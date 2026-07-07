@@ -79,10 +79,75 @@
       font-weight: 800;
       letter-spacing: -1.5px;
       line-height: 1.1;
+    }
+
+    .burnout {
+      position: relative;
+      display: inline-block;
+      background:
+        linear-gradient(108deg, transparent 28%, rgba(8,8,8,0.95) 31%, rgba(50,50,50,0.8) 36%, rgba(12,12,12,0.9) 40%, transparent 44%),
+        linear-gradient(74deg, transparent 46%, rgba(5,5,5,0.9) 49%, rgba(38,38,38,0.75) 54%, transparent 58%),
+        linear-gradient(96deg, transparent 60%, rgba(10,10,10,0.85) 63%, rgba(42,42,42,0.7) 68%, transparent 72%),
+        repeating-linear-gradient(
+          -18deg,
+          #0a0a0a 0px,
+          #2e2e2e 2px,
+          #141414 4px,
+          #404040 6px,
+          #080808 8px
+        );
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 2px 8px rgba(40, 20, 0, 0.7))
+              drop-shadow(0 0 20px rgba(100, 50, 10, 0.4));
+      transform: skewX(-4deg);
+      padding-right: 0.08em;
+    }
+
+    .burnout::before {
+      content: '';
+      position: absolute;
+      top: 38%;
+      left: -10%;
+      width: 120%;
+      height: 16px;
+      background:
+        repeating-linear-gradient(
+          86deg,
+          transparent 0px,
+          rgba(20,20,20,0.95) 4px,
+          rgba(55,55,55,0.55) 8px,
+          rgba(15,15,15,0.9) 12px,
+          transparent 16px
+        );
+      transform: translateY(-50%) rotate(-7deg);
+      border-radius: 45%;
+      opacity: 0.8;
+      pointer-events: none;
+      mix-blend-mode: multiply;
+    }
+
+    .burnout::after {
+      content: '';
+      position: absolute;
+      left: -12%;
+      right: -8%;
+      bottom: -20%;
+      height: 45%;
+      background:
+        radial-gradient(ellipse 50% 100% at 25% 50%, rgba(70, 35, 5, 0.5) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 100% at 60% 50%, rgba(50, 25, 5, 0.55) 0%, transparent 70%),
+        radial-gradient(ellipse 45% 100% at 90% 50%, rgba(60, 30, 5, 0.45) 0%, transparent 70%);
+      pointer-events: none;
+      filter: blur(3px);
+    }
+
+    .h1-rest {
       background: linear-gradient(135deg, #fff 30%, var(--accent-light));
       -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
       background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     p.lead {
@@ -184,7 +249,7 @@
 
   <main id="inicio">
     <span class="badge">Bienvenido</span>
-    <h1>Construimos el futuro<br>con Seibi</h1>
+    <h1><span class="burnout">Constru</span><span class="h1-rest">imos el futuro<br>con Seibi</span></h1>
     <p class="lead">
       Una plataforma moderna y sencilla para impulsar tus ideas.
       Simple, elegante y lista para crecer contigo.
