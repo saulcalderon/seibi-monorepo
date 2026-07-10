@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seibi — Iniciar sesión</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #000000;
+      --accent: #8b7cf7;
+      --accent-deep: #6c5ce7;
+      --text: #ffffff;
+      --muted: #8a8f9e;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #050505;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      color: var(--text);
+    }
+
+    .preview-label {
+      position: fixed;
+      top: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #555;
+    }
+
+    .phone {
+      position: relative;
+      width: 390px;
+      height: 844px;
+      background: #000;
+      border-radius: 52px;
+      padding: 12px;
+      box-shadow:
+        0 0 0 1px #1a1a1a,
+        0 50px 100px rgba(0, 0, 0, 0.8);
+    }
+
+    .phone::before {
+      content: '';
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 34px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 20;
+    }
+
+    .screen {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: var(--black);
+      border-radius: 42px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 3.5rem 1.5rem 0;
+    }
+
+    .logo {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .logo .sei { color: #fff; }
+    .logo .bi { color: var(--accent); }
+
+    .tagline {
+      font-size: 0.8rem;
+      font-weight: 400;
+      color: var(--muted);
+      letter-spacing: 0.01em;
+    }
+
+    .visual {
+      position: relative;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 280px;
+      margin-top: 0.5rem;
+    }
+
+    .road-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .road-bg svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .car-art {
+      position: relative;
+      z-index: 3;
+      width: 280px;
+      height: 210px;
+    }
+
+    .car-art svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .welcome-section {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 0 2rem 1.25rem;
+    }
+
+    .welcome-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+      margin-bottom: 0.4rem;
+    }
+
+    .welcome-sub {
+      font-size: 0.78rem;
+      font-weight: 400;
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 280px;
+      margin: 0 auto;
+    }
+
+    .auth {
+      position: relative;
+      z-index: 10;
+      padding: 0 1.75rem 2.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      width: 100%;
+      padding: 0.95rem 1.25rem;
+      border: none;
+      border-radius: 50px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.2s ease;
+    }
+
+    .btn:active { transform: scale(0.98); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
+      color: #fff;
+      box-shadow: 0 4px 28px rgba(139, 124, 247, 0.35);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 6px 36px rgba(139, 124, 247, 0.5);
+    }
+
+    .btn-light {
+      background: #fff;
+      color: #111;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    .btn-light:hover {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    .btn svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      margin: 0.15rem 0;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .divider span {
+      font-size: 0.72rem;
+      color: #555;
+      font-weight: 400;
+    }
+
+    .terms {
+      text-align: center;
+      font-size: 0.65rem;
+      color: #555;
+      line-height: 1.6;
+      margin-top: 0.35rem;
+    }
+
+    .terms a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    /* ── Splash screen (pantalla de carga) ── */
+    .splash {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      background: #1a56e0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 42px;
+      overflow: hidden;
+      transition: opacity 0.8s ease, transform 0.8s ease, visibility 0.8s ease;
+    }
+
+    .splash.hide {
+      opacity: 0;
+      transform: scale(1.05);
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .splash-car-wrap {
+      position: relative;
+      width: 300px;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: carZoom 1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+      opacity: 0;
+      transform: scale(0.6) translateX(40px);
+    }
+
+    .splash-car-wrap svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .speed-line {
+      stroke-dasharray: 120;
+      stroke-dashoffset: 120;
+      animation: drawLine 0.6s ease forwards;
+    }
+
+    .speed-line:nth-child(1) { animation-delay: 0.5s; }
+    .speed-line:nth-child(2) { animation-delay: 0.65s; }
+    .speed-line:nth-child(3) { animation-delay: 0.8s; }
+
+    .splash-name {
+      position: absolute;
+      bottom: 4.5rem;
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 0.35em;
+      color: #fff;
+      text-indent: 0.35em;
+      animation: nameIn 0.8s ease 0.9s forwards;
+      opacity: 0;
+      transform: translateY(16px);
+    }
+
+    .splash-progress {
+      position: absolute;
+      bottom: 2.5rem;
+      width: 40px;
+      height: 3px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 3px;
+      overflow: hidden;
+      animation: nameIn 0.5s ease 1s forwards;
+      opacity: 0;
+    }
+
+    .splash-progress::after {
+      content: '';
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: #fff;
+      border-radius: 3px;
+      animation: loadBar 2.5s ease-in-out 0.5s forwards;
+    }
+
+    /* Main app — hidden until splash ends */
+    .main-app {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      opacity: 0;
+      transition: opacity 0.6s ease 0.1s;
+    }
+
+    .main-app.visible {
+      opacity: 1;
+    }
+
+    .main-app .brand,
+    .main-app .visual,
+    .main-app .welcome-section,
+    .main-app .auth {
+      animation: fadeUp 0.6s ease forwards;
+      opacity: 0;
+    }
+
+    .main-app.visible .brand       { animation-delay: 0.05s; }
+    .main-app.visible .visual      { animation-delay: 0.15s; }
+    .main-app.visible .welcome-section { animation-delay: 0.25s; }
+    .main-app.visible .auth        { animation-delay: 0.35s; }
+
+    .car-art svg {
+      animation: carFloat 3s ease-in-out infinite;
+    }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes nameIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes carZoom {
+      to { opacity: 1; transform: scale(1) translateX(0); }
+    }
+
+    @keyframes drawLine {
+      to { stroke-dashoffset: 0; }
+    }
+
+    @keyframes carFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    @keyframes loadBar {
+      to { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <p class="preview-label">Vista previa — Seibi App</p>
+
+  <div class="phone">
+    <div class="screen">
+
+      <!-- Pantalla de carga animada -->
+      <div class="splash" id="splash">
+        <div class="splash-car-wrap">
+          <svg viewBox="0 0 320 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path class="speed-line" d="M30 95 Q60 90 100 88" stroke="#111" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+            <path class="speed-line" d="M20 110 Q55 108 95 106" stroke="#111" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <path class="speed-line" d="M10 125 Q50 122 90 120" stroke="#111" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+            <path d="M110 130 L125 105 Q135 88 160 82 L200 78 Q230 76 250 88 L270 105 Q280 118 285 135 L290 145" stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M160 82 Q185 62 215 60 Q235 58 255 72 L268 88" stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M170 84 Q195 68 220 66 Q240 65 258 78" stroke="#111" stroke-width="1.2" fill="none" opacity="0.5"/>
+            <path d="M130 108 L165 98 L165 125 L128 130 Z" stroke="#111" stroke-width="1.8" fill="none"/>
+            <path d="M168 96 Q190 82 225 86 L260 100" stroke="#111" stroke-width="1.5" fill="none" opacity="0.6"/>
+            <circle cx="258" cy="140" r="16" stroke="#111" stroke-width="2.5" fill="none"/>
+            <circle cx="258" cy="140" r="7" stroke="#111" stroke-width="1" fill="none" opacity="0.4"/>
+            <ellipse cx="95" cy="136" rx="14" ry="12" stroke="#111" stroke-width="2.5" fill="none"/>
+            <ellipse cx="95" cy="136" rx="6" ry="5" stroke="#111" stroke-width="1" fill="none" opacity="0.4"/>
+            <path d="M275 108 L295 102 L300 110 L280 116 Z" stroke="#111" stroke-width="2" fill="none"/>
+            <path d="M108 100 Q105 95 100 100" stroke="#111" stroke-width="2" stroke-linecap="round" fill="none"/>
+          </svg>
+        </div>
+        <p class="splash-name">SEIBI</p>
+        <div class="splash-progress"></div>
+      </div>
+
+      <!-- Pantalla principal -->
+      <div class="main-app" id="mainApp">
+
+      <div class="brand">
+        <h1 class="logo"><span class="sei">Sei</span><span class="bi">bi</span></h1>
+        <p class="tagline">Cada kilometro registrado</p>
+      </div>
+
+      <div class="visual">
+        <div class="road-bg">
+          <svg viewBox="0 0 366 400" preserveAspectRatio="xMidYMid slice" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M280 0 C320 60, 340 120, 300 200 C260 280, 180 320, 100 360" stroke="#222" stroke-width="32" fill="none" stroke-linecap="round"/>
+            <path d="M280 0 C320 60, 340 120, 300 200 C260 280, 180 320, 100 360" stroke="#2a2a2a" stroke-width="24" fill="none" stroke-linecap="round"/>
+            <path d="M280 0 C320 60, 340 120, 300 200 C260 280, 180 320, 100 360" stroke="#444" stroke-width="1.5" stroke-dasharray="10 8" fill="none" opacity="0.5"/>
+            <path d="M0 280 C60 300, 120 310, 180 340 C240 370, 300 390, 366 400" stroke="#1a1a1a" stroke-width="28" fill="none" stroke-linecap="round"/>
+            <path d="M40 290 C90 305, 140 315, 190 345" stroke="#333" stroke-width="1.5" stroke-dasharray="8 7" fill="none" opacity="0.35"/>
+          </svg>
+        </div>
+
+        <div class="car-art">
+          <svg viewBox="0 0 320 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M55 185 L68 145 Q78 115 115 102 L155 96 Q195 93 228 108 L258 128 Q272 145 278 170 L282 185 Z" fill="#fff" opacity="0.92"/>
+            <path d="M115 102 Q148 72 188 70 Q218 68 248 90 L258 108 L115 104 Z" fill="#fff" opacity="0.88"/>
+            <path d="M128 106 L158 98 L158 132 L122 138 Z" fill="#000" opacity="0.85"/>
+            <path d="M162 100 Q182 86 218 90 L248 108 L162 104 Z" fill="#000" opacity="0.8"/>
+            <circle cx="228" cy="182" r="20" fill="#000"/>
+            <circle cx="228" cy="182" r="11" fill="#1a1a1a"/>
+            <circle cx="228" cy="182" r="4" fill="#333"/>
+            <ellipse cx="88" cy="176" rx="18" ry="16" fill="#000"/>
+            <ellipse cx="88" cy="176" rx="9" ry="8" fill="#1a1a1a"/>
+            <path d="M252 122 L282 115 L288 124 L258 132 Z" fill="#fff" opacity="0.9"/>
+            <ellipse cx="272" cy="148" rx="6" ry="3" fill="#fff" opacity="0.5"/>
+            <ellipse cx="72" cy="138" rx="5" ry="3" fill="#fff" opacity="0.35"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="welcome-section">
+        <h2 class="welcome-title">Bienvenido</h2>
+        <p class="welcome-sub">Inicia sesión para registrar el mantenimiento de tu auto</p>
+      </div>
+
+      <div class="auth">
+        <button class="btn btn-primary" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+          </svg>
+          Continuar con número
+        </button>
+
+        <div class="divider"><span>o continúa con</span></div>
+
+        <button class="btn btn-light" type="button">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+          </svg>
+          Continuar con Apple
+        </button>
+
+        <button class="btn btn-light" type="button">
+          <svg viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          Iniciar sesión con Google
+        </button>
+
+        <p class="terms">
+          Al continuar, aceptas nuestros <a href="#">Términos de servicio</a> y <a href="#">Política de privacidad</a>.
+        </p>
+      </div>
+
+      </div><!-- /main-app -->
+
+    </div>
+  </div>
+
+  <script>
+    const splash = document.getElementById('splash');
+    const mainApp = document.getElementById('mainApp');
+
+    setTimeout(() => {
+      splash.classList.add('hide');
+      mainApp.classList.add('visible');
+    }, 3000);
+  </script>
+
+</body>
+</html>
