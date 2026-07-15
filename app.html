@@ -6,7 +6,7 @@
   <title>Seibi — Iniciar sesión</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -16,8 +16,10 @@
       --accent-deep: #6c5ce7;
       --text: #ffffff;
       --muted: #8a8f9e;
-      --splash-bg: #fffacd;
+      --splash-bg: #fdf5cb;
       --milano-red: #c40000;
+      --ease-smooth: cubic-bezier(0.33, 1, 0.68, 1);
+      --transition-depth: 1.15s;
     }
 
     body {
@@ -72,18 +74,19 @@
       position: relative;
       width: 100%;
       height: 100%;
-      background: var(--black);
+      background: var(--splash-bg);
       border-radius: 42px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      perspective: 1400px;
     }
 
     .brand {
       position: relative;
       z-index: 10;
       text-align: center;
-      padding: 3.5rem 1.5rem 0;
+      padding: 3.5rem 1.5rem 0.5rem;
     }
 
     .logo {
@@ -94,71 +97,53 @@
       margin-bottom: 0.5rem;
     }
 
-    .logo .sei { color: #fff; }
-    .logo .bi { color: var(--accent); }
+    .logo .sei { color: var(--black); }
+    .logo .bi { color: var(--milano-red); }
 
     .tagline {
       font-size: 0.8rem;
       font-weight: 400;
-      color: var(--muted);
+      color: rgba(0, 0, 0, 0.88);
       letter-spacing: 0.01em;
     }
 
     .visual {
-      position: relative;
       flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 280px;
-      margin-top: 0.5rem;
+      min-height: 160px;
+      padding: 0 0.5rem;
     }
 
-    .road-bg {
-      position: absolute;
-      inset: 0;
-      z-index: 1;
-      overflow: hidden;
-    }
-
-    .road-bg svg {
+    .hero-image {
       width: 100%;
-      height: 100%;
-    }
-
-    .car-art {
-      position: relative;
-      z-index: 3;
-      width: 280px;
-      height: 210px;
-    }
-
-    .car-art svg {
-      width: 100%;
-      height: 100%;
+      max-width: 320px;
+      height: auto;
+      display: block;
     }
 
     .welcome-section {
       position: relative;
       z-index: 10;
       text-align: center;
-      padding: 0 2rem 1.25rem;
+      padding: 0 2rem 1rem;
     }
 
     .welcome-title {
       font-size: 1.5rem;
       font-weight: 700;
       letter-spacing: -0.02em;
-      color: #fff;
+      color: var(--black);
       margin-bottom: 0.4rem;
     }
 
     .welcome-sub {
       font-size: 0.78rem;
       font-weight: 400;
-      color: var(--muted);
+      color: rgba(0, 0, 0, 0.88);
       line-height: 1.55;
-      max-width: 280px;
+      max-width: 300px;
       margin: 0 auto;
     }
 
@@ -189,24 +174,15 @@
 
     .btn:active { transform: scale(0.98); }
 
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
-      color: #fff;
-      box-shadow: 0 4px 28px rgba(139, 124, 247, 0.35);
-    }
-
-    .btn-primary:hover {
-      box-shadow: 0 6px 36px rgba(139, 124, 247, 0.5);
-    }
-
     .btn-light {
       background: #fff;
       color: #111;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
     }
 
     .btn-light:hover {
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
     }
 
     .btn svg {
@@ -215,37 +191,16 @@
       flex-shrink: 0;
     }
 
-    .divider {
-      display: flex;
-      align-items: center;
-      gap: 0.85rem;
-      margin: 0.15rem 0;
-    }
-
-    .divider::before,
-    .divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: rgba(255, 255, 255, 0.06);
-    }
-
-    .divider span {
-      font-size: 0.72rem;
-      color: #555;
-      font-weight: 400;
-    }
-
     .terms {
       text-align: center;
       font-size: 0.65rem;
-      color: #555;
+      color: rgba(0, 0, 0, 0.88);
       line-height: 1.6;
       margin-top: 0.35rem;
     }
 
     .terms a {
-      color: var(--accent);
+      color: var(--milano-red);
       text-decoration: none;
     }
 
@@ -261,29 +216,21 @@
       justify-content: center;
       border-radius: 42px;
       overflow: hidden;
+      transform: scale(1) translateZ(0);
+      will-change: transform, opacity;
       transition:
-        opacity 1.1s cubic-bezier(0.4, 0, 0.2, 1),
-        transform 1.1s cubic-bezier(0.4, 0, 0.2, 1),
-        visibility 1.1s;
+        opacity var(--transition-depth) var(--ease-smooth),
+        transform var(--transition-depth) var(--ease-smooth),
+        visibility var(--transition-depth);
     }
 
-    .splash::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse at 50% 40%, transparent 30%, rgba(0, 0, 0, 0.12) 100%);
-      pointer-events: none;
+    .splash.transitioning {
       opacity: 0;
-      transition: opacity 1.1s ease;
-    }
-
-    .splash.transitioning::after {
-      opacity: 1;
+      transform: scale(0.97) translateZ(-72px);
+      pointer-events: none;
     }
 
     .splash.hide {
-      opacity: 0;
-      transform: scale(1.03);
       visibility: hidden;
       pointer-events: none;
     }
@@ -295,17 +242,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      animation: carZoom 1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+      animation: carZoom 1s var(--ease-smooth) 0.2s forwards;
       opacity: 0;
-      transform: scale(0.92);
-      transition:
-        opacity 0.9s cubic-bezier(0.4, 0, 0.2, 1),
-        transform 0.9s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .splash.transitioning .splash-car-wrap {
-      opacity: 0;
-      transform: scale(0.94) translateY(-10px);
+      transform: scale(0.94);
     }
 
     .splash-video {
@@ -325,26 +264,10 @@
       flex-direction: column;
       align-items: center;
       gap: 1rem;
-      transition:
-        opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1),
-        transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .splash.transitioning .splash-footer {
-      opacity: 0;
-      transform: translateY(12px);
     }
 
     .splash-name {
-      font-family: 'Fredoka', system-ui, sans-serif;
-      font-size: 2.15rem;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      color: var(--milano-red);
-      text-indent: 0.06em;
-      text-transform: lowercase;
-      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
-      animation: nameIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.7s forwards;
+      animation: nameIn 0.9s var(--ease-smooth) 0.7s forwards;
       opacity: 0;
       transform: translateY(14px);
     }
@@ -366,7 +289,7 @@
       width: 0%;
       background: var(--milano-red);
       border-radius: 3px;
-      animation: loadBar 2.8s cubic-bezier(0.4, 0, 0.2, 1) 0.5s forwards;
+      animation: loadBar 2.8s var(--ease-smooth) 0.5s forwards;
     }
 
     /* Main app — hidden until splash ends */
@@ -374,39 +297,26 @@
       display: flex;
       flex-direction: column;
       flex: 1;
+      background-color: var(--splash-bg);
       opacity: 0;
-      transform: translateY(18px);
+      transform: scale(0.97) translateZ(-88px);
+      will-change: transform, opacity;
       transition:
-        opacity 1s cubic-bezier(0.22, 1, 0.36, 1) 0.25s,
-        transform 1s cubic-bezier(0.22, 1, 0.36, 1) 0.25s;
+        opacity var(--transition-depth) var(--ease-smooth),
+        transform var(--transition-depth) var(--ease-smooth);
     }
 
     .main-app.visible {
       opacity: 1;
-      transform: translateY(0);
+      transform: scale(1) translateZ(0);
     }
 
     .main-app .brand,
     .main-app .visual,
     .main-app .welcome-section,
     .main-app .auth {
-      animation: fadeUp 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-      opacity: 0;
-      transform: translateY(16px);
-    }
-
-    .main-app.visible .brand            { animation-delay: 0.35s; }
-    .main-app.visible .visual           { animation-delay: 0.5s; }
-    .main-app.visible .welcome-section  { animation-delay: 0.65s; }
-    .main-app.visible .auth             { animation-delay: 0.8s; }
-
-    .car-art svg {
-      animation: carFloat 3s ease-in-out infinite;
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to { opacity: 1; transform: translateY(0); }
+      opacity: 1;
+      transform: none;
     }
 
     @keyframes nameIn {
@@ -415,11 +325,6 @@
 
     @keyframes carZoom {
       to { opacity: 1; transform: scale(1); }
-    }
-
-    @keyframes carFloat {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-4px); }
     }
 
     @keyframes loadBar {
@@ -451,7 +356,7 @@
           </video>
         </div>
         <div class="splash-footer">
-          <p class="splash-name">seibi</p>
+          <h1 class="logo splash-name"><span class="sei">Sei</span><span class="bi">bi</span></h1>
           <div class="splash-progress"></div>
         </div>
       </div>
@@ -461,53 +366,19 @@
 
       <div class="brand">
         <h1 class="logo"><span class="sei">Sei</span><span class="bi">bi</span></h1>
-        <p class="tagline">Cada kilometro registrado</p>
+        <p class="tagline">Mantenimiento con total claridad</p>
       </div>
 
       <div class="visual">
-        <div class="road-bg">
-          <svg viewBox="0 0 366 400" preserveAspectRatio="xMidYMid slice" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M280 0 C320 60, 340 120, 300 200 C260 280, 180 320, 100 360" stroke="#222" stroke-width="32" fill="none" stroke-linecap="round"/>
-            <path d="M280 0 C320 60, 340 120, 300 200 C260 280, 180 320, 100 360" stroke="#2a2a2a" stroke-width="24" fill="none" stroke-linecap="round"/>
-            <path d="M280 0 C320 60, 340 120, 300 200 C260 280, 180 320, 100 360" stroke="#444" stroke-width="1.5" stroke-dasharray="10 8" fill="none" opacity="0.5"/>
-            <path d="M0 280 C60 300, 120 310, 180 340 C240 370, 300 390, 366 400" stroke="#1a1a1a" stroke-width="28" fill="none" stroke-linecap="round"/>
-            <path d="M40 290 C90 305, 140 315, 190 345" stroke="#333" stroke-width="1.5" stroke-dasharray="8 7" fill="none" opacity="0.35"/>
-          </svg>
-        </div>
-
-        <div class="car-art">
-          <svg viewBox="0 0 320 240" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M55 185 L68 145 Q78 115 115 102 L155 96 Q195 93 228 108 L258 128 Q272 145 278 170 L282 185 Z" fill="#fff" opacity="0.92"/>
-            <path d="M115 102 Q148 72 188 70 Q218 68 248 90 L258 108 L115 104 Z" fill="#fff" opacity="0.88"/>
-            <path d="M128 106 L158 98 L158 132 L122 138 Z" fill="#000" opacity="0.85"/>
-            <path d="M162 100 Q182 86 218 90 L248 108 L162 104 Z" fill="#000" opacity="0.8"/>
-            <circle cx="228" cy="182" r="20" fill="#000"/>
-            <circle cx="228" cy="182" r="11" fill="#1a1a1a"/>
-            <circle cx="228" cy="182" r="4" fill="#333"/>
-            <ellipse cx="88" cy="176" rx="18" ry="16" fill="#000"/>
-            <ellipse cx="88" cy="176" rx="9" ry="8" fill="#1a1a1a"/>
-            <path d="M252 122 L282 115 L288 124 L258 132 Z" fill="#fff" opacity="0.9"/>
-            <ellipse cx="272" cy="148" rx="6" ry="3" fill="#fff" opacity="0.5"/>
-            <ellipse cx="72" cy="138" rx="5" ry="3" fill="#fff" opacity="0.35"/>
-          </svg>
-        </div>
+        <img class="hero-image" src="assets/login-hero.png?v=6" alt="Garaje con vehículo">
       </div>
 
       <div class="welcome-section">
         <h2 class="welcome-title">Bienvenido</h2>
-        <p class="welcome-sub">Inicia sesión para registrar el mantenimiento de tu auto</p>
+        <p class="welcome-sub">Historial de servicios, recordatorios por kilometraje y estimados de costo</p>
       </div>
 
       <div class="auth">
-        <button class="btn btn-primary" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-          </svg>
-          Continuar con número
-        </button>
-
-        <div class="divider"><span>o continúa con</span></div>
-
         <button class="btn btn-light" type="button">
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
@@ -539,18 +410,35 @@
     const splash = document.getElementById('splash');
     const mainApp = document.getElementById('mainApp');
     const splashVideo = document.getElementById('splashVideo');
+    const splashProgress = splash.querySelector('.splash-progress');
+    const TRANSITION_MS = 1150;
+    const PAUSE_AFTER_SPLASH_MS = 280;
 
     splashVideo.play().catch(() => {});
 
-    setTimeout(() => {
-      splash.classList.add('transitioning');
-      mainApp.classList.add('visible');
+    let transitionStarted = false;
+
+    function beginLoginTransition() {
+      if (transitionStarted) return;
+      transitionStarted = true;
 
       setTimeout(() => {
-        splash.classList.add('hide');
-        splashVideo.pause();
-      }, 1100);
-    }, 3200);
+        splash.classList.add('transitioning');
+        mainApp.classList.add('visible');
+
+        setTimeout(() => {
+          splash.classList.add('hide');
+          splashVideo.pause();
+        }, TRANSITION_MS);
+      }, PAUSE_AFTER_SPLASH_MS);
+    }
+
+    splashProgress.addEventListener('animationend', (event) => {
+      if (event.animationName === 'loadBar') beginLoginTransition();
+    });
+
+    // Fallback: loadBar termina a los 3.3s (0.5s delay + 2.8s duración)
+    setTimeout(beginLoginTransition, 3600);
   </script>
 
 </body>
