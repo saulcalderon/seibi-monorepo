@@ -6,7 +6,7 @@
   <title>Seibi — Iniciar sesión</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -16,6 +16,8 @@
       --accent-deep: #6c5ce7;
       --text: #ffffff;
       --muted: #8a8f9e;
+      --splash-bg: #fffacd;
+      --milano-red: #c40000;
     }
 
     body {
@@ -252,72 +254,108 @@
       position: absolute;
       inset: 0;
       z-index: 50;
-      background: #1a56e0;
+      background: var(--splash-bg);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       border-radius: 42px;
       overflow: hidden;
-      transition: opacity 0.8s ease, transform 0.8s ease, visibility 0.8s ease;
+      transition:
+        opacity 1.1s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 1.1s cubic-bezier(0.4, 0, 0.2, 1),
+        visibility 1.1s;
+    }
+
+    .splash::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 40%, transparent 30%, rgba(0, 0, 0, 0.12) 100%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 1.1s ease;
+    }
+
+    .splash.transitioning::after {
+      opacity: 1;
     }
 
     .splash.hide {
       opacity: 0;
-      transform: scale(1.05);
+      transform: scale(1.03);
       visibility: hidden;
       pointer-events: none;
     }
 
     .splash-car-wrap {
       position: relative;
-      width: 300px;
-      height: 200px;
+      width: 82%;
+      height: 48%;
       display: flex;
       align-items: center;
       justify-content: center;
       animation: carZoom 1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
       opacity: 0;
-      transform: scale(0.6) translateX(40px);
+      transform: scale(0.92);
+      transition:
+        opacity 0.9s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.9s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .splash-car-wrap svg {
+    .splash.transitioning .splash-car-wrap {
+      opacity: 0;
+      transform: scale(0.94) translateY(-10px);
+    }
+
+    .splash-video {
       width: 100%;
       height: 100%;
+      object-fit: contain;
+      display: block;
+      background: transparent;
     }
 
-    .speed-line {
-      stroke-dasharray: 120;
-      stroke-dashoffset: 120;
-      animation: drawLine 0.6s ease forwards;
+    .splash-footer {
+      position: absolute;
+      bottom: 4.25rem;
+      left: 0;
+      right: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      transition:
+        opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .speed-line:nth-child(1) { animation-delay: 0.5s; }
-    .speed-line:nth-child(2) { animation-delay: 0.65s; }
-    .speed-line:nth-child(3) { animation-delay: 0.8s; }
+    .splash.transitioning .splash-footer {
+      opacity: 0;
+      transform: translateY(12px);
+    }
 
     .splash-name {
-      position: absolute;
-      bottom: 4.5rem;
-      font-size: 1.6rem;
-      font-weight: 700;
-      letter-spacing: 0.35em;
-      color: #fff;
-      text-indent: 0.35em;
-      animation: nameIn 0.8s ease 0.9s forwards;
+      font-family: 'Fredoka', system-ui, sans-serif;
+      font-size: 2.15rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: var(--milano-red);
+      text-indent: 0.06em;
+      text-transform: lowercase;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+      animation: nameIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.7s forwards;
       opacity: 0;
-      transform: translateY(16px);
+      transform: translateY(14px);
     }
 
     .splash-progress {
-      position: absolute;
-      bottom: 2.5rem;
-      width: 40px;
+      width: 44px;
       height: 3px;
-      background: rgba(255,255,255,0.2);
+      background: rgba(196, 0, 0, 0.18);
       border-radius: 3px;
       overflow: hidden;
-      animation: nameIn 0.5s ease 1s forwards;
+      animation: nameIn 0.6s ease 0.95s forwards;
       opacity: 0;
     }
 
@@ -326,9 +364,9 @@
       display: block;
       height: 100%;
       width: 0%;
-      background: #fff;
+      background: var(--milano-red);
       border-radius: 3px;
-      animation: loadBar 2.5s ease-in-out 0.5s forwards;
+      animation: loadBar 2.8s cubic-bezier(0.4, 0, 0.2, 1) 0.5s forwards;
     }
 
     /* Main app — hidden until splash ends */
@@ -337,31 +375,37 @@
       flex-direction: column;
       flex: 1;
       opacity: 0;
-      transition: opacity 0.6s ease 0.1s;
+      transform: translateY(18px);
+      transition:
+        opacity 1s cubic-bezier(0.22, 1, 0.36, 1) 0.25s,
+        transform 1s cubic-bezier(0.22, 1, 0.36, 1) 0.25s;
     }
 
     .main-app.visible {
       opacity: 1;
+      transform: translateY(0);
     }
 
     .main-app .brand,
     .main-app .visual,
     .main-app .welcome-section,
     .main-app .auth {
-      animation: fadeUp 0.6s ease forwards;
+      animation: fadeUp 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
       opacity: 0;
+      transform: translateY(16px);
     }
 
-    .main-app.visible .brand       { animation-delay: 0.05s; }
-    .main-app.visible .visual      { animation-delay: 0.15s; }
-    .main-app.visible .welcome-section { animation-delay: 0.25s; }
-    .main-app.visible .auth        { animation-delay: 0.35s; }
+    .main-app.visible .brand            { animation-delay: 0.35s; }
+    .main-app.visible .visual           { animation-delay: 0.5s; }
+    .main-app.visible .welcome-section  { animation-delay: 0.65s; }
+    .main-app.visible .auth             { animation-delay: 0.8s; }
 
     .car-art svg {
       animation: carFloat 3s ease-in-out infinite;
     }
 
     @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
@@ -370,11 +414,7 @@
     }
 
     @keyframes carZoom {
-      to { opacity: 1; transform: scale(1) translateX(0); }
-    }
-
-    @keyframes drawLine {
-      to { stroke-dashoffset: 0; }
+      to { opacity: 1; transform: scale(1); }
     }
 
     @keyframes carFloat {
@@ -397,25 +437,23 @@
       <!-- Pantalla de carga animada -->
       <div class="splash" id="splash">
         <div class="splash-car-wrap">
-          <svg viewBox="0 0 320 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path class="speed-line" d="M30 95 Q60 90 100 88" stroke="#111" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-            <path class="speed-line" d="M20 110 Q55 108 95 106" stroke="#111" stroke-width="2" stroke-linecap="round" fill="none"/>
-            <path class="speed-line" d="M10 125 Q50 122 90 120" stroke="#111" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-            <path d="M110 130 L125 105 Q135 88 160 82 L200 78 Q230 76 250 88 L270 105 Q280 118 285 135 L290 145" stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <path d="M160 82 Q185 62 215 60 Q235 58 255 72 L268 88" stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <path d="M170 84 Q195 68 220 66 Q240 65 258 78" stroke="#111" stroke-width="1.2" fill="none" opacity="0.5"/>
-            <path d="M130 108 L165 98 L165 125 L128 130 Z" stroke="#111" stroke-width="1.8" fill="none"/>
-            <path d="M168 96 Q190 82 225 86 L260 100" stroke="#111" stroke-width="1.5" fill="none" opacity="0.6"/>
-            <circle cx="258" cy="140" r="16" stroke="#111" stroke-width="2.5" fill="none"/>
-            <circle cx="258" cy="140" r="7" stroke="#111" stroke-width="1" fill="none" opacity="0.4"/>
-            <ellipse cx="95" cy="136" rx="14" ry="12" stroke="#111" stroke-width="2.5" fill="none"/>
-            <ellipse cx="95" cy="136" rx="6" ry="5" stroke="#111" stroke-width="1" fill="none" opacity="0.4"/>
-            <path d="M275 108 L295 102 L300 110 L280 116 Z" stroke="#111" stroke-width="2" fill="none"/>
-            <path d="M108 100 Q105 95 100 100" stroke="#111" stroke-width="2" stroke-linecap="round" fill="none"/>
-          </svg>
+          <video
+            class="splash-video"
+            id="splashVideo"
+            autoplay
+            muted
+            loop
+            playsinline
+            preload="auto"
+          >
+            <source src="assets/splash-car-clean.webm?v=5" type="video/webm">
+            <source src="assets/splash-car-clean.mp4?v=5" type="video/mp4">
+          </video>
         </div>
-        <p class="splash-name">SEIBI</p>
-        <div class="splash-progress"></div>
+        <div class="splash-footer">
+          <p class="splash-name">seibi</p>
+          <div class="splash-progress"></div>
+        </div>
       </div>
 
       <!-- Pantalla principal -->
@@ -500,11 +538,19 @@
   <script>
     const splash = document.getElementById('splash');
     const mainApp = document.getElementById('mainApp');
+    const splashVideo = document.getElementById('splashVideo');
+
+    splashVideo.play().catch(() => {});
 
     setTimeout(() => {
-      splash.classList.add('hide');
+      splash.classList.add('transitioning');
       mainApp.classList.add('visible');
-    }, 3000);
+
+      setTimeout(() => {
+        splash.classList.add('hide');
+        splashVideo.pause();
+      }, 1100);
+    }, 3200);
   </script>
 
 </body>
