@@ -482,8 +482,9 @@
             playsinline
             preload="auto"
           >
-            <source src="assets/splash-car-clean.webm?v=6" type="video/webm">
-            <source src="assets/splash-car-clean.mp4?v=6" type="video/mp4">
+            <!-- MP4 first: Safari/iOS WebM drops VP9 alpha (gray underlay). -->
+            <source src="assets/splash-car-clean.mp4?v=7" type="video/mp4">
+            <source src="assets/splash-car-clean.webm?v=7" type="video/webm">
           </video>
         </div>
         <div class="splash-footer">

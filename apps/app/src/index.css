@@ -67,6 +67,18 @@ body {
   transform: scale(0.94);
   animation: seibi-car-zoom 1s var(--ease-smooth) 0.2s forwards;
 }
+.splash-video {
+  display: block;
+  background: transparent;
+}
+/* Hide native media chrome if iOS blocks autoplay (Low Power Mode / PWA). */
+.splash-video::-webkit-media-controls {
+  display: none !important;
+}
+.splash-video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+  -webkit-appearance: none;
+}
 .splash-name {
   opacity: 0;
   transform: translateY(14px);
