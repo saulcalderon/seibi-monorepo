@@ -1,28 +1,36 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
+import type { AnimationEvent } from 'react'
 import { Logo } from '../components/Logo'
 
 interface SplashProps {
   onDone: () => void
 }
 
-const SPLASH_MS = 2800
+// Fallback in case the loadBar animation event never fires (e.g. reduced motion).
+const SPLASH_FALLBACK_MS = 3600
 
 export function Splash({ onDone }: SplashProps) {
-  const [progress, setProgress] = useState(0)
+  const doneRef = useRef(false)
+
+  const finish = () => {
+    if (doneRef.current) return
+    doneRef.current = true
+    onDone()
+  }
 
   useEffect(() => {
-    // Kick the progress bar to 100% on the next frame so the width transitions.
-    const raf = requestAnimationFrame(() => setProgress(100))
-    const timer = setTimeout(onDone, SPLASH_MS)
-    return () => {
-      cancelAnimationFrame(raf)
-      clearTimeout(timer)
-    }
-  }, [onDone])
+    const timer = setTimeout(finish, SPLASH_FALLBACK_MS)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleBarAnimationEnd = (event: AnimationEvent<HTMLDivElement>) => {
+    if (event.animationName === 'seibi-load-bar') finish()
+  }
 
   return (
     <div className="relative flex h-full flex-col items-center justify-center bg-splash">
-      <div className="flex h-[48%] w-[82%] items-center justify-center">
+      <div className="splash-car-wrap flex h-[48%] w-[82%] items-center justify-center">
         <video
           className="h-full w-full object-contain"
           autoPlay
@@ -37,11 +45,11 @@ export function Splash({ onDone }: SplashProps) {
       </div>
 
       <div className="absolute bottom-24 flex flex-col items-center gap-4">
-        <Logo className="text-4xl" />
-        <div className="h-[3px] w-11 overflow-hidden rounded-full bg-milano/20">
+        <Logo className="splash-name text-4xl" />
+        <div className="splash-progress-track h-[3px] w-11 overflow-hidden rounded-full bg-milano/20">
           <div
-            className="h-full rounded-full bg-milano transition-[width] duration-[2600ms] ease-[cubic-bezier(0.33,1,0.68,1)]"
-            style={{ width: `${progress}%` }}
+            className="splash-progress-bar h-full rounded-full bg-milano"
+            onAnimationEnd={handleBarAnimationEnd}
           />
         </div>
       </div>

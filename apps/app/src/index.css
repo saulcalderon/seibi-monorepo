@@ -42,3 +42,64 @@ body {
   background: var(--color-splash);
   overflow: hidden;
 }
+
+/* ── Splash entrance animations (ported 1:1 from the prototype) ── */
+@keyframes seibi-car-zoom {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes seibi-name-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes seibi-load-bar {
+  to {
+    width: 100%;
+  }
+}
+
+.splash-car-wrap {
+  opacity: 0;
+  transform: scale(0.94);
+  animation: seibi-car-zoom 1s var(--ease-smooth) 0.2s forwards;
+}
+.splash-name {
+  opacity: 0;
+  transform: translateY(14px);
+  animation: seibi-name-in 0.9s var(--ease-smooth) 0.7s forwards;
+}
+.splash-progress-track {
+  opacity: 0;
+  animation: seibi-name-in 0.6s ease 0.95s forwards;
+}
+.splash-progress-bar {
+  width: 0%;
+  animation: seibi-load-bar 2.8s var(--ease-smooth) 0.5s forwards;
+}
+
+/* ── Depth transition between screens, approximating the prototype's
+   scale + fade layer swap. Runs on TanStack Router view transitions. ── */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: seibi-depth-out 1.15s var(--ease-smooth) both;
+  }
+  ::view-transition-new(root) {
+    animation: seibi-depth-in 1.15s var(--ease-smooth) both;
+  }
+}
+@keyframes seibi-depth-out {
+  to {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+@keyframes seibi-depth-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}

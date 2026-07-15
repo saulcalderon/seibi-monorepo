@@ -10,6 +10,7 @@ const router = createRouter({
   routeTree,
   context: { queryClient },
   defaultPreload: 'intent',
+  defaultViewTransition: true,
   scrollRestoration: true,
 })
 
