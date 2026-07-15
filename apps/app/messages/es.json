@@ -23,5 +23,6 @@
   "login_terms_and": " y ",
   "login_terms_privacy": "Política de privacidad",
   "home_title": "Tus vehículos",
-  "home_empty": "Aún no has agregado ningún vehículo."
+  "home_empty": "Aún no has agregado ningún vehículo.",
+  "home_logout": "Cerrar sesión"
 }

@@ -24,6 +24,10 @@ export type OAuthProvider = 'apple' | 'google'
 export function signInWithProvider(provider: OAuthProvider) {
   return supabase.auth.signInWithOAuth({
     provider,
-    options: { redirectTo: `${window.location.origin}/home` },
+    options: { redirectTo: `${window.location.origin}/auth/callback` },
   })
+}
+
+export function signOut() {
+  return supabase.auth.signOut()
 }
