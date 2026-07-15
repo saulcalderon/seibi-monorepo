@@ -6,7 +6,7 @@
   <title>Seibi — Iniciar sesión</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -323,8 +323,9 @@
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      padding: 3.25rem 1.75rem 0.5rem;
-      min-height: 4.5rem;
+      padding: 3.25rem 1.75rem 0.25rem;
+      min-height: 4.25rem;
+      flex-shrink: 0;
     }
 
     .info-skip {
@@ -352,6 +353,7 @@
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
       touch-action: pan-x;
+      min-height: 0;
     }
 
     .info-viewport::-webkit-scrollbar {
@@ -371,51 +373,788 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 1rem 2rem 0.5rem;
+      justify-content: flex-start;
+      padding: 0.35rem 1.5rem 0.5rem;
       text-align: center;
     }
 
-    .info-icon {
-      width: 148px;
-      height: 148px;
-      margin-bottom: 2rem;
+    /* Illustration stage */
+    .info-stage {
+      position: relative;
+      width: 100%;
+      max-width: 300px;
+      height: 270px;
+      margin-top: 1.15rem;
+      margin-bottom: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(255, 255, 255, 0.55);
-      border-radius: 36px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+      order: 2;
     }
 
-    .info-icon svg {
-      width: 72px;
-      height: 72px;
+    .info-stage-glow {
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(196, 0, 0, 0.12) 0%, transparent 70%);
+      pointer-events: none;
     }
 
-    .info-title {
-      font-size: 1.45rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
+    /* Shared mock card */
+    .mock-card {
+      position: relative;
+      width: 100%;
+      background: #fff;
+      border-radius: 22px;
+      box-shadow:
+        0 4px 6px rgba(0, 0, 0, 0.03),
+        0 16px 40px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      text-align: left;
+    }
+
+    .mock-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem 0.55rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .mock-vehicle-label {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      min-width: 0;
+    }
+
+    .mock-car-thumb {
+      width: 52px;
+      height: auto;
+      display: block;
+      flex-shrink: 0;
+      opacity: 0;
+      transform: translateX(-18px) scale(0.92);
+      filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.12));
+    }
+
+    .info-slide.active .mock-car-thumb {
+      animation: carThumbIn 0.7s var(--ease-smooth) 0.5s forwards;
+    }
+
+    .mock-card-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(0, 0, 0, 0.4);
+    }
+
+    .mock-badge {
+      font-size: 0.62rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 20px;
+      background: rgba(196, 0, 0, 0.1);
+      color: var(--milano-red);
+    }
+
+    .mock-badge.ok {
+      background: rgba(34, 140, 70, 0.12);
+      color: #1a7a3c;
+    }
+
+    /* Slide 1 — Historial timeline */
+    .mock-timeline {
+      padding: 0.65rem 1rem 0.9rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+    .mock-row {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      opacity: 0;
+      transform: translateX(-14px);
+    }
+
+    .info-slide.active .mock-row {
+      animation: slideRowIn 0.55s var(--ease-smooth) forwards;
+    }
+
+    .info-slide.active .mock-row:nth-child(1) { animation-delay: 0.55s; }
+    .info-slide.active .mock-row:nth-child(2) { animation-delay: 0.7s; }
+    .info-slide.active .mock-row:nth-child(3) { animation-delay: 0.85s; }
+
+    .mock-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--milano-red);
+      flex-shrink: 0;
+      box-shadow: 0 0 0 3px rgba(196, 0, 0, 0.15);
+    }
+
+    .mock-dot.muted {
+      background: rgba(0, 0, 0, 0.2);
+      box-shadow: none;
+    }
+
+    .mock-row-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .mock-row-title {
+      font-size: 0.78rem;
+      font-weight: 600;
       color: var(--black);
-      margin-bottom: 0.65rem;
       line-height: 1.2;
     }
 
+    .mock-row-meta {
+      font-size: 0.65rem;
+      color: rgba(0, 0, 0, 0.45);
+      margin-top: 0.12rem;
+    }
+
+    .mock-row-cost {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--black);
+      flex-shrink: 0;
+      opacity: 0;
+      transform: translateY(-10px) scale(1.35);
+      transform-origin: right center;
+      display: inline-block;
+      min-width: 3.2em;
+      text-align: right;
+    }
+
+    .info-slide.active .mock-row:nth-child(1) .mock-row-cost {
+      animation: costSettleIn 0.65s var(--ease-smooth) 0.85s forwards;
+    }
+
+    .info-slide.active .mock-row:nth-child(2) .mock-row-cost {
+      animation: costSettleIn 0.65s var(--ease-smooth) 1.05s forwards;
+    }
+
+    .info-slide.active .mock-row:nth-child(3) .mock-row-cost {
+      animation: costSettleIn 0.65s var(--ease-smooth) 1.25s forwards;
+    }
+
+    /* Slide 2 — Recordatorio / odómetro */
+    .mock-odometer {
+      padding: 0.85rem 1.1rem 0.95rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .mock-km-block {
+      display: flex;
+      align-items: baseline;
+      gap: 0.35rem;
+      opacity: 0;
+      transform: translateY(12px);
+    }
+
+    .info-slide.active .mock-km-block {
+      animation: riseIn 0.6s var(--ease-smooth) 0.55s forwards;
+    }
+
+    .mock-km-value {
+      font-size: 1.65rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--black);
+      font-variant-numeric: tabular-nums;
+      display: inline-block;
+      transform-origin: left center;
+      will-change: transform;
+    }
+
+    .mock-km-value.counting {
+      animation: kmDigitsPulse 1.6s var(--ease-smooth) both;
+    }
+
+    .mock-km-unit {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.45);
+    }
+
+    .mock-progress {
+      position: relative;
+      padding: 0.85rem 0 0.15rem;
+      opacity: 0;
+    }
+
+    .info-slide.active .mock-progress {
+      animation: fadeSoft 0.4s ease 0.7s forwards;
+    }
+
+    .mock-progress-track {
+      height: 8px;
+      background: rgba(0, 0, 0, 0.07);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .mock-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--milano-red), #e03a3a);
+      border-radius: 8px;
+    }
+
+    .info-slide.active .mock-progress-fill {
+      animation: fillBar 1.35s var(--ease-smooth) 0.85s forwards;
+    }
+
+    .mock-progress-car {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 44px;
+      height: auto;
+      transform: translateX(-50%);
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.18));
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .info-slide.active .mock-progress-car {
+      animation: carDrive 1.35s var(--ease-smooth) 0.85s forwards;
+    }
+
+    .mock-alerts {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .mock-alert {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.55rem 0.7rem;
+      background: rgba(196, 0, 0, 0.07);
+      border-radius: 14px;
+      border: 1px solid rgba(196, 0, 0, 0.12);
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    .info-slide.active .mock-alert:nth-child(1) {
+      animation:
+        riseIn 0.55s var(--ease-smooth) 1.05s forwards,
+        alertPulse 0.7s var(--ease-smooth) 1.85s 1;
+    }
+
+    .info-slide.active .mock-alert:nth-child(2) {
+      animation:
+        riseIn 0.55s var(--ease-smooth) 1.22s forwards,
+        alertPulse 0.7s var(--ease-smooth) 2.65s 1;
+    }
+
+    .info-slide.active .mock-alert:nth-child(1) .mock-alert-icon {
+      animation: iconPulse 0.7s var(--ease-smooth) 1.85s 1;
+    }
+
+    .info-slide.active .mock-alert:nth-child(2) .mock-alert-icon {
+      animation: iconPulse 0.7s var(--ease-smooth) 2.65s 1;
+    }
+
+    .mock-alert-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--milano-red);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .mock-alert-icon svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .mock-alert-text {
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.78);
+      line-height: 1.35;
+    }
+
+    .mock-alert-text strong {
+      color: var(--milano-red);
+      font-weight: 700;
+    }
+
+    /* Slide 3 — Chat / estimado */
+    .mock-card.chat-card {
+      overflow: hidden;
+    }
+
+    .mock-browser-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.7rem 0.85rem;
+      background: rgba(0, 0, 0, 0.03);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .mock-browser-dots {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .mock-browser-dots span {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    .mock-browser-dots span:nth-child(1) { background: #ff5f57; }
+    .mock-browser-dots span:nth-child(2) { background: #febc2e; }
+    .mock-browser-dots span:nth-child(3) { background: #28c840; }
+
+    .mock-browser-url {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.62rem;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.45);
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      border-radius: 8px;
+      padding: 0.28rem 0.55rem;
+      text-align: center;
+      letter-spacing: 0.01em;
+    }
+
+    .mock-chat {
+      padding: 0.75rem 0.8rem 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      min-height: 188px;
+    }
+
+    .mock-chat-bubble {
+      max-width: 92%;
+      border-radius: 18px;
+      padding: 0.55rem 0.75rem;
+      font-size: 0.7rem;
+      line-height: 1.4;
+      opacity: 0;
+      transform: translateY(14px) scale(0.82);
+      transform-origin: bottom right;
+      will-change: transform, opacity;
+      filter: blur(2px);
+    }
+
+    .mock-chat-bubble.user {
+      align-self: flex-end;
+      background: var(--milano-red);
+      color: #fff;
+      border-bottom-right-radius: 5px;
+      min-height: 2.1rem;
+      font-weight: 500;
+      box-shadow: 0 6px 18px rgba(196, 0, 0, 0.18);
+      transform-origin: bottom right;
+    }
+
+    .mock-chat-bubble.user.visible {
+      animation: bubbleInUser 0.45s cubic-bezier(0.22, 1.2, 0.36, 1) forwards;
+    }
+
+    .mock-chat-bubble.reply {
+      align-self: flex-start;
+      background: rgba(0, 0, 0, 0.05);
+      color: var(--black);
+      border-bottom-left-radius: 5px;
+      width: 100%;
+      max-width: 100%;
+      transform-origin: bottom left;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
+    }
+
+    .mock-chat-bubble.reply.visible {
+      animation: bubbleInReply 0.55s cubic-bezier(0.22, 1.15, 0.36, 1) forwards;
+    }
+
+    .mock-chat-typing {
+      align-self: flex-start;
+      display: none;
+      align-items: center;
+      gap: 5px;
+      padding: 0.6rem 0.85rem;
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 18px;
+      border-bottom-left-radius: 5px;
+      transform-origin: bottom left;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+    }
+
+    .mock-chat-typing.visible {
+      display: flex;
+      animation: bubbleInTyping 0.35s cubic-bezier(0.22, 1.2, 0.36, 1) forwards;
+    }
+
+    .mock-chat-typing.hiding {
+      animation: bubbleOut 0.18s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    .mock-chat-typing span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.28);
+      animation: typingDot 1.15s ease-in-out infinite;
+    }
+
+    .mock-chat-typing span:nth-child(2) { animation-delay: 0.18s; }
+    .mock-chat-typing span:nth-child(3) { animation-delay: 0.36s; }
+
+    .mock-chat-caret {
+      display: inline-block;
+      width: 1.5px;
+      height: 0.85em;
+      background: rgba(255, 255, 255, 0.9);
+      margin-left: 1px;
+      vertical-align: -1px;
+      border-radius: 1px;
+      animation: caretBlink 0.85s ease-in-out infinite;
+    }
+
+    .mock-chat-caret.hide {
+      display: none;
+    }
+
+    .chat-reply-title {
+      font-size: 0.68rem;
+      font-weight: 600;
+      margin-bottom: 0.15rem;
+    }
+
+    .chat-reply-meta {
+      font-size: 0.6rem;
+      color: rgba(0, 0, 0, 0.45);
+      margin-bottom: 0.55rem;
+    }
+
+    .chat-reply-price-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.55rem;
+    }
+
+    .chat-reply-price {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--milano-red);
+      letter-spacing: -0.03em;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chat-reply-range {
+      font-size: 0.58rem;
+      color: rgba(0, 0, 0, 0.45);
+      text-align: right;
+      line-height: 1.35;
+    }
+
+    .chat-reply-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .chat-reply-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .chat-reply-bar-name {
+      width: 48px;
+      font-size: 0.55rem;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.5);
+      flex-shrink: 0;
+    }
+
+    .chat-reply-bar-track {
+      flex: 1;
+      height: 5px;
+      background: rgba(0, 0, 0, 0.08);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .chat-reply-bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 5px;
+      background: var(--milano-red);
+    }
+
+    .chat-reply-bar-fill.parts {
+      background: rgba(0, 0, 0, 0.28);
+    }
+
+    .mock-chat-bubble.reply.visible .chat-reply-bar-fill.labor {
+      animation: fillLabor 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.18s forwards;
+    }
+
+    .mock-chat-bubble.reply.visible .chat-reply-bar-fill.parts {
+      animation: fillParts 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.28s forwards;
+    }
+
+    .mock-chat-bubble.reply.visible .chat-reply-price {
+      animation: bubblePriceIn 0.45s cubic-bezier(0.22, 1.2, 0.36, 1) 0.1s both;
+    }
+
+    .mock-chat-bubble.reply.visible .chat-reply-title,
+    .mock-chat-bubble.reply.visible .chat-reply-meta,
+    .mock-chat-bubble.reply.visible .chat-reply-range {
+      animation: bubbleSoftIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .mock-chat-bubble.reply.visible .chat-reply-title { animation-delay: 0.04s; }
+    .mock-chat-bubble.reply.visible .chat-reply-meta { animation-delay: 0.08s; }
+    .mock-chat-bubble.reply.visible .chat-reply-range { animation-delay: 0.16s; }
+
+    .chat-reply-title,
+    .chat-reply-meta,
+    .chat-reply-range,
+    .chat-reply-price {
+      opacity: 0;
+    }
+
+    /* Text block — editorial, per-slide character */
+    .info-copy {
+      position: relative;
+      order: 1;
+      width: 100%;
+      max-width: 310px;
+      text-align: left;
+      padding: 0.15rem 0.15rem 0;
+      opacity: 0;
+      transform: translateY(18px);
+    }
+
+    .info-slide.active .info-copy {
+      animation: copyIn 0.7s var(--ease-smooth) 0.1s forwards;
+    }
+
+    .info-copy-top {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      margin-bottom: 0.75rem;
+      overflow: hidden;
+    }
+
+    .info-step {
+      font-family: 'Sora', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #fff;
+      background: var(--milano-red);
+      width: 2.35rem;
+      height: 2.35rem;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 6px 16px rgba(196, 0, 0, 0.28);
+      opacity: 0;
+      transform: scale(0.2);
+      filter: blur(6px);
+    }
+
+    .info-slide.active .info-step {
+      animation: stepDrop 0.85s cubic-bezier(0.16, 1.2, 0.3, 1) 0.12s forwards;
+    }
+
+    .info-eyebrow {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(0, 0, 0, 0.42);
+      position: relative;
+      padding-left: 0.7rem;
+      opacity: 0;
+      transform: translateX(28px);
+    }
+
+    .info-slide.active .info-eyebrow {
+      animation: eyebrowSlideIn 0.6s var(--ease-smooth) 0.35s forwards;
+    }
+
+    .info-eyebrow::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      width: 0.4rem;
+      height: 0.4rem;
+      border-radius: 50%;
+      background: var(--milano-red);
+      transform: translateY(-50%);
+    }
+
+    .info-title {
+      font-family: 'Sora', sans-serif;
+      font-size: 1.18rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--black);
+      margin-bottom: 0.65rem;
+      line-height: 1.2;
+      max-width: 100%;
+      white-space: nowrap;
+    }
+
+    .info-title em {
+      font-style: normal;
+      color: var(--milano-red);
+      position: relative;
+      display: inline;
+    }
+
+    .info-title em::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0.08em;
+      height: 0.28em;
+      background: rgba(196, 0, 0, 0.14);
+      z-index: -1;
+      border-radius: 2px;
+    }
+
     .info-desc {
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 400;
-      color: rgba(0, 0, 0, 0.72);
-      line-height: 1.6;
-      max-width: 280px;
+      color: rgba(0, 0, 0, 0.82);
+      line-height: 1.55;
+      max-width: 290px;
+      padding-left: 0.85rem;
+      border-left: 2px solid rgba(196, 0, 0, 0.28);
+    }
+
+    .info-copy-watermark {
+      position: absolute;
+      right: -0.35rem;
+      top: -0.55rem;
+      font-family: 'Sora', sans-serif;
+      font-size: 4.2rem;
+      font-weight: 700;
+      letter-spacing: -0.06em;
+      line-height: 1;
+      color: rgba(196, 0, 0, 0.07);
+      pointer-events: none;
+      user-select: none;
+      z-index: 0;
+    }
+
+    .info-copy > *:not(.info-copy-watermark) {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Per-slide accents */
+    .info-copy.theme-historial .info-step {
+      border-radius: 10px 10px 4px 10px;
+    }
+
+    .info-copy.theme-recordatorios .info-step {
+      border-radius: 50%;
+    }
+
+    .info-copy.theme-estimados .info-step {
+      border-radius: 8px;
+      background: #111;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+    }
+
+    .info-copy.theme-estimados .info-eyebrow::before {
+      border-radius: 2px;
+      width: 0.45rem;
+      height: 0.45rem;
+    }
+
+    .info-copy.theme-recordatorios .info-desc {
+      border-left-color: rgba(196, 0, 0, 0.45);
+    }
+
+    .info-slide.active .info-stage {
+      animation: stageIn 0.7s var(--ease-smooth) 0.42s both;
+    }
+
+    @keyframes copyIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes stepDrop {
+      0% {
+        opacity: 0;
+        transform: scale(0.15);
+        filter: blur(8px);
+      }
+      55% {
+        opacity: 1;
+        filter: blur(0);
+        transform: scale(1.18);
+      }
+      78% {
+        transform: scale(0.94);
+      }
+      100% {
+        opacity: 1;
+        filter: blur(0);
+        transform: scale(1);
+      }
+    }
+
+    @keyframes eyebrowSlideIn {
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
     }
 
     .info-footer {
-      padding: 1.25rem 1.75rem 2.75rem;
+      padding: 1rem 1.75rem 2.75rem;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 1.25rem;
+      gap: 1.15rem;
+      flex-shrink: 0;
     }
 
     .info-dots {
@@ -461,6 +1200,202 @@
     @keyframes loadBar {
       to { width: 100%; }
     }
+
+    @keyframes slideRowIn {
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes costSettleIn {
+      0% {
+        opacity: 0;
+        transform: translateY(-12px) scale(1.4);
+      }
+      55% {
+        opacity: 1;
+        transform: translateY(2px) scale(0.94);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes riseIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeSoft {
+      to { opacity: 1; }
+    }
+
+    @keyframes popIn {
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes stageIn {
+      from { opacity: 0; transform: scale(0.94) translateY(16px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    @keyframes fillBar {
+      to { width: 78%; }
+    }
+
+    @keyframes carDrive {
+      from { left: 0%; }
+      to { left: 78%; }
+    }
+
+    @keyframes kmDigitsPulse {
+      0% {
+        transform: scale(1);
+      }
+      18% {
+        transform: scale(1.14);
+      }
+      55% {
+        transform: scale(1.08);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes fillLabor {
+      to { width: 62%; }
+    }
+
+    @keyframes fillParts {
+      to { width: 38%; }
+    }
+
+    @keyframes carThumbIn {
+      to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+      }
+    }
+
+    @keyframes alertPulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(196, 0, 0, 0);
+        background: rgba(196, 0, 0, 0.07);
+      }
+      40% {
+        box-shadow: 0 0 0 7px rgba(196, 0, 0, 0.14);
+        background: rgba(196, 0, 0, 0.14);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(196, 0, 0, 0);
+        background: rgba(196, 0, 0, 0.07);
+      }
+    }
+
+    @keyframes iconPulse {
+      0%, 100% { transform: scale(1); }
+      40% { transform: scale(1.12); }
+    }
+
+    @keyframes chatPop {
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes bubbleInUser {
+      0% {
+        opacity: 0;
+        transform: translateY(16px) scale(0.78);
+        filter: blur(3px);
+      }
+      60% {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(-3px) scale(1.04);
+      }
+      100% {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes bubbleInReply {
+      0% {
+        opacity: 0;
+        transform: translateY(18px) scale(0.84);
+        filter: blur(3px);
+      }
+      58% {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(-4px) scale(1.03);
+      }
+      100% {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes bubbleInTyping {
+      0% {
+        opacity: 0;
+        transform: translateY(10px) scale(0.8);
+      }
+      65% {
+        opacity: 1;
+        transform: translateY(-2px) scale(1.05);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes bubbleOut {
+      to {
+        opacity: 0;
+        transform: translateY(6px) scale(0.88);
+      }
+    }
+
+    @keyframes bubbleSoftIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes bubblePriceIn {
+      0% {
+        opacity: 0;
+        transform: scale(0.85);
+      }
+      60% {
+        opacity: 1;
+        transform: scale(1.08);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes typingDot {
+      0%, 70%, 100% { transform: translateY(0) scale(1); opacity: 0.35; }
+      35% { transform: translateY(-4px) scale(1.15); opacity: 1; }
+    }
+
+    @keyframes caretBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
   </style>
 </head>
 <body>
@@ -502,43 +1437,164 @@
         <div class="info-viewport" id="infoViewport">
           <div class="info-track" id="infoTrack">
 
-            <article class="info-slide">
-              <div class="info-icon">
-                <svg viewBox="0 0 72 72" fill="none" aria-hidden="true">
-                  <rect x="14" y="10" width="44" height="52" rx="6" stroke="#000" stroke-width="2.5"/>
-                  <path d="M22 22h28M22 32h20M22 42h24M22 52h16" stroke="#c40000" stroke-width="2.5" stroke-linecap="round"/>
-                  <circle cx="50" cy="50" r="10" fill="#c40000"/>
-                  <path d="M47 50l2.5 2.5L54 46" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+            <!-- Slide 1: Historial de Servicios -->
+            <article class="info-slide active">
+              <div class="info-stage">
+                <div class="info-stage-glow" aria-hidden="true"></div>
+                <div class="mock-card">
+                  <div class="mock-card-header">
+                    <div class="mock-vehicle-label">
+                      <img class="mock-car-thumb" src="assets/info-car.png?v=1" alt="" width="52" height="24">
+                      <span class="mock-card-label">Tu vehículo</span>
+                    </div>
+                    <span class="mock-badge">3 servicios</span>
+                  </div>
+                  <div class="mock-timeline">
+                    <div class="mock-row">
+                      <span class="mock-dot"></span>
+                      <div class="mock-row-body">
+                        <div class="mock-row-title">Cambio de aceite</div>
+                        <div class="mock-row-meta">Mantenimiento · Auto Norte</div>
+                      </div>
+                      <span class="mock-row-cost">$850</span>
+                    </div>
+                    <div class="mock-row">
+                      <span class="mock-dot muted"></span>
+                      <div class="mock-row-body">
+                        <div class="mock-row-title">Frenos delanteros</div>
+                        <div class="mock-row-meta">Reparación · Taller Rápido</div>
+                      </div>
+                      <span class="mock-row-cost">$2,400</span>
+                    </div>
+                    <div class="mock-row">
+                      <span class="mock-dot muted"></span>
+                      <div class="mock-row-body">
+                        <div class="mock-row-title">Alineación</div>
+                        <div class="mock-row-meta">Mantenimiento · 12 mar</div>
+                      </div>
+                      <span class="mock-row-cost">$650</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <h2 class="info-title">Historial de servicios</h2>
-              <p class="info-desc">Registra cada mantenimiento, reparación y visita al taller. Todo queda organizado por vehículo y fecha.</p>
+              <div class="info-copy theme-historial">
+                <span class="info-copy-watermark" aria-hidden="true">1</span>
+                <div class="info-copy-top">
+                  <span class="info-step">1</span>
+                  <span class="info-eyebrow">Historial</span>
+                </div>
+                <h2 class="info-title">Cada servicio, <em>en un solo lugar</em></h2>
+                <p class="info-desc">Guarda mantenimientos y reparaciones con fecha, taller y costo. Cuando vendas o cambies de mecánico, tu historial viaja contigo.</p>
+              </div>
             </article>
 
+            <!-- Slide 2: Recordatorios -->
             <article class="info-slide">
-              <div class="info-icon">
-                <svg viewBox="0 0 72 72" fill="none" aria-hidden="true">
-                  <circle cx="36" cy="36" r="24" stroke="#000" stroke-width="2.5"/>
-                  <path d="M36 20v16l10 6" stroke="#c40000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                  <circle cx="36" cy="58" r="4" fill="#c40000"/>
-                  <path d="M30 6h12" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
-                </svg>
+              <div class="info-stage">
+                <div class="info-stage-glow" aria-hidden="true"></div>
+                <div class="mock-card">
+                  <div class="mock-card-header">
+                    <span class="mock-card-label">Kilometraje</span>
+                    <span class="mock-badge">2 avisos</span>
+                  </div>
+                  <div class="mock-odometer">
+                    <div class="mock-km-block">
+                      <span class="mock-km-value" id="mockKmValue">0</span>
+                      <span class="mock-km-unit">km</span>
+                    </div>
+                    <div class="mock-progress">
+                      <img class="mock-progress-car" src="assets/info-car-km.png?v=1" alt="" width="44" height="19">
+                      <div class="mock-progress-track">
+                        <div class="mock-progress-fill"></div>
+                      </div>
+                    </div>
+                    <div class="mock-alerts">
+                      <div class="mock-alert">
+                        <div class="mock-alert-icon">
+                          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M12 8v5M12 16.5h.01" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+                            <path d="M10.3 4.2L2.8 17.5a2 2 0 001.7 3h15a2 2 0 001.7-3L13.7 4.2a2 2 0 00-3.4 0z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/>
+                          </svg>
+                        </div>
+                        <p class="mock-alert-text">Cambio de aceite en <strong>820 km</strong> o el 28 de jul</p>
+                      </div>
+                      <div class="mock-alert">
+                        <div class="mock-alert-icon">
+                          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <circle cx="12" cy="12" r="7.5" stroke="#fff" stroke-width="1.8"/>
+                            <circle cx="12" cy="12" r="2.2" fill="#fff"/>
+                            <path d="M12 4.5v2.2M12 17.3v2.2M4.5 12h2.2M17.3 12h2.2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+                          </svg>
+                        </div>
+                        <p class="mock-alert-text">Cambio de llantas en <strong>3,400 km</strong> o el 12 de nov</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <h2 class="info-title">Recordatorios inteligentes</h2>
-              <p class="info-desc">Recibe avisos según el kilometraje o el tiempo transcurrido. Nunca olvides un cambio de aceite o una revisión.</p>
+              <div class="info-copy theme-recordatorios">
+                <span class="info-copy-watermark" aria-hidden="true">2</span>
+                <div class="info-copy-top">
+                  <span class="info-step">2</span>
+                  <span class="info-eyebrow">Recordatorios</span>
+                </div>
+                <h2 class="info-title">Avisos por <em>km o por tiempo</em></h2>
+                <p class="info-desc">Seibi calcula cuándo toca el próximo servicio según tu kilometraje o el tiempo desde el último. Así no llegas tarde a una revisión.</p>
+              </div>
             </article>
 
+            <!-- Slide 3: Estimados -->
             <article class="info-slide">
-              <div class="info-icon">
-                <svg viewBox="0 0 72 72" fill="none" aria-hidden="true">
-                  <rect x="12" y="18" width="48" height="36" rx="6" stroke="#000" stroke-width="2.5"/>
-                  <path d="M12 30h48" stroke="#000" stroke-width="2.5"/>
-                  <text x="22" y="46" font-family="Inter, sans-serif" font-size="14" font-weight="700" fill="#c40000">$</text>
-                  <path d="M34 42h18M34 48h12" stroke="#000" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
-                </svg>
+              <div class="info-stage">
+                <div class="info-stage-glow" aria-hidden="true"></div>
+                <div class="mock-card chat-card">
+                  <div class="mock-browser-bar">
+                    <div class="mock-browser-dots" aria-hidden="true">
+                      <span></span><span></span><span></span>
+                    </div>
+                    <div class="mock-browser-url">seibiapp.com/estimados</div>
+                  </div>
+                  <div class="mock-chat" id="mockChat">
+                    <div class="mock-chat-bubble user" id="chatUserBubble">
+                      <span id="chatTypedText"></span><span class="mock-chat-caret" id="chatCaret"></span>
+                    </div>
+                    <div class="mock-chat-typing" id="chatTyping" aria-hidden="true">
+                      <span></span><span></span><span></span>
+                    </div>
+                    <div class="mock-chat-bubble reply" id="chatReplyBubble">
+                      <div class="chat-reply-title">Cambio de aceite sintético 10W-30</div>
+                      <div class="chat-reply-meta">Rango típico en tu zona</div>
+                      <div class="chat-reply-price-row">
+                        <span class="chat-reply-price">$1,180</span>
+                        <span class="chat-reply-range">$980 – $1,450<br>según taller</span>
+                      </div>
+                      <div class="chat-reply-bars">
+                        <div class="chat-reply-bar">
+                          <span class="chat-reply-bar-name">Mano de obra</span>
+                          <div class="chat-reply-bar-track">
+                            <div class="chat-reply-bar-fill labor"></div>
+                          </div>
+                        </div>
+                        <div class="chat-reply-bar">
+                          <span class="chat-reply-bar-name">Refacciones</span>
+                          <div class="chat-reply-bar-track">
+                            <div class="chat-reply-bar-fill parts"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <h2 class="info-title">Estimados de costo</h2>
-              <p class="info-desc">Conoce cuánto podría costar tu próximo servicio antes de ir al taller. Planifica sin sorpresas.</p>
+              <div class="info-copy theme-estimados">
+                <span class="info-copy-watermark" aria-hidden="true">3</span>
+                <div class="info-copy-top">
+                  <span class="info-step">3</span>
+                  <span class="info-eyebrow">Estimados</span>
+                </div>
+                <h2 class="info-title">Sabes cuánto costará, <em>antes de ir</em></h2>
+                <p class="info-desc">Consulta el servicio y recibe un estimado con rango de precio y desglose. Compara con tranquilidad y evita sorpresas en el taller.</p>
+              </div>
             </article>
 
           </div>
@@ -606,9 +1662,25 @@
     const PAUSE_AFTER_SPLASH_MS = 280;
 
     const slides = Array.from(infoTrack.querySelectorAll('.info-slide'));
+    const mockKmValue = document.getElementById('mockKmValue');
+    const chatTypedText = document.getElementById('chatTypedText');
+    const chatCaret = document.getElementById('chatCaret');
+    const chatUserBubble = document.getElementById('chatUserBubble');
+    const chatTyping = document.getElementById('chatTyping');
+    const chatReplyBubble = document.getElementById('chatReplyBubble');
     let currentSlide = 0;
     let splashTransitionStarted = false;
     let loginTransitionStarted = false;
+    let programmaticScroll = false;
+    let kmCountRaf = null;
+    let chatTimers = [];
+
+    const KM_TARGET = 42180;
+    const KM_COUNT_MS = 1600;
+    const KM_COUNT_DELAY_MS = 550;
+    const CHAT_QUERY = 'Cambio de aceite sintético 10W-30';
+    // Esperar a que el cuadro termine de colocarse + breve pausa
+    const CHAT_START_DELAY_MS = 1200;
 
     splashVideo.play().catch(() => {});
 
@@ -626,11 +1698,118 @@
 
     const dots = Array.from(infoDots.querySelectorAll('.info-dot'));
 
+    function formatKm(value) {
+      return Math.round(value).toLocaleString('en-US');
+    }
+
+    function stopKmCount() {
+      if (kmCountRaf) {
+        cancelAnimationFrame(kmCountRaf);
+        kmCountRaf = null;
+      }
+    }
+
+    function startKmCount() {
+      stopKmCount();
+      if (!mockKmValue) return;
+
+      mockKmValue.textContent = '0';
+      mockKmValue.classList.remove('counting');
+      const startAt = performance.now() + KM_COUNT_DELAY_MS;
+      let pulseStarted = false;
+
+      function tick(now) {
+        if (now < startAt) {
+          kmCountRaf = requestAnimationFrame(tick);
+          return;
+        }
+
+        if (!pulseStarted) {
+          pulseStarted = true;
+          void mockKmValue.offsetWidth;
+          mockKmValue.classList.add('counting');
+        }
+
+        const elapsed = now - startAt;
+        const t = Math.min(1, elapsed / KM_COUNT_MS);
+        // Ease-out cubic: rápido al inicio, frena al final
+        const eased = 1 - Math.pow(1 - t, 3);
+        mockKmValue.textContent = formatKm(KM_TARGET * eased);
+
+        if (t < 1) {
+          kmCountRaf = requestAnimationFrame(tick);
+        } else {
+          mockKmValue.textContent = formatKm(KM_TARGET);
+          mockKmValue.classList.remove('counting');
+          kmCountRaf = null;
+        }
+      }
+
+      kmCountRaf = requestAnimationFrame(tick);
+    }
+
+    function clearChatTimers() {
+      chatTimers.forEach(clearTimeout);
+      chatTimers = [];
+    }
+
+    function resetChat() {
+      clearChatTimers();
+      if (!chatTypedText) return;
+      chatTypedText.textContent = '';
+      chatCaret.classList.remove('hide');
+      chatUserBubble.classList.remove('visible');
+      chatTyping.classList.remove('visible', 'hiding');
+      chatReplyBubble.classList.remove('visible');
+      chatReplyBubble.querySelectorAll('.chat-reply-bar-fill').forEach((el) => {
+        el.style.animation = 'none';
+        void el.offsetWidth;
+        el.style.animation = '';
+      });
+    }
+
+    function startChatSequence() {
+      resetChat();
+
+      const delay = (ms, fn) => {
+        chatTimers.push(setTimeout(fn, ms));
+      };
+
+      delay(CHAT_START_DELAY_MS, () => {
+        chatUserBubble.classList.add('visible');
+        let i = 0;
+
+        const typeNext = () => {
+          if (i <= CHAT_QUERY.length) {
+            chatTypedText.textContent = CHAT_QUERY.slice(0, i);
+            i += 1;
+            chatTimers.push(setTimeout(typeNext, 18 + Math.random() * 16));
+          } else {
+            chatCaret.classList.add('hide');
+            delay(220, () => {
+              chatTyping.classList.add('visible');
+              delay(650, () => {
+                chatTyping.classList.add('hiding');
+                delay(150, () => {
+                  chatTyping.classList.remove('visible', 'hiding');
+                  chatReplyBubble.classList.add('visible');
+                });
+              });
+            });
+          }
+        };
+
+        typeNext();
+      });
+    }
+
     function goToSlide(index) {
       currentSlide = Math.max(0, Math.min(index, slides.length - 1));
       const slideWidth = infoViewport.clientWidth;
+      programmaticScroll = true;
       infoViewport.scrollTo({ left: currentSlide * slideWidth, behavior: 'smooth' });
       updateInfoUI();
+      setTimeout(() => { programmaticScroll = false; }, 500);
     }
 
     function getSlideFromScroll() {
@@ -639,7 +1818,21 @@
       return Math.round(infoViewport.scrollLeft / slideWidth);
     }
 
+    function restartSlideAnimations(slide) {
+      slide.classList.remove('active');
+      void slide.offsetWidth;
+      slide.classList.add('active');
+    }
+
     function updateInfoUI() {
+      slides.forEach((slide, i) => {
+        if (i === currentSlide) {
+          restartSlideAnimations(slide);
+        } else {
+          slide.classList.remove('active');
+        }
+      });
+
       dots.forEach((dot, i) => {
         const active = i === currentSlide;
         dot.classList.toggle('active', active);
@@ -648,9 +1841,23 @@
 
       const isLast = currentSlide === slides.length - 1;
       infoNext.textContent = isLast ? 'Continuar' : 'Siguiente';
+
+      if (currentSlide === 1) {
+        startKmCount();
+      } else {
+        stopKmCount();
+        if (mockKmValue) mockKmValue.textContent = '0';
+      }
+
+      if (currentSlide === 2) {
+        startChatSequence();
+      } else {
+        resetChat();
+      }
     }
 
     infoViewport.addEventListener('scroll', () => {
+      if (programmaticScroll) return;
       const nextSlide = getSlideFromScroll();
       if (nextSlide !== currentSlide) {
         currentSlide = nextSlide;
@@ -676,6 +1883,7 @@
       setTimeout(() => {
         splash.classList.add('transitioning');
         infoScreen.classList.add('visible');
+        restartSlideAnimations(slides[0]);
 
         setTimeout(() => {
           splash.classList.add('hide');
