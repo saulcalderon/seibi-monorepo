@@ -82,6 +82,41 @@
       perspective: 1400px;
     }
 
+    /* Shared screen-layer transitions */
+    .screen-layer {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--splash-bg);
+      border-radius: 42px;
+      opacity: 0;
+      transform: scale(0.97) translateZ(-88px);
+      will-change: transform, opacity;
+      transition:
+        opacity var(--transition-depth) var(--ease-smooth),
+        transform var(--transition-depth) var(--ease-smooth),
+        visibility var(--transition-depth);
+      pointer-events: none;
+    }
+
+    .screen-layer.visible {
+      opacity: 1;
+      transform: scale(1) translateZ(0);
+      pointer-events: auto;
+    }
+
+    .screen-layer.transitioning-out {
+      opacity: 0;
+      transform: scale(0.97) translateZ(-72px);
+      pointer-events: none;
+    }
+
+    .screen-layer.hide {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
     .brand {
       position: relative;
       z-index: 10;
@@ -123,30 +158,6 @@
       display: block;
     }
 
-    .welcome-section {
-      position: relative;
-      z-index: 10;
-      text-align: center;
-      padding: 0 2rem 1rem;
-    }
-
-    .welcome-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      color: var(--black);
-      margin-bottom: 0.4rem;
-    }
-
-    .welcome-sub {
-      font-size: 0.78rem;
-      font-weight: 400;
-      color: rgba(0, 0, 0, 0.88);
-      line-height: 1.55;
-      max-width: 300px;
-      margin: 0 auto;
-    }
-
     .auth {
       position: relative;
       z-index: 10;
@@ -169,7 +180,7 @@
       font-size: 0.9rem;
       font-weight: 600;
       cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.2s ease;
+      transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
     }
 
     .btn:active { transform: scale(0.98); }
@@ -183,6 +194,17 @@
 
     .btn-light:hover {
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .btn-primary {
+      background: var(--milano-red);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(196, 0, 0, 0.28);
+    }
+
+    .btn-primary:hover {
+      background: #a80000;
+      box-shadow: 0 6px 24px rgba(196, 0, 0, 0.35);
     }
 
     .btn svg {
@@ -204,7 +226,7 @@
       text-decoration: none;
     }
 
-    /* ── Splash screen (pantalla de carga) ── */
+    /* ── Splash screen ── */
     .splash {
       position: absolute;
       inset: 0;
@@ -292,31 +314,140 @@
       animation: loadBar 2.8s var(--ease-smooth) 0.5s forwards;
     }
 
-    /* Main app — hidden until splash ends */
-    .main-app {
+    /* ── Info / onboarding carousel ── */
+    .info-screen {
+      z-index: 30;
+    }
+
+    .info-header {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 3.25rem 1.75rem 0.5rem;
+      min-height: 4.5rem;
+    }
+
+    .info-skip {
+      background: none;
+      border: none;
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.45);
+      cursor: pointer;
+      padding: 0.4rem 0.2rem;
+      transition: color 0.2s ease;
+    }
+
+    .info-skip:hover {
+      color: rgba(0, 0, 0, 0.75);
+    }
+
+    .info-viewport {
+      flex: 1;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      touch-action: pan-x;
+    }
+
+    .info-viewport::-webkit-scrollbar {
+      display: none;
+    }
+
+    .info-track {
+      display: flex;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .info-slide {
+      flex: 0 0 100%;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
       display: flex;
       flex-direction: column;
-      flex: 1;
-      background-color: var(--splash-bg);
-      opacity: 0;
-      transform: scale(0.97) translateZ(-88px);
-      will-change: transform, opacity;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem 2rem 0.5rem;
+      text-align: center;
+    }
+
+    .info-icon {
+      width: 148px;
+      height: 148px;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.55);
+      border-radius: 36px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+    }
+
+    .info-icon svg {
+      width: 72px;
+      height: 72px;
+    }
+
+    .info-title {
+      font-size: 1.45rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--black);
+      margin-bottom: 0.65rem;
+      line-height: 1.2;
+    }
+
+    .info-desc {
+      font-size: 0.82rem;
+      font-weight: 400;
+      color: rgba(0, 0, 0, 0.72);
+      line-height: 1.6;
+      max-width: 280px;
+    }
+
+    .info-footer {
+      padding: 1.25rem 1.75rem 2.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .info-dots {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+    }
+
+    .info-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.15);
+      border: none;
+      padding: 0;
+      cursor: pointer;
       transition:
-        opacity var(--transition-depth) var(--ease-smooth),
-        transform var(--transition-depth) var(--ease-smooth);
+        width 0.35s var(--ease-smooth),
+        background 0.35s var(--ease-smooth),
+        border-radius 0.35s var(--ease-smooth);
     }
 
-    .main-app.visible {
-      opacity: 1;
-      transform: scale(1) translateZ(0);
+    .info-dot.active {
+      width: 22px;
+      border-radius: 4px;
+      background: var(--milano-red);
     }
 
-    .main-app .brand,
-    .main-app .visual,
-    .main-app .welcome-section,
-    .main-app .auth {
-      opacity: 1;
-      transform: none;
+    /* Main app (login) */
+    .main-app {
+      z-index: 20;
     }
 
     @keyframes nameIn {
@@ -339,7 +470,7 @@
   <div class="phone">
     <div class="screen">
 
-      <!-- Pantalla de carga animada -->
+      <!-- 1. Splash -->
       <div class="splash" id="splash">
         <div class="splash-car-wrap">
           <video
@@ -361,45 +492,97 @@
         </div>
       </div>
 
-      <!-- Pantalla principal -->
-      <div class="main-app" id="mainApp">
+      <!-- 2. Info (carrusel deslizable) -->
+      <div class="screen-layer info-screen" id="infoScreen">
+        <header class="info-header">
+          <button class="info-skip" id="infoSkip" type="button">Omitir</button>
+        </header>
 
-      <div class="brand">
-        <h1 class="logo"><span class="sei">Sei</span><span class="bi">bi</span></h1>
-        <p class="tagline">Mantenimiento con total claridad</p>
+        <div class="info-viewport" id="infoViewport">
+          <div class="info-track" id="infoTrack">
+
+            <article class="info-slide">
+              <div class="info-icon">
+                <svg viewBox="0 0 72 72" fill="none" aria-hidden="true">
+                  <rect x="14" y="10" width="44" height="52" rx="6" stroke="#000" stroke-width="2.5"/>
+                  <path d="M22 22h28M22 32h20M22 42h24M22 52h16" stroke="#c40000" stroke-width="2.5" stroke-linecap="round"/>
+                  <circle cx="50" cy="50" r="10" fill="#c40000"/>
+                  <path d="M47 50l2.5 2.5L54 46" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <h2 class="info-title">Historial de servicios</h2>
+              <p class="info-desc">Registra cada mantenimiento, reparación y visita al taller. Todo queda organizado por vehículo y fecha.</p>
+            </article>
+
+            <article class="info-slide">
+              <div class="info-icon">
+                <svg viewBox="0 0 72 72" fill="none" aria-hidden="true">
+                  <circle cx="36" cy="36" r="24" stroke="#000" stroke-width="2.5"/>
+                  <path d="M36 20v16l10 6" stroke="#c40000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="36" cy="58" r="4" fill="#c40000"/>
+                  <path d="M30 6h12" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <h2 class="info-title">Recordatorios inteligentes</h2>
+              <p class="info-desc">Recibe avisos según el kilometraje o el tiempo transcurrido. Nunca olvides un cambio de aceite o una revisión.</p>
+            </article>
+
+            <article class="info-slide">
+              <div class="info-icon">
+                <svg viewBox="0 0 72 72" fill="none" aria-hidden="true">
+                  <rect x="12" y="18" width="48" height="36" rx="6" stroke="#000" stroke-width="2.5"/>
+                  <path d="M12 30h48" stroke="#000" stroke-width="2.5"/>
+                  <text x="22" y="46" font-family="Inter, sans-serif" font-size="14" font-weight="700" fill="#c40000">$</text>
+                  <path d="M34 42h18M34 48h12" stroke="#000" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+                </svg>
+              </div>
+              <h2 class="info-title">Estimados de costo</h2>
+              <p class="info-desc">Conoce cuánto podría costar tu próximo servicio antes de ir al taller. Planifica sin sorpresas.</p>
+            </article>
+
+          </div>
+        </div>
+
+        <footer class="info-footer">
+          <div class="info-dots" id="infoDots" role="tablist" aria-label="Pantallas de información"></div>
+          <button class="btn btn-primary" id="infoNext" type="button">Siguiente</button>
+        </footer>
       </div>
 
-      <div class="visual">
-        <img class="hero-image" src="assets/login-hero.png?v=6" alt="Garaje con vehículo">
-      </div>
+      <!-- 3. Login -->
+      <div class="screen-layer main-app" id="mainApp">
 
-      <div class="welcome-section">
-        <h2 class="welcome-title">Bienvenido</h2>
-        <p class="welcome-sub">Historial de servicios, recordatorios por kilometraje y estimados de costo</p>
-      </div>
+        <div class="brand">
+          <h1 class="logo"><span class="sei">Sei</span><span class="bi">bi</span></h1>
+          <p class="tagline">Mantenimiento con total claridad</p>
+        </div>
 
-      <div class="auth">
-        <button class="btn btn-light" type="button">
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-          </svg>
-          Continuar con Apple
-        </button>
+        <div class="visual">
+          <img class="hero-image" src="assets/login-hero.png?v=6" alt="Garaje con vehículo">
+        </div>
 
-        <button class="btn btn-light" type="button">
-          <svg viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-          </svg>
-          Iniciar sesión con Google
-        </button>
+        <div class="auth">
+          <button class="btn btn-light" type="button">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+            </svg>
+            Continuar con Apple
+          </button>
 
-        <p class="terms">
-          Al continuar, aceptas nuestros <a href="#">Términos de servicio</a> y <a href="#">Política de privacidad</a>.
-        </p>
-      </div>
+          <button class="btn btn-light" type="button">
+            <svg viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Iniciar sesión con Google
+          </button>
+
+          <p class="terms">
+            Al continuar, aceptas nuestros <a href="#">Términos de servicio</a> y <a href="#">Política de privacidad</a>.
+          </p>
+        </div>
 
       </div><!-- /main-app -->
 
@@ -408,23 +591,90 @@
 
   <script>
     const splash = document.getElementById('splash');
+    const infoScreen = document.getElementById('infoScreen');
     const mainApp = document.getElementById('mainApp');
     const splashVideo = document.getElementById('splashVideo');
     const splashProgress = splash.querySelector('.splash-progress');
+    const infoViewport = document.getElementById('infoViewport');
+    const infoTrack = document.getElementById('infoTrack');
+    const infoDots = document.getElementById('infoDots');
+    const infoNext = document.getElementById('infoNext');
+    const infoSkip = document.getElementById('infoSkip');
+
     const TRANSITION_MS = 1150;
     const PAUSE_AFTER_SPLASH_MS = 280;
 
+    const slides = Array.from(infoTrack.querySelectorAll('.info-slide'));
+    let currentSlide = 0;
+    let splashTransitionStarted = false;
+    let loginTransitionStarted = false;
+
     splashVideo.play().catch(() => {});
 
-    let transitionStarted = false;
+    /* ── Build pagination dots ── */
+    slides.forEach((_, index) => {
+      const dot = document.createElement('button');
+      dot.type = 'button';
+      dot.className = 'info-dot' + (index === 0 ? ' active' : '');
+      dot.setAttribute('role', 'tab');
+      dot.setAttribute('aria-label', `Pantalla ${index + 1} de ${slides.length}`);
+      dot.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
+      dot.addEventListener('click', () => goToSlide(index));
+      infoDots.appendChild(dot);
+    });
 
-    function beginLoginTransition() {
-      if (transitionStarted) return;
-      transitionStarted = true;
+    const dots = Array.from(infoDots.querySelectorAll('.info-dot'));
+
+    function goToSlide(index) {
+      currentSlide = Math.max(0, Math.min(index, slides.length - 1));
+      const slideWidth = infoViewport.clientWidth;
+      infoViewport.scrollTo({ left: currentSlide * slideWidth, behavior: 'smooth' });
+      updateInfoUI();
+    }
+
+    function getSlideFromScroll() {
+      const slideWidth = infoViewport.clientWidth;
+      if (!slideWidth) return 0;
+      return Math.round(infoViewport.scrollLeft / slideWidth);
+    }
+
+    function updateInfoUI() {
+      dots.forEach((dot, i) => {
+        const active = i === currentSlide;
+        dot.classList.toggle('active', active);
+        dot.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+
+      const isLast = currentSlide === slides.length - 1;
+      infoNext.textContent = isLast ? 'Continuar' : 'Siguiente';
+    }
+
+    infoViewport.addEventListener('scroll', () => {
+      const nextSlide = getSlideFromScroll();
+      if (nextSlide !== currentSlide) {
+        currentSlide = nextSlide;
+        updateInfoUI();
+      }
+    }, { passive: true });
+
+    infoNext.addEventListener('click', () => {
+      if (currentSlide < slides.length - 1) {
+        goToSlide(currentSlide + 1);
+      } else {
+        beginLoginTransition();
+      }
+    });
+
+    infoSkip.addEventListener('click', beginLoginTransition);
+
+    /* ── Splash → Info ── */
+    function beginInfoTransition() {
+      if (splashTransitionStarted) return;
+      splashTransitionStarted = true;
 
       setTimeout(() => {
         splash.classList.add('transitioning');
-        mainApp.classList.add('visible');
+        infoScreen.classList.add('visible');
 
         setTimeout(() => {
           splash.classList.add('hide');
@@ -433,12 +683,25 @@
       }, PAUSE_AFTER_SPLASH_MS);
     }
 
+    /* ── Info → Login ── */
+    function beginLoginTransition() {
+      if (loginTransitionStarted) return;
+      loginTransitionStarted = true;
+
+      infoScreen.classList.add('transitioning-out');
+      mainApp.classList.add('visible');
+
+      setTimeout(() => {
+        infoScreen.classList.add('hide');
+      }, TRANSITION_MS);
+    }
+
     splashProgress.addEventListener('animationend', (event) => {
-      if (event.animationName === 'loadBar') beginLoginTransition();
+      if (event.animationName === 'loadBar') beginInfoTransition();
     });
 
-    // Fallback: loadBar termina a los 3.3s (0.5s delay + 2.8s duración)
-    setTimeout(beginLoginTransition, 3600);
+    setTimeout(beginInfoTransition, 3600);
+    updateInfoUI();
   </script>
 
 </body>
