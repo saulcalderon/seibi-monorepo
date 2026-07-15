@@ -1,0 +1,16 @@
+{
+  "name": "seibi-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.3.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @seibi/app dev",
+    "build": "pnpm --filter @seibi/app build",
+    "preview": "pnpm --filter @seibi/app preview",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint"
+  }
+}

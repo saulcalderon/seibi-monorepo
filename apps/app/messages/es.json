@@ -1,0 +1,21 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "tagline": "Mantenimiento con total claridad",
+  "onboarding_skip": "Omitir",
+  "onboarding_next": "Siguiente",
+  "onboarding_continue": "Continuar",
+  "onboarding_1_title": "Historial de servicios",
+  "onboarding_1_desc": "Registra cada mantenimiento, reparación y visita al taller. Todo queda organizado por vehículo y fecha.",
+  "onboarding_2_title": "Recordatorios inteligentes",
+  "onboarding_2_desc": "Recibe avisos según el kilometraje o el tiempo transcurrido. Nunca olvides un cambio de aceite o una revisión.",
+  "onboarding_3_title": "Estimados de costo",
+  "onboarding_3_desc": "Conoce cuánto podría costar tu próximo servicio antes de ir al taller. Planifica sin sorpresas.",
+  "login_apple": "Continuar con Apple",
+  "login_google": "Iniciar sesión con Google",
+  "login_terms_prefix": "Al continuar, aceptas nuestros ",
+  "login_terms_tos": "Términos de servicio",
+  "login_terms_and": " y ",
+  "login_terms_privacy": "Política de privacidad",
+  "home_title": "Tus vehículos",
+  "home_empty": "Aún no has agregado ningún vehículo."
+}

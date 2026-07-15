@@ -1,0 +1,44 @@
+@import 'tailwindcss';
+
+/* Brand design tokens (ported from the prototype). Exposed as Tailwind
+   theme values so utilities like bg-milano / text-splash work. */
+@theme {
+  --color-milano: #c40000;
+  --color-milano-dark: #a80000;
+  --color-splash: #fdf5cb;
+  --color-ink: #000000;
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+
+  --ease-smooth: cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: #000;
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+/* Full-viewport mobile app shell, respecting device safe areas. */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  background: var(--color-splash);
+  overflow: hidden;
+}
