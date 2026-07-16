@@ -6,7 +6,7 @@ interface LogoProps {
 export function Logo({ className }: LogoProps) {
   return (
     <span
-      className={`font-bold tracking-tight leading-none ${className ?? ''}`}
+      className={`font-display font-semibold tracking-tight leading-none ${className ?? ''}`}
     >
       <span className="text-ink">Sei</span>
       <span className="text-milano">bi</span>
