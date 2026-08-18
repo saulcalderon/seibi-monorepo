@@ -3,6 +3,7 @@ import * as m from '../paraglide/messages.js'
 
 interface OnboardingProps {
   onFinish: () => void
+  onSkip?: () => void
 }
 
 const prefersReducedMotion = () =>
@@ -360,10 +361,11 @@ function EstimateSlide({ active }: { active: boolean }) {
 
 const SLIDE_COUNT = 3
 
-export function Onboarding({ onFinish }: OnboardingProps) {
+export function Onboarding({ onFinish, onSkip }: OnboardingProps) {
   const viewportRef = useRef<HTMLDivElement>(null)
   const [current, setCurrent] = useState(0)
   const isLast = current === SLIDE_COUNT - 1
+  const handleSkip = onSkip ?? onFinish
 
   function goToSlide(index: number) {
     const clamped = Math.max(0, Math.min(index, SLIDE_COUNT - 1))
@@ -391,7 +393,7 @@ export function Onboarding({ onFinish }: OnboardingProps) {
       <header className="flex min-h-18 items-center justify-end px-7 pt-13">
         <button
           type="button"
-          onClick={onFinish}
+          onClick={handleSkip}
           className="p-1 text-[0.78rem] font-medium text-black/45 transition-colors hover:text-black/75"
         >
           {m.onboarding_skip()}

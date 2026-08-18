@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { isSetupDone } from '../lib/setupProgress'
 import { supabase } from '../lib/supabase'
 
 export const Route = createFileRoute('/auth/callback')({
@@ -19,7 +20,10 @@ function AuthCallbackRoute() {
 
       if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
         if (session) {
-          void navigate({ to: '/home', replace: true })
+          void navigate({
+            to: isSetupDone() ? '/home' : '/setup',
+            replace: true,
+          })
           return
         }
 

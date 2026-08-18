@@ -1,15 +1,7 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { Home } from '../screens/Home'
-import { supabase } from '../lib/supabase'
 
+// Preview mode: auth bypassed together with login skip.
 export const Route = createFileRoute('/home')({
-  beforeLoad: async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-    if (!session) {
-      throw redirect({ to: '/login' })
-    }
-  },
   component: Home,
 })
