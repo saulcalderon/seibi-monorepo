@@ -8,18 +8,20 @@ import {
   TUTORIAL_TOTAL_STEPS,
   type AppSection,
 } from '../lib/tutorialProgress'
-import { getActiveVehicle, getGarage, formatVehicleLabel, type VehicleProfile } from '../lib/vehicleProfile'
+import { getActiveVehicle, getGarage, setActiveVehicle as persistActiveVehicle, type VehicleProfile } from '../lib/vehicleProfile'
 import { recentServicesForVehicle } from '../lib/services'
 import { remindersForVehicle } from '../lib/reminders'
-import { Avisos, ReminderCard, recentRemindersForVehicle } from './Avisos'
+import { Avisos } from './Avisos'
 import { Estimados } from './Estimados'
+import { HomeDashboard } from './HomeDashboard'
 import { Perfil } from './Perfil'
-import { ServiceIconGlyph, Servicios } from './Servicios'
+import { Servicios } from './Servicios'
 import * as m from '../paraglide/messages.js'
 
 const SECTION_ORDER: AppSection[] = [
+  'animacion',
   'vehiculo',
-  'kilometraje',
+  'agregar',
   'servicios',
   'recordatorios',
   'estimados',
@@ -57,6 +59,7 @@ function TutorialCoach({
     { title: m.tutorial_3_title(), desc: m.tutorial_3_desc() },
     { title: m.tutorial_4_title(), desc: m.tutorial_4_desc() },
     { title: m.tutorial_5_title(), desc: m.tutorial_5_desc() },
+    { title: m.tutorial_6_title(), desc: m.tutorial_6_desc() },
   ][step]
 
   if (!copy) return null
@@ -260,8 +263,7 @@ function HeaderActions({
   )
 }
 
-const NAV_TABS = ['home', 'servicios', 'estimados', 'recordatorios', 'perfil'] as const
-type NavTab = (typeof NAV_TABS)[number]
+type NavTab = 'home' | 'garaje' | 'recordatorios' | 'perfil' | 'servicios' | 'estimados'
 
 function DashNav({
   nav,
@@ -282,40 +284,6 @@ function DashNav({
   onAvisos: () => void
   onPerfil: () => void
 }) {
-  const navRef = useRef<HTMLElement>(null)
-  const buttonRefs = useRef<(HTMLButtonElement | null)[]>([])
-  const [indicator, setIndicator] = useState({
-    x: 0,
-    y: 0,
-    width: 0,
-    height: 0,
-    ready: false,
-  })
-
-  useLayoutEffect(() => {
-    function placeIndicator() {
-      const root = navRef.current
-      const index = NAV_TABS.indexOf(nav)
-      const button = buttonRefs.current[index]
-      if (!root || !button || index < 0) return
-
-      const hit = button.querySelector<HTMLElement>('.dash-nav-hit') ?? button
-      const rootBox = root.getBoundingClientRect()
-      const hitBox = hit.getBoundingClientRect()
-      setIndicator({
-        x: hitBox.left - rootBox.left,
-        y: hitBox.top - rootBox.top,
-        width: hitBox.width,
-        height: hitBox.height,
-        ready: true,
-      })
-    }
-
-    placeIndicator()
-    window.addEventListener('resize', placeIndicator)
-    return () => window.removeEventListener('resize', placeIndicator)
-  }, [nav])
-
   const items = [
     {
       id: 'home' as const,
@@ -338,23 +306,12 @@ function DashNav({
       badge: null as number | null,
       icon: (
         <path
-          d="M5 7h14M5 12h14M5 17h10"
+          d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"
           stroke="currentColor"
-          strokeWidth="1.8"
+          strokeWidth="1.7"
           strokeLinecap="round"
+          strokeLinejoin="round"
         />
-      ),
-    },
-    {
-      id: 'estimados' as const,
-      label: m.home_nav_estimates(),
-      onClick: onEstimados,
-      badge: null as number | null,
-      icon: (
-        <>
-          <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.8" />
-          <path d="M16 16l4.2 4.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-        </>
       ),
     },
     {
@@ -364,13 +321,13 @@ function DashNav({
       badge: notificationCount > 0 ? notificationCount : null,
       icon: (
         <>
-          <circle cx="12" cy="13" r="7" stroke="currentColor" strokeWidth="1.8" />
           <path
-            d="M12 10v3l2 2M9 4h6"
+            d="M6 9a6 6 0 0112 0c0 4 1.5 5.5 2 6H4c.5-.5 2-2 2-6z"
             stroke="currentColor"
             strokeWidth="1.8"
-            strokeLinecap="round"
+            strokeLinejoin="round"
           />
+          <path d="M10 19a2 2 0 004 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
         </>
       ),
     },
@@ -393,23 +350,97 @@ function DashNav({
     },
   ]
 
+  const left = items.slice(0, 2)
+  const right = items.slice(2)
+  const navRef = useRef<HTMLElement>(null)
+  const indicatorRef = useRef<HTMLSpanElement>(null)
+  const [indicatorReady, setIndicatorReady] = useState(false)
+
+  useLayoutEffect(() => {
+    const root = navRef.current
+    const indicator = indicatorRef.current
+    if (!root || !indicator) return
+
+    function place() {
+      if (!root || !indicator) return
+      const active = root.querySelector('button.is-active')
+      if (!(active instanceof HTMLElement)) return
+      const hit = active.querySelector('.dash-nav-hit')
+      const target = hit instanceof HTMLElement ? hit : active
+      const navBox = root.getBoundingClientRect()
+      const box = target.getBoundingClientRect()
+      indicator.style.width = `${box.width}px`
+      indicator.style.height = `${box.height}px`
+      indicator.style.transform = `translate3d(${box.left - navBox.left}px, ${box.top - navBox.top}px, 0)`
+      setIndicatorReady(true)
+    }
+
+    place()
+    const observer = new ResizeObserver(place)
+    observer.observe(root)
+    window.addEventListener('resize', place)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', place)
+    }
+  }, [nav, hidden])
+
   return (
     <nav
       ref={navRef}
-      className={`dash-nav${hidden ? ' is-scroll-hidden' : ''}`}
+      className={`dash-nav dash-nav--seibi${hidden ? ' is-scroll-hidden' : ''}`}
       aria-label="Principal"
       aria-hidden={hidden}
     >
       <span
-        className={`dash-nav-indicator${indicator.ready ? ' is-ready' : ''}`}
-        style={{
-          width: indicator.width,
-          height: indicator.height,
-          transform: `translate3d(${indicator.x}px, ${indicator.y}px, 0)`,
-        }}
+        ref={indicatorRef}
+        className={`dash-nav-indicator${indicatorReady ? ' is-ready' : ''}`}
         aria-hidden="true"
       />
-      {items.map((item, index) => {
+      {left.map((item) => {
+        const active = nav === item.id
+        return (
+          <button
+            key={item.id}
+            type="button"
+            className={active ? 'is-active' : ''}
+            aria-label={item.label}
+            aria-current={active ? 'page' : undefined}
+            onClick={item.onClick}
+          >
+            <span className="dash-nav-hit">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                {item.icon}
+              </svg>
+            </span>
+          </button>
+        )
+      })}
+      <button
+        type="button"
+        className={nav === 'estimados' ? 'is-active' : ''}
+        aria-label={m.home_nav_estimates()}
+        aria-current={nav === 'estimados' ? 'page' : undefined}
+        onClick={onEstimados}
+      >
+        <span className="dash-nav-hit">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M6 6.8A2.8 2.8 0 018.8 4h6.4A2.8 2.8 0 0118 6.8v6.4A2.8 2.8 0 0115.2 16H11l-4 3v-3H8.8A2.8 2.8 0 016 13.2V6.8z"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M9 8.5h6M9 12h4"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+            />
+          </svg>
+        </span>
+      </button>
+      {right.map((item) => {
         const active = nav === item.id
         const badge = item.badge
         const badgeLabel =
@@ -420,13 +451,9 @@ function DashNav({
           <button
             key={item.id}
             type="button"
-            ref={(node) => {
-              buttonRefs.current[index] = node
-            }}
             className={active ? 'is-active' : ''}
             aria-label={badgeLabel}
             aria-current={active ? 'page' : undefined}
-            aria-pressed={item.id === 'estimados' ? active : undefined}
             onClick={item.onClick}
           >
             <span className="dash-nav-hit">
@@ -461,7 +488,8 @@ export function Home() {
       tab === 'servicios' ||
       tab === 'estimados' ||
       tab === 'recordatorios' ||
-      tab === 'perfil'
+      tab === 'perfil' ||
+      tab === 'garaje'
     ) {
       return tab
     }
@@ -471,6 +499,10 @@ export function Home() {
   const [focusServiceId, setFocusServiceId] = useState<string | null>(null)
   const [serviciosPreferAll, setServiciosPreferAll] = useState(false)
   const [navHidden, setNavHidden] = useState(false)
+  const [addOpenNonce, setAddOpenNonce] = useState(0)
+  const [editOpenNonce, setEditOpenNonce] = useState(0)
+  const [editVehicleId, setEditVehicleId] = useState<string | null>(null)
+  const [mileageOpenNonce, setMileageOpenNonce] = useState(0)
   const homeRootRef = useRef<HTMLDivElement>(null)
   const navRevealTimer = useRef<number | null>(null)
   const skipNavHideOnMount = useRef(true)
@@ -478,7 +510,26 @@ export function Home() {
   const highlightedSection =
     tutorialActive && step >= 1 ? SECTION_ORDER[step - 1] : null
 
+  function goHome() {
+    setFocusReminderId(null)
+    setFocusServiceId(null)
+    setServiciosPreferAll(false)
+    setNotificationsOpen(false)
+    setFleetListOpen(false)
+    setNav('home')
+    skipNavHideOnMount.current = true
+    window.requestAnimationFrame(() => {
+      homeRootRef.current
+        ?.querySelector('.dash-scroll')
+        ?.scrollTo({ top: 0, behavior: 'auto' })
+    })
+  }
+
   function concealNav(ms = 420) {
+    if (skipNavHideOnMount.current) {
+      skipNavHideOnMount.current = false
+      return
+    }
     setNavHidden(true)
     if (navRevealTimer.current != null) {
       window.clearTimeout(navRevealTimer.current)
@@ -493,25 +544,29 @@ export function Home() {
     const root = homeRootRef.current
     if (!root) return
 
+    const scroller = root.querySelector('.dash-scroll') ?? root
+    let lastTop = scroller.scrollTop
+    skipNavHideOnMount.current = true
+
     function onMove() {
+      const top = scroller.scrollTop
+      if (skipNavHideOnMount.current) {
+        skipNavHideOnMount.current = false
+        lastTop = top
+        return
+      }
+      if (Math.abs(top - lastTop) < 16) return
+      lastTop = top
       concealNav()
     }
 
-    root.addEventListener('scroll', onMove, { capture: true, passive: true })
+    scroller.addEventListener('scroll', onMove, { passive: true })
     return () => {
-      root.removeEventListener('scroll', onMove, { capture: true })
+      scroller.removeEventListener('scroll', onMove)
       if (navRevealTimer.current != null) {
         window.clearTimeout(navRevealTimer.current)
       }
     }
-  }, [])
-
-  useEffect(() => {
-    if (skipNavHideOnMount.current) {
-      skipNavHideOnMount.current = false
-      return
-    }
-    concealNav(360)
   }, [nav])
 
   function openAvisos(reminderId?: string) {
@@ -526,6 +581,14 @@ export function Home() {
     setFocusServiceId(serviceId ?? null)
     setServiciosPreferAll(preferAll)
     setNav('servicios')
+  }
+
+  function openGaraje(openAdd = false) {
+    setFocusReminderId(null)
+    setFocusServiceId(null)
+    setServiciosPreferAll(false)
+    if (openAdd) setAddOpenNonce((value) => value + 1)
+    setNav('garaje')
   }
 
   function openEstimados() {
@@ -546,6 +609,46 @@ export function Home() {
     node?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [highlightedSection])
 
+  function renderVehicleHero(showChrome: boolean) {
+    return (
+      <VehicleHero
+        showChrome={showChrome}
+        addOpenNonce={addOpenNonce}
+        editOpenNonce={editOpenNonce}
+        editVehicleId={editVehicleId}
+        mileageOpenNonce={mileageOpenNonce}
+        unlocked={hasVehicle ? isSectionUnlocked('vehiculo', step) : true}
+        kmUnlocked={hasVehicle ? isSectionUnlocked('kilometraje', step) : true}
+        kmHighlighted={highlightedSection === 'kilometraje'}
+        highlighted={
+          highlightedSection === 'vehiculo' || highlightedSection === 'kilometraje'
+        }
+        toolbarExtras={
+          <HeaderActions
+            onOpenFleet={() => setFleetListOpen(true)}
+            onOpenNotifications={() => setNotificationsOpen(true)}
+            hasNotifications={notificationsForVehicle(activeVehicle).length > 0}
+          />
+        }
+        fleetListOpen={fleetListOpen}
+        onFleetListOpenChange={setFleetListOpen}
+        onActiveChange={(vehicle) => {
+          setActiveVehicle(vehicle)
+        }}
+        onFleetVehicleSelect={() => {
+          setFleetListOpen(false)
+          goHome()
+        }}
+        onServiceFocus={() => openAvisos()}
+        onSaved={(profile) => {
+          setHasVehicle(true)
+          setActiveVehicle(profile)
+          if (step < 3) unlockThrough(3)
+        }}
+      />
+    )
+  }
+
   return (
     <div
       ref={homeRootRef}
@@ -557,8 +660,7 @@ export function Home() {
             vehicle={activeVehicle}
             focusReminderId={focusReminderId}
             onBack={() => {
-              setFocusReminderId(null)
-              setNav('home')
+              goHome()
             }}
             onFocusHandled={() => setFocusReminderId(null)}
           />
@@ -580,140 +682,37 @@ export function Home() {
         <div className="dash-scroll avisos-scroll">
           <Perfil vehicle={activeVehicle} />
         </div>
+      ) : nav === 'garaje' ? (
+        <div className="dash-scroll">{renderVehicleHero(true)}</div>
       ) : (
         <div className="dash-scroll">
-          <VehicleHero
-            unlocked={hasVehicle ? isSectionUnlocked('vehiculo', step) : true}
-            kmUnlocked={hasVehicle ? isSectionUnlocked('kilometraje', step) : true}
-            kmHighlighted={highlightedSection === 'kilometraje'}
-            highlighted={
-              highlightedSection === 'vehiculo' || highlightedSection === 'kilometraje'
+          <HomeDashboard
+            vehicle={activeVehicle}
+            vehicles={getGarage().vehicles}
+            notificationCount={notificationsForVehicle(activeVehicle).length}
+            highlightedSection={highlightedSection}
+            onOpenFleet={() => setFleetListOpen(true)}
+            onOpenNotifications={() => setNotificationsOpen(true)}
+            onAddVehicle={() => setAddOpenNonce((value) => value + 1)}
+            onTutorialTarget={() =>
+              unlockThrough(Math.min(TUTORIAL_TOTAL_STEPS, step + 1))
             }
-            toolbarExtras={
-              <HeaderActions
-                onOpenFleet={() => setFleetListOpen(true)}
-                onOpenNotifications={() => setNotificationsOpen(true)}
-                hasNotifications={notificationsForVehicle(activeVehicle).length > 0}
-              />
-            }
-            fleetListOpen={fleetListOpen}
-            onFleetListOpenChange={setFleetListOpen}
-            onActiveChange={(vehicle) => {
-              setActiveVehicle(vehicle)
+            onOpenAvisos={openAvisos}
+            onOpenServicios={openServicios}
+            onSelectVehicle={(id) => {
+              const next = persistActiveVehicle(id)
+              setActiveVehicle(getActiveVehicle(next))
             }}
-            onFleetVehicleSelect={() => {
-              setFleetListOpen(false)
-              openServicios(undefined, true)
+            onEditVehicle={(id) => {
+              setEditVehicleId(id)
+              setEditOpenNonce((value) => value + 1)
             }}
-            onServiceFocus={() => openAvisos()}
-            onSaved={() => {
-              setHasVehicle(true)
-              if (step < 2) unlockThrough(2)
-            }}
+            onUpdateKm={() => setMileageOpenNonce((value) => value + 1)}
           />
-
-          <section
-            data-section="recordatorios"
-            className={`dash-block${
-              highlightedSection === 'recordatorios' ? ' is-highlighted' : ''
-            }`}
-            aria-label={m.home_upcoming_title()}
-          >
-            <div className="dash-block-head">
-              <div>
-                <h2>{m.home_upcoming_title()}</h2>
-                <p className="dash-block-context">
-                  {activeVehicle
-                    ? m.home_vehicle_context({
-                        vehicle: formatVehicleLabel(activeVehicle),
-                      })
-                    : m.home_vehicle_context_empty()}
-                </p>
-              </div>
-              {activeVehicle ? (
-                <button type="button" onClick={() => openAvisos()}>
-                  {m.home_see_all()}
-                </button>
-              ) : null}
-            </div>
-            {activeVehicle ? (
-              (() => {
-                const proximos = recentRemindersForVehicle(activeVehicle)
-                if (proximos.length === 0) {
-                  return <p className="dash-tx-empty">{m.home_recent_empty()}</p>
-                }
-                return (
-                  <div
-                    className="aviso-live-list"
-                    key={`avisos-${activeVehicle.id}`}
-                  >
-                    {proximos.map((item) => (
-                      <ReminderCard
-                        key={item.id}
-                        item={item}
-                        focused={false}
-                        onOpen={() => openAvisos(item.id)}
-                      />
-                    ))}
-                  </div>
-                )
-              })()
-            ) : (
-              <p className="dash-tx-empty">{m.home_recent_empty()}</p>
-            )}
-          </section>
-
-          <section
-            data-section="servicios"
-            className={`dash-block${
-              highlightedSection === 'servicios' ? ' is-highlighted' : ''
-            }`}
-            aria-label={m.home_recent_title()}
-          >
-            <div className="dash-block-head">
-              <div>
-                <h2>{m.home_recent_title()}</h2>
-                <p className="dash-block-context">
-                  {activeVehicle
-                    ? m.home_vehicle_context({
-                        vehicle: formatVehicleLabel(activeVehicle),
-                      })
-                    : m.home_vehicle_context_empty()}
-                </p>
-              </div>
-              {activeVehicle ? (
-                <button type="button" onClick={() => openServicios()}>
-                  {m.home_see_all()}
-                </button>
-              ) : null}
-            </div>
-            {activeVehicle ? (
-              <ul className="dash-tx-list" key={`services-${activeVehicle.id}`}>
-                {recentServicesForVehicle(activeVehicle).map((item) => (
-                  <li key={item.id}>
-                    <button
-                      type="button"
-                      className="dash-tx dash-tx--button"
-                      onClick={() => openServicios(item.id)}
-                    >
-                      <span className="dash-tx-icon" aria-hidden="true">
-                        <ServiceIconGlyph icon={item.icon} />
-                      </span>
-                      <div>
-                        <p className="dash-tx-name">{item.name}</p>
-                        <p className="dash-tx-meta">{item.meta}</p>
-                      </div>
-                      <strong>{item.cost}</strong>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="dash-tx-empty">{m.home_recent_empty()}</p>
-            )}
-          </section>
         </div>
       )}
+
+      {nav === 'home' ? renderVehicleHero(false) : null}
 
       {notificationsOpen
         ? createPortal(
@@ -737,28 +736,20 @@ export function Home() {
           )
         : null}
 
-      {createPortal(
-        <DashNav
-          nav={nav}
-          hidden={navHidden}
-          notificationCount={notificationsForVehicle(activeVehicle).length}
-          onHome={() => {
-            setFocusReminderId(null)
-            setFocusServiceId(null)
-            setServiciosPreferAll(false)
-            setNav('home')
-          }}
-          onServicios={() => openServicios()}
-          onEstimados={() => openEstimados()}
-          onAvisos={() => {
-            setFocusReminderId(null)
-            setFocusServiceId(null)
-            setNav('recordatorios')
-          }}
-          onPerfil={() => setNav('perfil')}
-        />,
-        document.getElementById('root') ?? document.body,
-      )}
+      <DashNav
+        nav={nav}
+        hidden={navHidden}
+        notificationCount={notificationsForVehicle(activeVehicle).length}
+        onHome={() => goHome()}
+        onServicios={() => openServicios()}
+        onEstimados={() => openEstimados()}
+        onAvisos={() => {
+          setFocusReminderId(null)
+          setFocusServiceId(null)
+          setNav('recordatorios')
+        }}
+        onPerfil={() => setNav('perfil')}
+      />
 
       {tutorialActive ? (
         <TutorialCoach

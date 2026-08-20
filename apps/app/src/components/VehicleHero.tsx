@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import {
   addVehicle,
   formatMileage,
+  formatMileageAmount,
   getActiveVehicle,
   getGarage,
   resolveBrandName,
@@ -546,12 +547,15 @@ function VehicleSelectCard({
       </button>
 
       <div className="garage-card-badge">
-        <div>
+        <div className="garage-card-badge-km">
           <p>{m.home_garage_km_label()}</p>
-          <strong>{formatMileage(vehicle.mileage)}</strong>
+          <strong>
+            <span>{formatMileageAmount(vehicle.mileage)}</span>
+            <span>{m.setup_4_suffix()}</span>
+          </strong>
         </div>
         <div className="garage-card-badge-divider" aria-hidden="true" />
-        <div>
+        <div className="garage-card-badge-status">
           <p>{m.home_garage_status_label()}</p>
           {needsService ? (
             <button
@@ -568,7 +572,9 @@ function VehicleSelectCard({
                 onServiceFocus()
               }}
             >
-              {m.home_garage_status_service()}
+              Requiere
+              <br />
+              servicio
             </button>
           ) : (
             <strong className="is-ready">{m.home_garage_status_ready()}</strong>
@@ -678,6 +684,10 @@ function FleetListSheet({
   onSelect: (id: string) => void
 }) {
   const [query, setQuery] = useState('')
+  const [dragY, setDragY] = useState(0)
+  const [dragging, setDragging] = useState(false)
+  const dragStartY = useRef(0)
+  const didDrag = useRef(false)
 
   useEffect(() => {
     const previous = document.body.style.overflow
@@ -686,6 +696,33 @@ function FleetListSheet({
       document.body.style.overflow = previous
     }
   }, [])
+
+  function onGrabPointerDown(event: PointerEvent<HTMLButtonElement>) {
+    dragStartY.current = event.clientY
+    didDrag.current = false
+    setDragging(true)
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+
+  function onGrabPointerMove(event: PointerEvent<HTMLButtonElement>) {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
+    const dy = Math.max(0, event.clientY - dragStartY.current)
+    if (dy > 8) didDrag.current = true
+    setDragY(dy)
+  }
+
+  function onGrabPointerUp(event: PointerEvent<HTMLButtonElement>) {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+    const dy = Math.max(0, event.clientY - dragStartY.current)
+    setDragging(false)
+    if (dy > 56) {
+      onClose()
+      return
+    }
+    setDragY(0)
+  }
 
   const sorted = [...vehicles].sort((a, b) => {
     const left = `${a.brand} ${a.model} ${a.year}`.toLocaleLowerCase('es')
@@ -717,8 +754,28 @@ function FleetListSheet({
         aria-label={m.home_vehicle_sheet_close()}
         onClick={onClose}
       />
-      <div className="vehicle-sheet-panel">
-        <div className="vehicle-sheet-handle" aria-hidden="true" />
+      <div
+        className={`vehicle-sheet-panel${dragging ? ' is-dragging' : ''}`}
+        style={dragY ? { transform: `translate3d(0, ${dragY}px, 0)` } : undefined}
+      >
+        <button
+          type="button"
+          className="vehicle-sheet-grabber"
+          aria-label={m.home_vehicle_sheet_close()}
+          onClick={(event) => {
+            if (didDrag.current) {
+              event.preventDefault()
+              return
+            }
+            onClose()
+          }}
+          onPointerDown={onGrabPointerDown}
+          onPointerMove={onGrabPointerMove}
+          onPointerUp={onGrabPointerUp}
+          onPointerCancel={onGrabPointerUp}
+        >
+          <span className="vehicle-sheet-handle" aria-hidden="true" />
+        </button>
 
         <header className="vehicle-sheet-header">
           <button type="button" className="vehicle-setup-back" onClick={onClose}>
@@ -860,6 +917,11 @@ export function VehicleHero({
   onSaved,
   onActiveChange,
   onServiceFocus,
+  showChrome = true,
+  addOpenNonce = 0,
+  editOpenNonce = 0,
+  editVehicleId = null,
+  mileageOpenNonce = 0,
 }: {
   unlocked: boolean
   kmUnlocked: boolean
@@ -876,9 +938,16 @@ export function VehicleHero({
   onSaved: (profile: VehicleProfile) => void
   onActiveChange: (profile: VehicleProfile | null) => void
   onServiceFocus: () => void
+  showChrome?: boolean
+  addOpenNonce?: number
+  editOpenNonce?: number
+  editVehicleId?: string | null
+  mileageOpenNonce?: number
 }) {
   const [garage, setGarage] = useState<GarageState>(() => getGarage())
-  const [sheetOpen, setSheetOpen] = useState(() => getGarage().vehicles.length === 0)
+  const [sheetOpen, setSheetOpen] = useState(
+    () => showChrome && getGarage().vehicles.length === 0,
+  )
   const [editingVehicle, setEditingVehicle] = useState<VehicleProfile | null>(null)
   const [mileageVehicle, setMileageVehicle] = useState<VehicleProfile | null>(null)
   const [addFocused, setAddFocused] = useState(false)
@@ -890,6 +959,39 @@ export function VehicleHero({
     // Sync once on mount; later updates go through select/save.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    if (showChrome) return
+    setSheetOpen(false)
+    setEditingVehicle(null)
+    setMileageVehicle(null)
+    setAddFocused(false)
+  }, [showChrome])
+
+  useEffect(() => {
+    function syncGarage() {
+      setGarage(getGarage())
+    }
+    window.addEventListener('seibi-garage-change', syncGarage)
+    return () => window.removeEventListener('seibi-garage-change', syncGarage)
+  }, [])
+
+  useEffect(() => {
+    if (!addOpenNonce) return
+    setSheetOpen(true)
+  }, [addOpenNonce])
+
+  useEffect(() => {
+    if (!editOpenNonce || !editVehicleId) return
+    const found = getGarage().vehicles.find((item) => item.id === editVehicleId) ?? null
+    if (found) setEditingVehicle(found)
+  }, [editOpenNonce, editVehicleId])
+
+  useEffect(() => {
+    if (!mileageOpenNonce) return
+    const current = getActiveVehicle(getGarage())
+    if (current) setMileageVehicle(current)
+  }, [mileageOpenNonce])
 
   useEffect(() => {
     if (!trackRef.current) return
@@ -960,13 +1062,14 @@ export function VehicleHero({
 
   return (
     <>
-      {activeStripFirst ? (
+      {showChrome && activeStripFirst ? (
         <>
           {activeStrip}
           {afterActiveStrip}
         </>
       ) : null}
 
+      {showChrome ? (
       <section
         data-section="vehiculo"
         className={`dash-lockable garage-hero${unlocked || garage.vehicles.length === 0 ? ' is-unlocked' : ' is-locked'}${
@@ -1136,6 +1239,7 @@ export function VehicleHero({
           </>
         )}
       </section>
+      ) : null}
 
       {sheetOpen
         ? createPortal(

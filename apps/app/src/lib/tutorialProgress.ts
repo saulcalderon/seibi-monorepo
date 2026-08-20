@@ -1,10 +1,12 @@
 const TUTORIAL_STEP_KEY = 'seibi-tutorial-step'
 
-/** 0 = welcome, 1–5 = section unlocks, 6 = finished */
-export const TUTORIAL_TOTAL_STEPS = 6
+/** 0 = welcome, 1–6 = section unlocks, 7 = finished */
+export const TUTORIAL_TOTAL_STEPS = 7
 
 export type AppSection =
+  | 'animacion'
   | 'vehiculo'
+  | 'agregar'
   | 'kilometraje'
   | 'servicios'
   | 'recordatorios'
@@ -12,11 +14,13 @@ export type AppSection =
 
 /** Step at which each section becomes unlocked (inclusive). */
 export const SECTION_UNLOCK_STEP: Record<AppSection, number> = {
-  vehiculo: 1,
+  animacion: 1,
+  vehiculo: 2,
+  agregar: 3,
   kilometraje: 2,
-  servicios: 3,
-  recordatorios: 4,
-  estimados: 5,
+  servicios: 4,
+  recordatorios: 5,
+  estimados: 6,
 }
 
 export function getTutorialStep(): number {

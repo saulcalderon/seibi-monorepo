@@ -96,6 +96,7 @@ export function getGarage(): GarageState {
 
 export function saveGarage(garage: GarageState) {
   localStorage.setItem(GARAGE_KEY, JSON.stringify(garage))
+  window.dispatchEvent(new Event('seibi-garage-change'))
 }
 
 export function getActiveVehicle(garage = getGarage()): VehicleProfile | null {
@@ -152,6 +153,12 @@ export function clearGarage() {
 
 export function formatVehicleLabel(profile: Pick<VehicleProfile, 'brand' | 'model' | 'year'>) {
   return `${profile.brand} ${profile.model} ${profile.year}`
+}
+
+export function formatMileageAmount(mileage: string) {
+  const value = Number(String(mileage).replace(/,/g, ''))
+  if (!Number.isFinite(value)) return mileage
+  return value.toLocaleString('es-MX')
 }
 
 export function formatMileage(mileage: string) {
