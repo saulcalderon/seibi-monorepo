@@ -8,6 +8,7 @@ export type VehicleProfile = {
   model: string
   year: string
   mileage: string
+  placa: string
 }
 
 export type GarageState = {
@@ -32,7 +33,47 @@ function createId() {
   return `veh_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
 }
 
-function isVehicle(value: unknown): value is VehicleProfile {
+const PLACA_LETTERS = 'ABCDEFGHJKLMNPRSTUVWXYZ'
+
+/** Stable preview plate for vehicles saved before `placa` existed. */
+export function previewPlacaFromId(id: string) {
+  let hash = 2166136261
+  for (let i = 0; i < id.length; i += 1) {
+    hash ^= id.charCodeAt(i)
+    hash = Math.imul(hash, 16777619)
+  }
+  const u = hash >>> 0
+  const a = PLACA_LETTERS[u % PLACA_LETTERS.length]
+  const b = PLACA_LETTERS[(u >>> 5) % PLACA_LETTERS.length]
+  const c = PLACA_LETTERS[(u >>> 10) % PLACA_LETTERS.length]
+  const n1 = String((u >>> 15) % 100).padStart(2, '0')
+  const n2 = String((u >>> 22) % 100).padStart(2, '0')
+  return `${a}${b}${c}-${n1}-${n2}`
+}
+
+export function sanitizePlaca(value: string) {
+  return value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 12)
+}
+
+function compactSearchText(value: string) {
+  return value.toLocaleLowerCase('es').replace(/[^a-z0-9áéíóúüñ]/g, '')
+}
+
+export function vehicleMatchesFleetQuery(
+  vehicle: Pick<VehicleProfile, 'brand' | 'model' | 'year' | 'mileage' | 'placa'>,
+  query: string,
+) {
+  const needle = compactSearchText(query)
+  if (!needle) return true
+  const haystack = compactSearchText(
+    `${vehicle.brand} ${vehicle.model} ${vehicle.year} ${vehicle.mileage} ${vehicle.placa}`,
+  )
+  return haystack.includes(needle)
+}
+
+function isVehicleRecord(value: unknown): value is Omit<VehicleProfile, 'placa'> & {
+  placa?: unknown
+} {
   if (!value || typeof value !== 'object') return false
   const item = value as Partial<VehicleProfile>
   return (
@@ -42,6 +83,18 @@ function isVehicle(value: unknown): value is VehicleProfile {
     typeof item.year === 'string' &&
     typeof item.mileage === 'string'
   )
+}
+
+function readVehicle(value: unknown): VehicleProfile | null {
+  if (!isVehicleRecord(value)) return null
+  return {
+    id: value.id,
+    brand: value.brand,
+    model: value.model,
+    year: value.year,
+    mileage: value.mileage,
+    placa: typeof value.placa === 'string' ? value.placa : previewPlacaFromId(value.id),
+  }
 }
 
 function migrateLegacy(): GarageState | null {
@@ -57,12 +110,14 @@ function migrateLegacy(): GarageState | null {
     ) {
       return null
     }
+    const id = createId()
     const vehicle: VehicleProfile = {
-      id: createId(),
+      id,
       brand: parsed.brand,
       model: parsed.model,
       year: parsed.year,
       mileage: parsed.mileage,
+      placa: previewPlacaFromId(id),
     }
     const garage: GarageState = { vehicles: [vehicle], activeId: vehicle.id }
     saveGarage(garage)
@@ -81,7 +136,9 @@ export function getGarage(): GarageState {
     }
     const parsed = JSON.parse(raw) as Partial<GarageState>
     const vehicles = Array.isArray(parsed.vehicles)
-      ? parsed.vehicles.filter(isVehicle)
+      ? parsed.vehicles
+          .map(readVehicle)
+          .filter((vehicle): vehicle is VehicleProfile => vehicle !== null)
       : []
     const activeId =
       typeof parsed.activeId === 'string' &&
@@ -113,7 +170,11 @@ export function addVehicle(
   input: Omit<VehicleProfile, 'id'>,
   garage = getGarage(),
 ): GarageState {
-  const vehicle: VehicleProfile = { ...input, id: createId() }
+  const vehicle: VehicleProfile = {
+    ...input,
+    id: createId(),
+    placa: sanitizePlaca(input.placa),
+  }
   const next: GarageState = {
     vehicles: [...garage.vehicles, vehicle],
     activeId: vehicle.id,
@@ -135,7 +196,7 @@ export function updateVehicle(
   garage = getGarage(),
 ): GarageState {
   const vehicles = garage.vehicles.map((vehicle) =>
-    vehicle.id === id ? { ...vehicle, ...input, id } : vehicle,
+    vehicle.id === id ? { ...vehicle, ...input, id, placa: sanitizePlaca(input.placa) } : vehicle,
   )
   if (!vehicles.some((vehicle) => vehicle.id === id)) return garage
   const next: GarageState = {

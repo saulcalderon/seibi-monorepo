@@ -5,18 +5,25 @@ import {
   formatMileageAmount,
   oilKmRemaining,
   vehicleArtSrc,
-  vehicleNeedsService,
   type VehicleProfile,
 } from '../lib/vehicleProfile'
 import {
-  batteryLifeForVehicle,
   remindersForVehicle,
   upcomingMaintenanceForVehicle,
+  vehicleServiceHealth,
   wearLevelFromPct,
   WEAR_COLOR,
   type ReminderItem,
   type WearLevel,
 } from '../lib/reminders'
+import { addAppointment, formatAppointmentDate } from '../lib/appointments'
+import {
+  addPendiente,
+  pendientesForVehicle,
+  removePendiente,
+  schedulePendiente,
+  type Pendiente,
+} from '../lib/pendientes'
 import {
   addLoggedService,
   recentServicesForVehicle,
@@ -286,15 +293,23 @@ function ShortcutTile({
   label,
   onClick,
   disabled,
+  ariaLabel,
   children,
 }: {
   label: string
   onClick: () => void
   disabled?: boolean
+  ariaLabel?: string
   children: ReactNode
 }) {
   return (
-    <button type="button" className="seibi-shortcut" onClick={onClick} disabled={disabled}>
+    <button
+      type="button"
+      className="seibi-shortcut"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={ariaLabel}
+    >
       <span className="seibi-shortcut-icon" aria-hidden="true">
         {children}
       </span>
@@ -433,7 +448,7 @@ function GearIcon() {
 }
 
 function vehicleCardHealth(item: VehicleProfile) {
-  return { needsService: vehicleNeedsService(item) }
+  return vehicleServiceHealth(item)
 }
 
 export function HomeDashboard({
@@ -481,19 +496,22 @@ export function HomeDashboard({
   const showVehicleData = Boolean(vehicle) && !addFocused
   const [addArmed, setAddArmed] = useState(false)
   const [editArmed, setEditArmed] = useState(false)
-  const [quickSheet, setQuickSheet] = useState<'part' | 'battery' | 'appt' | null>(null)
+  const [quickSheet, setQuickSheet] = useState<'part' | 'pendientes' | 'appt' | null>(null)
   const [wearFocus, setWearFocus] = useState<ReminderItem | null>(null)
   const [hudLayout, setHudLayout] = useState<HudLayout>(DEFAULT_HUD_LAYOUT)
   const [hudEditSlot, setHudEditSlot] = useState<HudSlot | null>(null)
   const [wearEditing, setWearEditing] = useState(false)
   const [partName, setPartName] = useState('')
   const [partCost, setPartCost] = useState('')
+  const [partTaller, setPartTaller] = useState('')
+  const [pendientes, setPendientes] = useState<Pendiente[]>([])
+  const [pendienteDraft, setPendienteDraft] = useState('')
+  const [schedulingId, setSchedulingId] = useState<string | null>(null)
   const [apptDate, setApptDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [apptNote, setApptNote] = useState('')
   const [apptSaved, setApptSaved] = useState('')
   const [, setServicesTick] = useState(0)
   const recent = showVehicleData ? recentServicesForVehicle(vehicle, 2) : []
-  const batteryLife = showVehicleData ? batteryLifeForVehicle(vehicle) : null
   const lockCards = highlightedSection === 'animacion'
   const lockAdd =
     highlightedSection === 'animacion' || highlightedSection === 'vehiculo'
@@ -516,10 +534,14 @@ export function HomeDashboard({
     if (highlightedSection === 'agregar') onTutorialTarget?.()
   }
 
-  function openQuick(kind: 'part' | 'battery' | 'appt') {
+  function openQuick(kind: 'part' | 'pendientes' | 'appt') {
     if (!showVehicleData || !vehicle) return
     setPartName('')
     setPartCost('')
+    setPartTaller('')
+    setPendienteDraft('')
+    setSchedulingId(null)
+    setPendientes(pendientesForVehicle(vehicle.id))
     setApptDate(new Date().toISOString().slice(0, 10))
     setApptNote('')
     setApptSaved('')
@@ -528,7 +550,12 @@ export function HomeDashboard({
 
   function savePart() {
     if (!vehicle || !partName.trim()) return
-    addLoggedService(vehicle.id, { name: partName, cost: partCost, mileage: vehicle.mileage })
+    addLoggedService(vehicle.id, {
+      name: partName,
+      cost: partCost,
+      mileage: vehicle.mileage,
+      taller: partTaller,
+    })
     setFocusReminderId(reminderIdForPartName(partName))
     setQuickSheet(null)
     window.requestAnimationFrame(() => {
@@ -536,6 +563,37 @@ export function HomeDashboard({
         .querySelector<HTMLElement>('[data-section="recientes"]')
         ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     })
+  }
+
+  function savePendiente() {
+    if (!vehicle || !pendienteDraft.trim()) return
+    addPendiente({ vehicleId: vehicle.id, note: pendienteDraft })
+    setPendienteDraft('')
+    setPendientes(pendientesForVehicle(vehicle.id))
+  }
+
+  function startSchedulePendiente(item: Pendiente) {
+    setSchedulingId(item.id)
+    setApptDate(item.date || new Date().toISOString().slice(0, 10))
+    setApptSaved('')
+  }
+
+  function confirmSchedulePendiente() {
+    if (!vehicle || !schedulingId || !apptDate) return
+    const item = pendientes.find((pendiente) => pendiente.id === schedulingId)
+    if (!item) return
+    schedulePendiente(item.id, apptDate)
+    addAppointment({ vehicleId: vehicle.id, date: apptDate, note: item.note })
+    setPendientes(pendientesForVehicle(vehicle.id))
+    setSchedulingId(null)
+    setApptSaved(formatAppointmentDate(apptDate))
+  }
+
+  function deletePendiente(id: string) {
+    if (!vehicle) return
+    removePendiente(id)
+    if (schedulingId === id) setSchedulingId(null)
+    setPendientes(pendientesForVehicle(vehicle.id))
   }
 
   function saveAppointment() {
@@ -716,7 +774,7 @@ export function HomeDashboard({
           <div className="seibi-stage-car">
             <GarageCarStage vehicle={vehicle} />
           </div>
-          <div className="seibi-stage-id">
+          <div className="seibi-stage-id" key={vehicle?.id ?? 'empty'}>
             {vehicle ? (
               <>
                 <p className="seibi-hero-brand">{vehicle.brand}</p>
@@ -829,7 +887,7 @@ export function HomeDashboard({
                     {healthCard.needsService ? (
                       <button
                         type="button"
-                        className="seibi-hero-stat-action is-warn"
+                        className={`seibi-hero-stat-action is-${healthCard.urgency}`}
                         aria-label={
                           active && editArmed
                             ? m.home_service_focus_open()
@@ -901,17 +959,20 @@ export function HomeDashboard({
         <div className="seibi-shortcuts">
           <ShortcutTile
             label={m.home_shortcut_km()}
+            ariaLabel={m.home_mileage_update_open()}
             disabled={!showVehicleData}
             onClick={onUpdateKm}
           >
             <svg viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="7.5" stroke="currentColor" strokeWidth="1.7" />
+              <circle cx="12" cy="12" r="7.35" stroke="currentColor" strokeWidth="1.75" />
               <path
-                d="M12 12l4-2.2M12 8.2V12"
+                d="M12 5.55v1.4M18.45 12h-1.4M12 17.05v1.4M6.95 12H5.55"
                 stroke="currentColor"
-                strokeWidth="1.7"
+                strokeWidth="1.55"
                 strokeLinecap="round"
               />
+              <path d="M12 12l3.45-3.05" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+              <circle cx="12" cy="12" r="1.2" fill="currentColor" />
             </svg>
           </ShortcutTile>
           <ShortcutTile
@@ -925,18 +986,20 @@ export function HomeDashboard({
             </svg>
           </ShortcutTile>
           <ShortcutTile
-            label={m.home_shortcut_battery()}
+            label={m.home_shortcut_pendientes()}
             disabled={!showVehicleData}
-            onClick={() => openQuick('battery')}
+            onClick={() => openQuick('pendientes')}
           >
             <svg viewBox="0 0 24 24" fill="none">
-              <rect x="4" y="7" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.7" />
+              <rect x="5" y="4" width="14" height="16" rx="2.5" stroke="currentColor" strokeWidth="1.7" />
               <path
-                d="M18 10h2v4h-2M8 12h5"
+                d="M8.5 10.2l1.7 1.7 3.6-3.7"
                 stroke="currentColor"
                 strokeWidth="1.7"
                 strokeLinecap="round"
+                strokeLinejoin="round"
               />
+              <path d="M8.5 15h7" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
             </svg>
           </ShortcutTile>
           <ShortcutTile
@@ -1033,7 +1096,7 @@ export function HomeDashboard({
         <div className="seibi-section-head">
           <h2>{m.home_recent_title()}</h2>
           {recent.length > 0 ? (
-            <button type="button" onClick={() => onOpenServicios(undefined, true)}>
+            <button type="button" onClick={() => onOpenServicios()}>
               {m.home_see_all()}
             </button>
           ) : null}
@@ -1045,7 +1108,7 @@ export function HomeDashboard({
                 key={item.id}
                 type="button"
                 className="seibi-recent-row"
-                onClick={() => onOpenServicios(item.id, true)}
+                onClick={() => onOpenServicios(item.id)}
               >
                 <span className="seibi-recent-icon" aria-hidden="true">
                   <ServiceIconGlyph icon={item.icon} />
@@ -1083,9 +1146,9 @@ export function HomeDashboard({
             <svg className="seibi-hud-hex" viewBox="0 0 200 230" aria-hidden="true">
               <defs>
                 <linearGradient id="seibi-hud-stroke" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#ff6b63" />
-                  <stop offset="45%" stopColor="#c40000" />
-                  <stop offset="100%" stopColor="#ff3b30" />
+                  <stop offset="0%" stopColor="#F2F4F7" />
+                  <stop offset="45%" stopColor="#FF4F18" />
+                  <stop offset="100%" stopColor="#FF4F18" />
                 </linearGradient>
                 <filter id="seibi-hud-glow" x="-20%" y="-20%" width="140%" height="140%">
                   <feGaussianBlur stdDeviation="2.4" result="blur" />
@@ -1288,6 +1351,14 @@ export function HomeDashboard({
               inputMode="numeric"
             />
           </label>
+          <label className="vehicle-setup-field mileage-modal-field">
+            <span className="seibi-quick-label">{m.home_part_taller_label()}</span>
+            <input
+              value={partTaller}
+              onChange={(event) => setPartTaller(event.target.value)}
+              placeholder={m.home_part_taller_placeholder()}
+            />
+          </label>
           <button
             type="button"
             className="vehicle-setup-cta"
@@ -1299,16 +1370,82 @@ export function HomeDashboard({
         </QuickSheet>
       ) : null}
 
-      {quickSheet === 'battery' && batteryLife ? (
-        <QuickSheet title={m.home_battery_title()} onClose={() => setQuickSheet(null)}>
-          <div className="seibi-battery-card">
-            <strong>{m.home_battery_pct({ pct: String(batteryLife.pct) })}</strong>
-            <div className="seibi-battery-track" aria-hidden="true">
-              <span style={{ width: `${batteryLife.pct}%` }} />
-            </div>
-            <p>{m.home_battery_days({ days: String(batteryLife.daysLeft) })}</p>
-            <p className="seibi-battery-meta">{m.home_battery_meta()}</p>
-          </div>
+      {quickSheet === 'pendientes' ? (
+        <QuickSheet
+          title={m.home_pendientes_title()}
+          desc={m.home_pendientes_desc()}
+          onClose={() => setQuickSheet(null)}
+        >
+          <form
+            className="seibi-pendientes-add"
+            onSubmit={(event) => {
+              event.preventDefault()
+              savePendiente()
+            }}
+          >
+            <input
+              value={pendienteDraft}
+              onChange={(event) => setPendienteDraft(event.target.value)}
+              placeholder={m.home_pendientes_placeholder()}
+              autoFocus
+            />
+            <button type="submit" disabled={!pendienteDraft.trim()}>
+              {m.home_pendientes_add()}
+            </button>
+          </form>
+          {pendientes.length === 0 ? (
+            <p className="seibi-pendientes-empty">{m.home_pendientes_empty()}</p>
+          ) : (
+            <ul className="seibi-pendientes-list">
+              {pendientes.map((item) => {
+                const scheduling = schedulingId === item.id
+                return (
+                  <li key={item.id} className={`seibi-pendiente${scheduling ? ' is-open' : ''}`}>
+                    <div className="seibi-pendiente-row">
+                      <p className="seibi-pendiente-note">{item.note}</p>
+                      <button
+                        type="button"
+                        className="seibi-pendiente-remove"
+                        aria-label={m.home_pendientes_remove()}
+                        onClick={() => deletePendiente(item.id)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                    {item.date && !scheduling ? (
+                      <p className="seibi-pendiente-scheduled">
+                        {m.home_pendientes_scheduled({ date: formatAppointmentDate(item.date) })}
+                      </p>
+                    ) : null}
+                    {scheduling ? (
+                      <div className="seibi-pendiente-schedule">
+                        <CalendarPicker value={apptDate} onChange={setApptDate} />
+                        <button
+                          type="button"
+                          className="vehicle-setup-cta"
+                          disabled={!apptDate}
+                          onClick={confirmSchedulePendiente}
+                        >
+                          {m.home_pendientes_confirm()}
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        className="seibi-pendiente-agendar"
+                        onClick={() => startSchedulePendiente(item)}
+                      >
+                        {m.home_pendientes_schedule()}
+                      </button>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+          {apptSaved && !schedulingId ? (
+            <p className="seibi-appt-saved">{m.home_appt_saved({ date: apptSaved })}</p>
+          ) : null}
         </QuickSheet>
       ) : null}
 

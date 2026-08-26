@@ -125,7 +125,7 @@ function FieldInput({
         placeholder={placeholder}
         inputMode={inputMode}
         autoFocus={autoFocus}
-        className="w-full rounded-2xl border border-black/8 bg-white px-5 py-4 text-[1rem] text-ink shadow-[0_2px_12px_rgba(0,0,0,0.06)] outline-none placeholder:text-black/35 focus:border-milano/40"
+        className="w-full rounded-2xl border border-coal/8 bg-pure px-5 py-4 text-[1rem] text-coal shadow-[0_2px_12px_rgba(20,21,23,0.06)] outline-none placeholder:text-coal/35 focus:border-radiant/40"
       />
       {suffix ? (
         <span className="pointer-events-none absolute top-1/2 right-5 -translate-y-1/2 text-[0.85rem] font-medium text-black/40">
@@ -163,7 +163,7 @@ function StepBody({
   return (
     <div key={step} className="setup-step flex flex-1 flex-col pt-4">
       <div className="px-7">
-        <h1 className="text-[1.75rem] leading-tight tracking-tight text-ink">
+        <h1 className="text-[1.75rem] leading-tight tracking-tight text-coal">
           {titles[step]}
         </h1>
         <p className="mt-2 max-w-80 text-[0.88rem] leading-relaxed text-black/55">
@@ -282,7 +282,7 @@ export function VehicleSetup({
   }
 
   return (
-    <div className="flex h-full flex-col bg-splash">
+    <div className="flex h-full flex-col bg-fog">
       <ProgressHeader current={step} onBack={handleBack} />
 
       <StepBody step={step} answers={answers} setAnswers={setAnswers} />
@@ -292,7 +292,7 @@ export function VehicleSetup({
           type="button"
           disabled={!ready}
           onClick={handleNext}
-          className="w-full rounded-full bg-milano px-5 py-[0.95rem] text-[0.9rem] font-semibold text-white shadow-[0_4px_20px_rgba(196,0,0,0.28)] transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+          className="w-full rounded-full bg-radiant px-5 py-[0.95rem] text-[0.9rem] font-semibold text-pure shadow-[0_4px_20px_rgba(255,79,24,0.28)] transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
         >
           {m.setup_next()}
         </button>

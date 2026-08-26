@@ -21,7 +21,7 @@ function AuthCallbackRoute() {
       if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
         if (session) {
           void navigate({
-            to: isSetupDone() ? '/home' : '/setup',
+            to: isSetupDone(session.user.id) ? '/home' : '/setup',
             replace: true,
           })
           return
@@ -40,7 +40,7 @@ function AuthCallbackRoute() {
   }, [navigate])
 
   return (
-    <div className="flex h-full items-center justify-center bg-splash">
+    <div className="flex h-full items-center justify-center bg-fog">
       <p className="text-[0.85rem] text-black/60">Signing you in…</p>
     </div>
   )

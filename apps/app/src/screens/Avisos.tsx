@@ -235,8 +235,6 @@ export function Avisos({
   const context = label
     ? m.home_vehicle_context({ vehicle: label })
     : m.home_vehicle_context_empty()
-  const dangerCount = reminders.filter((item) => item.tone === 'danger').length
-  const warnCount = reminders.filter((item) => item.tone === 'warn').length
 
   useEffect(() => {
     if (!focusReminderId) return
@@ -261,26 +259,62 @@ export function Avisos({
             {m.setup_back()}
           </button>
         ) : null}
-        <p className="avisos-eyebrow">{m.home_reminders_eyebrow()}</p>
         <h1 className="avisos-title">{m.home_upcoming_title()}</h1>
         <p className="avisos-context">{context}</p>
       </header>
 
-      <div className="avisos-legend" aria-label="Semáforo de avisos">
-        <span className="avisos-chip tone-danger">{`Urgente · ${dangerCount}`}</span>
-        <span className="avisos-chip tone-warn">{`Próximo · ${warnCount}`}</span>
-        <span className="avisos-chip tone-ok">Al día</span>
-      </div>
-
-      <section className="aviso-live-list" aria-label={m.home_upcoming_title()}>
-        {reminders.map((item) => (
-          <ReminderCard
-            key={item.id}
-            item={item}
-            focused={focusReminderId === item.id}
-          />
+      <div className="avisos-groups" aria-label={m.home_avisos_groups()}>
+        {(
+          [
+            {
+              tone: 'danger' as const,
+              label: m.home_avisos_urgent(),
+              items: reminders.filter((item) => item.tone === 'danger'),
+            },
+            {
+              tone: 'warn' as const,
+              label: m.home_avisos_soon(),
+              items: reminders.filter((item) => item.tone === 'warn'),
+            },
+            {
+              tone: 'ok' as const,
+              label: m.home_avisos_ok(),
+              items: reminders.filter((item) => item.tone === 'ok'),
+            },
+          ] as const
+        ).map((group) => (
+          <section
+            key={group.tone}
+            className="avisos-group"
+            aria-label={m.home_avisos_chip({
+              label: group.label,
+              count: String(group.items.length),
+            })}
+          >
+            <h2 className="avisos-group-head">
+              <span className={`avisos-chip tone-${group.tone}`}>
+                {m.home_avisos_chip({
+                  label: group.label,
+                  count: String(group.items.length),
+                })}
+              </span>
+            </h2>
+            {group.items.length > 0 ? (
+              <div className="aviso-live-list">
+                {group.items.map((item) => (
+                  <ReminderCard
+                    key={item.id}
+                    item={item}
+                    focused={focusReminderId === item.id}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="avisos-group-empty">{m.home_avisos_group_empty()}</p>
+            )}
+          </section>
         ))}
-      </section>
+      </div>
     </div>
   )
 }

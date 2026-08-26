@@ -11,113 +11,117 @@ export type ServiceItem = {
   meta: string
   cost: string
   icon: ServiceIcon
+  /** Epoch ms when the Servicio was performed. */
+  performedAt: number
+  taller?: string
+  comment?: string
 }
+
+/** Window used by “Servicios recientes”. Historial ignores this. */
+export const RECENT_SERVICE_DAYS = 30
+const RECENT_WINDOW_MS = RECENT_SERVICE_DAYS * 24 * 60 * 60 * 1000
 
 function money(amount: number) {
   return `$${amount.toLocaleString('es-MX')}`
 }
 
-/** Preview Servicios for the active Vehículo until real data exists. */
+function daysAgo(days: number) {
+  return Date.now() - days * 24 * 60 * 60 * 1000
+}
+
+function formatServiceWhen(at: number) {
+  return new Date(at).toLocaleString('es-MX', {
+    day: '2-digit',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+}
+
+function demoServices(seed = 0): ServiceItem[] {
+  const oilAt = daysAgo(4)
+  const brakesAt = daysAgo(12)
+  const tiresAt = daysAgo(22)
+  const filterAt = daysAgo(48)
+  const alignAt = daysAgo(95)
+  const batteryAt = daysAgo(140)
+
+  return [
+    {
+      id: 'oil',
+      name: 'Cambio de aceite',
+      meta: formatServiceWhen(oilAt),
+      cost: money(850 + (seed % 120)),
+      icon: 'oil',
+      performedAt: oilAt,
+      taller: 'Taller Express Norte',
+    },
+    {
+      id: 'brakes',
+      name: 'Frenos delanteros',
+      meta: formatServiceWhen(brakesAt),
+      cost: money(2_200 + (seed % 500)),
+      icon: 'brakes',
+      performedAt: brakesAt,
+      taller: 'Frenos y Más',
+    },
+    {
+      id: 'tires',
+      name: 'Rotación de llantas',
+      meta: formatServiceWhen(tiresAt),
+      cost: money(600 + (seed % 90)),
+      icon: 'tires',
+      performedAt: tiresAt,
+      taller: 'Llantas del Valle',
+    },
+    {
+      id: 'filter',
+      name: 'Filtro de aire',
+      meta: formatServiceWhen(filterAt),
+      cost: money(420 + (seed % 80)),
+      icon: 'filter',
+      performedAt: filterAt,
+      taller: 'Taller Express Norte',
+    },
+    {
+      id: 'alignment',
+      name: 'Alineación',
+      meta: formatServiceWhen(alignAt),
+      cost: money(850 + (seed % 150)),
+      icon: 'alignment',
+      performedAt: alignAt,
+      taller: 'Alineación Rápida',
+    },
+    {
+      id: 'battery',
+      name: 'Prueba de batería',
+      meta: formatServiceWhen(batteryAt),
+      cost: money(280 + (seed % 60)),
+      icon: 'battery',
+      performedAt: batteryAt,
+      taller: 'Autoeléctrica Centro',
+    },
+  ].sort((a, b) => b.performedAt - a.performedAt)
+}
+
+/** Full Historial for the active Vehículo (any date). */
 export function servicesForVehicle(vehicle: VehicleProfile | null): ServiceItem[] {
   if (!vehicle) {
-    return [
-      {
-        id: 'oil',
-        name: 'Cambio de aceite',
-        meta: '12 Mar, 10:20 AM',
-        cost: '$850',
-        icon: 'oil',
-      },
-      {
-        id: 'brakes',
-        name: 'Frenos delanteros',
-        meta: '28 Feb, 04:15 PM',
-        cost: '$2,400',
-        icon: 'brakes',
-      },
-      {
-        id: 'tires',
-        name: 'Rotación de llantas',
-        meta: '10 Ene, 11:40 AM',
-        cost: '$650',
-        icon: 'tires',
-      },
-      {
-        id: 'filter',
-        name: 'Filtro de aire',
-        meta: '02 Dic, 03:10 PM',
-        cost: '$480',
-        icon: 'filter',
-      },
-      {
-        id: 'alignment',
-        name: 'Alineación',
-        meta: '18 Nov, 09:45 AM',
-        cost: '$900',
-        icon: 'alignment',
-      },
-      {
-        id: 'battery',
-        name: 'Prueba de batería',
-        meta: '05 Oct, 02:30 PM',
-        cost: '$320',
-        icon: 'battery',
-      },
-    ]
+    return withServiceNotes(null, demoServices())
   }
 
   const km = Number(vehicle.mileage.replace(/,/g, '')) || 0
   const seed = km % 900
   const extras = loggedServicesForVehicle(vehicle.id)
 
-  return [
-    ...extras,
-    {
-      id: 'oil',
-      name: 'Cambio de aceite',
-      meta: '12 Mar, 10:20 AM',
-      cost: money(850 + (seed % 120)),
-      icon: 'oil',
-    },
-    {
-      id: 'brakes',
-      name: 'Frenos delanteros',
-      meta: '28 Feb, 04:15 PM',
-      cost: money(2_200 + (seed % 500)),
-      icon: 'brakes',
-    },
-    {
-      id: 'tires',
-      name: 'Rotación de llantas',
-      meta: '10 Ene, 11:40 AM',
-      cost: money(600 + (seed % 90)),
-      icon: 'tires',
-    },
-    {
-      id: 'filter',
-      name: 'Filtro de aire',
-      meta: '02 Dic, 03:10 PM',
-      cost: money(420 + (seed % 80)),
-      icon: 'filter',
-    },
-    {
-      id: 'alignment',
-      name: 'Alineación',
-      meta: '18 Nov, 09:45 AM',
-      cost: money(850 + (seed % 150)),
-      icon: 'alignment',
-    },
-    {
-      id: 'battery',
-      name: 'Prueba de batería',
-      meta: '05 Oct, 02:30 PM',
-      cost: money(280 + (seed % 60)),
-      icon: 'battery',
-    },
-  ]
+  return withServiceNotes(vehicle.id, [...extras, ...demoServices(seed)].sort(
+    (a, b) => b.performedAt - a.performedAt,
+  ))
 }
 
 const LOGGED_KEY = 'seibi-logged-services'
+const NOTES_KEY = 'seibi-service-notes'
 const SERVICES_CHANGE = 'seibi-services-change'
 
 type LoggedService = ServiceItem & {
@@ -155,16 +159,6 @@ export function reminderIdForPartName(name: string): string | null {
   return null
 }
 
-function formatLoggedWhen(date = new Date()) {
-  return date.toLocaleString('es-MX', {
-    day: '2-digit',
-    month: 'short',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  })
-}
-
 function formatLoggedCost(raw: string) {
   const amount = Number(String(raw).replace(/[^\d]/g, ''))
   if (!Number.isFinite(amount) || amount <= 0) return '—'
@@ -192,7 +186,19 @@ function readLoggedServices(): LoggedService[] {
 export function loggedServicesForVehicle(vehicleId: string): ServiceItem[] {
   return readLoggedServices()
     .filter((item) => item.vehicleId === vehicleId)
-    .map(({ vehicleId: _vehicleId, mileageKm: _mileageKm, loggedAt: _loggedAt, ...item }) => item)
+    .map(({ vehicleId: _vehicleId, mileageKm: _mileageKm, loggedAt, ...item }) => {
+      const performedAt =
+        typeof item.performedAt === 'number'
+          ? item.performedAt
+          : typeof loggedAt === 'number'
+            ? loggedAt
+            : 0
+      return {
+        ...item,
+        performedAt,
+        meta: item.meta || (performedAt ? formatServiceWhen(performedAt) : '—'),
+      }
+    })
 }
 
 export function loggedPartResetsForVehicle(vehicleId: string): Partial<Record<string, PartReset>> {
@@ -213,23 +219,68 @@ export function loggedPartResetsForVehicle(vehicleId: string): Partial<Record<st
 
 export function addLoggedService(
   vehicleId: string,
-  input: { name: string; cost?: string; mileage?: string },
+  input: { name: string; cost?: string; mileage?: string; taller?: string },
 ): ServiceItem {
   const name = input.name.trim()
   const mileageKm = Number(String(input.mileage ?? '').replace(/,/g, ''))
+  const taller = input.taller?.trim() || undefined
+  const performedAt = Date.now()
+  const when = formatServiceWhen(performedAt)
   const item: LoggedService = {
     id: `log_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
     vehicleId,
     name,
-    meta: formatLoggedWhen(),
+    meta: taller ? `${when} · ${taller}` : when,
     cost: formatLoggedCost(input.cost ?? ''),
     icon: iconForName(name),
+    performedAt,
     mileageKm: Number.isFinite(mileageKm) ? mileageKm : undefined,
-    loggedAt: Date.now(),
+    loggedAt: performedAt,
+    taller,
   }
   localStorage.setItem(LOGGED_KEY, JSON.stringify([item, ...readLoggedServices()]))
   window.dispatchEvent(new Event(SERVICES_CHANGE))
   return item
+}
+
+function noteStorageKey(vehicleId: string | null, serviceId: string) {
+  return `${vehicleId ?? 'none'}:${serviceId}`
+}
+
+function readServiceNotes(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(NOTES_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw) as Record<string, string>
+    return parsed && typeof parsed === 'object' ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+function withServiceNotes(
+  vehicleId: string | null,
+  items: ServiceItem[],
+): ServiceItem[] {
+  const notes = readServiceNotes()
+  return items.map((item) => {
+    const saved = notes[noteStorageKey(vehicleId, item.id)]
+    return saved ? { ...item, comment: saved } : item
+  })
+}
+
+export function saveServiceComment(
+  vehicleId: string | null,
+  serviceId: string,
+  comment: string,
+) {
+  const notes = readServiceNotes()
+  const key = noteStorageKey(vehicleId, serviceId)
+  const trimmed = comment.trim()
+  if (trimmed) notes[key] = trimmed
+  else delete notes[key]
+  localStorage.setItem(NOTES_KEY, JSON.stringify(notes))
+  window.dispatchEvent(new Event(SERVICES_CHANGE))
 }
 
 export function subscribeServicesChange(onChange: () => void) {
@@ -237,13 +288,42 @@ export function subscribeServicesChange(onChange: () => void) {
   return () => window.removeEventListener(SERVICES_CHANGE, onChange)
 }
 
+/** Servicios performed within the last 30 days (newest first). */
 export function recentServicesForVehicle(
   vehicle: VehicleProfile | null,
-  limit = 3,
+  limit?: number,
 ): ServiceItem[] {
-  return servicesForVehicle(vehicle).slice(0, limit)
+  const cutoff = Date.now() - RECENT_WINDOW_MS
+  const recent = servicesForVehicle(vehicle)
+    .filter((item) => item.performedAt >= cutoff)
+    .sort((a, b) => b.performedAt - a.performedAt)
+  return typeof limit === 'number' ? recent.slice(0, limit) : recent
 }
 
 export function serviceVehicleLabel(vehicle: VehicleProfile | null) {
   return vehicle ? formatVehicleLabel(vehicle) : null
+}
+
+export function parseServiceCost(cost: string) {
+  const amount = Number(String(cost).replace(/[^\d]/g, ''))
+  return Number.isFinite(amount) ? amount : 0
+}
+
+/** Total spent on Servicios in the current calendar month. */
+export function monthlySpendForVehicle(vehicle: VehicleProfile | null) {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth()
+  const items = servicesForVehicle(vehicle).filter((item) => {
+    if (!item.performedAt) return false
+    const date = new Date(item.performedAt)
+    return date.getFullYear() === year && date.getMonth() === month
+  })
+  const total = items.reduce((sum, item) => sum + parseServiceCost(item.cost), 0)
+  return {
+    total,
+    count: items.length,
+    label: now.toLocaleString('es-MX', { month: 'long', year: 'numeric' }),
+    formatted: money(total),
+  }
 }

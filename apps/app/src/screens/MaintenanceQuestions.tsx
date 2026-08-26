@@ -2,16 +2,13 @@ import { useState, type ReactNode } from 'react'
 import * as m from '../paraglide/messages.js'
 
 /**
- * Preguntas de mantenimiento
- * Bloque de 3 pantallas previo al setup del vehículo.
- * Contenido provisional — se refinará y reubicará después.
+ * Preguntas de mantenimiento — 3 pantallas tras el login (solo primera vez).
  */
 const TOTAL = 3
 
 const QUESTIONS = [
   {
     title: () => m.maint_1_title(),
-    desc: () => m.maint_1_desc(),
     options: [
       { id: 'new', label: () => m.maint_1_opt_new() },
       { id: 'basic', label: () => m.maint_1_opt_basic() },
@@ -20,7 +17,6 @@ const QUESTIONS = [
   },
   {
     title: () => m.maint_2_title(),
-    desc: () => m.maint_2_desc(),
     options: [
       { id: 'weekly', label: () => m.maint_2_opt_weekly() },
       { id: 'monthly', label: () => m.maint_2_opt_monthly() },
@@ -30,7 +26,6 @@ const QUESTIONS = [
   },
   {
     title: () => m.maint_3_title(),
-    desc: () => m.maint_3_desc(),
     options: [
       { id: 'cost', label: () => m.maint_3_opt_cost() },
       { id: 'reminders', label: () => m.maint_3_opt_reminders() },
@@ -103,7 +98,7 @@ export function MaintenanceQuestions({
   }
 
   return (
-    <div className="flex h-full flex-col bg-splash">
+    <div className="flex h-full flex-col bg-fog">
       <header className="setup-header px-7 pt-13 pb-4">
         <div className="flex min-h-9 items-center justify-between gap-3">
           <button
@@ -114,7 +109,7 @@ export function MaintenanceQuestions({
             {m.setup_back()}
           </button>
           <div className="text-center">
-            <p className="text-[0.65rem] font-semibold tracking-[0.14em] text-milano uppercase">
+            <p className="text-[0.65rem] font-semibold tracking-[0.14em] text-radiant uppercase">
               {m.maint_section()}
             </p>
             <p className="mt-0.5 text-[0.78rem] font-medium tracking-wide text-black/55">
@@ -156,12 +151,9 @@ export function MaintenanceQuestions({
       </header>
 
       <div key={step} className="setup-step flex flex-1 flex-col px-7 pt-4">
-        <h1 className="text-[1.75rem] leading-tight tracking-tight text-ink">
+        <h1 className="text-[1.75rem] leading-tight tracking-tight text-coal">
           {question.title()}
         </h1>
-        <p className="mt-2 max-w-80 text-[0.88rem] leading-relaxed text-black/55">
-          {question.desc()}
-        </p>
 
         <div className="mt-8 flex flex-col gap-2.5">
           {question.options.map((option) => (
@@ -185,7 +177,7 @@ export function MaintenanceQuestions({
           type="button"
           disabled={!ready}
           onClick={handleNext}
-          className="w-full rounded-full bg-milano px-5 py-[0.95rem] text-[0.9rem] font-semibold text-white shadow-[0_4px_20px_rgba(196,0,0,0.28)] transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+          className="w-full rounded-full bg-radiant px-5 py-[0.95rem] text-[0.9rem] font-semibold text-pure shadow-[0_4px_20px_rgba(255,79,24,0.28)] transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
         >
           {m.setup_next()}
         </button>

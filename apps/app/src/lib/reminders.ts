@@ -217,6 +217,27 @@ export function remindersForVehicle(vehicle: VehicleProfile | null): ReminderIte
   return items.sort((a, b) => TONE_ORDER[a.tone] - TONE_ORDER[b.tone])
 }
 
+export type ServiceUrgency = 'ok' | 'warn' | 'danger'
+
+/**
+ * Selector status from that vehicle's mantenimientos.
+ * Listo = apto para circular. Requiere servicio = hay algo vencido o crítico.
+ */
+export function vehicleServiceHealth(vehicle: VehicleProfile): {
+  needsService: boolean
+  urgency: ServiceUrgency
+} {
+  const blocking = remindersForVehicle(vehicle).filter((item) => item.tone === 'danger')
+  if (blocking.length === 0) {
+    return { needsService: false, urgency: 'ok' }
+  }
+  const worstPct = blocking.reduce((min, item) => Math.min(min, item.remainingPct), 100)
+  return {
+    needsService: true,
+    urgency: worstPct <= 0 ? 'danger' : 'warn',
+  }
+}
+
 export function reminderVehicleLabel(vehicle: VehicleProfile | null) {
   return vehicle ? formatVehicleLabel(vehicle) : null
 }

@@ -209,13 +209,13 @@ function GarageScene({ color }: { color: string }) {
         intensity={1.5}
         color="#ffffff"
       />
-      <pointLight position={[2.6, 0.9, 2]} intensity={0.8} color="#c40000" distance={9} />
+      <pointLight position={[2.6, 0.9, 2]} intensity={0.8} color="#FF4F18" distance={9} />
 
       <StylizedCar color={color} />
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <circleGeometry args={[3.8, 64]} />
-        <meshStandardMaterial color="#efe2a8" metalness={0.2} roughness={0.32} />
+        <meshStandardMaterial color="#F2F4F7" metalness={0.12} roughness={0.42} />
       </mesh>
       <ContactShadows
         position={[0, 0.015, 0]}

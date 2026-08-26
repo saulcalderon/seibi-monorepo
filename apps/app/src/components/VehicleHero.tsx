@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type AnimationEvent, type PointerEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import {
   addVehicle,
@@ -7,10 +7,11 @@ import {
   getActiveVehicle,
   getGarage,
   resolveBrandName,
+  sanitizePlaca,
   setActiveVehicle,
   updateVehicle,
   vehicleArtSrc,
-  vehicleNeedsService,
+  vehicleMatchesFleetQuery,
   VEHICLE_BRANDS,
   type GarageState,
   type VehicleBrandOption,
@@ -18,6 +19,7 @@ import {
 } from '../lib/vehicleProfile'
 import { GarageCarStage } from './GarageCarStage'
 import { BrandSearchField } from './BrandSearchField'
+import { vehicleServiceHealth } from '../lib/reminders'
 import * as m from '../paraglide/messages.js'
 
 const SETUP_STEPS = 4
@@ -28,6 +30,7 @@ type Draft = {
   model: string
   year: string
   mileage: string
+  placa: string
 }
 
 const emptyDraft: Draft = {
@@ -36,6 +39,7 @@ const emptyDraft: Draft = {
   model: '',
   year: '',
   mileage: '',
+  placa: '',
 }
 
 function draftFromVehicle(vehicle: VehicleProfile): Draft {
@@ -46,6 +50,7 @@ function draftFromVehicle(vehicle: VehicleProfile): Draft {
     model: vehicle.model,
     year: vehicle.year,
     mileage: vehicle.mileage,
+    placa: vehicle.placa,
   }
 }
 
@@ -55,6 +60,7 @@ function draftToInput(draft: Draft) {
     model: draft.model.trim(),
     year: draft.year.trim(),
     mileage: draft.mileage.replace(/,/g, '').trim(),
+    placa: sanitizePlaca(draft.placa),
   }
 }
 
@@ -118,15 +124,16 @@ function SetupField({
   )
 }
 
-function VehicleSetupSheet({
-  onClose,
+export function VehicleSetupScreen({
+  onBack,
   onSaved,
 }: {
-  onClose: () => void
+  onBack: () => void
   onSaved: (garage: GarageState) => void
 }) {
   const [step, setStep] = useState(0)
   const [draft, setDraft] = useState<Draft>(emptyDraft)
+  const [leaving, setLeaving] = useState(false)
   const ready = canContinue(step, draft)
   const isLast = step === SETUP_STEPS - 1
 
@@ -143,17 +150,22 @@ function VehicleSetupSheet({
     m.setup_4_desc(),
   ]
 
-  useEffect(() => {
-    const previous = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = previous
+  function prefersReducedMotion() {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  }
+
+  function closeScreen() {
+    if (leaving) return
+    if (prefersReducedMotion()) {
+      onBack()
+      return
     }
-  }, [])
+    setLeaving(true)
+  }
 
   function handleBack() {
     if (step === 0) {
-      onClose()
+      closeScreen()
       return
     }
     setStep((current) => Math.max(0, current - 1))
@@ -169,36 +181,33 @@ function VehicleSetupSheet({
     onSaved(addVehicle(draftToInput(draft)))
   }
 
+  function handleOverlayAnimationEnd(event: AnimationEvent<HTMLDivElement>) {
+    if (!leaving) return
+    if (event.target !== event.currentTarget) return
+    if (!event.animationName.includes('vehicle-setup-out')) return
+    onBack()
+  }
+
   return (
-    <div className="vehicle-sheet" role="dialog" aria-modal="true" aria-labelledby="vehicle-sheet-title">
-      <button
-        type="button"
-        className="vehicle-sheet-backdrop"
-        aria-label={m.home_vehicle_sheet_close()}
-        onClick={onClose}
-      />
-      <div className="vehicle-sheet-panel">
-        <div className="vehicle-sheet-handle" aria-hidden="true" />
-
-        <header className="vehicle-sheet-header">
-          <button type="button" className="vehicle-setup-back" onClick={handleBack}>
-            {step === 0 ? m.home_vehicle_sheet_close() : m.setup_back()}
-          </button>
-          <p className="vehicle-setup-progress">
-            {m.home_vehicle_setup_progress({
-              current: String(step + 1),
-              total: String(SETUP_STEPS),
-            })}
-          </p>
-          <span aria-hidden="true" />
-        </header>
-
+    <div
+      className={`vehicle-setup-overlay${leaving ? ' is-leaving' : ''}`}
+      onAnimationEnd={handleOverlayAnimationEnd}
+    >
+    <div className="avisos-screen vehicle-setup-screen">
+      <header className="avisos-header">
+        <button type="button" className="avisos-back" onClick={handleBack}>
+          {step === 0 ? m.home_vehicle_sheet_close() : m.setup_back()}
+        </button>
         <div
           className="vehicle-setup-bar"
           role="progressbar"
           aria-valuemin={1}
           aria-valuemax={SETUP_STEPS}
           aria-valuenow={step + 1}
+          aria-label={m.home_vehicle_setup_progress({
+            current: String(step + 1),
+            total: String(SETUP_STEPS),
+          })}
         >
           {Array.from({ length: SETUP_STEPS }).map((_, index) => (
             <span
@@ -209,76 +218,84 @@ function VehicleSetupSheet({
             />
           ))}
         </div>
+        <p className="avisos-eyebrow">{m.home_garage_add()}</p>
+        <h1 className="avisos-title">{titles[step]}</h1>
+        <p className="avisos-context">{descs[step]}</p>
+      </header>
 
-        <div className="vehicle-sheet-content">
-          <h2 id="vehicle-sheet-title" className="vehicle-setup-title">
-            {titles[step]}
-          </h2>
-          <p className="vehicle-setup-desc">{descs[step]}</p>
+      <div className="vehicle-setup-body">
+        {step === 0 ? (
+          <BrandSearchField
+            brand={draft.brand}
+            brandOther={draft.brandOther}
+            autoFocus
+            onChange={(next) => setDraft((current) => ({ ...current, ...next }))}
+          />
+        ) : null}
 
-          <div className="vehicle-setup-body">
-            {step === 0 ? (
-              <BrandSearchField
-                brand={draft.brand}
-                brandOther={draft.brandOther}
-                autoFocus
-                onChange={(next) => setDraft((current) => ({ ...current, ...next }))}
-              />
-            ) : null}
+        {step === 1 ? (
+          <SetupField
+            value={draft.model}
+            onChange={(model) => setDraft((current) => ({ ...current, model }))}
+            placeholder={m.setup_2_placeholder()}
+            autoFocus
+          />
+        ) : null}
 
-            {step === 1 ? (
-              <SetupField
-                value={draft.model}
-                onChange={(model) => setDraft((current) => ({ ...current, model }))}
-                placeholder={m.setup_2_placeholder()}
-                autoFocus
-              />
-            ) : null}
+        {step === 2 ? (
+          <SetupField
+            value={draft.year}
+            onChange={(year) =>
+              setDraft((current) => ({
+                ...current,
+                year: year.replace(/\D/g, '').slice(0, 4),
+              }))
+            }
+            placeholder={m.setup_3_placeholder()}
+            inputMode="numeric"
+            autoFocus
+          />
+        ) : null}
 
-            {step === 2 ? (
-              <SetupField
-                value={draft.year}
-                onChange={(year) =>
-                  setDraft((current) => ({
-                    ...current,
-                    year: year.replace(/\D/g, '').slice(0, 4),
-                  }))
-                }
-                placeholder={m.setup_3_placeholder()}
-                inputMode="numeric"
-                autoFocus
-              />
-            ) : null}
-
-            {step === 3 ? (
-              <SetupField
-                value={draft.mileage}
-                onChange={(mileage) =>
-                  setDraft((current) => ({
-                    ...current,
-                    mileage: mileage.replace(/[^\d]/g, ''),
-                  }))
-                }
-                placeholder={m.setup_4_placeholder()}
-                inputMode="numeric"
-                suffix={m.setup_4_suffix()}
-                autoFocus
-              />
-            ) : null}
-          </div>
-        </div>
-
-        <footer className="vehicle-sheet-footer">
-          <button
-            type="button"
-            className="vehicle-setup-cta"
-            disabled={!ready}
-            onClick={handleNext}
-          >
-            {isLast ? m.home_vehicle_setup_save() : m.setup_next()}
-          </button>
-        </footer>
+        {step === 3 ? (
+          <>
+            <SetupField
+              value={draft.mileage}
+              onChange={(mileage) =>
+                setDraft((current) => ({
+                  ...current,
+                  mileage: mileage.replace(/[^\d]/g, ''),
+                }))
+              }
+              placeholder={m.setup_4_placeholder()}
+              inputMode="numeric"
+              suffix={m.setup_4_suffix()}
+              autoFocus
+            />
+            <p className="vehicle-edit-label">{m.home_garage_placa_label()}</p>
+            <SetupField
+              value={draft.placa}
+              onChange={(placa) =>
+                setDraft((current) => ({
+                  ...current,
+                  placa: sanitizePlaca(placa),
+                }))
+              }
+              placeholder={m.setup_placa_placeholder()}
+            />
+          </>
+        ) : null}
       </div>
+
+      <button
+        type="button"
+        className="vehicle-setup-cta"
+        disabled={!ready}
+        onClick={handleNext}
+      >
+        {isLast ? m.home_vehicle_setup_save() : m.setup_next()}
+      </button>
+    </div>
     </div>
   )
 }
@@ -323,6 +340,7 @@ function MileageUpdateModal({
         model: vehicle.model,
         year: vehicle.year,
         mileage: mileage.replace(/,/g, '').trim(),
+        placa: vehicle.placa,
       }),
     )
   }
@@ -382,6 +400,60 @@ function MileageUpdateModal({
   )
 }
 
+function useSheetDrag(onClose: () => void) {
+  const [dragY, setDragY] = useState(0)
+  const [dragging, setDragging] = useState(false)
+  const dragStartY = useRef(0)
+  const didDrag = useRef(false)
+
+  function onGrabPointerDown(event: PointerEvent<HTMLElement>) {
+    dragStartY.current = event.clientY
+    didDrag.current = false
+    setDragging(true)
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+
+  function onGrabPointerMove(event: PointerEvent<HTMLElement>) {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
+    const dy = Math.max(0, event.clientY - dragStartY.current)
+    if (dy > 8) didDrag.current = true
+    setDragY(dy)
+  }
+
+  function onGrabPointerUp(event: PointerEvent<HTMLElement>) {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+    const dy = Math.max(0, event.clientY - dragStartY.current)
+    setDragging(false)
+    if (dy > 56) {
+      onClose()
+      return
+    }
+    setDragY(0)
+  }
+
+  function onGrabClick(event: { preventDefault: () => void }) {
+    if (didDrag.current) {
+      event.preventDefault()
+      return
+    }
+    onClose()
+  }
+
+  return {
+    dragY,
+    dragging,
+    grabProps: {
+      onPointerDown: onGrabPointerDown,
+      onPointerMove: onGrabPointerMove,
+      onPointerUp: onGrabPointerUp,
+      onPointerCancel: onGrabPointerUp,
+      onClick: onGrabClick,
+    },
+  }
+}
+
 function VehicleEditSheet({
   vehicle,
   onClose,
@@ -393,6 +465,7 @@ function VehicleEditSheet({
 }) {
   const [draft, setDraft] = useState<Draft>(() => draftFromVehicle(vehicle))
   const ready = isDraftComplete(draft)
+  const { dragY, dragging, grabProps } = useSheetDrag(onClose)
 
   useEffect(() => {
     const previous = document.body.style.overflow
@@ -415,14 +488,31 @@ function VehicleEditSheet({
         aria-label={m.home_vehicle_sheet_close()}
         onClick={onClose}
       />
-      <div className="vehicle-sheet-panel">
-        <div className="vehicle-sheet-handle" aria-hidden="true" />
+      <div
+        className={`vehicle-sheet-panel${dragging ? ' is-dragging' : ''}`}
+        style={dragY ? { transform: `translate3d(0, ${dragY}px, 0)` } : undefined}
+      >
+        <button
+          type="button"
+          className="vehicle-sheet-grabber"
+          aria-label={m.home_vehicle_sheet_close()}
+          {...grabProps}
+        >
+          <span className="vehicle-sheet-handle" aria-hidden="true" />
+        </button>
 
         <header className="vehicle-sheet-header">
           <button type="button" className="vehicle-setup-back" onClick={onClose}>
             {m.home_vehicle_sheet_close()}
           </button>
-          <p className="vehicle-setup-progress">{m.home_vehicle_edit_badge()}</p>
+          <button
+            type="button"
+            className="vehicle-setup-progress vehicle-sheet-title-grab"
+            aria-label={m.home_vehicle_sheet_close()}
+            {...grabProps}
+          >
+            {m.home_vehicle_edit_badge()}
+          </button>
           <span aria-hidden="true" />
         </header>
 
@@ -474,6 +564,18 @@ function VehicleEditSheet({
               suffix={m.setup_4_suffix()}
               autoFocus
             />
+
+            <label className="vehicle-edit-label">{m.home_garage_placa_label()}</label>
+            <SetupField
+              value={draft.placa}
+              onChange={(placa) =>
+                setDraft((current) => ({
+                  ...current,
+                  placa: sanitizePlaca(placa),
+                }))
+              }
+              placeholder={m.setup_placa_placeholder()}
+            />
           </div>
         </div>
 
@@ -507,7 +609,7 @@ function VehicleSelectCard({
   onEdit: () => void
   onServiceFocus: () => void
 }) {
-  const needsService = vehicleNeedsService(vehicle)
+  const { needsService, urgency } = vehicleServiceHealth(vehicle)
   const [actionsArmed, setActionsArmed] = useState(false)
 
   useEffect(() => {
@@ -560,7 +662,7 @@ function VehicleSelectCard({
           {needsService ? (
             <button
               type="button"
-              className={`garage-card-status-btn${actionsArmed ? ' is-armed' : ''}`}
+              className={`garage-card-status-btn is-${urgency}${actionsArmed ? ' is-armed' : ''}`}
               tabIndex={actionsArmed ? 0 : -1}
               aria-hidden={!actionsArmed}
               aria-label={m.home_service_focus_open()}
@@ -684,10 +786,7 @@ function FleetListSheet({
   onSelect: (id: string) => void
 }) {
   const [query, setQuery] = useState('')
-  const [dragY, setDragY] = useState(0)
-  const [dragging, setDragging] = useState(false)
-  const dragStartY = useRef(0)
-  const didDrag = useRef(false)
+  const { dragY, dragging, grabProps } = useSheetDrag(onClose)
 
   useEffect(() => {
     const previous = document.body.style.overflow
@@ -697,44 +796,13 @@ function FleetListSheet({
     }
   }, [])
 
-  function onGrabPointerDown(event: PointerEvent<HTMLButtonElement>) {
-    dragStartY.current = event.clientY
-    didDrag.current = false
-    setDragging(true)
-    event.currentTarget.setPointerCapture(event.pointerId)
-  }
-
-  function onGrabPointerMove(event: PointerEvent<HTMLButtonElement>) {
-    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
-    const dy = Math.max(0, event.clientY - dragStartY.current)
-    if (dy > 8) didDrag.current = true
-    setDragY(dy)
-  }
-
-  function onGrabPointerUp(event: PointerEvent<HTMLButtonElement>) {
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId)
-    }
-    const dy = Math.max(0, event.clientY - dragStartY.current)
-    setDragging(false)
-    if (dy > 56) {
-      onClose()
-      return
-    }
-    setDragY(0)
-  }
-
   const sorted = [...vehicles].sort((a, b) => {
     const left = `${a.brand} ${a.model} ${a.year}`.toLocaleLowerCase('es')
     const right = `${b.brand} ${b.model} ${b.year}`.toLocaleLowerCase('es')
     return left.localeCompare(right, 'es')
   })
 
-  const filtered = sorted.filter((vehicle) => {
-    const haystack = `${vehicle.brand} ${vehicle.model} ${vehicle.year} ${vehicle.mileage}`
-      .toLocaleLowerCase('es')
-    return haystack.includes(query.trim().toLocaleLowerCase('es'))
-  })
+  const filtered = sorted.filter((vehicle) => vehicleMatchesFleetQuery(vehicle, query))
 
   const countLabel =
     vehicles.length === 1
@@ -762,17 +830,7 @@ function FleetListSheet({
           type="button"
           className="vehicle-sheet-grabber"
           aria-label={m.home_vehicle_sheet_close()}
-          onClick={(event) => {
-            if (didDrag.current) {
-              event.preventDefault()
-              return
-            }
-            onClose()
-          }}
-          onPointerDown={onGrabPointerDown}
-          onPointerMove={onGrabPointerMove}
-          onPointerUp={onGrabPointerUp}
-          onPointerCancel={onGrabPointerUp}
+          {...grabProps}
         >
           <span className="vehicle-sheet-handle" aria-hidden="true" />
         </button>
@@ -811,7 +869,7 @@ function FleetListSheet({
           <ul className="fleet-sheet-list">
             {filtered.map((vehicle, index) => {
               const active = vehicle.id === activeId
-              const needsService = vehicleNeedsService(vehicle)
+              const { needsService, urgency } = vehicleServiceHealth(vehicle)
               const artIndex = vehicles.findIndex((item) => item.id === vehicle.id)
               const mark = vehicle.brand.trim().charAt(0).toUpperCase() || 'V'
               const statusLabel = active
@@ -839,6 +897,9 @@ function FleetListSheet({
                           <span className="fleet-sheet-item-model">
                             {vehicle.model} <span>{vehicle.year}</span>
                           </span>
+                          {vehicle.placa ? (
+                            <span className="fleet-sheet-item-placa">{vehicle.placa}</span>
+                          ) : null}
                         </span>
                       </span>
                       <img
@@ -886,7 +947,7 @@ function FleetListSheet({
                       </span>
                       <span
                         className={`fleet-sheet-pill fleet-sheet-pill--accent${
-                          active ? ' is-active' : needsService ? ' is-service' : ''
+                          active ? ' is-active' : needsService ? ` is-${urgency}` : ''
                         }`}
                       >
                         <strong>{statusLabel}</strong>
@@ -918,7 +979,7 @@ export function VehicleHero({
   onActiveChange,
   onServiceFocus,
   showChrome = true,
-  addOpenNonce = 0,
+  onAddVehicle,
   editOpenNonce = 0,
   editVehicleId = null,
   mileageOpenNonce = 0,
@@ -939,19 +1000,18 @@ export function VehicleHero({
   onActiveChange: (profile: VehicleProfile | null) => void
   onServiceFocus: () => void
   showChrome?: boolean
-  addOpenNonce?: number
+  onAddVehicle?: () => void
   editOpenNonce?: number
   editVehicleId?: string | null
   mileageOpenNonce?: number
 }) {
   const [garage, setGarage] = useState<GarageState>(() => getGarage())
-  const [sheetOpen, setSheetOpen] = useState(
-    () => showChrome && getGarage().vehicles.length === 0,
-  )
   const [editingVehicle, setEditingVehicle] = useState<VehicleProfile | null>(null)
   const [mileageVehicle, setMileageVehicle] = useState<VehicleProfile | null>(null)
   const [addFocused, setAddFocused] = useState(false)
   const trackRef = useRef<HTMLDivElement>(null)
+  const appliedEditNonce = useRef(editOpenNonce)
+  const appliedMileageNonce = useRef(mileageOpenNonce)
   const active = getActiveVehicle(garage)
 
   useEffect(() => {
@@ -962,7 +1022,6 @@ export function VehicleHero({
 
   useEffect(() => {
     if (showChrome) return
-    setSheetOpen(false)
     setEditingVehicle(null)
     setMileageVehicle(null)
     setAddFocused(false)
@@ -977,17 +1036,16 @@ export function VehicleHero({
   }, [])
 
   useEffect(() => {
-    if (!addOpenNonce) return
-    setSheetOpen(true)
-  }, [addOpenNonce])
-
-  useEffect(() => {
+    if (editOpenNonce === appliedEditNonce.current) return
+    appliedEditNonce.current = editOpenNonce
     if (!editOpenNonce || !editVehicleId) return
     const found = getGarage().vehicles.find((item) => item.id === editVehicleId) ?? null
     if (found) setEditingVehicle(found)
   }, [editOpenNonce, editVehicleId])
 
   useEffect(() => {
+    if (mileageOpenNonce === appliedMileageNonce.current) return
+    appliedMileageNonce.current = mileageOpenNonce
     if (!mileageOpenNonce) return
     const current = getActiveVehicle(getGarage())
     if (current) setMileageVehicle(current)
@@ -1007,8 +1065,8 @@ export function VehicleHero({
     track.scrollTo({ left: Math.max(0, left), behavior: 'smooth' })
   }, [active?.id, addFocused])
 
-  function openAddSheet() {
-    setSheetOpen(true)
+  function openAddVehicle() {
+    onAddVehicle?.()
   }
 
   function selectVehicle(id: string) {
@@ -1091,7 +1149,7 @@ export function VehicleHero({
               className="garage-add-btn"
               aria-label={m.home_garage_add()}
               disabled={garage.vehicles.length > 0 && !unlocked}
-              onClick={openAddSheet}
+              onClick={openAddVehicle}
             >
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M12 6v12M6 12h12" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
@@ -1197,7 +1255,7 @@ export function VehicleHero({
         </div>
 
         {garage.vehicles.length === 0 ? (
-          <button type="button" className="garage-empty" onClick={openAddSheet}>
+          <button type="button" className="garage-empty" onClick={openAddVehicle}>
             <p className="garage-empty-title">{m.home_vehicle_empty_title()}</p>
             <p className="garage-empty-hint">{m.home_vehicle_empty_hint()}</p>
           </button>
@@ -1229,7 +1287,7 @@ export function VehicleHero({
                   onSelect={selectAddCard}
                   onConfirm={() => {
                     setAddFocused(false)
-                    openAddSheet()
+                    openAddVehicle()
                   }}
                 />
               </div>
@@ -1240,24 +1298,6 @@ export function VehicleHero({
         )}
       </section>
       ) : null}
-
-      {sheetOpen
-        ? createPortal(
-            <VehicleSetupSheet
-              key={`new-${garage.vehicles.length}`}
-              onClose={() => setSheetOpen(false)}
-              onSaved={(next) => {
-                setGarage(next)
-                setSheetOpen(false)
-                setAddFocused(false)
-                const saved = getActiveVehicle(next)
-                onActiveChange(saved)
-                if (saved) onSaved(saved)
-              }}
-            />,
-            document.body,
-          )
-        : null}
 
       {editingVehicle
         ? createPortal(

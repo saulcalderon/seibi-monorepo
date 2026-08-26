@@ -1,9 +1,13 @@
-const SETUP_DONE_KEY = 'seibi-setup-done'
+const SETUP_DONE_PREFIX = 'seibi-setup-done'
 
-export function markSetupDone() {
-  sessionStorage.setItem(SETUP_DONE_KEY, '1')
+function setupKey(userId?: string | null) {
+  return userId ? `${SETUP_DONE_PREFIX}:${userId}` : SETUP_DONE_PREFIX
 }
 
-export function isSetupDone() {
-  return sessionStorage.getItem(SETUP_DONE_KEY) === '1'
+export function markSetupDone(userId?: string | null) {
+  localStorage.setItem(setupKey(userId), '1')
+}
+
+export function isSetupDone(userId?: string | null) {
+  return localStorage.getItem(setupKey(userId)) === '1'
 }

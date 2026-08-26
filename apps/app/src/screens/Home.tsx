@@ -1,6 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
-import { createPortal } from 'react-dom'
-import { VehicleHero } from '../components/VehicleHero'
+import { VehicleHero, VehicleSetupScreen } from '../components/VehicleHero'
 import {
   getTutorialStep,
   isSectionUnlocked,
@@ -89,6 +88,23 @@ function TutorialCoach({
   )
 }
 
+const DISMISSED_NOTIF_KEY = 'seibi-dismissed-notifications'
+
+function readDismissedNotificationIds(): string[] {
+  try {
+    const raw = localStorage.getItem(DISMISSED_NOTIF_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as unknown
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+function writeDismissedNotificationIds(ids: string[]) {
+  localStorage.setItem(DISMISSED_NOTIF_KEY, JSON.stringify(ids))
+}
+
 type AppNotification = {
   id: string
   kind: 'aviso' | 'servicio' | 'recomendacion'
@@ -150,54 +166,32 @@ function kindLabel(kind: AppNotification['kind']) {
   }
 }
 
-function NotificationsSheet({
+function NotificationsScreen({
   items,
-  onClose,
+  onBack,
   onSelect,
+  onClear,
 }: {
   items: AppNotification[]
-  onClose: () => void
+  onBack: () => void
   onSelect: (item: AppNotification) => void
+  onClear: () => void
 }) {
-  useEffect(() => {
-    const previous = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = previous
-    }
-  }, [])
-
   return (
-    <div
-      className="vehicle-sheet"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="notifications-sheet-title"
-    >
-      <button
-        type="button"
-        className="vehicle-sheet-backdrop"
-        aria-label={m.home_vehicle_sheet_close()}
-        onClick={onClose}
-      />
-      <div className="vehicle-sheet-panel">
-        <div className="vehicle-sheet-handle" aria-hidden="true" />
-        <header className="vehicle-sheet-header">
-          <button type="button" className="vehicle-setup-back" onClick={onClose}>
-            {m.home_vehicle_sheet_close()}
-          </button>
-          <p className="vehicle-setup-progress">{m.home_notifications()}</p>
-          <span aria-hidden="true" />
-        </header>
+    <div className="avisos-screen notif-screen">
+      <header className="avisos-header">
+        <button type="button" className="avisos-back" onClick={onBack}>
+          {m.setup_back()}
+        </button>
+        <p className="avisos-eyebrow">{m.home_notifications()}</p>
+        <h1 className="avisos-title">{m.home_notifications_title()}</h1>
+        <p className="avisos-context">{m.home_notifications_desc()}</p>
+      </header>
 
-        <h2 id="notifications-sheet-title" className="vehicle-setup-title">
-          {m.home_notifications_title()}
-        </h2>
-        <p className="notif-sheet-desc">{m.home_notifications_desc()}</p>
-
-        {items.length === 0 ? (
-          <p className="notif-sheet-empty">{m.home_notifications_empty()}</p>
-        ) : (
+      {items.length === 0 ? (
+        <p className="notif-sheet-empty">{m.home_notifications_empty()}</p>
+      ) : (
+        <>
           <ul className="notif-sheet-list">
             {items.map((item) => (
               <li key={item.id}>
@@ -213,8 +207,11 @@ function NotificationsSheet({
               </li>
             ))}
           </ul>
-        )}
-      </div>
+          <button type="button" className="notif-clear" onClick={onClear}>
+            {m.home_notifications_clear()}
+          </button>
+        </>
+      )}
     </div>
   )
 }
@@ -263,7 +260,7 @@ function HeaderActions({
   )
 }
 
-type NavTab = 'home' | 'garaje' | 'recordatorios' | 'perfil' | 'servicios' | 'estimados'
+type NavTab = 'home' | 'garaje' | 'recordatorios' | 'perfil' | 'servicios' | 'estimados' | 'notificaciones' | 'agregar'
 
 function DashNav({
   nav,
@@ -306,7 +303,7 @@ function DashNav({
       badge: null as number | null,
       icon: (
         <path
-          d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"
+          d="M14.5 5.5l4 4M4 20l1.2-4.2L15.7 5.3a2 2 0 012.8 0l.2.2a2 2 0 010 2.8L8.2 18.8 4 20z"
           stroke="currentColor"
           strokeWidth="1.7"
           strokeLinecap="round"
@@ -320,15 +317,13 @@ function DashNav({
       onClick: onAvisos,
       badge: notificationCount > 0 ? notificationCount : null,
       icon: (
-        <>
-          <path
-            d="M6 9a6 6 0 0112 0c0 4 1.5 5.5 2 6H4c.5-.5 2-2 2-6z"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinejoin="round"
-          />
-          <path d="M10 19a2 2 0 004 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-        </>
+        <path
+          d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       ),
     },
     {
@@ -364,7 +359,10 @@ function DashNav({
     function place() {
       if (!root || !indicator) return
       const active = root.querySelector('button.is-active')
-      if (!(active instanceof HTMLElement)) return
+      if (!(active instanceof HTMLElement)) {
+        setIndicatorReady(false)
+        return
+      }
       const hit = active.querySelector('.dash-nav-hit')
       const target = hit instanceof HTMLElement ? hit : active
       const navBox = root.getBoundingClientRect()
@@ -480,7 +478,7 @@ export function Home() {
     getActiveVehicle(getGarage()),
   )
   const [fleetListOpen, setFleetListOpen] = useState(false)
-  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [dismissedNotificationIds, setDismissedNotificationIds] = useState(readDismissedNotificationIds)
   const [nav, setNav] = useState<NavTab>(() => {
     if (typeof window === 'undefined') return 'home'
     const tab = new URLSearchParams(window.location.search).get('nav')
@@ -489,7 +487,9 @@ export function Home() {
       tab === 'estimados' ||
       tab === 'recordatorios' ||
       tab === 'perfil' ||
-      tab === 'garaje'
+      tab === 'garaje' ||
+      tab === 'notificaciones' ||
+      tab === 'agregar'
     ) {
       return tab
     }
@@ -498,76 +498,30 @@ export function Home() {
   const [focusReminderId, setFocusReminderId] = useState<string | null>(null)
   const [focusServiceId, setFocusServiceId] = useState<string | null>(null)
   const [serviciosPreferAll, setServiciosPreferAll] = useState(false)
-  const [navHidden, setNavHidden] = useState(false)
-  const [addOpenNonce, setAddOpenNonce] = useState(0)
   const [editOpenNonce, setEditOpenNonce] = useState(0)
   const [editVehicleId, setEditVehicleId] = useState<string | null>(null)
   const [mileageOpenNonce, setMileageOpenNonce] = useState(0)
   const homeRootRef = useRef<HTMLDivElement>(null)
-  const navRevealTimer = useRef<number | null>(null)
-  const skipNavHideOnMount = useRef(true)
   const tutorialActive = step < TUTORIAL_TOTAL_STEPS
   const highlightedSection =
     tutorialActive && step >= 1 ? SECTION_ORDER[step - 1] : null
+  const inbox = notificationsForVehicle(activeVehicle).filter(
+    (item) => !dismissedNotificationIds.includes(item.id),
+  )
+  const notificationCount = inbox.length
 
   function goHome() {
     setFocusReminderId(null)
     setFocusServiceId(null)
     setServiciosPreferAll(false)
-    setNotificationsOpen(false)
     setFleetListOpen(false)
     setNav('home')
-    skipNavHideOnMount.current = true
     window.requestAnimationFrame(() => {
       homeRootRef.current
         ?.querySelector('.dash-scroll')
         ?.scrollTo({ top: 0, behavior: 'auto' })
     })
   }
-
-  function concealNav(ms = 420) {
-    if (skipNavHideOnMount.current) {
-      skipNavHideOnMount.current = false
-      return
-    }
-    setNavHidden(true)
-    if (navRevealTimer.current != null) {
-      window.clearTimeout(navRevealTimer.current)
-    }
-    navRevealTimer.current = window.setTimeout(() => {
-      setNavHidden(false)
-      navRevealTimer.current = null
-    }, ms)
-  }
-
-  useEffect(() => {
-    const root = homeRootRef.current
-    if (!root) return
-
-    const scroller = root.querySelector('.dash-scroll') ?? root
-    let lastTop = scroller.scrollTop
-    skipNavHideOnMount.current = true
-
-    function onMove() {
-      const top = scroller.scrollTop
-      if (skipNavHideOnMount.current) {
-        skipNavHideOnMount.current = false
-        lastTop = top
-        return
-      }
-      if (Math.abs(top - lastTop) < 16) return
-      lastTop = top
-      concealNav()
-    }
-
-    scroller.addEventListener('scroll', onMove, { passive: true })
-    return () => {
-      scroller.removeEventListener('scroll', onMove)
-      if (navRevealTimer.current != null) {
-        window.clearTimeout(navRevealTimer.current)
-      }
-    }
-  }, [nav])
 
   function openAvisos(reminderId?: string) {
     setFocusReminderId(reminderId ?? null)
@@ -583,11 +537,10 @@ export function Home() {
     setNav('servicios')
   }
 
-  function openGaraje(openAdd = false) {
+  function openGaraje() {
     setFocusReminderId(null)
     setFocusServiceId(null)
     setServiciosPreferAll(false)
-    if (openAdd) setAddOpenNonce((value) => value + 1)
     setNav('garaje')
   }
 
@@ -596,6 +549,39 @@ export function Home() {
     setFocusServiceId(null)
     setServiciosPreferAll(false)
     setNav('estimados')
+  }
+
+  function openNotifications() {
+    setFocusReminderId(null)
+    setFocusServiceId(null)
+    setServiciosPreferAll(false)
+    setNav('notificaciones')
+  }
+
+  function openAddVehicle() {
+    setFocusReminderId(null)
+    setFocusServiceId(null)
+    setServiciosPreferAll(false)
+    setNav('agregar')
+  }
+
+  function clearNotifications() {
+    const visible = notificationsForVehicle(activeVehicle).map((item) => item.id)
+    const next = [...new Set([...dismissedNotificationIds, ...visible])]
+    writeDismissedNotificationIds(next)
+    setDismissedNotificationIds(next)
+  }
+
+  function openNotificationTarget(item: AppNotification) {
+    if (item.target === 'avisos') {
+      openAvisos(item.reminderId)
+      return
+    }
+    if (item.target === 'servicios') {
+      openServicios(item.serviceId)
+      return
+    }
+    openEstimados()
   }
 
   function unlockThrough(nextStep: number) {
@@ -613,7 +599,7 @@ export function Home() {
     return (
       <VehicleHero
         showChrome={showChrome}
-        addOpenNonce={addOpenNonce}
+        onAddVehicle={openAddVehicle}
         editOpenNonce={editOpenNonce}
         editVehicleId={editVehicleId}
         mileageOpenNonce={mileageOpenNonce}
@@ -626,8 +612,8 @@ export function Home() {
         toolbarExtras={
           <HeaderActions
             onOpenFleet={() => setFleetListOpen(true)}
-            onOpenNotifications={() => setNotificationsOpen(true)}
-            hasNotifications={notificationsForVehicle(activeVehicle).length > 0}
+            onOpenNotifications={openNotifications}
+            hasNotifications={notificationCount > 0}
           />
         }
         fleetListOpen={fleetListOpen}
@@ -672,6 +658,7 @@ export function Home() {
             focusServiceId={focusServiceId}
             preferAll={serviciosPreferAll}
             onFocusHandled={() => setFocusServiceId(null)}
+            onOpenReminder={(reminderId) => openAvisos(reminderId)}
           />
         </div>
       ) : nav === 'estimados' ? (
@@ -682,6 +669,15 @@ export function Home() {
         <div className="dash-scroll avisos-scroll">
           <Perfil vehicle={activeVehicle} />
         </div>
+      ) : nav === 'notificaciones' ? (
+        <div className="dash-scroll avisos-scroll">
+          <NotificationsScreen
+            items={inbox}
+            onBack={() => goHome()}
+            onSelect={openNotificationTarget}
+            onClear={clearNotifications}
+          />
+        </div>
       ) : nav === 'garaje' ? (
         <div className="dash-scroll">{renderVehicleHero(true)}</div>
       ) : (
@@ -689,11 +685,11 @@ export function Home() {
           <HomeDashboard
             vehicle={activeVehicle}
             vehicles={getGarage().vehicles}
-            notificationCount={notificationsForVehicle(activeVehicle).length}
+            notificationCount={notificationCount}
             highlightedSection={highlightedSection}
             onOpenFleet={() => setFleetListOpen(true)}
-            onOpenNotifications={() => setNotificationsOpen(true)}
-            onAddVehicle={() => setAddOpenNonce((value) => value + 1)}
+            onOpenNotifications={openNotifications}
+            onAddVehicle={openAddVehicle}
             onTutorialTarget={() =>
               unlockThrough(Math.min(TUTORIAL_TOTAL_STEPS, step + 1))
             }
@@ -712,34 +708,26 @@ export function Home() {
         </div>
       )}
 
-      {nav === 'home' ? renderVehicleHero(false) : null}
-
-      {notificationsOpen
-        ? createPortal(
-            <NotificationsSheet
-              items={notificationsForVehicle(activeVehicle)}
-              onClose={() => setNotificationsOpen(false)}
-              onSelect={(item) => {
-                setNotificationsOpen(false)
-                if (item.target === 'avisos') {
-                  openAvisos(item.reminderId)
-                  return
-                }
-                if (item.target === 'servicios') {
-                  openServicios(item.serviceId)
-                  return
-                }
-                openEstimados()
-              }}
-            />,
-            document.body,
-          )
+      {nav === 'home' || nav === 'agregar' || nav === 'notificaciones'
+        ? renderVehicleHero(false)
         : null}
+
+      {nav === 'agregar' ? (
+        <VehicleSetupScreen
+          onBack={() => goHome()}
+          onSaved={(garage) => {
+            const saved = getActiveVehicle(garage)
+            setHasVehicle(true)
+            setActiveVehicle(saved)
+            if (step < 3) unlockThrough(3)
+            goHome()
+          }}
+        />
+      ) : null}
 
       <DashNav
         nav={nav}
-        hidden={navHidden}
-        notificationCount={notificationsForVehicle(activeVehicle).length}
+        notificationCount={notificationCount}
         onHome={() => goHome()}
         onServicios={() => openServicios()}
         onEstimados={() => openEstimados()}

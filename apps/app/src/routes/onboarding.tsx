@@ -7,11 +7,5 @@ export const Route = createFileRoute('/onboarding')({
 
 function OnboardingRoute() {
   const navigate = useNavigate()
-  // Preview: skip login and go straight into setup questions.
-  return (
-    <Onboarding
-      onFinish={() => navigate({ to: '/setup' })}
-      onSkip={() => navigate({ to: '/setup' })}
-    />
-  )
+  return <Onboarding onFinish={() => navigate({ to: '/login' })} />
 }
