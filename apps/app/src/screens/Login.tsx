@@ -18,7 +18,7 @@ export function Login() {
   }
 
   return (
-    <div className="flex h-full flex-col bg-splash">
+    <div className="flex h-full flex-col bg-fog">
       <div className="relative z-10 px-6 pt-14 pb-2 text-center">
         <Logo className="text-3xl" />
         <p className="mt-2 text-[0.8rem] text-black/88">{m.tagline()}</p>
@@ -37,7 +37,7 @@ export function Login() {
           type="button"
           disabled={pending !== null}
           onClick={() => handleSignIn('apple')}
-          className="flex w-full items-center justify-center gap-2.5 rounded-full border border-black/8 bg-white px-5 py-[0.95rem] text-[0.9rem] font-semibold text-[#111] shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-transform active:scale-[0.98] disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2.5 rounded-full border border-coal/8 bg-pure px-5 py-[0.95rem] text-[0.9rem] font-semibold text-coal shadow-[0_2px_12px_rgba(20,21,23,0.08)] transition-transform active:scale-[0.98] disabled:opacity-60"
         >
           <svg viewBox="0 0 24 24" fill="currentColor" className="h-[18px] w-[18px]">
             <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
@@ -49,7 +49,7 @@ export function Login() {
           type="button"
           disabled={pending !== null}
           onClick={() => handleSignIn('google')}
-          className="flex w-full items-center justify-center gap-2.5 rounded-full border border-black/8 bg-white px-5 py-[0.95rem] text-[0.9rem] font-semibold text-[#111] shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-transform active:scale-[0.98] disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2.5 rounded-full border border-coal/8 bg-pure px-5 py-[0.95rem] text-[0.9rem] font-semibold text-coal shadow-[0_2px_12px_rgba(20,21,23,0.08)] transition-transform active:scale-[0.98] disabled:opacity-60"
         >
           <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
@@ -62,9 +62,9 @@ export function Login() {
 
         <p className="mt-1.5 text-center text-[0.65rem] leading-relaxed text-black/88">
           {m.login_terms_prefix()}
-          <a href="#" className="text-milano no-underline">{m.login_terms_tos()}</a>
+          <a href="#" className="text-radiant no-underline">{m.login_terms_tos()}</a>
           {m.login_terms_and()}
-          <a href="#" className="text-milano no-underline">{m.login_terms_privacy()}</a>.
+          <a href="#" className="text-radiant no-underline">{m.login_terms_privacy()}</a>.
         </p>
       </div>
     </div>

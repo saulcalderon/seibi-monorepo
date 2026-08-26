@@ -11,10 +11,10 @@ const prefersReducedMotion = () =>
 
 const AlertWarningIcon = (
   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path d="M12 8v5M12 16.5h.01" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" />
+    <path d="M12 8v5M12 16.5h.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
     <path
       d="M10.3 4.2L2.8 17.5a2 2 0 001.7 3h15a2 2 0 001.7-3L13.7 4.2a2 2 0 00-3.4 0z"
-      stroke="#fff"
+      stroke="currentColor"
       strokeWidth="1.6"
       strokeLinejoin="round"
     />
@@ -23,14 +23,63 @@ const AlertWarningIcon = (
 
 const AlertTireIcon = (
   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <circle cx="12" cy="12" r="7.5" stroke="#fff" strokeWidth="1.8" />
-    <circle cx="12" cy="12" r="2.2" fill="#fff" />
+    <circle cx="12" cy="12" r="7.5" stroke="currentColor" strokeWidth="1.8" />
+    <circle cx="12" cy="12" r="2.2" fill="currentColor" />
     <path
       d="M12 4.5v2.2M12 17.3v2.2M4.5 12h2.2M17.3 12h2.2"
-      stroke="#fff"
+      stroke="currentColor"
       strokeWidth="1.6"
       strokeLinecap="round"
     />
+  </svg>
+)
+
+const OilDropIcon = (
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M12 3.2S6.8 10 6.8 14a5.2 5.2 0 0010.4 0C17.2 10 12 3.2 12 3.2z"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
+const WheelIcon = (
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <circle cx="12" cy="12" r="7.4" stroke="currentColor" strokeWidth="1.7" />
+    <circle cx="12" cy="12" r="2.3" stroke="currentColor" strokeWidth="1.7" />
+    <path
+      d="M12 4.6v2.3M12 17.1v2.3M4.6 12h2.3M17.1 12h2.3"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+    />
+  </svg>
+)
+
+const CarSideIcon = (
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M4.5 14.2l1.1-3.2A2.4 2.4 0 017.9 9.2h8.2a2.4 2.4 0 012.3 1.8l1.1 3.2"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M3.8 14.2h16.4v2.6a1.1 1.1 0 01-1.1 1.1H4.9a1.1 1.1 0 01-1.1-1.1v-2.6z"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M8.2 9.2l.7-1.9h6.2l.7 1.9"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinejoin="round"
+    />
+    <circle cx="7.4" cy="17.4" r="1.25" fill="currentColor" />
+    <circle cx="16.6" cy="17.4" r="1.25" fill="currentColor" />
   </svg>
 )
 
@@ -56,26 +105,35 @@ function HistorySlide({ active }: { active: boolean }) {
           </div>
           <div className="mock-timeline">
             <div className="mock-row">
-              <span className="mock-dot" />
+              <span className="mock-row-icon" aria-hidden="true">
+                {OilDropIcon}
+              </span>
               <div className="mock-row-body">
                 <div className="mock-row-title">Cambio de aceite</div>
-                <div className="mock-row-meta">Mantenimiento · Auto Norte</div>
+                <div className="mock-row-place">Auto Norte</div>
+                <div className="mock-row-when">12 mar · 10:00 a.m.</div>
               </div>
               <span className="mock-row-cost">$850</span>
             </div>
             <div className="mock-row">
-              <span className="mock-dot muted" />
+              <span className="mock-row-icon muted" aria-hidden="true">
+                {WheelIcon}
+              </span>
               <div className="mock-row-body">
                 <div className="mock-row-title">Frenos delanteros</div>
-                <div className="mock-row-meta">Reparación · Taller Rápido</div>
+                <div className="mock-row-place">Taller Rápido</div>
+                <div className="mock-row-when">3 feb · 4:30 p.m.</div>
               </div>
               <span className="mock-row-cost">$2,400</span>
             </div>
             <div className="mock-row">
-              <span className="mock-dot muted" />
+              <span className="mock-row-icon muted" aria-hidden="true">
+                {CarSideIcon}
+              </span>
               <div className="mock-row-body">
                 <div className="mock-row-title">Alineación</div>
-                <div className="mock-row-meta">Mantenimiento · 12 mar</div>
+                <div className="mock-row-place">Centro Automotriz</div>
+                <div className="mock-row-when">28 ene · 9:15 a.m.</div>
               </div>
               <span className="mock-row-cost">$650</span>
             </div>
@@ -359,44 +417,128 @@ function EstimateSlide({ active }: { active: boolean }) {
 }
 
 const SLIDE_COUNT = 3
+/** Pause after "Siguiente" so in-slide motion can settle before scrolling. */
+const NEXT_SETTLE_MS = 120
+/** Fallback if `scrollend` is unavailable. */
+const SCROLL_SETTLE_MS = 550
+/** Extra beat after landing before the mock card appears. */
+const STAGE_REVEAL_MS = 60
 
 export function Onboarding({ onFinish }: OnboardingProps) {
   const viewportRef = useRef<HTMLDivElement>(null)
   const [current, setCurrent] = useState(0)
+  /** Which slide may play entrance animations / show its mock card. */
+  const [active, setActive] = useState(0)
+  const [busy, setBusy] = useState(false)
+  const currentRef = useRef(0)
+  const activeRef = useRef(0)
+  const programmaticScrollRef = useRef(false)
+  const scrollDoneTimerRef = useRef(0)
+  const nextTimerRef = useRef(0)
+  const revealTimerRef = useRef(0)
   const isLast = current === SLIDE_COUNT - 1
+
+  currentRef.current = current
+  activeRef.current = active
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(nextTimerRef.current)
+      clearTimeout(scrollDoneTimerRef.current)
+      clearTimeout(revealTimerRef.current)
+    }
+  }, [])
+
+  function revealSlide(index: number) {
+    clearTimeout(revealTimerRef.current)
+    const delay = prefersReducedMotion() ? 0 : STAGE_REVEAL_MS
+    revealTimerRef.current = window.setTimeout(() => {
+      setActive(index)
+      setBusy(false)
+    }, delay)
+  }
+
+  function finishProgrammaticScroll(index: number) {
+    programmaticScrollRef.current = false
+    setCurrent(index)
+    revealSlide(index)
+  }
 
   function goToSlide(index: number) {
     const clamped = Math.max(0, Math.min(index, SLIDE_COUNT - 1))
-    const viewport = viewportRef.current
-    if (viewport) {
-      viewport.scrollTo({ left: clamped * viewport.clientWidth, behavior: 'smooth' })
+    if (clamped === currentRef.current && activeRef.current === clamped) {
+      setBusy(false)
+      return
     }
-    setCurrent(clamped)
+
+    const viewport = viewportRef.current
+    // Hide every mock card before moving so nothing peeks mid-transition.
+    setActive(-1)
+    clearTimeout(revealTimerRef.current)
+
+    if (!viewport) {
+      setCurrent(clamped)
+      revealSlide(clamped)
+      return
+    }
+
+    programmaticScrollRef.current = true
+    clearTimeout(scrollDoneTimerRef.current)
+
+    let settled = false
+    const onDone = () => {
+      if (settled) return
+      settled = true
+      viewport.removeEventListener('scrollend', onDone)
+      clearTimeout(scrollDoneTimerRef.current)
+      finishProgrammaticScroll(clamped)
+    }
+
+    viewport.addEventListener('scrollend', onDone)
+    scrollDoneTimerRef.current = window.setTimeout(onDone, SCROLL_SETTLE_MS)
+    viewport.scrollTo({ left: clamped * viewport.clientWidth, behavior: 'smooth' })
   }
 
   function handleScroll() {
+    if (programmaticScrollRef.current) return
     const viewport = viewportRef.current
     if (!viewport || !viewport.clientWidth) return
-    const next = Math.round(viewport.scrollLeft / viewport.clientWidth)
-    if (next !== current) setCurrent(next)
+
+    const progress = viewport.scrollLeft / viewport.clientWidth
+    const nearest = Math.round(progress)
+    const aligned = Math.abs(progress - nearest) < 0.03
+
+    // Mid-swipe: hide cards so neighboring mocks aren't visible.
+    if (!aligned) {
+      if (activeRef.current !== -1) setActive(-1)
+      return
+    }
+
+    if (nearest !== currentRef.current) {
+      setCurrent(nearest)
+      revealSlide(nearest)
+    } else if (activeRef.current !== nearest) {
+      revealSlide(nearest)
+    }
   }
 
   function handleNext() {
-    if (isLast) onFinish()
-    else goToSlide(current + 1)
+    if (busy) return
+    if (isLast) {
+      onFinish()
+      return
+    }
+
+    setBusy(true)
+    clearTimeout(nextTimerRef.current)
+    nextTimerRef.current = window.setTimeout(() => {
+      goToSlide(currentRef.current + 1)
+    }, prefersReducedMotion() ? 0 : NEXT_SETTLE_MS)
   }
 
   return (
-    <div className="flex h-full flex-col bg-splash">
-      <header className="flex min-h-18 items-center justify-end px-7 pt-13">
-        <button
-          type="button"
-          onClick={onFinish}
-          className="p-1 text-[0.78rem] font-medium text-black/45 transition-colors hover:text-black/75"
-        >
-          {m.onboarding_skip()}
-        </button>
-      </header>
+    <div className="flex h-full flex-col bg-fog">
+      <div className="min-h-14 shrink-0 pt-13" aria-hidden="true" />
 
       <div
         ref={viewportRef}
@@ -404,9 +546,9 @@ export function Onboarding({ onFinish }: OnboardingProps) {
         className="info-viewport flex-1 snap-x snap-mandatory overflow-x-auto overflow-y-hidden"
       >
         <div className="flex h-full">
-          <HistorySlide active={current === 0} />
-          <ReminderSlide active={current === 1} />
-          <EstimateSlide active={current === 2} />
+          <HistorySlide active={active === 0} />
+          <ReminderSlide active={active === 1} />
+          <EstimateSlide active={active === 2} />
         </div>
       </div>
 
@@ -419,7 +561,12 @@ export function Onboarding({ onFinish }: OnboardingProps) {
               role="tab"
               aria-selected={index === current}
               aria-label={`Pantalla ${index + 1} de ${SLIDE_COUNT}`}
-              onClick={() => goToSlide(index)}
+              disabled={busy}
+              onClick={() => {
+                if (busy) return
+                setBusy(true)
+                goToSlide(index)
+              }}
               className={`info-dot${index === current ? ' active' : ''}`}
             />
           ))}
@@ -427,7 +574,9 @@ export function Onboarding({ onFinish }: OnboardingProps) {
         <button
           type="button"
           onClick={handleNext}
-          className="w-full rounded-full bg-milano px-5 py-[0.95rem] text-[0.9rem] font-semibold text-white shadow-[0_4px_20px_rgba(196,0,0,0.28)] transition-transform active:scale-[0.98]"
+          disabled={busy}
+          aria-busy={busy}
+          className="w-full rounded-full bg-radiant px-5 py-[0.95rem] text-[0.9rem] font-semibold text-pure shadow-[0_4px_20px_rgba(255,79,24,0.28)] transition-[transform,opacity] active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100"
         >
           {isLast ? m.onboarding_continue() : m.onboarding_next()}
         </button>
