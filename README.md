@@ -1,6 +1,6 @@
 # Seibi
 
-Mobile-first app for tracking vehicle maintenance: log work done on a vehicle, get reminders when the next service is due, and estimate costs. Domain language is Spanish — see [`CONTEXT.md`](./CONTEXT.md).
+Mobile-first app for tracking vehicle maintenance: log work done on a vehicle, get reminders when the next service is due, and estimate costs. Domain glossary is English — see [`CONTEXT.md`](./CONTEXT.md). Linear and UI use Spanish names from [ADR-0002](./docs/adr/0002-english-tech-spanish-people.md).
 
 ## Prerequisites
 

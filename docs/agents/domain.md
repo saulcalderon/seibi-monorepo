@@ -40,7 +40,11 @@ Multi-context repo (presence of `CONTEXT-MAP.md` at the root):
 
 ## Use the glossary's vocabulary
 
-When your output names a domain concept (in an issue title, a refactor proposal, a hypothesis, a test name), use the term as defined in `CONTEXT.md`. Don't drift to synonyms the glossary explicitly avoids.
+`CONTEXT.md` is English. People-facing writing (Linear, UI, product copy)
+uses the Spanish name from ADR-0002 (Vehículo, not Vehicle). Technology
+(tables, columns, enums, commits, tests) uses the English identifier
+(`maintenance`, not `mantenimiento`). Free text is stored as entered.
+Don't drift to glossary synonyms.
 
 If the concept you need isn't in the glossary yet, that's a signal — either you're inventing language the project doesn't use (reconsider) or there's a real gap (note it for `/domain-modeling`).
 

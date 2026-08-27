@@ -6,4 +6,6 @@ Issues and PRDs are tracked in Linear (team Seibi, project App móvil Seibi) via
 
 ### Domain docs
 
-Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. Glossary and
+schema are English; Linear and UI use the Spanish names in ADR-0002. See
+`docs/agents/domain.md`.
