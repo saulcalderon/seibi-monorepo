@@ -2,6 +2,9 @@
   "mcpServers": {
     "linear": {
       "url": "https://mcp.linear.app/mcp"
+    },
+    "supabase": {
+      "url": "https://mcp.supabase.com/mcp"
     }
   }
 }
