@@ -1,0 +1,3 @@
+interface:
+  display_name: "Craft PR"
+  short_description: "Branch, commits, gate, and PR body the team way"
