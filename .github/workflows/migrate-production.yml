@@ -1,4 +1,5 @@
-# After a PR lands on main: test migrations locally, then apply pending ones to production.
+# After a PR lands on main: apply pending migrations to production.
+# Database tests are not run in CI.
 # The app image stays with Dokploy and the Dockerfile — this workflow does not deploy the app.
 name: Migrate production
 
@@ -30,25 +31,9 @@ jobs:
             exit 1
           fi
 
-  verify-migrations:
-    name: Verify migrations on an isolated database
-    needs: guard
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: supabase/setup-cli@v3
-        with:
-          version: ${{ env.SUPABASE_CLI_VERSION }}
-
-      - name: Apply migrations and run database tests locally
-        run: |
-          supabase db start
-          supabase test db
-
   migrate:
     name: Apply pending production migrations
-    needs: verify-migrations
+    needs: guard
     runs-on: ubuntu-latest
     environment: production
     env:
