@@ -33,11 +33,13 @@ The UI maps enum codes back to the Spanish word.
 | CONTEXT.md | Schema | Linear / UI |
 | --- | --- | --- |
 | Vehicle | `vehicles` | Vehículo |
+| Plate | `plate` | Placa |
 | Service | `services` | Servicio |
 | Type | `type` — enum `maintenance` \| `repair` | Tipo — mantenimiento \| reparación |
 | Shop | `shop` (free-text column, not its own table) | Taller |
 | Reminder | `reminders` | Recordatorio |
-| Mileage | `mileage` | Kilometraje |
+| Mileage | `mileage_readings` | Kilometraje |
+| Odometer measure | `odometer_measure` — enum `km` \| `mi` | Medida del odómetro — km \| millas |
 | Estimate | `estimates` | Estimado |
 
 UI copy still says the Spanish word (placa, taller, mantenimiento). The

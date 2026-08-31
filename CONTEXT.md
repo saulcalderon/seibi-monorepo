@@ -7,11 +7,18 @@ Service is due, and what that work might cost.
 
 **Vehicle**:
 An automobile owned by a user. Every Service, Reminder, and Mileage reading
-belongs to exactly one Vehicle.
+belongs to exactly one Vehicle. A Plate is optional. Mileage on a Vehicle
+uses one odometer measure.
 _Avoid_: auto, car, unit
 
+**Plate**:
+The registration identifier on a Vehicle. Optional; two Vehicles may share
+brand, model, and year.
+_Avoid_: placa, license
+
 **Service**:
-A dated record of work done on a Vehicle.
+A dated record of work done on a Vehicle. Every Service is recorded with
+a Mileage reading. A Mileage reading is not a Service.
 _Avoid_: entry, log, job
 
 **Type**:
@@ -28,8 +35,15 @@ A due notice on a Vehicle, based on Mileage or elapsed time.
 _Avoid_: alert, notice, notification
 
 **Mileage**:
-An odometer reading for a Vehicle.
+A dated odometer reading for a Vehicle. A Vehicle has many; the latest is
+the current odometer. A series of readings describes how much the Vehicle
+is used — that usage is not an Estimate. A Mileage reading is not a Service.
 _Avoid_: odometer, distance, millage
+
+**Odometer measure**:
+Whether Mileage on a Vehicle is recorded in kilometers (`km`) or miles
+(`mi`). Set on the Vehicle; every reading uses that measure.
+_Avoid_: unit, units
 
 **Estimate**:
 The projected cost of an upcoming Service.
