@@ -1,5 +1,5 @@
 # After a PR lands on main: apply pending migrations to production.
-# Database tests run on pull requests (Database PR), not here.
+# Database tests are not run in CI.
 # The app image stays with Dokploy and the Dockerfile — this workflow does not deploy the app.
 name: Migrate production
 
