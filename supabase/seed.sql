@@ -1,0 +1,1 @@
+-- No seed rows. Schema comes from migrations.

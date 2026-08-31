@@ -7024,6 +7024,7 @@ button.dash-tx--button:active {
 .perfil-avatar {
   display: grid;
   place-items: center;
+  overflow: hidden;
   width: 3.4rem;
   height: 3.4rem;
   border-radius: 999px;
@@ -7033,6 +7034,12 @@ button.dash-tx--button:active {
   font-size: 1.05rem;
   font-weight: 600;
   letter-spacing: 0.02em;
+}
+
+.profile-avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .perfil-name {
@@ -7047,6 +7054,15 @@ button.dash-tx--button:active {
   margin: 0.2rem 0 0;
   font-size: 0.84rem;
   color: rgba(0, 0, 0, 0.45);
+}
+
+.profile-session-cue {
+  margin: 0.25rem 0 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-radiant);
 }
 
 .perfil-card {
