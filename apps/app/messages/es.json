@@ -244,6 +244,8 @@
   "perfil_eyebrow": "Cuenta",
   "perfil_context": "Tu información, garaje y preferencias en Seibi.",
   "perfil_account": "Cuenta",
+  "profile_guest_name": "Cuenta",
+  "profile_no_session": "Sin sesión",
   "perfil_garage": "Garaje",
   "perfil_garage_empty": "Aún no hay vehículo activo",
   "perfil_active_km": "{km} actuales",
