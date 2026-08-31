@@ -4,7 +4,7 @@ Mobile-first app for tracking vehicle maintenance: log work done on a vehicle, g
 
 ## Prerequisites
 
-- **Node.js** `>= 20`
+- **Node.js** LTS (see `.nvmrc`; `^22.13` or `^24`)
 - **pnpm** `11.3.0` (pinned via `packageManager` in `package.json`)
 
 Enable pnpm with Corepack:

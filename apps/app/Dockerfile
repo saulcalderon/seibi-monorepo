@@ -6,7 +6,7 @@
 # -----------------------------------------------------------------------------
 # Stage 1: base — shared Node + pnpm for every later stage
 # -----------------------------------------------------------------------------
-FROM node:24-alpine AS base
+FROM node:lts-alpine AS base
 # Corepack pins the same pnpm version the repo uses locally (see packageManager / lockfile).
 RUN corepack enable && corepack prepare pnpm@11.3.0 --activate
 WORKDIR /app
