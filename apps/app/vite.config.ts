@@ -17,7 +17,7 @@ export default defineConfig({
     }),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/icon.svg', 'assets/*'],
+      includeAssets: ['apple-touch-icon.png', 'favicon.svg', 'icons/*', 'assets/*'],
       manifest: {
         name: 'Seibi',
         short_name: 'Seibi',
@@ -25,17 +25,29 @@ export default defineConfig({
         lang: 'es',
         dir: 'ltr',
         theme_color: '#121214',
-        background_color: '#121214',
+        background_color: '#F2F4F7',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
         scope: '/',
         icons: [
           {
-            src: '/icons/icon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
-            purpose: 'any maskable',
+            src: '/icons/icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: '/icons/icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: '/icons/icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
           },
         ],
       },
