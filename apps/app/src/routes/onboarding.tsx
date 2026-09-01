@@ -1,11 +1,16 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { Onboarding } from '../screens/Onboarding'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { isSetupDone } from '../lib/setupProgress'
+import { requireSessionOrDevBypass } from '../lib/sessionGate'
+import { SetupFlow } from '../screens/SetupFlow'
 
 export const Route = createFileRoute('/onboarding')({
-  component: OnboardingRoute,
-})
+  beforeLoad: async () => {
+    const session = await requireSessionOrDevBypass()
+    if (!session) return
 
-function OnboardingRoute() {
-  const navigate = useNavigate()
-  return <Onboarding onFinish={() => navigate({ to: '/login' })} />
-}
+    if (isSetupDone(session.user.id)) {
+      throw redirect({ to: '/home' })
+    }
+  },
+  component: SetupFlow,
+})

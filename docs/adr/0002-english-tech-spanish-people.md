@@ -41,6 +41,8 @@ The UI maps enum codes back to the Spanish word.
 | Mileage | `mileage_readings` | Kilometraje |
 | Odometer measure | `odometer_measure` — enum `km` \| `mi` | Medida del odómetro — km \| millas |
 | Estimate | `estimates` | Estimado |
+| Intro | (no table — first-visit demo) | Introducción |
+| Onboarding | (no table — first run after sign-in) | Onboarding |
 
 UI copy still says the Spanish word (placa, taller, mantenimiento). The
 column behind it is English (`plate`, `shop`, `type`). `type` stores
