@@ -4,7 +4,11 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import './index.css'
 import { routeTree } from './routeTree.gen'
+import { applyStandaloneClass } from './lib/displayMode'
 import { queryClient, persister } from './lib/queryClient'
+
+// Before paint: standalone shell CSS (iOS navigator.standalone + display-mode).
+applyStandaloneClass()
 
 const router = createRouter({
   routeTree,
