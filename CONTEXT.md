@@ -66,3 +66,15 @@ _Avoid_: unit, units
 **Estimate**:
 The projected cost of an upcoming Service.
 _Avoid_: quote, budget, price
+
+**Intro**:
+The product demo a person sees the first time they open Seibi, before they
+sign in. It does not create a Vehicle.
+_Avoid_: setup, FTUE, walkthrough
+
+**Onboarding**:
+The first run after sign-in: a welcome, then questions about how they
+maintain a Vehicle. A Vehicle is not required to finish it. The first
+Vehicle may be created during Onboarding; creating one later in the
+garage is not Onboarding.
+_Avoid_: setup, first-run, FTUE
