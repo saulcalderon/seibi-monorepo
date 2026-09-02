@@ -17,7 +17,14 @@ export default defineConfig({
     }),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['apple-touch-icon.png', 'favicon.svg', 'icons/*', 'assets/*'],
+      includeAssets: [
+        'apple-touch-icon.png',
+        'favicon.ico',
+        'favicon-32.png',
+        'favicon.svg',
+        'icons/*',
+        'assets/*',
+      ],
       manifest: {
         name: 'Seibi',
         short_name: 'Seibi',
