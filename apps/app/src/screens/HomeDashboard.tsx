@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { GarageCarStage } from '../components/GarageCarStage'
+import { WearGauge, WearRing, wearLegend, wearStatusLabel } from '../components/wearUi'
 import {
   formatMileageAmount,
   oilKmRemaining,
@@ -43,90 +44,6 @@ import * as m from '../paraglide/messages.js'
 
 function dueProgress(item: ReminderItem) {
   return item.remainingPct
-}
-
-function wearStatusLabel(level: WearLevel) {
-  if (level === 'optimal') return m.home_wear_status_optimal()
-  if (level === 'medium') return m.home_wear_status_medium()
-  if (level === 'high') return m.home_wear_status_high()
-  return m.home_wear_status_replace()
-}
-
-function wearLegend() {
-  return [
-    {
-      id: 'optimal' as const,
-      range: m.home_wear_range_optimal(),
-      label: m.home_wear_status_optimal(),
-      sample: 85,
-    },
-    {
-      id: 'medium' as const,
-      range: m.home_wear_range_medium(),
-      label: m.home_wear_status_medium(),
-      sample: 55,
-    },
-    {
-      id: 'high' as const,
-      range: m.home_wear_range_high(),
-      label: m.home_wear_status_high(),
-      sample: 27,
-    },
-    {
-      id: 'replace' as const,
-      range: m.home_wear_range_replace(),
-      label: m.home_wear_status_replace(),
-      sample: 8,
-    },
-  ]
-}
-
-function WearGauge({
-  pct,
-  color,
-  label,
-  size = 'lg',
-}: {
-  pct: number
-  color: string
-  label?: string
-  size?: 'lg' | 'sm'
-}) {
-  const large = size === 'lg'
-  const view = large ? 120 : 32
-  const r = large ? 46 : 11
-  const c = 2 * Math.PI * r
-  const cx = view / 2
-  const shown = Math.min(100, Math.max(0, pct))
-
-  return (
-    <span
-      className={`seibi-wear-gauge is-${size}`}
-      style={{ '--wear': color } as CSSProperties}
-      aria-hidden="true"
-    >
-      <svg viewBox={`0 0 ${view} ${view}`}>
-        <circle className="seibi-wear-gauge-track" cx={cx} cy={cx} r={r} />
-        <circle
-          className="seibi-wear-gauge-fill"
-          cx={cx}
-          cy={cx}
-          r={r}
-          style={{
-            stroke: color,
-            strokeDasharray: `${c}`,
-            strokeDashoffset: `${c * (1 - shown / 100)}`,
-          }}
-        />
-      </svg>
-      {large ? (
-        <span className="seibi-wear-gauge-copy">
-          <strong>{Math.round(shown)}%</strong>
-          {label ? <em>{label}</em> : null}
-        </span>
-      ) : null}
-    </span>
-  )
 }
 
 function hudStatusLabel(level: WearLevel) {
@@ -680,30 +597,6 @@ export function HomeDashboard({
         })
       : (showVehicleData ? (next?.due ?? m.home_recent_empty()) : m.home_no_data())
   const progress = showVehicleData && next ? dueProgress(next) : 0
-  const wearLevel = wearLevelFromPct(progress)
-  const wearColor = WEAR_COLOR[wearLevel]
-  const [shownProgress, setShownProgress] = useState(0)
-
-  useEffect(() => {
-    setShownProgress(0)
-    if (!showVehicleData || !next?.id) return
-
-    const target = progress
-    const duration = 920
-    let start: number | null = null
-    let frame = 0
-
-    function tick(now: number) {
-      if (start == null) start = now
-      const t = Math.min(1, (now - start) / duration)
-      const eased = 1 - (1 - t) ** 3
-      setShownProgress(target * eased)
-      if (t < 1) frame = requestAnimationFrame(tick)
-    }
-
-    frame = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(frame)
-  }, [vehicle?.id, next?.id, progress, showVehicleData])
 
   return (
     <div className="seibi-dash">
@@ -1035,7 +928,11 @@ export function HomeDashboard({
           ) : null}
         </div>
         {showVehicleData && next ? (
-          <div className="seibi-maint">
+          <div
+            className={`seibi-maint${
+              wearLevelFromPct(progress) === 'replace' ? ' is-replace' : ''
+            }`}
+          >
             <button
               type="button"
               className="seibi-maint-main"
@@ -1057,33 +954,15 @@ export function HomeDashboard({
                 <span>{nextCopy}</span>
               </span>
             </button>
-            <button
-              type="button"
-              className="seibi-maint-ring-wrap"
-              aria-label={m.home_wear_open()}
+            <WearRing
+              pct={progress}
               onClick={() => {
                 const slot = HUD_SLOTS.find((key) => hudLayout[key] === next.id) ?? null
                 setHudEditSlot(slot)
                 setWearEditing(false)
                 setWearFocus(next)
               }}
-            >
-              <svg className="seibi-maint-ring" viewBox="0 0 48 48">
-                <circle className="seibi-maint-ring-track" cx="24" cy="24" r="18" />
-                <circle
-                  className="seibi-maint-ring-fill"
-                  cx="24"
-                  cy="24"
-                  r="18"
-                  style={{
-                    stroke: wearColor,
-                    strokeDasharray: `${2 * Math.PI * 18}`,
-                    strokeDashoffset: `${2 * Math.PI * 18 * (1 - shownProgress / 100)}`,
-                  }}
-                />
-              </svg>
-              <span className="seibi-maint-pct">{Math.round(shownProgress)}%</span>
-            </button>
+            />
           </div>
         ) : (
           <p className="dash-tx-empty">

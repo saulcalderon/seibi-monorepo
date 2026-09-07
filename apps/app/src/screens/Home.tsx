@@ -27,6 +27,40 @@ const SECTION_ORDER: AppSection[] = [
   'estimados',
 ]
 
+function DashPane({
+  variant = 'screen',
+  className,
+  children,
+}: {
+  variant?: 'home' | 'screen'
+  className?: string
+  children: ReactNode
+}) {
+  const [entering, setEntering] = useState(true)
+
+  useEffect(() => {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const id = window.setTimeout(() => setEntering(false), reduce ? 0 : 1150)
+    return () => window.clearTimeout(id)
+  }, [])
+
+  return (
+    <div
+      className={[
+        'dash-scroll',
+        'dash-pane',
+        entering ? 'dash-pane--enter' : '',
+        variant === 'home' ? 'dash-pane--home' : 'dash-pane--screen',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      {children}
+    </div>
+  )
+}
+
 function IconButton({
   label,
   onClick,
@@ -636,47 +670,43 @@ export function Home() {
       className={`dash-home is-toolbar-settled${tutorialActive ? ' is-tutoring' : ''}`}
     >
       {nav === 'recordatorios' ? (
-        <div className="dash-scroll avisos-scroll">
+        <DashPane key="recordatorios" className="avisos-scroll">
           <Avisos
             vehicle={activeVehicle}
             focusReminderId={focusReminderId}
-            onBack={() => {
-              goHome()
-            }}
             onFocusHandled={() => setFocusReminderId(null)}
           />
-        </div>
+        </DashPane>
       ) : nav === 'servicios' ? (
-        <div className="dash-scroll avisos-scroll">
+        <DashPane key="servicios" className="avisos-scroll">
           <Servicios
             vehicle={activeVehicle}
             focusServiceId={focusServiceId}
             preferAll={serviciosPreferAll}
             onFocusHandled={() => setFocusServiceId(null)}
-            onOpenReminder={(reminderId) => openAvisos(reminderId)}
           />
-        </div>
+        </DashPane>
       ) : nav === 'estimados' ? (
-        <div className="dash-scroll avisos-scroll estimados-scroll">
+        <DashPane key="estimados" className="avisos-scroll estimados-scroll">
           <Estimados vehicle={activeVehicle} />
-        </div>
+        </DashPane>
       ) : nav === 'perfil' ? (
-        <div className="dash-scroll avisos-scroll">
+        <DashPane key="perfil" className="avisos-scroll">
           <Perfil vehicle={activeVehicle} />
-        </div>
+        </DashPane>
       ) : nav === 'notificaciones' ? (
-        <div className="dash-scroll avisos-scroll">
+        <DashPane key="notificaciones" className="avisos-scroll">
           <NotificationsScreen
             items={inbox}
             onBack={() => goHome()}
             onSelect={openNotificationTarget}
             onClear={clearNotifications}
           />
-        </div>
+        </DashPane>
       ) : nav === 'garaje' ? (
-        <div className="dash-scroll">{renderVehicleHero(true)}</div>
+        <DashPane key="garaje">{renderVehicleHero(true)}</DashPane>
       ) : (
-        <div className="dash-scroll">
+        <DashPane key="home" variant="home">
           <HomeDashboard
             vehicle={activeVehicle}
             vehicles={getGarage().vehicles}
@@ -700,7 +730,7 @@ export function Home() {
             }}
             onUpdateKm={() => setMileageOpenNonce((value) => value + 1)}
           />
-        </div>
+        </DashPane>
       )}
 
       {nav === 'home' || nav === 'agregar' || nav === 'notificaciones'
