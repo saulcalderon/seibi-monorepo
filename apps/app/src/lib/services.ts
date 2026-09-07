@@ -15,6 +15,8 @@ export type ServiceItem = {
   performedAt: number
   taller?: string
   comment?: string
+  /** Optional invoice photo as a compressed data URL. */
+  invoicePhoto?: string
 }
 
 /** Window used by “Servicios recientes”. Historial ignores this. */
@@ -122,6 +124,7 @@ export function servicesForVehicle(vehicle: VehicleProfile | null): ServiceItem[
 
 const LOGGED_KEY = 'seibi-logged-services'
 const NOTES_KEY = 'seibi-service-notes'
+const INVOICES_KEY = 'seibi-service-invoices'
 const SERVICES_CHANGE = 'seibi-services-change'
 
 type LoggedService = ServiceItem & {
@@ -219,11 +222,18 @@ export function loggedPartResetsForVehicle(vehicleId: string): Partial<Record<st
 
 export function addLoggedService(
   vehicleId: string,
-  input: { name: string; cost?: string; mileage?: string; taller?: string },
+  input: {
+    name: string
+    cost?: string
+    mileage?: string
+    taller?: string
+    invoicePhoto?: string
+  },
 ): ServiceItem {
   const name = input.name.trim()
   const mileageKm = Number(String(input.mileage ?? '').replace(/,/g, ''))
   const taller = input.taller?.trim() || undefined
+  const invoicePhoto = input.invoicePhoto?.trim() || undefined
   const performedAt = Date.now()
   const when = formatServiceWhen(performedAt)
   const item: LoggedService = {
@@ -237,8 +247,12 @@ export function addLoggedService(
     mileageKm: Number.isFinite(mileageKm) ? mileageKm : undefined,
     loggedAt: performedAt,
     taller,
+    invoicePhoto,
   }
   localStorage.setItem(LOGGED_KEY, JSON.stringify([item, ...readLoggedServices()]))
+  if (invoicePhoto) {
+    writeServiceInvoicePhoto(vehicleId, item.id, invoicePhoto)
+  }
   window.dispatchEvent(new Event(SERVICES_CHANGE))
   return item
 }
@@ -258,14 +272,57 @@ function readServiceNotes(): Record<string, string> {
   }
 }
 
+function readServiceInvoices(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(INVOICES_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw) as Record<string, string>
+    return parsed && typeof parsed === 'object' ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+function writeServiceInvoicePhoto(
+  vehicleId: string | null,
+  serviceId: string,
+  photo: string | null,
+) {
+  const invoices = readServiceInvoices()
+  const key = noteStorageKey(vehicleId, serviceId)
+  const trimmed = photo?.trim() || ''
+  if (trimmed) invoices[key] = trimmed
+  else delete invoices[key]
+  localStorage.setItem(INVOICES_KEY, JSON.stringify(invoices))
+
+  if (!vehicleId) return
+  const logged = readLoggedServices()
+  let changed = false
+  const next = logged.map((entry) => {
+    if (entry.id !== serviceId || entry.vehicleId !== vehicleId) return entry
+    changed = true
+    if (trimmed) return { ...entry, invoicePhoto: trimmed }
+    const { invoicePhoto: _removed, ...rest } = entry
+    return rest
+  })
+  if (changed) localStorage.setItem(LOGGED_KEY, JSON.stringify(next))
+}
+
 function withServiceNotes(
   vehicleId: string | null,
   items: ServiceItem[],
 ): ServiceItem[] {
   const notes = readServiceNotes()
+  const invoices = readServiceInvoices()
   return items.map((item) => {
-    const saved = notes[noteStorageKey(vehicleId, item.id)]
-    return saved ? { ...item, comment: saved } : item
+    const key = noteStorageKey(vehicleId, item.id)
+    const savedComment = notes[key]
+    const savedInvoice = invoices[key]
+    return {
+      ...item,
+      ...(savedComment ? { comment: savedComment } : null),
+      ...(savedInvoice ? { invoicePhoto: savedInvoice } : null),
+    }
   })
 }
 
@@ -280,6 +337,15 @@ export function saveServiceComment(
   if (trimmed) notes[key] = trimmed
   else delete notes[key]
   localStorage.setItem(NOTES_KEY, JSON.stringify(notes))
+  window.dispatchEvent(new Event(SERVICES_CHANGE))
+}
+
+export function saveServiceInvoicePhoto(
+  vehicleId: string | null,
+  serviceId: string,
+  photo: string | null,
+) {
+  writeServiceInvoicePhoto(vehicleId, serviceId, photo)
   window.dispatchEvent(new Event(SERVICES_CHANGE))
 }
 
@@ -309,21 +375,28 @@ export function parseServiceCost(cost: string) {
   return Number.isFinite(amount) ? amount : 0
 }
 
-/** Total spent on Servicios in the current calendar month. */
-export function monthlySpendForVehicle(vehicle: VehicleProfile | null) {
+/** Total spent on Servicios in a calendar month (defaults to current month). */
+export function monthlySpendForVehicle(
+  vehicle: VehicleProfile | null,
+  at?: { year: number; month: number },
+) {
   const now = new Date()
-  const year = now.getFullYear()
-  const month = now.getMonth()
+  const year = at?.year ?? now.getFullYear()
+  const month = at?.month ?? now.getMonth()
   const items = servicesForVehicle(vehicle).filter((item) => {
     if (!item.performedAt) return false
     const date = new Date(item.performedAt)
     return date.getFullYear() === year && date.getMonth() === month
   })
   const total = items.reduce((sum, item) => sum + parseServiceCost(item.cost), 0)
+  const label = new Date(year, month, 1).toLocaleString('es-MX', {
+    month: 'long',
+    year: 'numeric',
+  })
   return {
     total,
     count: items.length,
-    label: now.toLocaleString('es-MX', { month: 'long', year: 'numeric' }),
+    label,
     formatted: money(total),
   }
 }

@@ -74,6 +74,7 @@ export function Estimados({ vehicle }: { vehicle: VehicleProfile | null }) {
   const [query, setQuery] = useState('')
   const [entries, setEntries] = useState<ChatEntry[]>([])
   const [typing, setTyping] = useState(false)
+  const [busy, setBusy] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [locating, setLocating] = useState(false)
   const [location, setLocation] = useState<EstimateLocation | null>(null)
@@ -107,26 +108,41 @@ export function Estimados({ vehicle }: { vehicle: VehicleProfile | null }) {
 
   function ask(raw: string) {
     const text = raw.trim()
-    if (!text || typing) return
+    if (!text || busy) return
 
     const userId = `u-${Date.now()}`
     setEntries((prev) => [...prev, { id: userId, kind: 'user', text }])
     setQuery('')
-    setTyping(true)
+    setBusy(true)
+    setTyping(false)
 
     timersRef.current.forEach(clearTimeout)
+
+    const reduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    const typingDelayMs = reduced ? 0 : 320
+    const replyDelayMs = reduced ? 80 : 1100
+
+    const typingTimer = window.setTimeout(() => {
+      setTyping(true)
+    }, typingDelayMs)
+
     const replyTimer = window.setTimeout(() => {
       const estimate = estimateForQuery(text, {
         radiusKm,
         location: activeLocation,
       })
+      setTyping(false)
+      setBusy(false)
       setEntries((prev) => [
         ...prev,
         { id: `r-${Date.now()}`, kind: 'reply', estimate },
       ])
-      setTyping(false)
-    }, 700)
-    timersRef.current = [replyTimer]
+    }, typingDelayMs + replyDelayMs)
+
+    timersRef.current = [typingTimer, replyTimer]
   }
 
   function handleSubmit(event: FormEvent) {
@@ -179,12 +195,12 @@ export function Estimados({ vehicle }: { vehicle: VehicleProfile | null }) {
 
   return (
     <div className="estimados-screen">
-      <header className="estimados-header">
+      <header className="avisos-header seibi-screen-header">
         <div className="estimados-header-top">
           <div>
-            <p className="estimados-eyebrow">{m.home_estimates_eyebrow()}</p>
-            <h1 className="estimados-title">{m.estimados_title()}</h1>
-            <p className="estimados-context">
+            <p className="avisos-eyebrow">{m.home_estimates_eyebrow()}</p>
+            <h1 className="avisos-title">{m.estimados_title()}</h1>
+            <p className="seibi-screen-header-vehicle">
               {label
                 ? m.home_vehicle_context({ vehicle: label })
                 : m.home_vehicle_context_empty()}
@@ -232,11 +248,11 @@ export function Estimados({ vehicle }: { vehicle: VehicleProfile | null }) {
         ) : (
           entries.map((entry) =>
             entry.kind === 'user' ? (
-              <div key={entry.id} className="estimados-bubble user">
+              <div key={entry.id} className="estimados-bubble user is-entering">
                 {entry.text}
               </div>
             ) : (
-              <div key={entry.id} className="estimados-bubble reply">
+              <div key={entry.id} className="estimados-bubble reply is-entering">
                 <ReplyCard estimate={entry.estimate} />
               </div>
             ),
@@ -244,7 +260,12 @@ export function Estimados({ vehicle }: { vehicle: VehicleProfile | null }) {
         )}
 
         {typing ? (
-          <div className="estimados-typing" aria-hidden="true">
+          <div
+            className="estimados-typing is-entering"
+            role="status"
+            aria-live="polite"
+            aria-label={m.estimados_typing()}
+          >
             <span />
             <span />
             <span />
@@ -267,7 +288,7 @@ export function Estimados({ vehicle }: { vehicle: VehicleProfile | null }) {
           type="submit"
           className="estimados-send"
           aria-label={m.estimados_send()}
-          disabled={!query.trim() || typing}
+          disabled={!query.trim() || busy}
         >
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path

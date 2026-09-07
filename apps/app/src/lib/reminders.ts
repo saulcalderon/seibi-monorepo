@@ -19,6 +19,8 @@ export type ReminderItem = {
   tone: ReminderTone
   remainingPct: number
   remainingKm?: number
+  remainingDays?: number
+  lastServicedAt?: number
 }
 
 const TONE_ORDER: Record<ReminderTone, number> = {
@@ -108,6 +110,21 @@ function formatKmLeft(km: number) {
   return km.toLocaleString('es-MX')
 }
 
+const KM_PER_DAY = 40
+
+function estimateDaysFromKm(kmLeft: number) {
+  return Math.max(0, Math.round(kmLeft / KM_PER_DAY))
+}
+
+function lastAtFromDays(intervalDays: number, daysLeft: number) {
+  return Date.now() - Math.max(0, intervalDays - daysLeft) * 86_400_000
+}
+
+function lastAtFromKm(intervalKm: number, kmLeft: number) {
+  const elapsedKm = Math.max(0, intervalKm - kmLeft)
+  return Date.now() - Math.round(elapsedKm / KM_PER_DAY) * 86_400_000
+}
+
 function kmItem(
   id: string,
   name: string,
@@ -115,6 +132,7 @@ function kmItem(
   left: number,
   interval: number,
   overdue?: boolean,
+  lastServicedAt?: number,
 ): ReminderItem {
   const remainingKm = overdue ? 0 : left
   return {
@@ -125,6 +143,8 @@ function kmItem(
     tone: oilTone(Boolean(overdue), remainingKm),
     remainingPct: overdue ? 0 : remainingPct(remainingKm, interval),
     remainingKm,
+    remainingDays: estimateDaysFromKm(remainingKm),
+    lastServicedAt: lastServicedAt ?? lastAtFromKm(interval, remainingKm),
   }
 }
 
@@ -133,14 +153,18 @@ function dayItem(
   name: string,
   meta: string,
   left: number,
+  lastServicedAt?: number,
 ): ReminderItem {
+  const interval = DAY_INTERVAL[id as keyof typeof DAY_INTERVAL] ?? 365
   return {
     id,
     name,
     meta,
     due: left <= 0 ? `Vencido · haz ${name.toLowerCase()}` : `En ${left} días`,
     tone: timeTone(left),
-    remainingPct: remainingPct(left, DAY_INTERVAL[id as keyof typeof DAY_INTERVAL] ?? 365),
+    remainingPct: remainingPct(left, interval),
+    remainingDays: left,
+    lastServicedAt: lastServicedAt ?? lastAtFromDays(interval, left),
   }
 }
 
@@ -214,7 +238,15 @@ export function remindersForVehicle(vehicle: VehicleProfile | null): ReminderIte
     dayItem('battery', 'Revisión de batería', 'Cada 24 meses', batteryDays),
   ]
 
-  return items.sort((a, b) => TONE_ORDER[a.tone] - TONE_ORDER[b.tone])
+  return items
+    .map((item) => {
+      const reset = resets[item.id]
+      return reset ? { ...item, lastServicedAt: reset.at } : item
+    })
+    .sort(
+      (a, b) =>
+        a.remainingPct - b.remainingPct || TONE_ORDER[a.tone] - TONE_ORDER[b.tone],
+    )
 }
 
 export type ServiceUrgency = 'ok' | 'warn' | 'danger'
