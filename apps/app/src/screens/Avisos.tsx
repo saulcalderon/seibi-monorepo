@@ -589,7 +589,7 @@ export function Avisos({
   }, [focusReminderId])
 
   function selectFilter(id: AvisosFilter) {
-    finishFocus()
+    onFocusHandled?.()
     if (id === activeFilter && swapPhase === 'idle') return
     pendingFilter.current = id
     setActiveFilter(id)
