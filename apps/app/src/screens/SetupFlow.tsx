@@ -5,7 +5,7 @@ import { SetupIntro } from './SetupIntro'
 import { useRequireProductionSession } from '../lib/authSession'
 import { markSetupDone } from '../lib/setupProgress'
 import { supabase } from '../lib/supabase'
-import { resetTutorial } from '../lib/tutorialProgress'
+import { isTutorialDone, resetTutorial } from '../lib/tutorialProgress'
 
 type SetupPhase = 'intro' | 'mantenimiento'
 
@@ -20,7 +20,7 @@ export function SetupFlow() {
       data: { session },
     } = await supabase.auth.getSession()
     markSetupDone(session?.user.id)
-    resetTutorial()
+    if (!isTutorialDone()) resetTutorial()
     void navigate({ to: '/home', replace: true })
   }
 

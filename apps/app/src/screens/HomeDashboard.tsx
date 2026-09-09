@@ -1,9 +1,17 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from 'react'
 import { createPortal } from 'react-dom'
 import { GarageCarStage } from '../components/GarageCarStage'
 import { WearGauge, WearRing, wearLegend, wearStatusLabel } from '../components/wearUi'
 import {
   formatMileageAmount,
+  formatMileageUnit,
   oilKmRemaining,
   vehicleArtSrc,
   type VehicleProfile,
@@ -17,7 +25,16 @@ import {
   type ReminderItem,
   type WearLevel,
 } from '../lib/reminders'
-import { addAppointment, formatAppointmentDate } from '../lib/appointments'
+import {
+  addAppointment,
+  appointmentDatesForVehicle,
+  appointmentsForVehicle,
+  formatAppointmentDate,
+  removeAppointment,
+  formatAppointmentTime,
+  formatAppointmentWhen,
+  type Appointment,
+} from '../lib/appointments'
 import {
   addPendiente,
   pendientesForVehicle,
@@ -44,6 +61,19 @@ import * as m from '../paraglide/messages.js'
 
 function dueProgress(item: ReminderItem) {
   return item.remainingPct
+}
+
+function reminderDueCopy(item: ReminderItem, active: VehicleProfile | null) {
+  if (item.id === 'oil' && active) {
+    const left = item.remainingKm ?? oilKmRemaining(active.mileage, active.mileageUnit)
+    if (left > 0) {
+      return m.home_due_days_or_km({
+        days: String(Math.max(1, Math.round(left / 120))),
+        km: left.toLocaleString('es-MX'),
+      })
+    }
+  }
+  return item.due
 }
 
 function hudStatusLabel(level: WearLevel) {
@@ -206,6 +236,119 @@ function HeaderBtn({
   )
 }
 
+const SWIPE_DELETE_W = 96
+
+function SwipeDeleteRow({
+  open,
+  onOpenChange,
+  onDelete,
+  deleteLabel,
+  children,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onDelete: () => void
+  deleteLabel: string
+  children: ReactNode
+}) {
+  const startX = useRef(0)
+  const startY = useRef(0)
+  const axis = useRef<'x' | 'y' | null>(null)
+  const dragging = useRef(false)
+  const pointerId = useRef<number | null>(null)
+  const offsetRef = useRef(open ? -SWIPE_DELETE_W : 0)
+  const [offset, setOffset] = useState(open ? -SWIPE_DELETE_W : 0)
+  const [isDragging, setIsDragging] = useState(false)
+
+  function moveTo(next: number) {
+    offsetRef.current = next
+    setOffset(next)
+  }
+
+  useEffect(() => {
+    if (!dragging.current) moveTo(open ? -SWIPE_DELETE_W : 0)
+  }, [open])
+
+  function onPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    if (event.pointerType === 'mouse' && event.button !== 0) return
+    startX.current = event.clientX
+    startY.current = event.clientY
+    axis.current = null
+    dragging.current = false
+    pointerId.current = event.pointerId
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId)
+    } catch {
+      /* synthetic events may not allow capture */
+    }
+  }
+
+  function onPointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    if (pointerId.current !== event.pointerId) return
+    const dx = event.clientX - startX.current
+    const dy = event.clientY - startY.current
+    if (!axis.current) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return
+      axis.current = Math.abs(dx) >= Math.abs(dy) ? 'x' : 'y'
+    }
+    if (axis.current !== 'x') return
+    dragging.current = true
+    setIsDragging(true)
+    const base = open ? -SWIPE_DELETE_W : 0
+    moveTo(Math.min(0, Math.max(-(SWIPE_DELETE_W + 20), base + dx)))
+  }
+
+  function onPointerUp(event: ReactPointerEvent<HTMLDivElement>) {
+    if (pointerId.current !== event.pointerId) return
+    pointerId.current = null
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    } catch {
+      /* already released */
+    }
+    setIsDragging(false)
+    if (axis.current !== 'x') {
+      if (open) onOpenChange(false)
+      return
+    }
+    const nextOpen = offsetRef.current < -SWIPE_DELETE_W * 0.42
+    onOpenChange(nextOpen)
+    moveTo(nextOpen ? -SWIPE_DELETE_W : 0)
+    window.setTimeout(() => {
+      dragging.current = false
+    }, 0)
+  }
+
+  return (
+    <div className={`seibi-swipe${open ? ' is-open' : ''}`}>
+      <button
+        type="button"
+        className="seibi-swipe-delete"
+        tabIndex={open ? 0 : -1}
+        onClick={onDelete}
+      >
+        {deleteLabel}
+      </button>
+      <div
+        className={`seibi-swipe-front${isDragging ? ' is-dragging' : ''}`}
+        style={{ transform: `translate3d(${offset}px, 0, 0)` }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        onClickCapture={(event) => {
+          if (dragging.current || open) {
+            event.preventDefault()
+            event.stopPropagation()
+          }
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
+
 function ShortcutTile({
   label,
   onClick,
@@ -282,9 +425,11 @@ const WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
 function CalendarPicker({
   value,
   onChange,
+  booked = [],
 }: {
   value: string
   onChange: (iso: string) => void
+  booked?: string[]
 }) {
   const selected = value ? new Date(`${value}T00:00:00`) : new Date()
   const [cursor, setCursor] = useState(
@@ -301,7 +446,7 @@ function CalendarPicker({
   })
 
   return (
-    <div className="seibi-cal">
+    <div className="seibi-cal" style={{ '--booked': WEAR_COLOR.medium } as CSSProperties}>
       <div className="seibi-cal-head">
         <button
           type="button"
@@ -330,11 +475,14 @@ function CalendarPicker({
         {cells.map((day, index) => {
           if (!day) return <span key={`e-${index}`} />
           const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+          const isBooked = booked.includes(iso)
           return (
             <button
               key={iso}
               type="button"
-              className={`${iso === value ? 'is-selected' : ''}${iso === todayIso ? ' is-today' : ''}`}
+              className={`${iso === value ? 'is-selected' : ''}${
+                iso === todayIso ? ' is-today' : ''
+              }${isBooked ? ' is-booked' : ''}`}
               onClick={() => onChange(iso)}
             >
               {day}
@@ -343,6 +491,34 @@ function CalendarPicker({
         })}
       </div>
     </div>
+  )
+}
+
+function AppointmentAlarm({ item }: { item: Appointment }) {
+  return (
+    <article
+      className="seibi-appt-alarm"
+      aria-live="polite"
+      style={{ '--booked': WEAR_COLOR.medium } as CSSProperties}
+    >
+      <span className="seibi-appt-alarm-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="13" r="6.2" stroke="currentColor" strokeWidth="1.7" />
+          <path
+            d="M12 10.2v3.1l2 1.2M8.2 4.8l-2 1.6M15.8 4.8l2 1.6"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+          />
+        </svg>
+      </span>
+      <div className="seibi-appt-alarm-copy">
+        <p className="seibi-appt-alarm-kicker">{m.home_appt_alarm()}</p>
+        <strong>{item.note || m.home_appt_alarm_note()}</strong>
+        <p className="seibi-appt-alarm-when">{formatAppointmentWhen(item.date, item.time)}</p>
+      </div>
+      <p className="seibi-appt-alarm-time">{formatAppointmentTime(item.time)}</p>
+    </article>
   )
 }
 
@@ -398,19 +574,16 @@ export function HomeDashboard({
   onTutorialTarget?: () => void
 }) {
   const fleetRef = useRef<HTMLDivElement>(null)
+  const fleetSelectRef = useRef<string | null>(null)
+  const skipFleetPulse = useRef(true)
+  const [pulseId, setPulseId] = useState<string | null>(null)
   const reminders = remindersForVehicle(vehicle)
-  const [focusReminderId, setFocusReminderId] = useState<string | null>(null)
-  const focusedReminder = focusReminderId
-    ? reminders.find((item) => item.id === focusReminderId)
-    : undefined
-  const next =
-    focusedReminder ??
-    reminders.find((item) => item.tone === 'danger' || item.tone === 'warn') ??
-    reminders[0]
+  const [, setFocusReminderId] = useState<string | null>(null)
   const fleet = vehicles
   const fleetMany = vehicles.length > 0
   const [addFocused, setAddFocused] = useState(false)
   const showVehicleData = Boolean(vehicle) && !addFocused
+  const upcoming = showVehicleData ? upcomingMaintenanceForVehicle(vehicle, 3) : []
   const [addArmed, setAddArmed] = useState(false)
   const [editArmed, setEditArmed] = useState(false)
   const [quickSheet, setQuickSheet] = useState<'part' | 'pendientes' | 'appt' | null>(null)
@@ -418,17 +591,26 @@ export function HomeDashboard({
   const [hudLayout, setHudLayout] = useState<HudLayout>(DEFAULT_HUD_LAYOUT)
   const [hudEditSlot, setHudEditSlot] = useState<HudSlot | null>(null)
   const [wearEditing, setWearEditing] = useState(false)
+  const [wearSource, setWearSource] = useState<'upcoming' | 'hud'>('hud')
   const [partName, setPartName] = useState('')
   const [partCost, setPartCost] = useState('')
   const [partTaller, setPartTaller] = useState('')
   const [pendientes, setPendientes] = useState<Pendiente[]>([])
   const [pendienteDraft, setPendienteDraft] = useState('')
+  const [focusPendienteId, setFocusPendienteId] = useState<string | null>(null)
+  const [swipeId, setSwipeId] = useState<string | null>(null)
   const [schedulingId, setSchedulingId] = useState<string | null>(null)
   const [apptDate, setApptDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [apptTime, setApptTime] = useState('09:00')
   const [apptNote, setApptNote] = useState('')
   const [apptSaved, setApptSaved] = useState('')
+  const [apptSavedItem, setApptSavedItem] = useState<Appointment | null>(null)
+  const [, setApptTick] = useState(0)
+  const bookedDates = vehicle ? appointmentDatesForVehicle(vehicle.id) : []
+  const agenda =
+    showVehicleData && vehicle ? appointmentsForVehicle(vehicle.id) : []
   const [, setServicesTick] = useState(0)
-  const recent = showVehicleData ? recentServicesForVehicle(vehicle, 2) : []
+  const recent = showVehicleData ? recentServicesForVehicle(vehicle, 3) : []
   const lockCards = highlightedSection === 'animacion'
   const lockAdd =
     highlightedSection === 'animacion' || highlightedSection === 'vehiculo'
@@ -451,18 +633,37 @@ export function HomeDashboard({
     if (highlightedSection === 'agregar') onTutorialTarget?.()
   }
 
-  function openQuick(kind: 'part' | 'pendientes' | 'appt') {
+  function openQuick(
+    kind: 'part' | 'pendientes' | 'appt',
+    focusPendiente?: string,
+    focusAppointment?: Appointment,
+  ) {
     if (!showVehicleData || !vehicle) return
     setPartName('')
     setPartCost('')
     setPartTaller('')
     setPendienteDraft('')
     setSchedulingId(null)
+    setFocusPendienteId(kind === 'pendientes' ? focusPendiente ?? null : null)
     setPendientes(pendientesForVehicle(vehicle.id))
-    setApptDate(new Date().toISOString().slice(0, 10))
-    setApptNote('')
-    setApptSaved('')
+    setApptDate(focusAppointment?.date || new Date().toISOString().slice(0, 10))
+    setApptTime(focusAppointment?.time || '09:00')
+    setApptNote(focusAppointment?.note || '')
+    setApptSaved(
+      kind === 'appt' && focusAppointment
+        ? formatAppointmentWhen(focusAppointment.date, focusAppointment.time)
+        : '',
+    )
+    setApptSavedItem(kind === 'appt' ? focusAppointment ?? null : null)
     setQuickSheet(kind)
+  }
+
+  function scrollToSection(section: string) {
+    window.requestAnimationFrame(() => {
+      document
+        .querySelector<HTMLElement>(`[data-section="${section}"]`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
   }
 
   function savePart() {
@@ -487,6 +688,8 @@ export function HomeDashboard({
     addPendiente({ vehicleId: vehicle.id, note: pendienteDraft })
     setPendienteDraft('')
     setPendientes(pendientesForVehicle(vehicle.id))
+    setQuickSheet(null)
+    scrollToSection('notas')
   }
 
   function startSchedulePendiente(item: Pendiente) {
@@ -500,23 +703,52 @@ export function HomeDashboard({
     const item = pendientes.find((pendiente) => pendiente.id === schedulingId)
     if (!item) return
     schedulePendiente(item.id, apptDate)
-    addAppointment({ vehicleId: vehicle.id, date: apptDate, note: item.note })
+    addAppointment({ vehicleId: vehicle.id, date: apptDate, note: item.note, time: apptTime })
     setPendientes(pendientesForVehicle(vehicle.id))
     setSchedulingId(null)
-    setApptSaved(formatAppointmentDate(apptDate))
+    setFocusPendienteId(null)
+    setApptSaved('')
+    setApptTick((count) => count + 1)
+    setQuickSheet(null)
+    scrollToSection('agenda')
   }
 
   function deletePendiente(id: string) {
     if (!vehicle) return
     removePendiente(id)
     if (schedulingId === id) setSchedulingId(null)
-    setPendientes(pendientesForVehicle(vehicle.id))
+    const next = pendientesForVehicle(vehicle.id)
+    setPendientes(next)
+    setSwipeId(null)
+    if (focusPendienteId === id) {
+      setFocusPendienteId(null)
+      setQuickSheet(null)
+    }
+  }
+
+  function deleteAppointment(id: string) {
+    removeAppointment(id)
+    if (apptSavedItem?.id === id) {
+      setApptSavedItem(null)
+      if (quickSheet === 'appt') setQuickSheet(null)
+    }
+    setSwipeId(null)
+    setApptTick((count) => count + 1)
   }
 
   function saveAppointment() {
     if (!vehicle || !apptDate) return
-    addAppointment({ vehicleId: vehicle.id, date: apptDate, note: apptNote })
-    setApptSaved(formatAppointmentDate(apptDate))
+    addAppointment({
+      vehicleId: vehicle.id,
+      date: apptDate,
+      note: apptNote,
+      time: apptTime,
+    })
+    setApptSaved('')
+    setApptSavedItem(null)
+    setApptTick((count) => count + 1)
+    setQuickSheet(null)
+    scrollToSection('agenda')
   }
 
   function pickHudPart(reminderId: string) {
@@ -540,6 +772,20 @@ export function HomeDashboard({
     if (!target) return
     const left = target.offsetLeft - (track.clientWidth - target.clientWidth) / 2
     track.scrollTo({ left: Math.max(0, left), behavior: 'smooth' })
+  }, [vehicle?.id, addFocused])
+
+  useEffect(() => {
+    const next = addFocused ? 'add' : vehicle?.id ?? null
+    if (skipFleetPulse.current) {
+      skipFleetPulse.current = false
+      fleetSelectRef.current = next
+      return
+    }
+    if (!next || next === fleetSelectRef.current) return
+    fleetSelectRef.current = next
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const timer = window.setTimeout(() => setPulseId(next), 720)
+    return () => window.clearTimeout(timer)
   }, [vehicle?.id, addFocused])
 
   useEffect(() => {
@@ -573,8 +819,15 @@ export function HomeDashboard({
     setWearFocus(null)
     setHudEditSlot(null)
     setWearEditing(false)
-    if (vehicle?.id) setHudLayout(hudLayoutForVehicle(vehicle.id))
-    else setHudLayout(DEFAULT_HUD_LAYOUT)
+    if (vehicle?.id) {
+      setHudLayout(hudLayoutForVehicle(vehicle.id))
+      setPendientes(pendientesForVehicle(vehicle.id))
+    } else {
+      setHudLayout(DEFAULT_HUD_LAYOUT)
+      setPendientes([])
+    }
+    setFocusPendienteId(null)
+    setSwipeId(null)
   }, [vehicle?.id])
 
   useEffect(() => {
@@ -583,21 +836,6 @@ export function HomeDashboard({
     // Skip card selection when the garage is empty.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [highlightedSection, vehicles.length])
-  const oilLeft =
-    showVehicleData && next?.id === 'oil' && next.remainingKm != null
-      ? next.remainingKm
-      : showVehicleData && vehicle
-        ? oilKmRemaining(vehicle.mileage)
-        : 0
-  const nextCopy =
-    showVehicleData && next?.id === 'oil' && vehicle && oilLeft > 0
-      ? m.home_due_days_or_km({
-          days: String(Math.max(1, Math.round(oilLeft / 120))),
-          km: oilLeft.toLocaleString('es-MX'),
-        })
-      : (showVehicleData ? (next?.due ?? m.home_recent_empty()) : m.home_no_data())
-  const progress = showVehicleData && next ? dueProgress(next) : 0
-
   return (
     <div className="seibi-dash">
       <header className="seibi-dash-head">
@@ -671,8 +909,10 @@ export function HomeDashboard({
             {vehicle ? (
               <>
                 <p className="seibi-hero-brand">{vehicle.brand}</p>
-                <h2 className="seibi-hero-title">{vehicle.model}</h2>
-                <p className="seibi-hero-year">{vehicle.year}</p>
+                <div className="seibi-stage-id-model">
+                  <h2 className="seibi-hero-title">{vehicle.model}</h2>
+                  <p className="seibi-hero-year">{vehicle.year}</p>
+                </div>
               </>
             ) : (
               <>
@@ -719,10 +959,13 @@ export function HomeDashboard({
                 data-vehicle-id={item.id}
                 className={`seibi-hero${active ? ' is-active' : ''}${
                   lockCards ? ' is-locked' : ''
-                }`}
+                }${pulseId === item.id ? ' is-pulse' : ''}`}
                 role="button"
                 tabIndex={0}
                 aria-pressed={active}
+                onAnimationEnd={(event) => {
+                  if (event.animationName === 'seibi-hero-arrive') setPulseId(null)
+                }}
                 onClick={() => selectVehicle(item.id)}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' || event.key === ' ') {
@@ -737,6 +980,27 @@ export function HomeDashboard({
                   alt=""
                   draggable={false}
                 />
+                <button
+                  type="button"
+                  className="seibi-hero-settings"
+                  aria-label={
+                    active && editArmed
+                      ? m.home_vehicle_edit_open()
+                      : m.home_service_select_first()
+                  }
+                  onClick={(event) => {
+                    event.preventDefault()
+                    event.stopPropagation()
+                    if (!active) {
+                      selectVehicle(item.id)
+                      return
+                    }
+                    if (!editArmed) return
+                    onEditVehicle(item.id)
+                  }}
+                >
+                  <GearIcon />
+                </button>
                 <div className="seibi-hero-top">
                   <div>
                     <p className="seibi-kicker">{m.home_your_vehicle()}</p>
@@ -744,34 +1008,13 @@ export function HomeDashboard({
                       {item.model} <span>{item.year}</span>
                     </h2>
                   </div>
-                  <button
-                    type="button"
-                    className="seibi-hero-settings"
-                    aria-label={
-                      active && editArmed
-                        ? m.home_vehicle_edit_open()
-                        : m.home_service_select_first()
-                    }
-                    onClick={(event) => {
-                      event.preventDefault()
-                      event.stopPropagation()
-                      if (!active) {
-                        selectVehicle(item.id)
-                        return
-                      }
-                      if (!editArmed) return
-                      onEditVehicle(item.id)
-                    }}
-                  >
-                    <GearIcon />
-                  </button>
                 </div>
                 <div className="seibi-hero-stats">
                   <div className="seibi-hero-stat seibi-hero-stat--km">
                     <p>{m.home_garage_km_label()}</p>
                     <strong>
                       <span className="seibi-hero-km-value">{formatMileageAmount(item.mileage)}</span>
-                      <span className="seibi-hero-km-unit">{m.setup_4_suffix()}</span>
+                      <span className="seibi-hero-km-unit">{formatMileageUnit(item.mileageUnit)}</span>
                     </strong>
                   </div>
                   <div className="seibi-hero-stats-divider" aria-hidden="true" />
@@ -818,7 +1061,10 @@ export function HomeDashboard({
               addArmed ? ' is-armed' : ''
             }${highlightedSection === 'agregar' ? ' is-highlighted' : ''}${
               lockAdd ? ' is-locked' : ''
-            }`}
+            }${pulseId === 'add' ? ' is-pulse' : ''}`}
+            onAnimationEnd={(event) => {
+              if (event.animationName === 'seibi-hero-arrive') setPulseId(null)
+            }}
             aria-pressed={addFocused}
             aria-label={addArmed ? m.home_garage_add() : m.home_garage_add_card_hint()}
             disabled={lockAdd}
@@ -927,42 +1173,53 @@ export function HomeDashboard({
             </button>
           ) : null}
         </div>
-        {showVehicleData && next ? (
-          <div
-            className={`seibi-maint${
-              wearLevelFromPct(progress) === 'replace' ? ' is-replace' : ''
-            }`}
-          >
-            <button
-              type="button"
-              className="seibi-maint-main"
-              onClick={() => onOpenAvisos(next.id)}
-            >
-              <span className="seibi-maint-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M8 4h8l1.5 5H6.5L8 4zM7 9v9a2 2 0 002 2h6a2 2 0 002-2V9"
-                    stroke="currentColor"
-                    strokeWidth="1.7"
-                    strokeLinejoin="round"
-                  />
-                  <path d="M10 13h4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                </svg>
-              </span>
-              <span className="seibi-maint-copy">
-                <strong>{next.name}</strong>
-                <span>{nextCopy}</span>
-              </span>
-            </button>
-            <WearRing
-              pct={progress}
-              onClick={() => {
-                const slot = HUD_SLOTS.find((key) => hudLayout[key] === next.id) ?? null
-                setHudEditSlot(slot)
-                setWearEditing(false)
-                setWearFocus(next)
-              }}
-            />
+        {showVehicleData && upcoming.length > 0 ? (
+          <div className="seibi-maint-list">
+            {upcoming.map((item) => (
+              <div
+                key={item.id}
+                className={`seibi-maint${
+                  wearLevelFromPct(dueProgress(item)) === 'replace' ? ' is-replace' : ''
+                }`}
+              >
+                <button
+                  type="button"
+                  className="seibi-maint-main"
+                  onClick={() => onOpenAvisos(item.id)}
+                >
+                  <span className="seibi-maint-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M8 4h8l1.5 5H6.5L8 4zM7 9v9a2 2 0 002 2h6a2 2 0 002-2V9"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M10 13h4"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>
+                  <span className="seibi-maint-copy">
+                    <strong>{item.name}</strong>
+                    <span>{reminderDueCopy(item, vehicle)}</span>
+                  </span>
+                </button>
+                <WearRing
+                  pct={dueProgress(item)}
+                  onClick={() => {
+                    const slot = HUD_SLOTS.find((key) => hudLayout[key] === item.id) ?? null
+                    setHudEditSlot(slot)
+                    setWearEditing(false)
+                    setWearSource('upcoming')
+                    setWearFocus(item)
+                  }}
+                />
+              </div>
+            ))}
           </div>
         ) : (
           <p className="dash-tx-empty">
@@ -1070,13 +1327,16 @@ export function HomeDashboard({
                 <button
                   key={slot}
                   type="button"
-                  className={`seibi-hud-node is-${slot}`}
+                  className={`seibi-hud-node is-${slot}${
+                    level === 'replace' ? ' is-replace' : ''
+                  }`}
                   style={{ '--wear': WEAR_COLOR[level] } as CSSProperties}
                   aria-label={`${hudShortLabel(reminderId)}: ${hudStatusLabel(level)}`}
                   onClick={() => {
                     if (!item) return
                     setHudEditSlot(slot)
                     setWearEditing(false)
+                    setWearSource('hud')
                     setWearFocus(item)
                   }}
                 >
@@ -1084,13 +1344,159 @@ export function HomeDashboard({
                     <HudPartIcon kind={hudIconKind(reminderId)} />
                   </span>
                   <strong>{hudShortLabel(reminderId)}</strong>
-                  <span>{hudStatusLabel(level)}</span>
+                  <span className="seibi-hud-status">{hudStatusLabel(level)}</span>
                 </button>
               )
             })}
           </div>
         ) : (
           <p className="dash-tx-empty">{m.home_no_data()}</p>
+        )}
+      </section>
+
+      <section
+        className="seibi-section"
+        data-section="notas"
+        aria-label={m.home_section_notes()}
+      >
+        <div className="seibi-section-head">
+          <h2>{m.home_section_notes()}</h2>
+          {showVehicleData ? (
+            <button type="button" onClick={() => openQuick('pendientes')}>
+              {m.home_pendientes_add()}
+            </button>
+          ) : null}
+        </div>
+        {showVehicleData && pendientes.length > 0 ? (
+          <div className="seibi-notes">
+            {pendientes.map((item) => (
+              <SwipeDeleteRow
+                key={item.id}
+                open={swipeId === item.id}
+                onOpenChange={(open) => setSwipeId(open ? item.id : null)}
+                onDelete={() => deletePendiente(item.id)}
+                deleteLabel={m.home_swipe_delete()}
+              >
+                <button
+                  type="button"
+                  className={`seibi-note${item.date ? ' is-scheduled' : ''}`}
+                  style={
+                    item.date
+                      ? ({ '--booked': WEAR_COLOR.medium } as CSSProperties)
+                      : undefined
+                  }
+                  onClick={() => openQuick('pendientes', item.id)}
+                >
+                  <span className="seibi-note-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <rect
+                        x="5"
+                        y="4"
+                        width="14"
+                        height="16"
+                        rx="2.5"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                      />
+                      <path
+                        d="M8.5 10.2l1.7 1.7 3.6-3.7"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M8.5 15h7"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>
+                  <span className="seibi-note-copy">
+                    <strong>{item.note}</strong>
+                    <span>
+                      {item.date
+                        ? m.home_pendientes_scheduled({
+                            date: formatAppointmentDate(item.date),
+                          })
+                        : m.home_notes_meta()}
+                    </span>
+                  </span>
+                </button>
+              </SwipeDeleteRow>
+            ))}
+          </div>
+        ) : (
+          <p className="dash-tx-empty">
+            {showVehicleData ? m.home_notes_empty() : m.home_no_data()}
+          </p>
+        )}
+      </section>
+
+      <section
+        className="seibi-section"
+        data-section="agenda"
+        aria-label={m.home_section_agenda()}
+      >
+        <div className="seibi-section-head">
+          <h2>{m.home_section_agenda()}</h2>
+          {showVehicleData ? (
+            <button type="button" onClick={() => openQuick('appt')}>
+              {m.home_shortcut_appointment()}
+            </button>
+          ) : null}
+        </div>
+        {showVehicleData && agenda.length > 0 ? (
+          <div className="seibi-agenda">
+            {agenda.map((item) => (
+              <SwipeDeleteRow
+                key={item.id}
+                open={swipeId === item.id}
+                onOpenChange={(open) => setSwipeId(open ? item.id : null)}
+                onDelete={() => deleteAppointment(item.id)}
+                deleteLabel={m.home_swipe_delete()}
+              >
+                <button
+                  type="button"
+                  className="seibi-agenda-item"
+                  style={{ '--booked': WEAR_COLOR.medium } as CSSProperties}
+                  onClick={() => openQuick('appt', undefined, item)}
+                >
+                  <span className="seibi-agenda-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <rect
+                        x="4"
+                        y="5"
+                        width="16"
+                        height="15"
+                        rx="2"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                      />
+                      <path
+                        d="M8 3.5V7M16 3.5V7M4 10h16"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>
+                  <span className="seibi-agenda-copy">
+                    <strong>{item.note || m.home_appt_alarm_note()}</strong>
+                    <span>{formatAppointmentDate(item.date)}</span>
+                  </span>
+                  <strong className="seibi-agenda-time">
+                    {formatAppointmentTime(item.time)}
+                  </strong>
+                </button>
+              </SwipeDeleteRow>
+            ))}
+          </div>
+        ) : (
+          <p className="dash-tx-empty">
+            {showVehicleData ? m.home_agenda_empty() : m.home_no_data()}
+          </p>
         )}
       </section>
 
@@ -1121,23 +1527,25 @@ export function HomeDashboard({
               />
               <div className="seibi-wear-part-row">
                 <strong className="seibi-wear-part">{wearFocus.name}</strong>
-                <button
-                  type="button"
-                  className={`seibi-wear-edit${wearEditing ? ' is-open' : ''}`}
-                  aria-label={m.home_hud_edit()}
-                  aria-expanded={wearEditing}
-                  onClick={() => setWearEditing((open) => !open)}
-                >
-                  <svg viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M14.5 5.5l4 4M4 20l1.2-4.2L15.7 5.3a2 2 0 012.8 0l.2.2a2 2 0 010 2.8L8.2 18.8 4 20z"
-                      stroke="currentColor"
-                      strokeWidth="1.7"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
+                {wearSource === 'hud' ? (
+                  <button
+                    type="button"
+                    className={`seibi-wear-edit${wearEditing ? ' is-open' : ''}`}
+                    aria-label={m.home_hud_edit()}
+                    aria-expanded={wearEditing}
+                    onClick={() => setWearEditing((open) => !open)}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M14.5 5.5l4 4M4 20l1.2-4.2L15.7 5.3a2 2 0 012.8 0l.2.2a2 2 0 010 2.8L8.2 18.8 4 20z"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                ) : null}
               </div>
             </div>
             {wearEditing ? (
@@ -1252,36 +1660,49 @@ export function HomeDashboard({
       {quickSheet === 'pendientes' ? (
         <QuickSheet
           title={m.home_pendientes_title()}
-          desc={m.home_pendientes_desc()}
-          onClose={() => setQuickSheet(null)}
+          desc={focusPendienteId ? undefined : m.home_pendientes_desc()}
+          onClose={() => {
+            setFocusPendienteId(null)
+            setQuickSheet(null)
+          }}
         >
-          <form
-            className="seibi-pendientes-add"
-            onSubmit={(event) => {
-              event.preventDefault()
-              savePendiente()
-            }}
-          >
-            <input
-              value={pendienteDraft}
-              onChange={(event) => setPendienteDraft(event.target.value)}
-              placeholder={m.home_pendientes_placeholder()}
-              autoFocus
-            />
-            <button type="submit" disabled={!pendienteDraft.trim()}>
-              {m.home_pendientes_add()}
-            </button>
-          </form>
+          {focusPendienteId ? null : (
+            <form
+              className="seibi-pendientes-add"
+              onSubmit={(event) => {
+                event.preventDefault()
+                savePendiente()
+              }}
+            >
+              <input
+                value={pendienteDraft}
+                onChange={(event) => setPendienteDraft(event.target.value)}
+                placeholder={m.home_pendientes_placeholder()}
+                autoFocus
+              />
+              <button type="submit" disabled={!pendienteDraft.trim()}>
+                {m.home_pendientes_add()}
+              </button>
+            </form>
+          )}
           {pendientes.length === 0 ? (
             <p className="seibi-pendientes-empty">{m.home_pendientes_empty()}</p>
           ) : (
             <ul className="seibi-pendientes-list">
-              {pendientes.map((item) => {
+              {pendientes
+                .filter((item) => !focusPendienteId || item.id === focusPendienteId)
+                .map((item) => {
                 const scheduling = schedulingId === item.id
                 return (
                   <li key={item.id} className={`seibi-pendiente${scheduling ? ' is-open' : ''}`}>
                     <div className="seibi-pendiente-row">
-                      <p className="seibi-pendiente-note">{item.note}</p>
+                      <button
+                        type="button"
+                        className="seibi-pendiente-note"
+                        onClick={() => setFocusPendienteId(item.id)}
+                      >
+                        {item.note}
+                      </button>
                       <button
                         type="button"
                         className="seibi-pendiente-remove"
@@ -1298,7 +1719,11 @@ export function HomeDashboard({
                     ) : null}
                     {scheduling ? (
                       <div className="seibi-pendiente-schedule">
-                        <CalendarPicker value={apptDate} onChange={setApptDate} />
+                        <CalendarPicker
+                          value={apptDate}
+                          onChange={setApptDate}
+                          booked={bookedDates}
+                        />
                         <button
                           type="button"
                           className="vehicle-setup-cta"
@@ -1331,29 +1756,50 @@ export function HomeDashboard({
       {quickSheet === 'appt' ? (
         <QuickSheet
           title={m.home_appt_title()}
-          desc={m.home_appt_desc()}
-          onClose={() => setQuickSheet(null)}
+          desc={apptSavedItem ? undefined : m.home_appt_desc()}
+          onClose={() => {
+            setApptSavedItem(null)
+            setQuickSheet(null)
+          }}
         >
-          <CalendarPicker value={apptDate} onChange={setApptDate} />
-          <label className="vehicle-setup-field mileage-modal-field">
-            <span className="seibi-quick-label">{m.home_appt_note_label()}</span>
-            <input
-              value={apptNote}
-              onChange={(event) => setApptNote(event.target.value)}
-              placeholder={m.home_appt_note_placeholder()}
-            />
-          </label>
-          {apptSaved ? (
-            <p className="seibi-appt-saved">{m.home_appt_saved({ date: apptSaved })}</p>
+          {apptSavedItem ? (
+            <AppointmentAlarm item={apptSavedItem} />
           ) : (
-            <button
-              type="button"
-              className="vehicle-setup-cta"
-              disabled={!apptDate}
-              onClick={saveAppointment}
-            >
-              {m.home_appt_save()}
-            </button>
+            <>
+              <CalendarPicker
+                value={apptDate}
+                onChange={setApptDate}
+                booked={bookedDates}
+              />
+              <label className="vehicle-setup-field mileage-modal-field">
+                <span className="seibi-quick-label">{m.home_appt_note_label()}</span>
+                <input
+                  value={apptNote}
+                  onChange={(event) => setApptNote(event.target.value)}
+                  placeholder={m.home_appt_note_placeholder()}
+                />
+              </label>
+              <label className="vehicle-setup-field mileage-modal-field">
+                <span className="seibi-quick-label">{m.home_appt_time_label()}</span>
+                <input
+                  type="time"
+                  value={apptTime}
+                  onChange={(event) => setApptTime(event.target.value || '09:00')}
+                />
+              </label>
+              {apptSaved ? (
+                <p className="seibi-appt-saved">{m.home_appt_saved({ date: apptSaved })}</p>
+              ) : (
+                <button
+                  type="button"
+                  className="vehicle-setup-cta"
+                  disabled={!apptDate}
+                  onClick={saveAppointment}
+                >
+                  {m.home_appt_save()}
+                </button>
+              )}
+            </>
           )}
         </QuickSheet>
       ) : null}

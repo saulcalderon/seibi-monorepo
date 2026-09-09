@@ -1,5 +1,6 @@
 import {
   formatVehicleLabel,
+  mileageToKm,
   oilKmRemaining,
   OIL_INTERVAL_KM,
   vehicleNeedsService,
@@ -27,6 +28,70 @@ const TONE_ORDER: Record<ReminderTone, number> = {
   danger: 0,
   warn: 1,
   ok: 2,
+}
+
+const EXTRA_REMINDERS_KEY = 'seibi-extra-reminders'
+
+type ExtraReminder = {
+  id: string
+  vehicleId: string
+  name: string
+  meta: string
+  due: string
+  createdAt: number
+}
+
+function readExtraReminders(): ExtraReminder[] {
+  try {
+    const raw = localStorage.getItem(EXTRA_REMINDERS_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as ExtraReminder[]
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(
+      (item) =>
+        item &&
+        typeof item.id === 'string' &&
+        typeof item.vehicleId === 'string' &&
+        typeof item.name === 'string',
+    )
+  } catch {
+    return []
+  }
+}
+
+function extraItemsForVehicle(vehicleId: string): ReminderItem[] {
+  return readExtraReminders()
+    .filter((item) => item.vehicleId === vehicleId)
+    .map((item) => ({
+      id: item.id,
+      name: item.name,
+      meta: item.meta,
+      due: item.due,
+      tone: 'danger' as const,
+      remainingPct: 0,
+      remainingDays: 0,
+    }))
+}
+
+export function addVehicleReminder(input: {
+  vehicleId: string
+  id: string
+  name: string
+  meta: string
+  due: string
+}) {
+  const next = readExtraReminders().filter(
+    (item) => !(item.vehicleId === input.vehicleId && item.id === input.id),
+  )
+  next.unshift({
+    id: input.id,
+    vehicleId: input.vehicleId,
+    name: input.name,
+    meta: input.meta,
+    due: input.due,
+    createdAt: Date.now(),
+  })
+  localStorage.setItem(EXTRA_REMINDERS_KEY, JSON.stringify(next))
 }
 
 export const WEAR_COLOR: Record<WearLevel, string> = {
@@ -171,12 +236,15 @@ function dayItem(
 /** Most urgent upcoming maintenance for the active Vehículo (preview strip). */
 export function upcomingMaintenanceForVehicle(
   vehicle: VehicleProfile | null,
-  limit = 2,
+  limit = 3,
 ): ReminderItem[] {
   const items = remindersForVehicle(vehicle)
-  const soon = items.filter((item) => item.tone === 'danger' || item.tone === 'warn')
-  const pool = soon.length > 0 ? soon : items
-  return pool.slice(0, limit)
+  return [...items]
+    .sort(
+      (a, b) =>
+        TONE_ORDER[a.tone] - TONE_ORDER[b.tone] || a.remainingPct - b.remainingPct,
+    )
+    .slice(0, limit)
 }
 
 /** Preview Recordatorios for the active Vehículo until real data exists. */
@@ -189,11 +257,11 @@ export function remindersForVehicle(vehicle: VehicleProfile | null): ReminderIte
     ]
   }
 
-  const km = Number(vehicle.mileage.replace(/,/g, '')) || 0
+  const km = mileageToKm(vehicle.mileage, vehicle.mileageUnit)
   const resets = loggedPartResetsForVehicle(vehicle.id)
   const needsService = vehicleNeedsService(vehicle) && !resets.oil
   const oilLeft = kmLeftAfterReset(
-    oilKmRemaining(vehicle.mileage),
+    oilKmRemaining(vehicle.mileage, vehicle.mileageUnit),
     KM_INTERVAL.oil,
     km,
     resets.oil,
@@ -212,6 +280,7 @@ export function remindersForVehicle(vehicle: VehicleProfile | null): ReminderIte
   const batteryDays = daysLeftAfterReset(120 + (km % 80), DAY_INTERVAL.battery, resets.battery)
 
   const items: ReminderItem[] = [
+    ...extraItemsForVehicle(vehicle.id),
     kmItem(
       'oil',
       'Cambio de aceite',
@@ -276,7 +345,7 @@ export function reminderVehicleLabel(vehicle: VehicleProfile | null) {
 
 export function batteryLifeForVehicle(vehicle: VehicleProfile | null) {
   if (!vehicle) return null
-  const km = Number(vehicle.mileage.replace(/,/g, '')) || 0
+  const km = mileageToKm(vehicle.mileage, vehicle.mileageUnit)
   const resets = loggedPartResetsForVehicle(vehicle.id)
   if (resets.battery) {
     const daysLeft = daysLeftAfterReset(DAY_INTERVAL.battery, DAY_INTERVAL.battery, resets.battery)

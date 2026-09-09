@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { markSetupDone } from '../lib/setupProgress'
-import { BrandSearchField } from '../components/BrandSearchField'
-import type { VehicleBrandOption } from '../lib/vehicleProfile'
+import { BrandSearchField, ModelSearchField } from '../components/BrandSearchField'
+import { MileageUnitBox } from '../components/MileageUnitBox'
+import { mileageToKm, type MileageUnit, type VehicleBrandOption, modelBelongsToBrand } from '../lib/vehicleProfile'
 import * as m from '../paraglide/messages.js'
 
 const TOTAL = 5
@@ -20,6 +21,7 @@ interface Answers {
   model: string
   year: string
   mileage: string
+  mileageUnit: MileageUnit
   lastService: string
 }
 
@@ -29,6 +31,7 @@ const initialAnswers: Answers = {
   model: '',
   year: '',
   mileage: '',
+  mileageUnit: 'km',
   lastService: '',
 }
 
@@ -46,7 +49,7 @@ function canContinue(step: number, answers: Answers): boolean {
     }
     case 3: {
       if (!answers.mileage.trim()) return false
-      const km = Number(answers.mileage.replace(/,/g, ''))
+      const km = mileageToKm(answers.mileage, answers.mileageUnit)
       return Number.isFinite(km) && km >= 0 && km < 2_000_000
     }
     case 4:
@@ -108,6 +111,8 @@ function FieldInput({
   placeholder,
   inputMode,
   suffix,
+  unit,
+  onUnitChange,
   autoFocus,
 }: {
   value: string
@@ -115,24 +120,30 @@ function FieldInput({
   placeholder: string
   inputMode?: 'text' | 'numeric' | 'decimal'
   suffix?: string
+  unit?: MileageUnit
+  onUnitChange?: (unit: MileageUnit) => void
   autoFocus?: boolean
 }) {
+  const showUnit = Boolean(unit && onUnitChange)
+  const FieldTag = showUnit ? 'div' : 'label'
   return (
-    <label className="relative block">
+    <FieldTag className={`relative block${showUnit ? ' has-unit' : ''}`}>
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         inputMode={inputMode}
         autoFocus={autoFocus}
-        className="w-full rounded-2xl border border-coal/8 bg-pure px-5 py-4 text-[1rem] text-coal shadow-[0_2px_12px_rgba(20,21,23,0.06)] outline-none placeholder:text-coal/35 focus:border-radiant/40"
+        className={`w-full rounded-2xl border border-coal/8 bg-pure px-5 py-4 text-[1rem] text-coal shadow-[0_2px_12px_rgba(20,21,23,0.06)] outline-none placeholder:text-coal/35 focus:border-radiant/40${showUnit ? ' pr-[8.6rem]' : ''}`}
       />
-      {suffix ? (
+      {showUnit && unit && onUnitChange ? (
+        <MileageUnitBox unit={unit} onChange={onUnitChange} />
+      ) : suffix ? (
         <span className="pointer-events-none absolute top-1/2 right-5 -translate-y-1/2 text-[0.85rem] font-medium text-black/40">
           {suffix}
         </span>
       ) : null}
-    </label>
+    </FieldTag>
   )
 }
 
@@ -178,17 +189,23 @@ function StepBody({
               brand={(answers.brand as VehicleBrandOption | '') || ''}
               brandOther={answers.brandOther}
               autoFocus
-              onChange={(next) => setAnswers({ ...answers, ...next })}
+              onChange={(next) =>
+                setAnswers({
+                  ...answers,
+                  ...next,
+                  model: modelBelongsToBrand(answers.model, next.brand) ? answers.model : '',
+                })
+              }
             />
           </div>
         ) : null}
 
         {step === 1 ? (
           <div className="px-7">
-            <FieldInput
+            <ModelSearchField
+              brand={answers.brand === 'other' ? answers.brandOther : answers.brand}
               value={answers.model}
               onChange={(model) => setAnswers({ ...answers, model })}
-              placeholder={m.setup_2_placeholder()}
               autoFocus
             />
           </div>
@@ -220,7 +237,8 @@ function StepBody({
               }
               placeholder={m.setup_4_placeholder()}
               inputMode="numeric"
-              suffix={m.setup_4_suffix()}
+              unit={answers.mileageUnit}
+              onUnitChange={(mileageUnit) => setAnswers({ ...answers, mileageUnit })}
               autoFocus
             />
           </div>

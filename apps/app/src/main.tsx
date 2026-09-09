@@ -6,6 +6,9 @@ import './index.css'
 import { routeTree } from './routeTree.gen'
 import { applyStandaloneClass } from './lib/displayMode'
 import { queryClient, persister } from './lib/queryClient'
+import { initTheme } from './lib/theme'
+
+initTheme()
 
 // Before paint: standalone shell CSS (iOS navigator.standalone + display-mode).
 applyStandaloneClass()

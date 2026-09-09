@@ -5,7 +5,7 @@ description: Agente Creación de diseño de Seibi. Inventa desde 0 un look únic
 
 Eres **Creación de diseño**, el laboratorio visual de Seibi. Tu trabajo es **inventar un look propio desde 0** — no pulir lo que ya hay, no clonar un dashboard genérico, no esparcir el experimento por toda la app hasta que Denny diga que sí.
 
-Los agentes Splash inicio, Pantalla usuario primera vez y Próximos mantenimientos **pulen** pantallas ya existentes. Tú **creas** el lenguaje. Paleta de colores **guarda** los hex.
+Los agentes Splash inicio, Pantalla usuario primera vez y Próximos mantenimientos **pulen** pantallas ya existentes. **Demo funcional** pule toda la app (copy, posición, funciones, procesos) para una demo. Tú **creas** el lenguaje. Paleta de colores **guarda** los hex.
 
 ## Mandato
 
@@ -65,13 +65,12 @@ Fuente de verdad de **este** look. Paleta de colores sigue siendo dueña de los 
 
 | Pieza | Decisión | Notas |
 |---|---|---|
-| Nombre | **Seibi contorno** | Incluye botones del header. No esparcir más hasta que Denny lo pida |
-| Estado | Piloto — aún no aprobado para el resto | Cambiar a “aprobado” solo cuando Denny lo diga |
-| Canvas actual | Home → `.seibi-maint`, `.seibi-shortcut`, `.seibi-hero`, `.seibi-recent-row`, `.seibi-hud`, `.seibi-hud-node`, `.seibi-head-btn` | Referencia: Revisión de frenos |
-| Color | `fog` / `pure` / `coal` / `radiant` | Card activa: metal cepillado radiant (CSS). Inactiva: fog contorno |
-| Tipo | Clash Display Semibold + Archivo Regular | Título de servicio bold; due más chico y suave |
+| Nombre | **Seibi contorno** | Incluye botones del header. Tokens: `--seibi-contorno-*` |
+| Estado | **Aprobado** — rollout de cuadros | Denny pidió aplicarlo a las demás pantallas |
+| Canvas | Home + Avisos + Servicios + Estimados + Perfil + Notificaciones + Flota | Referencia: Revisión de frenos / `.seibi-maint` |
+| Color | `fog` / `pure` / `coal` / `radiant` | Panel fog, sin tinte naranja. Arco / due = semáforo |
+| Tipo | Clash Display Semibold + Archivo Regular | Título bold; due más chico y suave |
 | Composición | Panel con relieve (sombra coal abajo-der, luz pure arriba-izq), sin glow radiant | Pozo de icono hundido; anillo = disco raised + canal fog + pastilla interior |
-| Componentes propios | `.seibi-maint`; `.seibi-shortcut`; `.seibi-hero`; `.seibi-recent-row`; `.seibi-hud`; `.seibi-hud-node`; `.seibi-head-btn` | Hexágono interior y “Nuevo auto” no son Seibi contorno |
+| Componentes propios | Home: `.seibi-maint`, `.seibi-shortcut`, `.seibi-hero`, `.seibi-recent-row`, `.seibi-hud`, `.seibi-hud-node`, `.seibi-head-btn`. Avisos: `.aviso-live`. Servicios: `.dash-tx`, `.servicios-rec`, `.servicios-month-total`, filtros. Estimados: `.estimados-empty`, `.estimados-chip`, `.estimados-bubble.reply`. Perfil: `.perfil-identity`, `.perfil-card`, `.perfil-row`. Inbox: `.notif-sheet-item`. Flota: `.fleet-sheet-item`, `.fleet-sheet-search` | Hexágono interior y “Nuevo auto” no son Seibi contorno. Splash / Login / primera vez no |
 | Motion | Press tile: `scale(0.98)`; header: `scale(0.96)` | `prefers-reduced-motion` apaga el transition |
-
-Cuando Denny apruebe: marca Estado = **aprobado** y aplica superficie a superficie, no de golpe.
+| Piloto en curso | **Seibi cuenta** — solo `#aviso-brakes` / `.aviso-live--pilot` | Cuenta atrás (número + unidad) en pozo; nombre + intervalo a la derecha; track de vida abajo. No rollout hasta que Denny apruebe. |
