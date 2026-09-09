@@ -7,6 +7,7 @@ import {
   TUTORIAL_TOTAL_STEPS,
   type AppSection,
 } from '../lib/tutorialProgress'
+import { useRequireProductionSession } from '../lib/authSession'
 import { getActiveVehicle, getGarage, setActiveVehicle as persistActiveVehicle, type VehicleProfile } from '../lib/vehicleProfile'
 import {
   getNotificationsEnabled,
@@ -543,6 +544,7 @@ function DashNav({
 }
 
 export function Home() {
+  useRequireProductionSession()
   const [step, setStep] = useState(() => getTutorialStep())
   const [hasVehicle, setHasVehicle] = useState(() => getGarage().vehicles.length > 0)
   const [activeVehicle, setActiveVehicle] = useState<VehicleProfile | null>(() =>
@@ -609,13 +611,6 @@ export function Home() {
     setFocusServiceId(serviceId ?? null)
     setServiciosPreferAll(preferAll)
     setNav('servicios')
-  }
-
-  function openGaraje() {
-    setFocusReminderId(null)
-    setFocusServiceId(null)
-    setServiciosPreferAll(false)
-    setNav('garaje')
   }
 
   function openEstimados() {

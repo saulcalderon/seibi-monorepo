@@ -41,7 +41,7 @@ Cuando te invoquen:
 - No rediseñes splash/onboarding/layout; solo color. Para first-run visual, Splash inicio
 - i18n: no toques copy. Colores no van en `es.json`
 - No edites `src/paraglide/` a mano
-- Dominio: Vehículo, Servicio, Tipo, Taller, Recordatorio, Kilometraje, Estimado (`CONTEXT.md`)
+- Dominio: nombres en español de ADR-0002 (Vehículo, Servicio, Tipo, Taller, Recordatorio, Kilometraje, Estimado)
 
 ## Paleta canónica (tokens `@theme`)
 

@@ -10,7 +10,7 @@ export const Route = createFileRoute('/login')({
     } = await supabase.auth.getSession()
     if (session) {
       throw redirect({
-        to: isSetupDone(session.user.id) ? '/home' : '/setup',
+        to: isSetupDone(session.user.id) ? '/home' : '/onboarding',
       })
     }
   },

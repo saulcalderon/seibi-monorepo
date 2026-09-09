@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type AnimationEvent, type TransitionEvent } from 'react'
 import { createPortal } from 'react-dom'
+import { authIdentityFromUser, initialsFromName } from '../lib/authIdentity'
+import { useAuthSession, useSignOutToLogin } from '../lib/authSession'
 import {
   formatMileage,
   formatVehicleLabel,
@@ -15,19 +17,35 @@ import {
 } from '../lib/notificationsPref'
 import * as m from '../paraglide/messages.js'
 
-/** Placeholder until auth/profile provides the registered user. */
-const PREVIEW_USER = {
-  name: 'Dennys Acevedo',
-  email: 'dennys@seibi.app',
-}
+function IdentityAvatar({
+  name,
+  avatarUrl,
+}: {
+  name: string
+  avatarUrl: string | null
+}) {
+  const [imageFailed, setImageFailed] = useState(false)
 
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('')
+  useEffect(() => {
+    setImageFailed(false)
+  }, [avatarUrl])
+
+  const showPhoto = Boolean(avatarUrl) && !imageFailed
+
+  return (
+    <span className="perfil-avatar" aria-hidden="true">
+      {showPhoto ? (
+        <img
+          className="profile-avatar-image"
+          src={avatarUrl ?? undefined}
+          alt=""
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        initialsFromName(name)
+      )}
+    </span>
+  )
 }
 
 function SwitchRow({
@@ -359,6 +377,12 @@ const PLANS: Array<{
 ]
 
 export function Perfil({ vehicle }: { vehicle: VehicleProfile | null }) {
+  const signOutToLogin = useSignOutToLogin()
+  const { user, status } = useAuthSession()
+  const identity = authIdentityFromUser(user)
+  const sessionResolved = status !== 'resolving_initial_session'
+  const displayName = identity.displayName ?? m.profile_guest_name()
+  const showNoSessionCue = import.meta.env.DEV && status === 'signed_out'
   const [garage, setGarage] = useState(() => getGarage())
   const [garageOpen, setGarageOpen] = useState(false)
   const fleetCount = garage.vehicles.length
@@ -548,12 +572,13 @@ export function Perfil({ vehicle }: { vehicle: VehicleProfile | null }) {
         </header>
 
         <section className="perfil-identity" aria-label={m.perfil_account()}>
-          <span className="perfil-avatar" aria-hidden="true">
-            {initials(PREVIEW_USER.name)}
-          </span>
+          <IdentityAvatar name={displayName} avatarUrl={identity.avatarUrl} />
           <div>
-            <p className="perfil-name">{PREVIEW_USER.name}</p>
-            <p className="perfil-email">{PREVIEW_USER.email}</p>
+            <p className="perfil-name">{sessionResolved ? displayName : '\u00a0'}</p>
+            {identity.email ? <p className="perfil-email">{identity.email}</p> : null}
+            {showNoSessionCue ? (
+              <p className="profile-session-cue">{m.profile_no_session()}</p>
+            ) : null}
           </div>
         </section>
 
@@ -607,7 +632,7 @@ export function Perfil({ vehicle }: { vehicle: VehicleProfile | null }) {
           <Row label={m.perfil_support()} />
         </section>
 
-        <button type="button" className="perfil-logout">
+        <button type="button" className="perfil-logout" onClick={() => void signOutToLogin()}>
           {m.home_logout()}
         </button>
         </>

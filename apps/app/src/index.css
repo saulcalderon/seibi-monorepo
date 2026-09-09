@@ -95,14 +95,16 @@ h3 {
   text-wrap: balance;
 }
 
-/* Full-viewport mobile app shell, respecting device safe areas. */
+/* Full-viewport mobile app shell, respecting device safe areas.
+   No transform here: it would become the containing block for position:fixed
+   chrome (dash-nav, sheets). In standalone that left a Safari-toolbar-sized
+   hole under the nav when #root was shorter than the screen. */
 #root {
   position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
   max-height: 100%;
-  transform: translateZ(0);
   background: var(--color-fog);
   overflow: hidden;
 }
@@ -113,6 +115,44 @@ h3 {
   min-height: 0;
   display: flex;
   flex-direction: column;
+}
+
+/* Installed PWA: fill the real screen, not the old browser content rect.
+   html.is-standalone covers iOS navigator.standalone when media queries lag. */
+@media (display-mode: standalone),
+  (display-mode: fullscreen),
+  (display-mode: minimal-ui) {
+  html,
+  body,
+  #root {
+    height: 100%;
+    max-height: 100%;
+  }
+
+  @supports (height: 100dvh) {
+    html,
+    body,
+    #root {
+      height: 100dvh;
+      max-height: 100dvh;
+    }
+  }
+}
+
+html.is-standalone,
+html.is-standalone body,
+html.is-standalone #root {
+  height: 100%;
+  max-height: 100%;
+}
+
+@supports (height: 100dvh) {
+  html.is-standalone,
+  html.is-standalone body,
+  html.is-standalone #root {
+    height: 100dvh;
+    max-height: 100dvh;
+  }
 }
 
 /* Desktop / Cursor preview: keep the app at phone size. */
@@ -133,11 +173,18 @@ h3 {
     height: min(844px, 100dvh);
     max-height: 100dvh;
     flex: 0 0 auto;
+    /* Contain fixed chrome inside the phone frame on desktop preview. */
+    transform: translateZ(0);
     border-radius: 1.75rem;
     overflow: hidden;
     box-shadow:
       0 0 0 10px color-mix(in srgb, var(--color-coal) 82%, var(--color-pure)),
       0 28px 70px color-mix(in srgb, var(--color-coal) 45%, transparent);
+  }
+
+  html.is-standalone #root {
+    height: min(844px, 100dvh);
+    max-height: 100dvh;
   }
 }
 
@@ -9575,6 +9622,7 @@ button.servicios-month-cal-day.has-service:active {
 .perfil-avatar {
   display: grid;
   place-items: center;
+  overflow: hidden;
   width: 3.4rem;
   height: 3.4rem;
   border-radius: 999px;
@@ -9585,6 +9633,12 @@ button.servicios-month-cal-day.has-service:active {
   font-size: 1.05rem;
   font-weight: 600;
   letter-spacing: 0.02em;
+}
+
+.profile-avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .perfil-name {
@@ -9615,6 +9669,15 @@ button.servicios-month-cal-day.has-service:active {
   color: var(--color-coal);
   text-align: left;
   cursor: pointer;
+}
+
+.profile-session-cue {
+  margin: 0.25rem 0 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-radiant);
 }
 
 .perfil-night-label {

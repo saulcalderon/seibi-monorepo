@@ -1,49 +1,80 @@
 # Seibi
 
-Seibi is a mobile-first app for tracking vehicle maintenance: it records what work a
-vehicle has had done, reminds the owner when the next work is due, and estimates what
-that work will cost. The ubiquitous language is **Spanish** — canonical terms below are
-Spanish, and code/UI should use them rather than English synonyms.
+Seibi tracks vehicle maintenance: work done on a Vehicle, when the next
+Service is due, and what that work might cost.
 
 ## Language
 
-**Vehículo**:
-A car owned by a user. The root entity everything else hangs off; every Servicio,
-Recordatorio and Kilometraje reading belongs to exactly one Vehículo.
-_Avoid_: auto, carro, unidad
+**Vehicle**:
+An automobile owned by a user. Every Service, Reminder, and Mileage reading
+belongs to exactly one Vehicle. A Plate is optional. Mileage on a Vehicle
+uses one odometer measure. A Vehicle may have no Mileage readings yet. A
+Vehicle can be withdrawn from the garage without destroying its Services
+or Mileage readings. A withdrawn Vehicle can be restored.
+_Avoid_: auto, car, unit
 
-**Servicio**:
-A single dated entry logged against a Vehículo recording work that was done. This is the
-core atomic record. It carries a `tipo` and an optional `taller`.
-_Avoid_: registro, entrada, trabajo
+**Plate**:
+The registration identifier on a Vehicle. Optional and not unique; two
+Vehicles may share a Plate, or share brand, model, and year.
+_Avoid_: placa, license
 
-**Tipo (de servicio)**:
-The category of a Servicio — currently `mantenimiento` (planned, recurring work) or
-`reparación` (unplanned fix). A `tipo` value, not a separate concept: "mantenimiento" and
-"reparación" are kinds of Servicio, never their own tables.
-_Avoid_: categoría, clase
+**Service**:
+A dated record of work done on a Vehicle. Its date is a calendar day, not
+a clock time. Every Service is recorded with exactly one Mileage reading.
+The Service date and that reading's date are separate; they are written
+the same and are not kept in lockstep. A Mileage reading is not a Service.
+A Service can be withdrawn without destroying its Mileage reading.
+_Avoid_: entry, log, job
 
-**Taller**:
-The place where a Servicio was performed. For now an optional free-text label on a
-Servicio, **not** its own entity — promote to an entity only if shop history is needed.
-_Avoid_: garaje, mecánico, tienda
+**Type**:
+The kind of Service: maintenance (planned, recurring) or repair (unplanned).
+_Avoid_: category, class
 
-**Recordatorio**:
-An alert tied to a Vehículo that fires based on mileage (Kilometraje) or elapsed time,
-telling the owner a Servicio is due.
-_Avoid_: alerta, aviso, notificación
+**Shop**:
+The place a Service was performed. Optional on a Service, not a standalone
+concept.
+_Avoid_: garage, mechanic, store
 
-**Kilometraje**:
-An odometer reading for a Vehículo. Drives mileage-based Recordatorios.
-_Avoid_: millaje, odómetro, distancia
+**Reminder**:
+A due notice on a Vehicle, based on Mileage or elapsed time.
+_Avoid_: alert, notice, notification
 
-**Estimado**:
-The projected cost of an upcoming Servicio, shown before the owner visits a Taller.
-_Avoid_: cotización, presupuesto, precio
+**Mileage**:
+A dated odometer reading for a Vehicle. Its date is a calendar day, not a
+clock time. A Vehicle has many. A series of readings describes how much
+the Vehicle is used — that usage is not an Estimate. A Mileage reading is
+not a Service. A reading recorded with a Service may be any number
+(backfill). A reading recorded on its own is always dated today and must
+be strictly greater than the current odometer. With no current odometer,
+any non-negative number is allowed. A wrong number is corrected by
+changing that reading, not by deleting it. An edit may be any
+non-negative number; the “strictly greater” rule is only for new
+standalone inserts.
+_Avoid_: odometer, distance, millage, last checked
 
----
+**Current odometer**:
+The Mileage reading on a Vehicle for the latest calendar date; if several
+share that date, the highest number. A Vehicle with no readings has no
+current odometer.
+_Avoid_: last checked, cached mileage
 
-> **Note:** The domain model above is provisional and intentionally shallow — it captures
-> only what was firmly agreed. The fuller domain-modeling session (relationships,
-> lifecycle of Recordatorio/Estimado, whether Taller becomes an entity, DIY vs
-> shop-logged work) is deferred to a dedicated grilling session. See the tracking issue.
+**Odometer measure**:
+Whether Mileage on a Vehicle is recorded in kilometers (`km`) or miles
+(`mi`). Set on the Vehicle; every reading uses that measure.
+_Avoid_: unit, units
+
+**Estimate**:
+The projected cost of an upcoming Service.
+_Avoid_: quote, budget, price
+
+**Intro**:
+The product demo a person sees the first time they open Seibi, before they
+sign in. It does not create a Vehicle.
+_Avoid_: setup, FTUE, walkthrough
+
+**Onboarding**:
+The first run after sign-in: a welcome, then questions about how they
+maintain a Vehicle. A Vehicle is not required to finish it. The first
+Vehicle may be created during Onboarding; creating one later in the
+garage is not Onboarding.
+_Avoid_: setup, first-run, FTUE

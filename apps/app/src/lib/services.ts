@@ -50,7 +50,7 @@ function demoServices(seed = 0): ServiceItem[] {
   const alignAt = daysAgo(95)
   const batteryAt = daysAgo(140)
 
-  return [
+  const items: ServiceItem[] = [
     {
       id: 'oil',
       name: 'Cambio de aceite',
@@ -105,7 +105,8 @@ function demoServices(seed = 0): ServiceItem[] {
       performedAt: batteryAt,
       taller: 'Autoeléctrica Centro',
     },
-  ].sort((a, b) => b.performedAt - a.performedAt)
+  ]
+  return items.sort((a, b) => b.performedAt - a.performedAt)
 }
 
 /** Full Historial for the active Vehículo (any date). */

@@ -21,7 +21,7 @@ function AuthCallbackRoute() {
       if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
         if (session) {
           void navigate({
-            to: isSetupDone(session.user.id) ? '/home' : '/setup',
+            to: isSetupDone(session.user.id) ? '/home' : '/onboarding',
             replace: true,
           })
           return

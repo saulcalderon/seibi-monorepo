@@ -25,7 +25,7 @@ Otras superficies (solo en rollout, cuando Denny las nombre): `Avisos.tsx`, `Ser
 
 ## Dominio (español canónico)
 
-Lee `CONTEXT.md` antes de nombrar conceptos. Usa **Vehículo, Servicio, Tipo, Taller, Recordatorio, Kilometraje, Estimado**. Evita auto/carro, alerta/aviso, cotización/presupuesto.
+Lee `CONTEXT.md` y ADR-0002 antes de nombrar conceptos. El copy de UI usa los nombres en español de ADR-0002: **Vehículo, Servicio, Tipo, Taller, Recordatorio, Kilometraje, Estimado**. Evita auto/carro, alerta/aviso, cotización/presupuesto.
 
 ## Diseño — libertad y anclas
 

@@ -302,6 +302,8 @@
   "perfil_context": "Tu información, garaje y preferencias en Seibi.",
   "perfil_account": "Cuenta",
   "perfil_night_mode": "Modo oscuro",
+  "profile_guest_name": "Cuenta",
+  "profile_no_session": "Sin sesión",
   "perfil_garage": "Garaje",
   "perfil_garage_empty": "Aún no hay vehículo activo",
   "perfil_garage_sheet_desc": "Tus Vehículos registrados. Elimina el que ya no uses.",
