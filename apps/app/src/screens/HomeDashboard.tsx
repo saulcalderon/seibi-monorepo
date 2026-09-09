@@ -578,7 +578,7 @@ export function HomeDashboard({
   const skipFleetPulse = useRef(true)
   const [pulseId, setPulseId] = useState<string | null>(null)
   const reminders = remindersForVehicle(vehicle)
-  const [focusReminderId, setFocusReminderId] = useState<string | null>(null)
+  const [, setFocusReminderId] = useState<string | null>(null)
   const fleet = vehicles
   const fleetMany = vehicles.length > 0
   const [addFocused, setAddFocused] = useState(false)
@@ -605,7 +605,7 @@ export function HomeDashboard({
   const [apptNote, setApptNote] = useState('')
   const [apptSaved, setApptSaved] = useState('')
   const [apptSavedItem, setApptSavedItem] = useState<Appointment | null>(null)
-  const [apptTick, setApptTick] = useState(0)
+  const [, setApptTick] = useState(0)
   const bookedDates = vehicle ? appointmentDatesForVehicle(vehicle.id) : []
   const agenda =
     showVehicleData && vehicle ? appointmentsForVehicle(vehicle.id) : []
@@ -738,7 +738,7 @@ export function HomeDashboard({
 
   function saveAppointment() {
     if (!vehicle || !apptDate) return
-    const item = addAppointment({
+    addAppointment({
       vehicleId: vehicle.id,
       date: apptDate,
       note: apptNote,
