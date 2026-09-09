@@ -210,82 +210,6 @@ function ServiceRow({
   )
 }
 
-function TipKindIcon({ kind }: { kind: VehicleTipKind }) {
-  if (kind === 'curious') {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <circle cx="12" cy="12" r="7.5" stroke="currentColor" strokeWidth="1.7" />
-        <path
-          d="M12 10.5V16M12 8.2h.01"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-        />
-      </svg>
-    )
-  }
-
-  if (kind === 'common_fault') {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M12 8v5M12 16.5h.01"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        <path
-          d="M10.3 4.8L3.6 16.2A2 2 0 005.3 19h13.4a2 2 0 001.7-2.8L13.7 4.8a2 2 0 00-3.4 0z"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinejoin="round"
-        />
-      </svg>
-    )
-  }
-
-  if (kind === 'long_trip') {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M4 16h16M6.5 16l1.2-3.5A2 2 0 019.6 11h4.8a2 2 0 011.9 1.5L17.5 16"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinejoin="round"
-        />
-        <circle cx="8" cy="17.5" r="1.4" stroke="currentColor" strokeWidth="1.7" />
-        <circle cx="16" cy="17.5" r="1.4" stroke="currentColor" strokeWidth="1.7" />
-      </svg>
-    )
-  }
-
-  if (kind === 'weekly') {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <rect x="4" y="5" width="16" height="15" rx="2" stroke="currentColor" strokeWidth="1.7" />
-        <path
-          d="M8 3v4M16 3v4M4 10h16"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-        />
-      </svg>
-    )
-  }
-
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="13" r="7" stroke="currentColor" strokeWidth="1.8" />
-      <path
-        d="M12 10v3l2 2M9 4h6"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
-
 function tipKindLabel(kind: VehicleTipKind) {
   if (kind === 'curious') return m.home_services_tips_kind_curious()
   if (kind === 'common_fault') return m.home_services_tips_kind_fault()
@@ -294,18 +218,67 @@ function tipKindLabel(kind: VehicleTipKind) {
   return m.home_services_tips_kind_weekly()
 }
 
-function TipCard({ tip }: { tip: VehicleTip }) {
+function TipCard({
+  tip,
+  layout,
+  onOpen,
+}: {
+  tip: VehicleTip
+  layout: 'tall' | 'square' | 'stub' | 'strip'
+  onOpen: () => void
+}) {
   return (
-    <article className={`servicios-rec servicios-rec--tip kind-${tip.kind}`}>
-      <span className="servicios-rec-icon" aria-hidden="true">
-        <TipKindIcon kind={tip.kind} />
+    <button
+      type="button"
+      className={`servicios-bento-tile layout-${layout}`}
+      onClick={onOpen}
+      aria-label={`${tipKindLabel(tip.kind)}: ${tip.title}`}
+    >
+      <span className="servicios-bento-marker" aria-hidden="true" />
+      <span className="servicios-bento-copy">
+        <em className="servicios-bento-badge">{tipKindLabel(tip.kind)}</em>
+        <strong className="servicios-bento-title">{tip.title}</strong>
       </span>
-      <span className="servicios-rec-copy">
-        <em>{tipKindLabel(tip.kind)}</em>
-        <strong>{tip.title}</strong>
-        <span>{tip.body}</span>
+      <span className="servicios-bento-more">
+        {m.home_services_tips_open()}
+        <span aria-hidden="true">›</span>
       </span>
-    </article>
+    </button>
+  )
+}
+
+function TipDetailSheet({ tip, onClose }: { tip: VehicleTip; onClose: () => void }) {
+  return (
+    <div
+      className="servicios-detail"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="servicios-tip-title"
+    >
+      <button
+        type="button"
+        className="servicios-detail-backdrop"
+        aria-label={m.home_services_detail_close()}
+        onClick={onClose}
+      />
+      <div className="servicios-detail-panel servicios-tip-panel">
+        <header className="servicios-detail-head">
+          <div>
+            <p className="servicios-detail-eyebrow">{tipKindLabel(tip.kind)}</p>
+            <h2 id="servicios-tip-title">{tip.title}</h2>
+          </div>
+          <button type="button" className="servicios-detail-close" onClick={onClose}>
+            {m.home_services_detail_close()}
+          </button>
+        </header>
+        <p className="servicios-tip-body">{tip.body}</p>
+        <footer className="servicios-detail-footer">
+          <button type="button" className="servicios-detail-save" onClick={onClose}>
+            {m.home_services_tips_done()}
+          </button>
+        </footer>
+      </div>
+    </div>
   )
 }
 
@@ -1090,6 +1063,7 @@ export function Servicios({
   const [periodPicker, setPeriodPicker] = useState<PeriodPickerKind | null>(null)
   const [detail, setDetail] = useState<ServiceItem | null>(null)
   const [adding, setAdding] = useState(false)
+  const [activeTip, setActiveTip] = useState<VehicleTip | null>(null)
   const [servicesTick, setServicesTick] = useState(0)
   const services = useMemo(
     () => servicesForVehicle(vehicle),
@@ -1331,8 +1305,9 @@ export function Servicios({
       className="avisos-screen servicios-screen servicios-screen--enter"
     >
       <header className="avisos-header seibi-screen-header">
-        <p className="avisos-eyebrow">{m.home_services_eyebrow()}</p>
-        <h1 className="avisos-title">{m.home_recent_title()}</h1>
+        <h1 className="avisos-eyebrow servicios-main-title">
+          {m.home_services_eyebrow()}
+        </h1>
         <p className="seibi-screen-header-vehicle">{context}</p>
         <p className="avisos-context">{m.home_recent_desc()}</p>
       </header>
@@ -1360,20 +1335,6 @@ export function Servicios({
       </div>
 
       <div className="servicios-month-block">
-        <p className="servicios-month-list-label">{m.home_services_month_total()}</p>
-        <div className="servicios-month-total" aria-label={m.home_services_month_total()}>
-          <div>
-            <p className="servicios-month-period">{monthSpend.label}</p>
-            <p className="servicios-month-count">
-              {m.home_services_month_count({ count: monthSpend.count })}
-            </p>
-          </div>
-          <div className="servicios-month-sum">
-            <span>{m.home_services_month_sum()}</span>
-            <MonthSpendSum total={monthSpend.total} />
-          </div>
-        </div>
-
         <p className="servicios-month-list-label">{m.home_services_month_list()}</p>
 
         <MonthActivityCalendar
@@ -1442,21 +1403,53 @@ export function Servicios({
         </section>
       </div>
 
+      <div className="servicios-month-spend">
+        <p className="servicios-month-list-label">{m.home_services_month_total()}</p>
+        <div className="servicios-month-total" aria-label={m.home_services_month_total()}>
+          <div>
+            <p className="servicios-month-period">{monthSpend.label}</p>
+            <p className="servicios-month-count">
+              {m.home_services_month_count({ count: monthSpend.count })}
+            </p>
+          </div>
+          <div className="servicios-month-sum">
+            <span>{m.home_services_month_sum()}</span>
+            <MonthSpendSum total={monthSpend.total} />
+          </div>
+        </div>
+      </div>
+
       <section className="servicios-recs" aria-label={m.home_services_recs_title()}>
         <div className="servicios-recs-head">
           <h2>{m.home_services_recs_title()}</h2>
           <p>{m.home_services_recs_desc()}</p>
         </div>
         {tips.length > 0 ? (
-          <div className="servicios-recs-list">
-            {tips.map((tip) => (
-              <TipCard key={tip.id} tip={tip} />
+          <div className="servicios-recs-list servicios-recs-bento">
+            {tips.map((tip, index) => (
+              <TipCard
+                key={tip.id}
+                tip={tip}
+                layout={
+                  index === 0
+                    ? 'tall'
+                    : index === 1
+                      ? 'square'
+                      : index === 2
+                        ? 'stub'
+                        : 'strip'
+                }
+                onOpen={() => setActiveTip(tip)}
+              />
             ))}
           </div>
         ) : (
           <p className="dash-tx-empty">{m.home_services_recs_empty()}</p>
         )}
       </section>
+      {activeTip ? (
+        <TipDetailSheet tip={activeTip} onClose={() => setActiveTip(null)} />
+      ) : null}
       {detailSheet}
       {addSheet}
     </div>

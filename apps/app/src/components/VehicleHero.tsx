@@ -4,25 +4,36 @@ import {
   addVehicle,
   formatMileage,
   formatMileageAmount,
+  formatMileageUnit,
   getActiveVehicle,
   getGarage,
+  mileageToKm,
   resolveBrandName,
   sanitizePlaca,
   setActiveVehicle,
   updateVehicle,
   vehicleArtSrc,
   vehicleMatchesFleetQuery,
+  modelBelongsToBrand,
   VEHICLE_BRANDS,
   type GarageState,
+  type MileageUnit,
   type VehicleBrandOption,
   type VehicleProfile,
 } from '../lib/vehicleProfile'
 import { GarageCarStage } from './GarageCarStage'
-import { BrandSearchField } from './BrandSearchField'
-import { vehicleServiceHealth } from '../lib/reminders'
+import { BrandSearchField, ModelSearchField } from './BrandSearchField'
+import { MileageUnitBox } from './MileageUnitBox'
+import { VehicleSaveFollowup } from './VehicleSaveFollowup'
+import { applyMaintQuizToVehicle, type MaintQuizAnswers } from '../lib/vehicleMaintQuiz'
+import { addVehicleReminder, vehicleServiceHealth } from '../lib/reminders'
 import * as m from '../paraglide/messages.js'
 
 const SETUP_STEPS = 4
+
+function portalHost() {
+  return document.getElementById('root') ?? document.body
+}
 
 type Draft = {
   brand: VehicleBrandOption | ''
@@ -30,6 +41,7 @@ type Draft = {
   model: string
   year: string
   mileage: string
+  mileageUnit: MileageUnit
   placa: string
 }
 
@@ -39,6 +51,7 @@ const emptyDraft: Draft = {
   model: '',
   year: '',
   mileage: '',
+  mileageUnit: 'km',
   placa: '',
 }
 
@@ -50,6 +63,7 @@ function draftFromVehicle(vehicle: VehicleProfile): Draft {
     model: vehicle.model,
     year: vehicle.year,
     mileage: vehicle.mileage,
+    mileageUnit: vehicle.mileageUnit === 'mi' ? 'mi' : 'km',
     placa: vehicle.placa,
   }
 }
@@ -60,6 +74,7 @@ function draftToInput(draft: Draft) {
     model: draft.model.trim(),
     year: draft.year.trim(),
     mileage: draft.mileage.replace(/,/g, '').trim(),
+    mileageUnit: draft.mileageUnit,
     placa: sanitizePlaca(draft.placa),
   }
 }
@@ -87,7 +102,7 @@ function canContinue(step: number, draft: Draft): boolean {
     }
     case 3: {
       if (!draft.mileage.trim()) return false
-      const km = Number(draft.mileage.replace(/,/g, ''))
+      const km = mileageToKm(draft.mileage, draft.mileageUnit)
       return Number.isFinite(km) && km >= 0 && km < 2_000_000
     }
     default:
@@ -101,6 +116,8 @@ function SetupField({
   placeholder,
   inputMode,
   suffix,
+  unit,
+  onUnitChange,
   autoFocus,
 }: {
   value: string
@@ -108,10 +125,14 @@ function SetupField({
   placeholder: string
   inputMode?: 'text' | 'numeric'
   suffix?: string
+  unit?: MileageUnit
+  onUnitChange?: (unit: MileageUnit) => void
   autoFocus?: boolean
 }) {
+  const showUnit = Boolean(unit && onUnitChange)
+  const FieldTag = showUnit ? 'div' : 'label'
   return (
-    <label className="vehicle-setup-field">
+    <FieldTag className={`vehicle-setup-field${showUnit ? ' has-unit' : ''}`}>
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -119,8 +140,12 @@ function SetupField({
         inputMode={inputMode}
         autoFocus={autoFocus}
       />
-      {suffix ? <span>{suffix}</span> : null}
-    </label>
+      {showUnit && unit && onUnitChange ? (
+        <MileageUnitBox unit={unit} onChange={onUnitChange} />
+      ) : suffix ? (
+        <span className="vehicle-setup-suffix">{suffix}</span>
+      ) : null}
+    </FieldTag>
   )
 }
 
@@ -132,8 +157,11 @@ export function VehicleSetupScreen({
   onSaved: (garage: GarageState) => void
 }) {
   const [step, setStep] = useState(0)
+  const [stepDir, setStepDir] = useState<'forward' | 'back'>('forward')
   const [draft, setDraft] = useState<Draft>(emptyDraft)
   const [leaving, setLeaving] = useState(false)
+  const [followup, setFollowup] = useState(false)
+  const [askReady, setAskReady] = useState(false)
   const ready = canContinue(step, draft)
   const isLast = step === SETUP_STEPS - 1
 
@@ -168,17 +196,38 @@ export function VehicleSetupScreen({
       closeScreen()
       return
     }
+    setStepDir('back')
     setStep((current) => Math.max(0, current - 1))
   }
 
   function handleNext() {
     if (!ready) return
     if (!isLast) {
+      setStepDir('forward')
       setStep((current) => Math.min(SETUP_STEPS - 1, current + 1))
       return
     }
 
-    onSaved(addVehicle(draftToInput(draft)))
+    setAskReady(true)
+    setFollowup(true)
+  }
+
+  function finishSave(recommendMinor: boolean, answers?: MaintQuizAnswers) {
+    const garage = addVehicle(draftToInput(draft))
+    const saved = getActiveVehicle(garage)
+    if (saved && answers) {
+      applyMaintQuizToVehicle(saved, answers)
+    }
+    if (recommendMinor && saved) {
+      addVehicleReminder({
+        vehicleId: saved.id,
+        id: 'review-general',
+        name: m.save_recommend_item(),
+        meta: m.save_recommend_item_meta(),
+        due: m.home_avisos_urgent(),
+      })
+    }
+    onSaved(garage)
   }
 
   function handleOverlayAnimationEnd(event: AnimationEvent<HTMLDivElement>) {
@@ -193,7 +242,18 @@ export function VehicleSetupScreen({
       className={`vehicle-setup-overlay${leaving ? ' is-leaving' : ''}`}
       onAnimationEnd={handleOverlayAnimationEnd}
     >
-    <div className="avisos-screen vehicle-setup-screen">
+    {followup ? (
+      <VehicleSaveFollowup
+        onCancel={() => {
+          setAskReady(false)
+          setFollowup(false)
+        }}
+        onReady={() => setAskReady(true)}
+        onComplete={finishSave}
+      />
+    ) : null}
+    {!followup || !askReady ? (
+    <div className={`avisos-screen vehicle-setup-screen${followup ? ' is-saving' : ''}`}>
       <header className="avisos-header">
         <button type="button" className="avisos-back" onClick={handleBack}>
           {step === 0 ? m.home_vehicle_sheet_close() : m.setup_back()}
@@ -219,25 +279,35 @@ export function VehicleSetupScreen({
           ))}
         </div>
         <p className="avisos-eyebrow">{m.home_garage_add()}</p>
-        <h1 className="avisos-title">{titles[step]}</h1>
-        <p className="avisos-context">{descs[step]}</p>
       </header>
 
+      <div
+        key={step}
+        className={`vehicle-setup-pane${stepDir === 'back' ? ' is-back' : ''}`}
+      >
+        <h1 className="avisos-title">{titles[step]}</h1>
+        <p className="avisos-context">{descs[step]}</p>
       <div className="vehicle-setup-body">
         {step === 0 ? (
           <BrandSearchField
             brand={draft.brand}
             brandOther={draft.brandOther}
             autoFocus
-            onChange={(next) => setDraft((current) => ({ ...current, ...next }))}
+            onChange={(next) =>
+              setDraft((current) => ({
+                ...current,
+                ...next,
+                model: modelBelongsToBrand(current.model, next.brand) ? current.model : '',
+              }))
+            }
           />
         ) : null}
 
         {step === 1 ? (
-          <SetupField
+          <ModelSearchField
+            brand={draft.brand === 'other' ? draft.brandOther : draft.brand}
             value={draft.model}
             onChange={(model) => setDraft((current) => ({ ...current, model }))}
-            placeholder={m.setup_2_placeholder()}
             autoFocus
           />
         ) : null}
@@ -269,22 +339,31 @@ export function VehicleSetupScreen({
               }
               placeholder={m.setup_4_placeholder()}
               inputMode="numeric"
-              suffix={m.setup_4_suffix()}
+              unit={draft.mileageUnit}
+              onUnitChange={(mileageUnit) =>
+                setDraft((current) => ({ ...current, mileageUnit }))
+              }
               autoFocus
             />
-            <p className="vehicle-edit-label">{m.home_garage_placa_label()}</p>
-            <SetupField
-              value={draft.placa}
-              onChange={(placa) =>
-                setDraft((current) => ({
-                  ...current,
-                  placa: sanitizePlaca(placa),
-                }))
-              }
-              placeholder={m.setup_placa_placeholder()}
-            />
+            <div className="vehicle-setup-placa">
+              <p className="vehicle-edit-label">
+                {m.home_garage_placa_label()}{' '}
+                <span className="vehicle-setup-optional">{m.setup_placa_optional()}</span>
+              </p>
+              <SetupField
+                value={draft.placa}
+                onChange={(placa) =>
+                  setDraft((current) => ({
+                    ...current,
+                    placa: sanitizePlaca(placa),
+                  }))
+                }
+                placeholder={m.setup_placa_placeholder()}
+              />
+            </div>
           </>
         ) : null}
+      </div>
       </div>
 
       <button
@@ -296,6 +375,7 @@ export function VehicleSetupScreen({
         {isLast ? m.home_vehicle_setup_save() : m.setup_next()}
       </button>
     </div>
+    ) : null}
     </div>
   )
 }
@@ -321,7 +401,10 @@ function MileageUpdateModal({
   onSaved: (garage: GarageState) => void
 }) {
   const [mileage, setMileage] = useState(vehicle.mileage)
-  const km = Number(mileage.replace(/,/g, ''))
+  const [mileageUnit, setMileageUnit] = useState<MileageUnit>(
+    vehicle.mileageUnit === 'mi' ? 'mi' : 'km',
+  )
+  const km = mileageToKm(mileage, mileageUnit)
   const ready = Number.isFinite(km) && km >= 0 && km < 2_000_000 && mileage.trim().length > 0
 
   useEffect(() => {
@@ -340,6 +423,7 @@ function MileageUpdateModal({
         model: vehicle.model,
         year: vehicle.year,
         mileage: mileage.replace(/,/g, '').trim(),
+        mileageUnit,
         placa: vehicle.placa,
       }),
     )
@@ -376,7 +460,7 @@ function MileageUpdateModal({
         </p>
         <p className="mileage-modal-desc">{m.home_mileage_update_desc()}</p>
 
-        <label className="vehicle-setup-field mileage-modal-field">
+        <div className="vehicle-setup-field has-unit mileage-modal-field">
           <input
             value={mileage}
             onChange={(event) => setMileage(event.target.value.replace(/[^\d]/g, ''))}
@@ -384,8 +468,8 @@ function MileageUpdateModal({
             inputMode="numeric"
             autoFocus
           />
-          <span>{m.setup_4_suffix()}</span>
-        </label>
+          <MileageUnitBox unit={mileageUnit} onChange={setMileageUnit} />
+        </div>
 
         <button
           type="button"
@@ -502,7 +586,7 @@ function VehicleEditSheet({
         </button>
 
         <header className="vehicle-sheet-header">
-          <button type="button" className="vehicle-setup-back" onClick={onClose}>
+          <button type="button" className="avisos-back" onClick={onClose}>
             {m.home_vehicle_sheet_close()}
           </button>
           <button
@@ -527,14 +611,20 @@ function VehicleEditSheet({
             <BrandSearchField
               brand={draft.brand}
               brandOther={draft.brandOther}
-              onChange={(next) => setDraft((current) => ({ ...current, ...next }))}
+              onChange={(next) =>
+                setDraft((current) => ({
+                  ...current,
+                  ...next,
+                  model: modelBelongsToBrand(current.model, next.brand) ? current.model : '',
+                }))
+              }
             />
 
             <label className="vehicle-edit-label">{m.home_garage_model_label()}</label>
-            <SetupField
+            <ModelSearchField
+              brand={draft.brand === 'other' ? draft.brandOther : draft.brand}
               value={draft.model}
               onChange={(model) => setDraft((current) => ({ ...current, model }))}
-              placeholder={m.setup_2_placeholder()}
             />
 
             <label className="vehicle-edit-label">{m.home_garage_year_label()}</label>
@@ -561,7 +651,10 @@ function VehicleEditSheet({
               }
               placeholder={m.setup_4_placeholder()}
               inputMode="numeric"
-              suffix={m.setup_4_suffix()}
+              unit={draft.mileageUnit}
+              onUnitChange={(mileageUnit) =>
+                setDraft((current) => ({ ...current, mileageUnit }))
+              }
               autoFocus
             />
 
@@ -653,7 +746,7 @@ function VehicleSelectCard({
           <p>{m.home_garage_km_label()}</p>
           <strong>
             <span>{formatMileageAmount(vehicle.mileage)}</span>
-            <span>{m.setup_4_suffix()}</span>
+            <span>{formatMileageUnit(vehicle.mileageUnit)}</span>
           </strong>
         </div>
         <div className="garage-card-badge-divider" aria-hidden="true" />
@@ -796,13 +889,11 @@ function FleetListSheet({
     }
   }, [])
 
-  const sorted = [...vehicles].sort((a, b) => {
-    const left = `${a.brand} ${a.model} ${a.year}`.toLocaleLowerCase('es')
-    const right = `${b.brand} ${b.model} ${b.year}`.toLocaleLowerCase('es')
-    return left.localeCompare(right, 'es')
-  })
-
-  const filtered = sorted.filter((vehicle) => vehicleMatchesFleetQuery(vehicle, query))
+  const ordered = [
+    ...vehicles.filter((vehicle) => vehicle.id === activeId),
+    ...vehicles.filter((vehicle) => vehicle.id !== activeId),
+  ]
+  const filtered = ordered.filter((vehicle) => vehicleMatchesFleetQuery(vehicle, query))
 
   const countLabel =
     vehicles.length === 1
@@ -836,7 +927,7 @@ function FleetListSheet({
         </button>
 
         <header className="vehicle-sheet-header">
-          <button type="button" className="vehicle-setup-back" onClick={onClose}>
+          <button type="button" className="avisos-back" onClick={onClose}>
             {m.home_vehicle_sheet_close()}
           </button>
           <p className="vehicle-setup-progress">{countLabel}</p>
@@ -942,7 +1033,7 @@ function FleetListSheet({
                               strokeLinecap="round"
                             />
                           </svg>
-                          {formatMileage(vehicle.mileage)}
+                          {formatMileage(vehicle.mileage, vehicle.mileageUnit)}
                         </span>
                       </span>
                       <span
@@ -1112,7 +1203,9 @@ export function VehicleHero({
       <div className="garage-active-copy">
         <p className="garage-active-label">{m.home_mileage_update_open()}</p>
         <p className={`garage-active-km${active.mileage.trim() ? '' : ' garage-active-km--empty'}`}>
-          {active.mileage.trim() ? formatMileage(active.mileage) : m.home_garage_km_empty()}
+          {active.mileage.trim()
+            ? formatMileage(active.mileage, active.mileageUnit)
+            : m.home_garage_km_empty()}
         </p>
       </div>
     </button>
@@ -1316,7 +1409,7 @@ export function VehicleHero({
                 if (saved) onSaved(saved)
               }}
             />,
-            document.body,
+            portalHost(),
           )
         : null}
 
@@ -1337,7 +1430,7 @@ export function VehicleHero({
                 if (saved) onSaved(saved)
               }}
             />,
-            document.body,
+            portalHost(),
           )
         : null}
 
@@ -1354,7 +1447,7 @@ export function VehicleHero({
                 onFleetVehicleSelect?.()
               }}
             />,
-            document.body,
+            portalHost(),
           )
         : null}
     </>

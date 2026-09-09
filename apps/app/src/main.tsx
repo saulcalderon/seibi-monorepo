@@ -5,6 +5,9 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import './index.css'
 import { routeTree } from './routeTree.gen'
 import { queryClient, persister } from './lib/queryClient'
+import { initTheme } from './lib/theme'
+
+initTheme()
 
 const router = createRouter({
   routeTree,

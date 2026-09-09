@@ -1,5 +1,6 @@
 import {
   formatVehicleLabel,
+  mileageToKm,
   type VehicleProfile,
 } from './vehicleProfile'
 
@@ -113,13 +114,15 @@ export function servicesForVehicle(vehicle: VehicleProfile | null): ServiceItem[
     return withServiceNotes(null, demoServices())
   }
 
-  const km = Number(vehicle.mileage.replace(/,/g, '')) || 0
+  const km = mileageToKm(vehicle.mileage, vehicle.mileageUnit)
   const seed = km % 900
   const extras = loggedServicesForVehicle(vehicle.id)
+  const items = extras.length > 0 ? extras : demoServices(seed)
 
-  return withServiceNotes(vehicle.id, [...extras, ...demoServices(seed)].sort(
-    (a, b) => b.performedAt - a.performedAt,
-  ))
+  return withServiceNotes(
+    vehicle.id,
+    items.sort((a, b) => b.performedAt - a.performedAt),
+  )
 }
 
 const LOGGED_KEY = 'seibi-logged-services'
@@ -228,13 +231,16 @@ export function addLoggedService(
     mileage?: string
     taller?: string
     invoicePhoto?: string
+    performedAt?: number
+    comment?: string
   },
 ): ServiceItem {
   const name = input.name.trim()
   const mileageKm = Number(String(input.mileage ?? '').replace(/,/g, ''))
   const taller = input.taller?.trim() || undefined
   const invoicePhoto = input.invoicePhoto?.trim() || undefined
-  const performedAt = Date.now()
+  const comment = input.comment?.trim() || undefined
+  const performedAt = input.performedAt ?? Date.now()
   const when = formatServiceWhen(performedAt)
   const item: LoggedService = {
     id: `log_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
@@ -247,6 +253,7 @@ export function addLoggedService(
     mileageKm: Number.isFinite(mileageKm) ? mileageKm : undefined,
     loggedAt: performedAt,
     taller,
+    comment,
     invoicePhoto,
   }
   localStorage.setItem(LOGGED_KEY, JSON.stringify([item, ...readLoggedServices()]))

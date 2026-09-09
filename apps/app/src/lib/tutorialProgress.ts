@@ -23,18 +23,28 @@ export const SECTION_UNLOCK_STEP: Record<AppSection, number> = {
   estimados: 6,
 }
 
+function readStoredStep(): string | null {
+  const persisted = localStorage.getItem(TUTORIAL_STEP_KEY)
+  if (persisted !== null) return persisted
+
+  const legacy = sessionStorage.getItem(TUTORIAL_STEP_KEY)
+  if (legacy === null) return null
+  localStorage.setItem(TUTORIAL_STEP_KEY, legacy)
+  sessionStorage.removeItem(TUTORIAL_STEP_KEY)
+  return legacy
+}
+
 export function getTutorialStep(): number {
-  const raw = sessionStorage.getItem(TUTORIAL_STEP_KEY)
+  const raw = readStoredStep()
   if (raw === null) return 0
   const step = Number(raw)
   return Number.isFinite(step) ? Math.max(0, Math.min(TUTORIAL_TOTAL_STEPS, step)) : 0
 }
 
 export function setTutorialStep(step: number) {
-  sessionStorage.setItem(
-    TUTORIAL_STEP_KEY,
-    String(Math.max(0, Math.min(TUTORIAL_TOTAL_STEPS, step))),
-  )
+  const next = String(Math.max(0, Math.min(TUTORIAL_TOTAL_STEPS, step)))
+  localStorage.setItem(TUTORIAL_STEP_KEY, next)
+  sessionStorage.removeItem(TUTORIAL_STEP_KEY)
 }
 
 export function isTutorialDone() {
@@ -46,6 +56,8 @@ export function isSectionUnlocked(section: AppSection, step = getTutorialStep())
   return step >= SECTION_UNLOCK_STEP[section]
 }
 
+/** First-run only. Do not call this when the user already finished or skipped. */
 export function resetTutorial() {
-  sessionStorage.setItem(TUTORIAL_STEP_KEY, '0')
+  localStorage.setItem(TUTORIAL_STEP_KEY, '0')
+  sessionStorage.removeItem(TUTORIAL_STEP_KEY)
 }

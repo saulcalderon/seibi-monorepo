@@ -2,12 +2,15 @@ const GARAGE_KEY = 'seibi-garage'
 /** Legacy single-vehicle key — migrated on read. */
 const LEGACY_PROFILE_KEY = 'seibi-vehicle-profile'
 
+export type MileageUnit = 'km' | 'mi'
+
 export type VehicleProfile = {
   id: string
   brand: string
   model: string
   year: string
   mileage: string
+  mileageUnit: MileageUnit
   placa: string
 }
 
@@ -26,6 +29,28 @@ export const VEHICLE_BRANDS = [
 ] as const
 
 export type VehicleBrandOption = (typeof VEHICLE_BRANDS)[number] | 'other'
+
+export const VEHICLE_MODELS: Record<(typeof VEHICLE_BRANDS)[number], string[]> = {
+  Toyota: ['Corolla', 'Camry', 'RAV4', 'Hilux', 'Yaris', 'Tacoma', 'Prius'],
+  Honda: ['Civic', 'Accord', 'CR-V', 'HR-V', 'Fit', 'Pilot', 'City'],
+  Nissan: ['Sentra', 'Versa', 'March', 'X-Trail', 'NP300', 'Kicks', 'Altima'],
+  Volkswagen: ['Jetta', 'Vento', 'Golf', 'Tiguan', 'Polo', 'Amarok', 'Taos'],
+  Ford: ['Focus', 'Fiesta', 'Mustang', 'Escape', 'Explorer', 'Ranger', 'F-150'],
+  Chevrolet: ['Aveo', 'Spark', 'Cruze', 'Tracker', 'Silverado', 'Onix', 'Equinox'],
+}
+
+export function modelsForBrand(brand: VehicleBrandOption | string | ''): string[] {
+  if (!brand || brand === 'other') return []
+  return VEHICLE_MODELS[brand as (typeof VEHICLE_BRANDS)[number]] ?? []
+}
+
+export function modelBelongsToBrand(model: string, brand: VehicleBrandOption | string | '') {
+  const needle = model.trim().toLocaleLowerCase('es')
+  if (!needle) return true
+  const catalog = modelsForBrand(brand)
+  if (catalog.length === 0) return true
+  return catalog.some((item) => item.toLocaleLowerCase('es') === needle)
+}
 
 const emptyGarage: GarageState = { vehicles: [], activeId: null }
 
@@ -93,6 +118,7 @@ function readVehicle(value: unknown): VehicleProfile | null {
     model: value.model,
     year: value.year,
     mileage: value.mileage,
+    mileageUnit: value.mileageUnit === 'mi' ? 'mi' : 'km',
     placa: typeof value.placa === 'string' ? value.placa : previewPlacaFromId(value.id),
   }
 }
@@ -117,6 +143,7 @@ function migrateLegacy(): GarageState | null {
       model: parsed.model,
       year: parsed.year,
       mileage: parsed.mileage,
+      mileageUnit: parsed.mileageUnit === 'mi' ? 'mi' : 'km',
       placa: previewPlacaFromId(id),
     }
     const garage: GarageState = { vehicles: [vehicle], activeId: vehicle.id }
@@ -173,6 +200,7 @@ export function addVehicle(
   const vehicle: VehicleProfile = {
     ...input,
     id: createId(),
+    mileageUnit: readMileageUnit(input.mileageUnit),
     placa: sanitizePlaca(input.placa),
   }
   const next: GarageState = {
@@ -196,12 +224,35 @@ export function updateVehicle(
   garage = getGarage(),
 ): GarageState {
   const vehicles = garage.vehicles.map((vehicle) =>
-    vehicle.id === id ? { ...vehicle, ...input, id, placa: sanitizePlaca(input.placa) } : vehicle,
+    vehicle.id === id
+      ? {
+          ...vehicle,
+          ...input,
+          id,
+          mileageUnit: readMileageUnit(input.mileageUnit ?? vehicle.mileageUnit),
+          placa: sanitizePlaca(input.placa),
+        }
+      : vehicle,
   )
   if (!vehicles.some((vehicle) => vehicle.id === id)) return garage
   const next: GarageState = {
     vehicles,
     activeId: garage.activeId === id ? id : garage.activeId,
+  }
+  saveGarage(next)
+  return next
+}
+
+export function removeVehicle(id: string, garage = getGarage()): GarageState {
+  const vehicles = garage.vehicles.filter((vehicle) => vehicle.id !== id)
+  if (vehicles.length === garage.vehicles.length) return garage
+  const keepActive =
+    garage.activeId &&
+    garage.activeId !== id &&
+    vehicles.some((vehicle) => vehicle.id === garage.activeId)
+  const next: GarageState = {
+    vehicles,
+    activeId: keepActive ? garage.activeId : vehicles[0]?.id ?? null,
   }
   saveGarage(next)
   return next
@@ -216,16 +267,32 @@ export function formatVehicleLabel(profile: Pick<VehicleProfile, 'brand' | 'mode
   return `${profile.brand} ${profile.model} ${profile.year}`
 }
 
+const KM_PER_MILE = 1.60934
+
+export function readMileageUnit(unit?: MileageUnit | string | null): MileageUnit {
+  return unit === 'mi' ? 'mi' : 'km'
+}
+
+export function mileageToKm(mileage: string, unit?: MileageUnit | string | null) {
+  const value = Number(String(mileage).replace(/,/g, '')) || 0
+  return readMileageUnit(unit) === 'mi' ? Math.round(value * KM_PER_MILE) : value
+}
+
 export function formatMileageAmount(mileage: string) {
   const value = Number(String(mileage).replace(/,/g, ''))
   if (!Number.isFinite(value)) return mileage
   return value.toLocaleString('es-MX')
 }
 
-export function formatMileage(mileage: string) {
+export function formatMileageUnit(unit?: MileageUnit | string | null) {
+  return readMileageUnit(unit) === 'mi' ? 'mi' : 'km'
+}
+
+export function formatMileage(mileage: string, unit?: MileageUnit | string | null) {
   const value = Number(String(mileage).replace(/,/g, ''))
-  if (!Number.isFinite(value)) return `${mileage} km`
-  return `${value.toLocaleString('es-MX')} km`
+  const label = formatMileageUnit(unit)
+  if (!Number.isFinite(value)) return `${mileage} ${label}`
+  return `${value.toLocaleString('es-MX')} ${label}`
 }
 
 export function resolveBrandName(brand: string, brandOther: string) {
@@ -242,8 +309,8 @@ export function vehicleArtSrc(index: number) {
 export const OIL_INTERVAL_KM = 5_000
 
 /** Remaining km until next oil change based on current odometer. */
-export function oilKmRemaining(mileage: string) {
-  const km = Number(String(mileage).replace(/,/g, '')) || 0
+export function oilKmRemaining(mileage: string, unit?: MileageUnit | string | null) {
+  const km = mileageToKm(mileage, unit)
   return OIL_INTERVAL_KM - (km % OIL_INTERVAL_KM)
 }
 
@@ -252,10 +319,10 @@ export function oilKmRemaining(mileage: string) {
  * or when marked as the Honda Civic preview case.
  */
 export function vehicleNeedsService(
-  vehicle: Pick<VehicleProfile, 'brand' | 'model' | 'mileage'>,
+  vehicle: Pick<VehicleProfile, 'brand' | 'model' | 'mileage' | 'mileageUnit'>,
 ) {
   const brand = vehicle.brand.trim().toLowerCase()
   const model = vehicle.model.trim().toLowerCase()
   const civicPreview = brand.includes('honda') && model.includes('civic')
-  return civicPreview || oilKmRemaining(vehicle.mileage) <= 400
+  return civicPreview || oilKmRemaining(vehicle.mileage, vehicle.mileageUnit) <= 400
 }
