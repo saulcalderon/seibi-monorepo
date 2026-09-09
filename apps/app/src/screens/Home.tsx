@@ -8,6 +8,10 @@ import {
   type AppSection,
 } from '../lib/tutorialProgress'
 import { getActiveVehicle, getGarage, setActiveVehicle as persistActiveVehicle, type VehicleProfile } from '../lib/vehicleProfile'
+import {
+  getNotificationsEnabled,
+  subscribeNotificationsEnabled,
+} from '../lib/notificationsPref'
 import { recentServicesForVehicle } from '../lib/services'
 import { remindersForVehicle } from '../lib/reminders'
 import { Avisos } from './Avisos'
@@ -200,6 +204,9 @@ function kindLabel(kind: AppNotification['kind']) {
   }
 }
 
+const NOTIF_SLIDE_MS = 380
+const NOTIF_STAGGER_MS = 70
+
 function NotificationsScreen({
   items,
   onBack,
@@ -211,6 +218,33 @@ function NotificationsScreen({
   onSelect: (item: AppNotification) => void
   onClear: () => void
 }) {
+  const [clearing, setClearing] = useState(false)
+  const clearTimer = useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (clearTimer.current !== null) window.clearTimeout(clearTimer.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (items.length === 0) setClearing(false)
+  }, [items.length])
+
+  function handleClear() {
+    if (clearing || items.length === 0) return
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduceMotion) {
+      onClear()
+      return
+    }
+    setClearing(true)
+    const wait = NOTIF_SLIDE_MS + NOTIF_STAGGER_MS * Math.max(0, items.length - 1)
+    clearTimer.current = window.setTimeout(() => {
+      onClear()
+    }, wait)
+  }
+
   return (
     <div className="avisos-screen notif-screen">
       <header className="avisos-header">
@@ -226,13 +260,16 @@ function NotificationsScreen({
         <p className="notif-sheet-empty">{m.home_notifications_empty()}</p>
       ) : (
         <>
-          <ul className="notif-sheet-list">
+          <ul className={`notif-sheet-list${clearing ? ' is-clearing' : ''}`}>
             {items.map((item) => (
               <li key={item.id}>
                 <button
                   type="button"
                   className={`notif-sheet-item kind-${item.kind}`}
-                  onClick={() => onSelect(item)}
+                  onClick={() => {
+                    if (clearing) return
+                    onSelect(item)
+                  }}
                 >
                   <span className="notif-sheet-kind">{kindLabel(item.kind)}</span>
                   <span className="notif-sheet-title">{item.title}</span>
@@ -241,7 +278,7 @@ function NotificationsScreen({
               </li>
             ))}
           </ul>
-          <button type="button" className="notif-clear" onClick={onClear}>
+          <button type="button" className="notif-clear" disabled={clearing} onClick={handleClear}>
             {m.home_notifications_clear()}
           </button>
         </>
@@ -536,12 +573,15 @@ export function Home() {
   const [editVehicleId, setEditVehicleId] = useState<string | null>(null)
   const [mileageOpenNonce, setMileageOpenNonce] = useState(0)
   const homeRootRef = useRef<HTMLDivElement>(null)
+  const [notifsOn, setNotifsOn] = useState(() => getNotificationsEnabled())
   const tutorialActive = step < TUTORIAL_TOTAL_STEPS
   const highlightedSection =
     tutorialActive && step >= 1 ? SECTION_ORDER[step - 1] : null
-  const inbox = notificationsForVehicle(activeVehicle).filter(
-    (item) => !dismissedNotificationIds.includes(item.id),
-  )
+  const inbox = notifsOn
+    ? notificationsForVehicle(activeVehicle).filter(
+        (item) => !dismissedNotificationIds.includes(item.id),
+      )
+    : []
   const notificationCount = inbox.length
 
   function goHome() {
@@ -628,6 +668,20 @@ export function Home() {
     const node = document.querySelector(`[data-section="${highlightedSection}"]`)
     node?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [highlightedSection])
+
+  useEffect(() => subscribeNotificationsEnabled(() => {
+    setNotifsOn(getNotificationsEnabled())
+  }), [])
+
+  useEffect(() => {
+    const syncGarage = () => {
+      const garage = getGarage()
+      setActiveVehicle(getActiveVehicle(garage))
+      setHasVehicle(garage.vehicles.length > 0)
+    }
+    window.addEventListener('seibi-garage-change', syncGarage)
+    return () => window.removeEventListener('seibi-garage-change', syncGarage)
+  }, [])
 
   function renderVehicleHero(showChrome: boolean) {
     return (
