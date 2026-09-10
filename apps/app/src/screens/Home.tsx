@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { VehicleHero, VehicleSetupScreen } from '../components/VehicleHero'
 import { useRequireProductionSession } from '../lib/authSession'
 import { getActiveVehicle, getGarage, setActiveVehicle as persistActiveVehicle, type VehicleProfile } from '../lib/vehicleProfile'
@@ -308,13 +308,29 @@ function DashNav({
       onClick: onServicios,
       badge: null as number | null,
       icon: (
-        <path
-          d="M14.5 5.5l4 4M4 20l1.2-4.2L15.7 5.3a2 2 0 012.8 0l.2.2a2 2 0 010 2.8L8.2 18.8 4 20z"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
+        <>
+          <path
+            d="M8 6.5H6.5A1.5 1.5 0 005 8v11.5A1.5 1.5 0 006.5 21h11a1.5 1.5 0 001.5-1.5V8a1.5 1.5 0 00-1.5-1.5H16"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinejoin="round"
+          />
+          <rect
+            x="8"
+            y="3.5"
+            width="8"
+            height="4"
+            rx="1"
+            stroke="currentColor"
+            strokeWidth="1.7"
+          />
+          <path
+            d="M8.5 12.5h7M8.5 16h5"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+          />
+        </>
       ),
     },
     {
@@ -336,54 +352,12 @@ function DashNav({
     },
   ]
 
-  const navRef = useRef<HTMLElement>(null)
-  const indicatorRef = useRef<HTMLSpanElement>(null)
-  const [indicatorReady, setIndicatorReady] = useState(false)
-
-  useLayoutEffect(() => {
-    const root = navRef.current
-    const indicator = indicatorRef.current
-    if (!root || !indicator) return
-
-    function place() {
-      if (!root || !indicator) return
-      const active = root.querySelector('button.is-active')
-      if (!(active instanceof HTMLElement)) {
-        setIndicatorReady(false)
-        return
-      }
-      const hit = active.querySelector('.dash-nav-hit')
-      const target = hit instanceof HTMLElement ? hit : active
-      const navBox = root.getBoundingClientRect()
-      const box = target.getBoundingClientRect()
-      indicator.style.width = `${box.width}px`
-      indicator.style.height = `${box.height}px`
-      indicator.style.transform = `translate3d(${box.left - navBox.left}px, ${box.top - navBox.top}px, 0)`
-      setIndicatorReady(true)
-    }
-
-    place()
-    const observer = new ResizeObserver(place)
-    observer.observe(root)
-    window.addEventListener('resize', place)
-    return () => {
-      observer.disconnect()
-      window.removeEventListener('resize', place)
-    }
-  }, [nav, hidden])
-
   return (
     <nav
-      ref={navRef}
       className={`dash-nav dash-nav--seibi${hidden ? ' is-scroll-hidden' : ''}`}
       aria-label="Principal"
       aria-hidden={hidden}
     >
-      <span
-        ref={indicatorRef}
-        className={`dash-nav-indicator${indicatorReady ? ' is-ready' : ''}`}
-        aria-hidden="true"
-      />
       {items.map((item) => {
         const active = nav === item.id
         const badge = item.badge
