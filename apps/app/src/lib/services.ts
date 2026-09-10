@@ -1,6 +1,5 @@
 import {
   formatVehicleLabel,
-  mileageToKm,
   type VehicleProfile,
 } from './vehicleProfile'
 
@@ -28,10 +27,6 @@ function money(amount: number) {
   return `$${amount.toLocaleString('es-MX')}`
 }
 
-function daysAgo(days: number) {
-  return Date.now() - days * 24 * 60 * 60 * 1000
-}
-
 function formatServiceWhen(at: number) {
   return new Date(at).toLocaleString('es-MX', {
     day: '2-digit',
@@ -42,87 +37,13 @@ function formatServiceWhen(at: number) {
   })
 }
 
-function demoServices(seed = 0): ServiceItem[] {
-  const oilAt = daysAgo(4)
-  const brakesAt = daysAgo(12)
-  const tiresAt = daysAgo(22)
-  const filterAt = daysAgo(48)
-  const alignAt = daysAgo(95)
-  const batteryAt = daysAgo(140)
-
-  const items: ServiceItem[] = [
-    {
-      id: 'oil',
-      name: 'Cambio de aceite',
-      meta: formatServiceWhen(oilAt),
-      cost: money(850 + (seed % 120)),
-      icon: 'oil',
-      performedAt: oilAt,
-      taller: 'Taller Express Norte',
-    },
-    {
-      id: 'brakes',
-      name: 'Frenos delanteros',
-      meta: formatServiceWhen(brakesAt),
-      cost: money(2_200 + (seed % 500)),
-      icon: 'brakes',
-      performedAt: brakesAt,
-      taller: 'Frenos y Más',
-    },
-    {
-      id: 'tires',
-      name: 'Rotación de llantas',
-      meta: formatServiceWhen(tiresAt),
-      cost: money(600 + (seed % 90)),
-      icon: 'tires',
-      performedAt: tiresAt,
-      taller: 'Llantas del Valle',
-    },
-    {
-      id: 'filter',
-      name: 'Filtro de aire',
-      meta: formatServiceWhen(filterAt),
-      cost: money(420 + (seed % 80)),
-      icon: 'filter',
-      performedAt: filterAt,
-      taller: 'Taller Express Norte',
-    },
-    {
-      id: 'alignment',
-      name: 'Alineación',
-      meta: formatServiceWhen(alignAt),
-      cost: money(850 + (seed % 150)),
-      icon: 'alignment',
-      performedAt: alignAt,
-      taller: 'Alineación Rápida',
-    },
-    {
-      id: 'battery',
-      name: 'Prueba de batería',
-      meta: formatServiceWhen(batteryAt),
-      cost: money(280 + (seed % 60)),
-      icon: 'battery',
-      performedAt: batteryAt,
-      taller: 'Autoeléctrica Centro',
-    },
-  ]
-  return items.sort((a, b) => b.performedAt - a.performedAt)
-}
-
 /** Full Historial for the active Vehículo (any date). */
 export function servicesForVehicle(vehicle: VehicleProfile | null): ServiceItem[] {
-  if (!vehicle) {
-    return withServiceNotes(null, demoServices())
-  }
-
-  const km = mileageToKm(vehicle.mileage, vehicle.mileageUnit)
-  const seed = km % 900
-  const extras = loggedServicesForVehicle(vehicle.id)
-  const items = extras.length > 0 ? extras : demoServices(seed)
+  if (!vehicle) return []
 
   return withServiceNotes(
     vehicle.id,
-    items.sort((a, b) => b.performedAt - a.performedAt),
+    loggedServicesForVehicle(vehicle.id).sort((a, b) => b.performedAt - a.performedAt),
   )
 }
 
