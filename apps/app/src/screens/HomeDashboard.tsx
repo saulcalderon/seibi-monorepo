@@ -179,7 +179,6 @@ export function HomeDashboard({
           <p className="seibi-logo">
             SEIB<span className="seibi-logo-i">I</span>
           </p>
-          <p className="seibi-tagline">{m.home_your_vehicle()}</p>
         </div>
         <div className="seibi-dash-actions">
           <HeaderBtn label={m.home_fleet_open()} onClick={onOpenFleet}>
@@ -309,7 +308,6 @@ export function HomeDashboard({
                 </button>
                 <div className="seibi-hero-top">
                   <div>
-                    <p className="seibi-kicker">{m.home_your_vehicle()}</p>
                     <h2 className="seibi-hero-title">
                       {item.model} <span>{item.year}</span>
                     </h2>
