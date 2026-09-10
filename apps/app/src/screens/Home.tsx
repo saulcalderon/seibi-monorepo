@@ -1,12 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { VehicleHero, VehicleSetupScreen } from '../components/VehicleHero'
-import {
-  getTutorialStep,
-  isSectionUnlocked,
-  setTutorialStep,
-  TUTORIAL_TOTAL_STEPS,
-  type AppSection,
-} from '../lib/tutorialProgress'
 import { useRequireProductionSession } from '../lib/authSession'
 import { getActiveVehicle, getGarage, setActiveVehicle as persistActiveVehicle, type VehicleProfile } from '../lib/vehicleProfile'
 import {
@@ -16,20 +9,10 @@ import {
 import { recentServicesForVehicle } from '../lib/services'
 import { remindersForVehicle } from '../lib/reminders'
 import { Avisos } from './Avisos'
-import { Estimados } from './Estimados'
 import { HomeDashboard } from './HomeDashboard'
 import { Perfil } from './Perfil'
 import { Servicios } from './Servicios'
 import * as m from '../paraglide/messages.js'
-
-const SECTION_ORDER: AppSection[] = [
-  'animacion',
-  'vehiculo',
-  'agregar',
-  'servicios',
-  'recordatorios',
-  'estimados',
-]
 
 function DashPane({
   variant = 'screen',
@@ -81,52 +64,6 @@ function IconButton({
   )
 }
 
-function TutorialCoach({
-  step,
-  onNext,
-  onSkip,
-}: {
-  step: number
-  onNext: () => void
-  onSkip: () => void
-}) {
-  const copy = [
-    { title: m.tutorial_0_title(), desc: m.tutorial_0_desc() },
-    { title: m.tutorial_1_title(), desc: m.tutorial_1_desc() },
-    { title: m.tutorial_2_title(), desc: m.tutorial_2_desc() },
-    { title: m.tutorial_3_title(), desc: m.tutorial_3_desc() },
-    { title: m.tutorial_4_title(), desc: m.tutorial_4_desc() },
-    { title: m.tutorial_5_title(), desc: m.tutorial_5_desc() },
-    { title: m.tutorial_6_title(), desc: m.tutorial_6_desc() },
-  ][step]
-
-  if (!copy) return null
-  const isLast = step >= TUTORIAL_TOTAL_STEPS - 1
-
-  return (
-    <div className="tutorial-coach">
-      <div className="tutorial-coach-card">
-        <div className="tutorial-coach-top">
-          <span className="tutorial-coach-step">
-            {m.tutorial_progress({
-              current: String(step + 1),
-              total: String(TUTORIAL_TOTAL_STEPS),
-            })}
-          </span>
-          <button type="button" className="tutorial-coach-skip" onClick={onSkip}>
-            {m.tutorial_skip()}
-          </button>
-        </div>
-        <h2 className="tutorial-coach-title">{copy.title}</h2>
-        <p className="tutorial-coach-desc">{copy.desc}</p>
-        <button type="button" className="tutorial-coach-cta" onClick={onNext}>
-          {isLast ? m.tutorial_finish() : m.tutorial_next()}
-        </button>
-      </div>
-    </div>
-  )
-}
-
 const DISMISSED_NOTIF_KEY = 'seibi-dismissed-notifications'
 
 function readDismissedNotificationIds(): string[] {
@@ -146,10 +83,10 @@ function writeDismissedNotificationIds(ids: string[]) {
 
 type AppNotification = {
   id: string
-  kind: 'aviso' | 'servicio' | 'recomendacion'
+  kind: 'aviso' | 'servicio'
   title: string
   body: string
-  target: 'avisos' | 'servicios' | 'estimados'
+  target: 'avisos' | 'servicios'
   reminderId?: string
   serviceId?: string
 }
@@ -181,28 +118,12 @@ function notificationsForVehicle(vehicle: VehicleProfile | null): AppNotificatio
     })
   }
 
-  if (vehicle) {
-    items.push({
-      id: 'rec-estimate',
-      kind: 'recomendacion',
-      title: m.home_notifications_rec_title(),
-      body: m.home_notifications_rec_body(),
-      target: 'estimados',
-    })
-  }
-
   return items
 }
 
 function kindLabel(kind: AppNotification['kind']) {
-  switch (kind) {
-    case 'aviso':
-      return m.home_notifications_kind_aviso()
-    case 'servicio':
-      return m.home_notifications_kind_servicio()
-    case 'recomendacion':
-      return m.home_notifications_kind_recomendacion()
-  }
+  if (kind === 'aviso') return m.home_notifications_kind_aviso()
+  return m.home_notifications_kind_servicio()
 }
 
 const NOTIF_SLIDE_MS = 380
@@ -332,25 +253,23 @@ function HeaderActions({
   )
 }
 
-type NavTab = 'home' | 'garaje' | 'recordatorios' | 'perfil' | 'servicios' | 'estimados' | 'notificaciones' | 'agregar'
+type NavTab = 'home' | 'recordatorios' | 'perfil' | 'servicios' | 'notificaciones' | 'agregar'
 
 function DashNav({
   nav,
   hidden = false,
   notificationCount = 0,
   onHome,
-  onServicios,
-  onEstimados,
   onAvisos,
+  onServicios,
   onPerfil,
 }: {
   nav: NavTab
   hidden?: boolean
   notificationCount?: number
   onHome: () => void
-  onServicios: () => void
-  onEstimados: () => void
   onAvisos: () => void
+  onServicios: () => void
   onPerfil: () => void
 }) {
   const items = [
@@ -369,21 +288,6 @@ function DashNav({
       ),
     },
     {
-      id: 'servicios' as const,
-      label: m.home_nav_services(),
-      onClick: onServicios,
-      badge: null as number | null,
-      icon: (
-        <path
-          d="M14.5 5.5l4 4M4 20l1.2-4.2L15.7 5.3a2 2 0 012.8 0l.2.2a2 2 0 010 2.8L8.2 18.8 4 20z"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      ),
-    },
-    {
       id: 'recordatorios' as const,
       label: m.home_nav_reminders(),
       onClick: onAvisos,
@@ -396,6 +300,37 @@ function DashNav({
           strokeLinecap="round"
           strokeLinejoin="round"
         />
+      ),
+    },
+    {
+      id: 'servicios' as const,
+      label: m.home_nav_services(),
+      onClick: onServicios,
+      badge: null as number | null,
+      icon: (
+        <>
+          <path
+            d="M8 6.5H6.5A1.5 1.5 0 005 8v11.5A1.5 1.5 0 006.5 21h11a1.5 1.5 0 001.5-1.5V8a1.5 1.5 0 00-1.5-1.5H16"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinejoin="round"
+          />
+          <rect
+            x="8"
+            y="3.5"
+            width="8"
+            height="4"
+            rx="1"
+            stroke="currentColor"
+            strokeWidth="1.7"
+          />
+          <path
+            d="M8.5 12.5h7M8.5 16h5"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+          />
+        </>
       ),
     },
     {
@@ -417,100 +352,13 @@ function DashNav({
     },
   ]
 
-  const left = items.slice(0, 2)
-  const right = items.slice(2)
-  const navRef = useRef<HTMLElement>(null)
-  const indicatorRef = useRef<HTMLSpanElement>(null)
-  const [indicatorReady, setIndicatorReady] = useState(false)
-
-  useLayoutEffect(() => {
-    const root = navRef.current
-    const indicator = indicatorRef.current
-    if (!root || !indicator) return
-
-    function place() {
-      if (!root || !indicator) return
-      const active = root.querySelector('button.is-active')
-      if (!(active instanceof HTMLElement)) {
-        setIndicatorReady(false)
-        return
-      }
-      const hit = active.querySelector('.dash-nav-hit')
-      const target = hit instanceof HTMLElement ? hit : active
-      const navBox = root.getBoundingClientRect()
-      const box = target.getBoundingClientRect()
-      indicator.style.width = `${box.width}px`
-      indicator.style.height = `${box.height}px`
-      indicator.style.transform = `translate3d(${box.left - navBox.left}px, ${box.top - navBox.top}px, 0)`
-      setIndicatorReady(true)
-    }
-
-    place()
-    const observer = new ResizeObserver(place)
-    observer.observe(root)
-    window.addEventListener('resize', place)
-    return () => {
-      observer.disconnect()
-      window.removeEventListener('resize', place)
-    }
-  }, [nav, hidden])
-
   return (
     <nav
-      ref={navRef}
       className={`dash-nav dash-nav--seibi${hidden ? ' is-scroll-hidden' : ''}`}
       aria-label="Principal"
       aria-hidden={hidden}
     >
-      <span
-        ref={indicatorRef}
-        className={`dash-nav-indicator${indicatorReady ? ' is-ready' : ''}`}
-        aria-hidden="true"
-      />
-      {left.map((item) => {
-        const active = nav === item.id
-        return (
-          <button
-            key={item.id}
-            type="button"
-            className={active ? 'is-active' : ''}
-            aria-label={item.label}
-            aria-current={active ? 'page' : undefined}
-            onClick={item.onClick}
-          >
-            <span className="dash-nav-hit">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                {item.icon}
-              </svg>
-            </span>
-          </button>
-        )
-      })}
-      <button
-        type="button"
-        className={nav === 'estimados' ? 'is-active' : ''}
-        aria-label={m.home_nav_estimates()}
-        aria-current={nav === 'estimados' ? 'page' : undefined}
-        onClick={onEstimados}
-      >
-        <span className="dash-nav-hit">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M6 6.8A2.8 2.8 0 018.8 4h6.4A2.8 2.8 0 0118 6.8v6.4A2.8 2.8 0 0115.2 16H11l-4 3v-3H8.8A2.8 2.8 0 016 13.2V6.8z"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M9 8.5h6M9 12h4"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              strokeLinecap="round"
-            />
-          </svg>
-        </span>
-      </button>
-      {right.map((item) => {
+      {items.map((item) => {
         const active = nav === item.id
         const badge = item.badge
         const badgeLabel =
@@ -536,6 +384,7 @@ function DashNav({
                 </span>
               ) : null}
             </span>
+            <span className="dash-nav-label">{item.label}</span>
           </button>
         )
       })}
@@ -545,8 +394,6 @@ function DashNav({
 
 export function Home() {
   useRequireProductionSession()
-  const [step, setStep] = useState(() => getTutorialStep())
-  const [hasVehicle, setHasVehicle] = useState(() => getGarage().vehicles.length > 0)
   const [activeVehicle, setActiveVehicle] = useState<VehicleProfile | null>(() =>
     getActiveVehicle(getGarage()),
   )
@@ -557,10 +404,8 @@ export function Home() {
     const tab = new URLSearchParams(window.location.search).get('nav')
     if (
       tab === 'servicios' ||
-      tab === 'estimados' ||
       tab === 'recordatorios' ||
       tab === 'perfil' ||
-      tab === 'garaje' ||
       tab === 'notificaciones' ||
       tab === 'agregar'
     ) {
@@ -570,15 +415,10 @@ export function Home() {
   })
   const [focusReminderId, setFocusReminderId] = useState<string | null>(null)
   const [focusServiceId, setFocusServiceId] = useState<string | null>(null)
-  const [serviciosPreferAll, setServiciosPreferAll] = useState(false)
   const [editOpenNonce, setEditOpenNonce] = useState(0)
   const [editVehicleId, setEditVehicleId] = useState<string | null>(null)
-  const [mileageOpenNonce, setMileageOpenNonce] = useState(0)
   const homeRootRef = useRef<HTMLDivElement>(null)
   const [notifsOn, setNotifsOn] = useState(() => getNotificationsEnabled())
-  const tutorialActive = step < TUTORIAL_TOTAL_STEPS
-  const highlightedSection =
-    tutorialActive && step >= 1 ? SECTION_ORDER[step - 1] : null
   const inbox = notifsOn
     ? notificationsForVehicle(activeVehicle).filter(
         (item) => !dismissedNotificationIds.includes(item.id),
@@ -589,7 +429,6 @@ export function Home() {
   function goHome() {
     setFocusReminderId(null)
     setFocusServiceId(null)
-    setServiciosPreferAll(false)
     setFleetListOpen(false)
     setNav('home')
     window.requestAnimationFrame(() => {
@@ -602,35 +441,24 @@ export function Home() {
   function openAvisos(reminderId?: string) {
     setFocusReminderId(reminderId ?? null)
     setFocusServiceId(null)
-    setServiciosPreferAll(false)
     setNav('recordatorios')
   }
 
-  function openServicios(serviceId?: string, preferAll = false) {
+  function openServicios(serviceId?: string) {
     setFocusReminderId(null)
     setFocusServiceId(serviceId ?? null)
-    setServiciosPreferAll(preferAll)
     setNav('servicios')
-  }
-
-  function openEstimados() {
-    setFocusReminderId(null)
-    setFocusServiceId(null)
-    setServiciosPreferAll(false)
-    setNav('estimados')
   }
 
   function openNotifications() {
     setFocusReminderId(null)
     setFocusServiceId(null)
-    setServiciosPreferAll(false)
     setNav('notificaciones')
   }
 
   function openAddVehicle() {
     setFocusReminderId(null)
     setFocusServiceId(null)
-    setServiciosPreferAll(false)
     setNav('agregar')
   }
 
@@ -646,23 +474,8 @@ export function Home() {
       openAvisos(item.reminderId)
       return
     }
-    if (item.target === 'servicios') {
-      openServicios(item.serviceId)
-      return
-    }
-    openEstimados()
+    openServicios(item.serviceId)
   }
-
-  function unlockThrough(nextStep: number) {
-    setTutorialStep(nextStep)
-    setStep(nextStep)
-  }
-
-  useEffect(() => {
-    if (!highlightedSection) return
-    const node = document.querySelector(`[data-section="${highlightedSection}"]`)
-    node?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }, [highlightedSection])
 
   useEffect(() => subscribeNotificationsEnabled(() => {
     setNotifsOn(getNotificationsEnabled())
@@ -672,7 +485,6 @@ export function Home() {
     const syncGarage = () => {
       const garage = getGarage()
       setActiveVehicle(getActiveVehicle(garage))
-      setHasVehicle(garage.vehicles.length > 0)
     }
     window.addEventListener('seibi-garage-change', syncGarage)
     return () => window.removeEventListener('seibi-garage-change', syncGarage)
@@ -685,13 +497,10 @@ export function Home() {
         onAddVehicle={openAddVehicle}
         editOpenNonce={editOpenNonce}
         editVehicleId={editVehicleId}
-        mileageOpenNonce={mileageOpenNonce}
-        unlocked={hasVehicle ? isSectionUnlocked('vehiculo', step) : true}
-        kmUnlocked={hasVehicle ? isSectionUnlocked('kilometraje', step) : true}
-        kmHighlighted={highlightedSection === 'kilometraje'}
-        highlighted={
-          highlightedSection === 'vehiculo' || highlightedSection === 'kilometraje'
-        }
+        unlocked
+        kmUnlocked
+        kmHighlighted={false}
+        highlighted={false}
         toolbarExtras={
           <HeaderActions
             onOpenFleet={() => setFleetListOpen(true)}
@@ -710,19 +519,14 @@ export function Home() {
         }}
         onServiceFocus={() => openAvisos()}
         onSaved={(profile) => {
-          setHasVehicle(true)
           setActiveVehicle(profile)
-          if (step < 3) unlockThrough(3)
         }}
       />
     )
   }
 
   return (
-    <div
-      ref={homeRootRef}
-      className={`dash-home is-toolbar-settled${tutorialActive ? ' is-tutoring' : ''}`}
-    >
+    <div ref={homeRootRef} className="dash-home is-toolbar-settled">
       {nav === 'recordatorios' ? (
         <DashPane key="recordatorios" className="avisos-scroll">
           <Avisos
@@ -736,13 +540,8 @@ export function Home() {
           <Servicios
             vehicle={activeVehicle}
             focusServiceId={focusServiceId}
-            preferAll={serviciosPreferAll}
             onFocusHandled={() => setFocusServiceId(null)}
           />
-        </DashPane>
-      ) : nav === 'estimados' ? (
-        <DashPane key="estimados" className="avisos-scroll estimados-scroll">
-          <Estimados vehicle={activeVehicle} />
         </DashPane>
       ) : nav === 'perfil' ? (
         <DashPane key="perfil" className="avisos-scroll">
@@ -757,21 +556,15 @@ export function Home() {
             onClear={clearNotifications}
           />
         </DashPane>
-      ) : nav === 'garaje' ? (
-        <DashPane key="garaje">{renderVehicleHero(true)}</DashPane>
       ) : (
         <DashPane key="home" variant="home">
           <HomeDashboard
             vehicle={activeVehicle}
             vehicles={getGarage().vehicles}
             notificationCount={notificationCount}
-            highlightedSection={highlightedSection}
             onOpenFleet={() => setFleetListOpen(true)}
             onOpenNotifications={openNotifications}
             onAddVehicle={openAddVehicle}
-            onTutorialTarget={() =>
-              unlockThrough(Math.min(TUTORIAL_TOTAL_STEPS, step + 1))
-            }
             onOpenAvisos={openAvisos}
             onOpenServicios={openServicios}
             onSelectVehicle={(id) => {
@@ -782,7 +575,6 @@ export function Home() {
               setEditVehicleId(id)
               setEditOpenNonce((value) => value + 1)
             }}
-            onUpdateKm={() => setMileageOpenNonce((value) => value + 1)}
           />
         </DashPane>
       )}
@@ -795,10 +587,7 @@ export function Home() {
         <VehicleSetupScreen
           onBack={() => goHome()}
           onSaved={(garage) => {
-            const saved = getActiveVehicle(garage)
-            setHasVehicle(true)
-            setActiveVehicle(saved)
-            if (step < 3) unlockThrough(3)
+            setActiveVehicle(getActiveVehicle(garage))
             goHome()
           }}
         />
@@ -808,23 +597,14 @@ export function Home() {
         nav={nav}
         notificationCount={notificationCount}
         onHome={() => goHome()}
-        onServicios={() => openServicios()}
-        onEstimados={() => openEstimados()}
         onAvisos={() => {
           setFocusReminderId(null)
           setFocusServiceId(null)
           setNav('recordatorios')
         }}
+        onServicios={() => openServicios()}
         onPerfil={() => setNav('perfil')}
       />
-
-      {tutorialActive ? (
-        <TutorialCoach
-          step={step}
-          onNext={() => unlockThrough(Math.min(TUTORIAL_TOTAL_STEPS, step + 1))}
-          onSkip={() => unlockThrough(TUTORIAL_TOTAL_STEPS)}
-        />
-      ) : null}
     </div>
   )
 }
