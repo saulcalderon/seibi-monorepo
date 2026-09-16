@@ -2079,7 +2079,7 @@ html.is-standalone #root {
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
   /* Space so the last sections can scroll fully above the bottom nav. */
-  padding: 3.25rem 1.25rem calc(5.6rem + env(safe-area-inset-bottom));
+  padding: 3.25rem 1.25rem calc(5.75rem + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -8148,27 +8148,27 @@ button.servicios-month-cal-day.has-service:active {
 .dash-nav {
   position: fixed;
   left: 50%;
-  bottom: calc(0.7rem + env(safe-area-inset-bottom));
+  bottom: calc(0.75rem + env(safe-area-inset-bottom));
   z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.15rem;
-  width: min(21.5rem, calc(100% - 1.8rem));
+  display: grid;
+  grid-template-columns: repeat(4, 5rem);
+  align-items: start;
+  justify-content: center;
+  gap: 0.25rem;
+  width: max-content;
+  max-width: calc(100% - 2rem);
   transform: translate3d(-50%, 0, 0);
+  --dash-nav-radius: 1.5rem;
+  --dash-nav-pad: 0.375rem;
   margin: 0;
-  padding: 0.38rem 0.42rem;
+  padding: var(--dash-nav-pad);
   isolation: isolate;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.38);
-  background: linear-gradient(180deg, var(--color-fog) 0%, var(--color-radiant) 46%, var(--color-radiant) 100%);
-  box-shadow:
-    0 10px 24px rgba(255, 79, 24, 0.38),
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.42),
-    inset 0 -1.5px 0 rgba(255, 79, 24, 0.38);
-  -webkit-backdrop-filter: blur(18px) saturate(1.4);
-  backdrop-filter: blur(18px) saturate(1.4);
+  border-radius: var(--dash-nav-radius);
+  border: 1px solid var(--seibi-contorno-line);
+  background: var(--color-pure);
+  box-shadow: var(--seibi-contorno-shadow);
   pointer-events: auto;
+  transition: transform 0.28s var(--ease-smooth);
 }
 
 .dash-nav.is-scroll-hidden {
@@ -8176,62 +8176,52 @@ button.servicios-month-cal-day.has-service:active {
   pointer-events: none;
 }
 
-.dash-nav-indicator {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 0;
-  border-radius: 999px;
-  pointer-events: none;
-  opacity: 0;
-  background: linear-gradient(165deg, var(--color-fog) 0%, var(--color-radiant) 48%, var(--color-radiant) 100%);
-  box-shadow:
-    0 6px 14px rgba(255, 79, 24, 0.35),
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
-    inset 0 -1.5px 0 rgba(255, 79, 24, 0.28);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  transition:
-    transform 0.48s cubic-bezier(0.22, 1, 0.36, 1),
-    width 0.48s cubic-bezier(0.22, 1, 0.36, 1),
-    height 0.48s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.25s var(--ease-smooth);
-  will-change: transform, width, height;
-}
-
-.dash-nav-indicator.is-ready {
-  opacity: 1;
-}
-
 .dash-nav > button {
   position: relative;
   z-index: 1;
-  flex: 1;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+  width: 5rem;
+  min-height: 0;
+  margin: 0;
+  padding: 0.375rem 0.25rem 0.3125rem;
   border: 0;
+  border-radius: calc(var(--dash-nav-radius) - var(--dash-nav-pad));
   background: transparent;
-  color: rgba(18, 18, 20, 0.55);
-  padding: 0;
-  min-width: 0;
+  color: color-mix(in srgb, var(--color-coal) 64%, var(--color-pure));
   cursor: pointer;
+  transition:
+    color 0.18s var(--ease-smooth),
+    background-color 0.18s var(--ease-smooth);
+}
+
+.dash-nav > button:hover {
+  color: var(--color-coal);
+}
+
+.dash-nav > button:focus-visible {
+  outline: 2px solid var(--color-radiant);
+  outline-offset: 2px;
 }
 
 .dash-nav-hit {
   position: relative;
   display: grid;
   place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 999px;
-  transition:
-    color 0.25s var(--ease-smooth),
-    transform 0.15s var(--ease-smooth);
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0;
+  background: transparent;
+  transition: transform 0.15s var(--ease-smooth);
 }
 
 .dash-nav-badge {
   position: absolute;
-  top: 0.18rem;
-  right: 0.18rem;
+  top: -0.32rem;
+  right: -0.48rem;
   left: auto;
   z-index: 2;
   min-width: 0.95rem;
@@ -8240,46 +8230,67 @@ button.servicios-month-cal-day.has-service:active {
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: var(--color-pure);
-  color: var(--color-radiant);
-  font-family: var(--font-display);
-  font-size: 0.52rem;
-  font-weight: 700;
+  background: var(--color-radiant);
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: 0.5625rem;
+  font-weight: 600;
   line-height: 1;
   letter-spacing: -0.02em;
-  box-shadow:
-    0 0 0 1.5px rgba(255, 79, 24, 0.55),
-    0 2px 8px rgba(255, 79, 24, 0.35);
+  box-shadow: 0 0 0 1.5px var(--color-pure);
   pointer-events: none;
 }
 
 .dash-nav > button svg {
-  width: 1.28rem;
-  height: 1.28rem;
+  width: 1.25rem;
+  height: 1.25rem;
   fill: none;
   stroke: currentColor;
 }
 
 .dash-nav > button.is-active {
   color: var(--color-coal);
+  background: color-mix(in srgb, var(--color-radiant) 12%, var(--color-fog));
+}
+
+.dash-nav > button.is-active .dash-nav-hit {
+  color: var(--color-radiant);
+  background: transparent;
 }
 
 .dash-nav > button.is-active svg {
   fill: none;
   stroke: currentColor;
-  filter: drop-shadow(0 0 6px rgba(18, 18, 20, 0.25));
 }
 
 .dash-nav > button:active .dash-nav-hit {
   transform: scale(0.94);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .dash-nav {
-    transition-duration: 0.01ms;
-  }
+.dash-nav-label {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  color: inherit;
+}
 
-  .dash-nav-indicator {
+.dash-nav > button.is-active .dash-nav-label {
+  font-weight: 600;
+  color: var(--color-coal);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-nav,
+  .dash-nav > button,
+  .dash-nav-hit {
     transition-duration: 0.01ms;
   }
 }
@@ -12785,33 +12796,11 @@ html[data-theme='night'] .perfil-email {
 }
 
 .dash-nav--seibi {
-  align-items: center;
+  align-items: start;
 }
 
 .dash-nav--seibi > button {
-  padding: 0;
-  border-radius: 999px;
-}
-
-.dash-nav--seibi .dash-nav-indicator {
-  border-radius: 999px;
-}
-
-.dash-nav--seibi .dash-nav-hit {
-  width: 2.75rem;
-  height: 2.75rem;
-}
-
-.dash-nav--seibi > button.is-active {
-  color: var(--color-coal);
-}
-
-.dash-nav-label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
+  border-radius: calc(var(--dash-nav-radius) - var(--dash-nav-pad));
 }
 
 .dash-nav-fab {
@@ -12909,29 +12898,30 @@ html[data-theme='night'] .perfil-email {
 }
 
 .dash-nav {
-  border: 1px solid color-mix(in srgb, var(--color-coal) 8%, transparent);
+  border: 1px solid var(--seibi-contorno-line);
   background: var(--color-pure);
-  box-shadow: 0 10px 24px color-mix(in srgb, var(--color-coal) 12%, transparent);
-}
-
-.dash-nav-indicator {
-  background: var(--color-radiant);
-  border-color: transparent;
-  box-shadow: 0 6px 14px rgba(255, 79, 24, 0.28);
+  box-shadow: var(--seibi-contorno-shadow);
 }
 
 .dash-nav > button {
-  color: var(--color-coal);
+  color: color-mix(in srgb, var(--color-coal) 64%, var(--color-pure));
 }
 
 .dash-nav > button.is-active,
 .dash-nav--seibi > button.is-active {
-  color: var(--color-pure);
+  color: var(--color-coal);
+  background: color-mix(in srgb, var(--color-radiant) 12%, var(--color-fog));
+}
+
+.dash-nav > button.is-active .dash-nav-hit,
+.dash-nav--seibi > button.is-active .dash-nav-hit {
+  color: var(--color-radiant);
+  background: transparent;
 }
 
 .dash-nav-badge {
   background: var(--color-radiant);
-  color: var(--color-pure);
+  color: #ffffff;
   box-shadow: 0 0 0 1.5px var(--color-pure);
 }
 

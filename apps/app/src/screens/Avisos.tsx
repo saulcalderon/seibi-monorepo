@@ -8,13 +8,7 @@ import {
   type TransitionEvent,
 } from 'react'
 import { createPortal } from 'react-dom'
-import {
-  formatAlarmWhen,
-  getReminderAlarm,
-  saveReminderAlarm,
-  scheduleReminderPing,
-} from '../lib/reminderAlarms'
-import { WearMeaningSheet, WearRing } from '../components/wearUi'
+import { WearRing } from '../components/wearUi'
 import {
   reminderVehicleLabel,
   remindersForVehicle,
@@ -26,26 +20,6 @@ import {
 import type { VehicleProfile } from '../lib/vehicleProfile'
 import * as m from '../paraglide/messages.js'
 
-function pad2(value: number) {
-  return String(value).padStart(2, '0')
-}
-
-function toDateValue(at: number) {
-  const date = new Date(at)
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
-}
-
-function toTimeValue(at: number) {
-  const date = new Date(at)
-  return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`
-}
-
-function fromDateTime(date: string, time: string) {
-  const [year, month, day] = date.split('-').map(Number)
-  const [hour, minute] = time.split(':').map(Number)
-  return new Date(year, (month || 1) - 1, day || 1, hour || 0, minute || 0).getTime()
-}
-
 function formatLastService(at: number) {
   return new Date(at).toLocaleDateString('es-MX', {
     weekday: 'short',
@@ -53,14 +27,6 @@ function formatLastService(at: number) {
     month: 'short',
     year: 'numeric',
   })
-}
-
-function defaultAlarmAt(item: ReminderItem) {
-  const days = item.remainingDays && item.remainingDays > 0 ? item.remainingDays : 1
-  const at = new Date()
-  at.setDate(at.getDate() + days)
-  at.setHours(9, 0, 0, 0)
-  return at.getTime()
 }
 
 function reminderMeter(item: ReminderItem) {
@@ -200,19 +166,11 @@ function reminderLiveCopy(item: ReminderItem) {
 
 function ReminderDetailSheet({
   item,
-  vehicleId,
   onClose,
 }: {
   item: ReminderItem
-  vehicleId: string
   onClose: () => void
 }) {
-  const stored = getReminderAlarm(vehicleId, item.id)
-  const initialAt = stored?.at ?? defaultAlarmAt(item)
-  const [date, setDate] = useState(() => toDateValue(initialAt))
-  const [time, setTime] = useState(() => toTimeValue(initialAt))
-  const [savedAt, setSavedAt] = useState<number | null>(stored?.at ?? null)
-
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') onClose()
@@ -220,19 +178,6 @@ function ReminderDetailSheet({
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [onClose])
-
-  function handleSave() {
-    if (!date || !time) return
-    const at = fromDateTime(date, time)
-    if (!Number.isFinite(at)) return
-    saveReminderAlarm({ vehicleId, reminderId: item.id, at })
-    setSavedAt(at)
-    scheduleReminderPing(
-      at,
-      item.name,
-      m.home_reminder_detail_alarm_saved({ when: formatAlarmWhen(at) }),
-    )
-  }
 
   const lastLabel = item.lastServicedAt
     ? formatLastService(item.lastServicedAt)
@@ -283,43 +228,6 @@ function ReminderDetailSheet({
             <dd>{daysLabel}</dd>
           </div>
         </dl>
-
-        <section className="aviso-detail-alarm">
-          <p className="aviso-detail-label">{m.home_reminder_detail_alarm()}</p>
-          <p className="aviso-detail-hint">{m.home_reminder_detail_alarm_hint()}</p>
-          <div className="aviso-detail-when">
-            <label className="aviso-detail-field">
-              <span>{m.home_reminder_detail_alarm_date()}</span>
-              <input
-                type="date"
-                value={date}
-                onChange={(event) => {
-                  setDate(event.target.value)
-                  setSavedAt(null)
-                }}
-              />
-            </label>
-            <label className="aviso-detail-field">
-              <span>{m.home_reminder_detail_alarm_time()}</span>
-              <input
-                type="time"
-                value={time}
-                onChange={(event) => {
-                  setTime(event.target.value)
-                  setSavedAt(null)
-                }}
-              />
-            </label>
-          </div>
-          {savedAt ? (
-            <p className="aviso-detail-saved">
-              {m.home_reminder_detail_alarm_saved({ when: formatAlarmWhen(savedAt) })}
-            </p>
-          ) : null}
-          <button type="button" className="aviso-detail-save" onClick={handleSave}>
-            {m.home_reminder_detail_alarm_save()}
-          </button>
-        </section>
       </div>
     </div>
   )
@@ -332,7 +240,6 @@ function ReminderCard({
   ringDelayMs = 0,
   animateRing = true,
   onOpen,
-  onWear,
 }: {
   item: ReminderItem
   focused: boolean
@@ -340,7 +247,6 @@ function ReminderCard({
   ringDelayMs?: number
   animateRing?: boolean
   onOpen?: () => void
-  onWear?: () => void
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const cardRef = useRef<HTMLElement>(null)
@@ -418,12 +324,7 @@ function ReminderCard({
           </div>
         </div>
       </button>
-      <WearRing
-        pct={item.remainingPct}
-        delayMs={ringDelayMs}
-        animate={animateRing}
-        onClick={() => onWear?.()}
-      />
+      <WearRing pct={item.remainingPct} delayMs={ringDelayMs} animate={animateRing} />
       <button
         type="button"
         className={`aviso-live-more${menuOpen ? ' is-open' : ''}`}
@@ -482,201 +383,6 @@ function chunkReminders(items: ReminderItem[], size: number) {
   return pages
 }
 
-function reminderDueDate(item: ReminderItem) {
-  if (item.remainingDays == null) return null
-  const date = new Date()
-  date.setHours(12, 0, 0, 0)
-  date.setDate(date.getDate() + Math.max(0, item.remainingDays))
-  return date
-}
-
-function UpcomingMaintenanceCalendar({
-  items,
-  onPick,
-}: {
-  items: ReminderItem[]
-  onPick: (item: ReminderItem) => void
-}) {
-  const now = new Date()
-  const currentYear = now.getFullYear()
-  const currentMonth = now.getMonth()
-  const [shown, setShown] = useState({ year: currentYear, month: currentMonth })
-  const [expanded, setExpanded] = useState(true)
-
-  const datedItems = useMemo(
-    () =>
-      items
-        .map((item) => ({ item, date: reminderDueDate(item) }))
-        .filter(
-          (entry): entry is { item: ReminderItem; date: Date } =>
-            entry.date != null,
-        ),
-    [items],
-  )
-
-  const lastMonth = useMemo(() => {
-    const latest = datedItems.reduce<Date | null>(
-      (result, entry) =>
-        !result || entry.date.getTime() > result.getTime() ? entry.date : result,
-      null,
-    )
-    return latest
-      ? { year: latest.getFullYear(), month: latest.getMonth() }
-      : { year: currentYear, month: currentMonth }
-  }, [datedItems, currentMonth, currentYear])
-
-  const byDay = useMemo(() => {
-    const map = new Map<number, ReminderItem[]>()
-    for (const entry of datedItems) {
-      if (
-        entry.date.getFullYear() !== shown.year ||
-        entry.date.getMonth() !== shown.month
-      ) {
-        continue
-      }
-      const day = entry.date.getDate()
-      const bucket = map.get(day)
-      if (bucket) bucket.push(entry.item)
-      else map.set(day, [entry.item])
-    }
-    return map
-  }, [datedItems, shown])
-
-  const monthLabel = new Date(shown.year, shown.month, 1).toLocaleString(
-    'es-MX',
-    { month: 'long', year: 'numeric' },
-  )
-  const startPad = (new Date(shown.year, shown.month, 1).getDay() + 6) % 7
-  const daysInMonth = new Date(shown.year, shown.month + 1, 0).getDate()
-  const cells = [
-    ...Array.from({ length: startPad }, () => null),
-    ...Array.from({ length: daysInMonth }, (_, index) => index + 1),
-  ]
-  const atCurrent =
-    shown.year === currentYear && shown.month === currentMonth
-  const atLast =
-    shown.year > lastMonth.year ||
-    (shown.year === lastMonth.year && shown.month >= lastMonth.month)
-
-  function shiftMonth(delta: -1 | 1) {
-    const next = new Date(shown.year, shown.month + delta, 1)
-    setShown({ year: next.getFullYear(), month: next.getMonth() })
-  }
-
-  return (
-    <section
-      className={`avisos-month-calendar${expanded ? ' is-expanded' : ''}`}
-      aria-label={m.home_reminders_calendar()}
-    >
-      <header className="avisos-month-calendar-head">
-        <button
-          type="button"
-          className="avisos-month-calendar-toggle"
-          aria-expanded={expanded}
-          aria-label={
-            expanded
-              ? m.home_reminders_calendar_collapse()
-              : m.home_reminders_calendar_expand()
-          }
-          onClick={() => setExpanded((value) => !value)}
-        >
-          <span>
-            <small>{m.home_reminders_calendar()}</small>
-            <strong>{monthLabel}</strong>
-          </span>
-          <i
-            className={expanded ? 'is-expanded' : ''}
-            aria-hidden="true"
-          >
-            <svg viewBox="0 0 12 8" fill="none">
-              <path
-                d="m1.5 1.5 4.5 4 4.5-4"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </i>
-        </button>
-        <div className="avisos-month-calendar-nav">
-          <button
-            type="button"
-            disabled={atCurrent}
-            aria-label={m.home_reminders_calendar_prev()}
-            onClick={() => shiftMonth(-1)}
-          >
-            ‹
-          </button>
-          <button
-            type="button"
-            disabled={atLast}
-            aria-label={m.home_reminders_calendar_next()}
-            onClick={() => shiftMonth(1)}
-          >
-            ›
-          </button>
-        </div>
-      </header>
-
-      <div
-        className={`avisos-month-calendar-body${expanded ? ' is-expanded' : ''}`}
-        aria-hidden={!expanded}
-      >
-        <div className="avisos-month-calendar-body-inner">
-          <div className="avisos-month-calendar-weekdays" aria-hidden="true">
-            {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((day, index) => (
-              <span key={`${day}-${index}`}>{day}</span>
-            ))}
-          </div>
-          <div className="avisos-month-calendar-grid">
-            {cells.map((day, index) => {
-              if (day == null) {
-                return <span key={`empty-${index}`} className="is-empty" />
-              }
-              const dayItems = byDay.get(day) ?? []
-              if (dayItems.length === 0) return <span key={day}>{day}</span>
-              const first = dayItems[0]
-              const color = WEAR_COLOR[wearLevelFromPct(first.remainingPct)]
-              return (
-                <button
-                  key={day}
-                  type="button"
-                  className="has-maintenance"
-                  style={{ '--calendar-wear': color } as CSSProperties}
-                  aria-label={m.home_reminders_calendar_day({
-                    day: String(day),
-                    count: String(dayItems.length),
-                  })}
-                  onClick={() => onPick(first)}
-                >
-                  {day}
-                  <span className="avisos-month-calendar-dots" aria-hidden="true">
-                    {dayItems.slice(0, 3).map((item) => (
-                      <i
-                        key={item.id}
-                        style={
-                          {
-                            '--calendar-wear': WEAR_COLOR[
-                              wearLevelFromPct(item.remainingPct)
-                            ],
-                          } as CSSProperties
-                        }
-                      />
-                    ))}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-          <p className="avisos-month-calendar-note">
-            {m.home_reminders_calendar_note()}
-          </p>
-        </div>
-      </div>
-    </section>
-  )
-}
 
 export function Avisos({
   vehicle,
@@ -733,11 +439,8 @@ export function Avisos({
   const [shownCount, setShownCount] = useState(AVISO_PAGE)
   const [revealOpen, setRevealOpen] = useState(false)
   const [openItem, setOpenItem] = useState<ReminderItem | null>(null)
-  const [wearFocus, setWearFocus] = useState<ReminderItem | null>(null)
-  const [calendarFocusId, setCalendarFocusId] = useState<string | null>(null)
   const collapseTimer = useRef<number>(0)
   const swapTimer = useRef<number>(0)
-  const calendarFocusTimer = useRef<number>(0)
   const pendingFilter = useRef<AvisosFilter>('all')
   const ringsInstant = useRef(false)
   const visible = groups.find((group) => group.id === displayedFilter) ?? groups[0]
@@ -757,7 +460,6 @@ export function Avisos({
   useEffect(() => {
     return () => {
       window.clearTimeout(swapTimer.current)
-      window.clearTimeout(calendarFocusTimer.current)
     }
   }, [])
 
@@ -828,38 +530,6 @@ export function Avisos({
     resetPaging()
   }
 
-  function focusReminderFromCalendar(item: ReminderItem) {
-    ringsInstant.current = true
-    window.clearTimeout(swapTimer.current)
-    window.clearTimeout(calendarFocusTimer.current)
-    setSwapPhase('idle')
-    setActiveFilter('all')
-    setDisplayedFilter('all')
-    pendingFilter.current = 'all'
-
-    const index = reminders.findIndex((entry) => entry.id === item.id)
-    const next =
-      index < 0
-        ? AVISO_PAGE
-        : Math.max(
-            AVISO_PAGE,
-            Math.ceil((index + 1) / AVISO_PAGE) * AVISO_PAGE,
-          )
-    setShownCount(next)
-    setRevealOpen(next > AVISO_PAGE)
-    setCalendarFocusId(item.id)
-
-    window.setTimeout(() => {
-      document
-        .querySelector<HTMLElement>(`[data-reminder-id="${item.id}"]`)
-        ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }, 120)
-    calendarFocusTimer.current = window.setTimeout(
-      () => setCalendarFocusId(null),
-      1500,
-    )
-  }
-
   function renderCard(item: ReminderItem, index: number) {
     const instant = ringsInstant.current
     const previous = visible.items[index - 1]
@@ -882,13 +552,10 @@ export function Avisos({
       >
         <ReminderCard
           item={item}
-          focused={
-            focusReminderId === item.id || calendarFocusId === item.id
-          }
+          focused={focusReminderId === item.id}
           ringDelayMs={instant ? 0 : 1080 + index * 50}
           animateRing={!instant}
           onOpen={() => setOpenItem(item)}
-          onWear={() => setWearFocus(item)}
         />
       </div>
     )
@@ -923,11 +590,6 @@ export function Avisos({
           )
         })}
       </div>
-
-      <UpcomingMaintenanceCalendar
-        items={reminders}
-        onPick={focusReminderFromCalendar}
-      />
 
       <section
         className="avisos-group"
@@ -1015,15 +677,8 @@ export function Avisos({
         ? createPortal(
             <ReminderDetailSheet
               item={openItem}
-              vehicleId={vehicle?.id ?? 'preview'}
               onClose={() => setOpenItem(null)}
             />,
-            document.getElementById('root') ?? document.body,
-          )
-        : null}
-      {wearFocus
-        ? createPortal(
-            <WearMeaningSheet item={wearFocus} onClose={() => setWearFocus(null)} />,
             document.getElementById('root') ?? document.body,
           )
         : null}

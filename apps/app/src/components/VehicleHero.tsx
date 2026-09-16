@@ -24,9 +24,7 @@ import {
 import { GarageCarStage } from './GarageCarStage'
 import { BrandSearchField, ModelSearchField } from './BrandSearchField'
 import { MileageUnitBox } from './MileageUnitBox'
-import { VehicleSaveFollowup } from './VehicleSaveFollowup'
-import { applyMaintQuizToVehicle, type MaintQuizAnswers } from '../lib/vehicleMaintQuiz'
-import { addVehicleReminder, vehicleServiceHealth } from '../lib/reminders'
+import { vehicleServiceHealth } from '../lib/reminders'
 import * as m from '../paraglide/messages.js'
 
 const SETUP_STEPS = 4
@@ -160,8 +158,6 @@ export function VehicleSetupScreen({
   const [stepDir, setStepDir] = useState<'forward' | 'back'>('forward')
   const [draft, setDraft] = useState<Draft>(emptyDraft)
   const [leaving, setLeaving] = useState(false)
-  const [followup, setFollowup] = useState(false)
-  const [askReady, setAskReady] = useState(false)
   const ready = canContinue(step, draft)
   const isLast = step === SETUP_STEPS - 1
 
@@ -208,25 +204,7 @@ export function VehicleSetupScreen({
       return
     }
 
-    setAskReady(true)
-    setFollowup(true)
-  }
-
-  function finishSave(recommendMinor: boolean, answers?: MaintQuizAnswers) {
     const garage = addVehicle(draftToInput(draft))
-    const saved = getActiveVehicle(garage)
-    if (saved && answers) {
-      applyMaintQuizToVehicle(saved, answers)
-    }
-    if (recommendMinor && saved) {
-      addVehicleReminder({
-        vehicleId: saved.id,
-        id: 'review-general',
-        name: m.save_recommend_item(),
-        meta: m.save_recommend_item_meta(),
-        due: m.home_avisos_urgent(),
-      })
-    }
     onSaved(garage)
   }
 
@@ -242,18 +220,7 @@ export function VehicleSetupScreen({
       className={`vehicle-setup-overlay${leaving ? ' is-leaving' : ''}`}
       onAnimationEnd={handleOverlayAnimationEnd}
     >
-    {followup ? (
-      <VehicleSaveFollowup
-        onCancel={() => {
-          setAskReady(false)
-          setFollowup(false)
-        }}
-        onReady={() => setAskReady(true)}
-        onComplete={finishSave}
-      />
-    ) : null}
-    {!followup || !askReady ? (
-    <div className={`avisos-screen vehicle-setup-screen${followup ? ' is-saving' : ''}`}>
+    <div className="avisos-screen vehicle-setup-screen">
       <header className="avisos-header">
         <button type="button" className="avisos-back" onClick={handleBack}>
           {step === 0 ? m.home_vehicle_sheet_close() : m.setup_back()}
@@ -375,7 +342,6 @@ export function VehicleSetupScreen({
         {isLast ? m.home_vehicle_setup_save() : m.setup_next()}
       </button>
     </div>
-    ) : null}
     </div>
   )
 }

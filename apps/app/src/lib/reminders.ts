@@ -247,15 +247,9 @@ export function upcomingMaintenanceForVehicle(
     .slice(0, limit)
 }
 
-/** Preview Recordatorios for the active Vehículo until real data exists. */
+/** Recordatorios for the active Vehículo. Empty until a Vehículo exists. */
 export function remindersForVehicle(vehicle: VehicleProfile | null): ReminderItem[] {
-  if (!vehicle) {
-    return [
-      kmItem('oil', 'Cambio de aceite', 'Cada 5,000 km', 320, KM_INTERVAL.oil),
-      dayItem('brakes', 'Revisión de frenos', 'Cada 12 meses', 18),
-      kmItem('tires', 'Rotación de llantas', 'Cada 10,000 km', 4_200, KM_INTERVAL.tires),
-    ]
-  }
+  if (!vehicle) return []
 
   const km = mileageToKm(vehicle.mileage, vehicle.mileageUnit)
   const resets = loggedPartResetsForVehicle(vehicle.id)
