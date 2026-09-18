@@ -41,7 +41,8 @@ export function Login() {
       <div className="relative z-10 flex flex-1 flex-col items-center px-8 pt-[4.75rem] text-center">
         <SeibiMark className="login-axis-icon" />
         <h1 className="login-axis-title">
-          {m.login_hello()}
+          <span>{m.login_hello()}</span>
+          <span className="login-axis-title-to">{m.login_hello_to()}</span>
           <em>{m.login_hello_em()}</em>
         </h1>
         <p className="login-axis-desc">{m.tagline()}</p>
