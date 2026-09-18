@@ -1,0 +1,23 @@
+---
+description: Cuadro para servicios — card de lista de Servicios (intro HistorySlide). Usar cuando Denny pida este cuadro, una lista de servicios, o reutilizar el mock de historial.
+globs: apps/app/src/screens/{Onboarding,Servicios,Home,HomeDashboard}.tsx
+alwaysApply: false
+---
+
+# Cuadro para servicios
+
+Referencia visual: la card blanca de `/intro` (`HistorySlide` en `apps/app/src/screens/Onboarding.tsx`). CSS en `apps/app/src/index.css` (`.mock-card`, `.mock-timeline`, `.mock-row`).
+
+## Anatomía
+
+1. **Card** (`.mock-card`): fondo `--color-pure`, radius 22px, sombra suave (`0 4px 6px` + `0 16px 40px`).
+2. **Header** (`.mock-card-header`): thumb del Vehículo + label uppercase “Tu vehículo” + badge Milano “N servicios”.
+3. **Lista** (`.mock-timeline`): filas con icono (Milano / muted), título del Servicio, Shop, fecha · hora, costo a la derecha.
+
+Cada fila: icono 1.55rem radius 8px → cuerpo (título 0.78rem / Shop 0.62rem / when 0.6rem) → costo 0.72rem semibold, alineado a la derecha.
+
+## No hacer
+
+- No convertir esto en una tabla.
+- No meter el auto 3D dentro de la lista.
+- Shop y fecha van debajo del nombre del Servicio, no en una sola línea con el costo.

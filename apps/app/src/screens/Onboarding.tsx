@@ -113,7 +113,7 @@ function HistorySlide({ active }: { active: boolean }) {
                 <div className="mock-row-place">Auto Norte</div>
                 <div className="mock-row-when">12 mar · 10:00 a.m.</div>
               </div>
-              <span className="mock-row-cost">$850</span>
+              <span className="mock-row-cost">$48</span>
             </div>
             <div className="mock-row">
               <span className="mock-row-icon muted" aria-hidden="true">
@@ -124,7 +124,7 @@ function HistorySlide({ active }: { active: boolean }) {
                 <div className="mock-row-place">Taller Rápido</div>
                 <div className="mock-row-when">3 feb · 4:30 p.m.</div>
               </div>
-              <span className="mock-row-cost">$2,400</span>
+              <span className="mock-row-cost">$135</span>
             </div>
             <div className="mock-row">
               <span className="mock-row-icon muted" aria-hidden="true">
@@ -135,7 +135,7 @@ function HistorySlide({ active }: { active: boolean }) {
                 <div className="mock-row-place">Centro Automotriz</div>
                 <div className="mock-row-when">28 ene · 9:15 a.m.</div>
               </div>
-              <span className="mock-row-cost">$650</span>
+              <span className="mock-row-cost">$38</span>
             </div>
           </div>
         </div>
@@ -397,13 +397,17 @@ export function Onboarding({ onFinish }: OnboardingProps) {
   }
 
   return (
-    <div className="flex h-full flex-col bg-fog">
-      <div className="min-h-14 shrink-0 pt-13" aria-hidden="true" />
+    <div className="flex h-full min-h-0 flex-col bg-fog">
+      <div
+        className="shrink-0"
+        style={{ height: 'max(0.75rem, env(safe-area-inset-top))' }}
+        aria-hidden="true"
+      />
 
       <div
         ref={viewportRef}
         onScroll={handleScroll}
-        className="info-viewport flex-1 snap-x snap-mandatory overflow-x-auto overflow-y-hidden"
+        className="info-viewport min-h-0 flex-1 snap-x snap-mandatory overflow-x-auto overflow-y-hidden"
       >
         <div className="flex h-full">
           <HistorySlide active={active === 0} />
@@ -411,7 +415,7 @@ export function Onboarding({ onFinish }: OnboardingProps) {
         </div>
       </div>
 
-      <footer className="flex flex-col items-center gap-5 px-7 pt-5 pb-11">
+      <footer className="info-pager flex shrink-0 flex-col items-center gap-4 px-7 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <div className="flex items-center justify-center gap-1.5" role="tablist">
           {Array.from({ length: SLIDE_COUNT }).map((_, index) => (
             <button
