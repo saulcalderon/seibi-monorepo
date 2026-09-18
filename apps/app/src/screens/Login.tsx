@@ -1,8 +1,20 @@
 import { useState } from 'react'
-import { Logo } from '../components/Logo'
 import { signInWithProvider } from '../lib/supabase'
 import type { OAuthProvider } from '../lib/supabase'
 import * as m from '../paraglide/messages.js'
+
+function SeibiMark({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <rect width="64" height="64" rx="18" fill="currentColor" />
+      <path
+        d="M40.5 23.2c-2.2-2.4-5.6-3.5-10.2-3.5-7.4 0-12.1 3.6-12.1 8.6 0 4.2 3.2 6.7 10.4 8.1l3.4.7c4.3.8 6.2 2 6.2 4.1 0 2.6-2.6 4.3-6.9 4.3-3.8 0-6.8-1.3-8.6-3.8l-4.6 3.4C21.3 49.4 26.2 52 34.2 52c8.3 0 13.6-4 13.6-9.7 0-4.5-3-7.2-10.2-8.6l-3.5-.7c-4-.8-6-1.9-6-3.9 0-2.3 2.3-3.9 6.2-3.9 3.3 0 5.8 1.1 7.2 3.2l4.6-3.2z"
+        fill="var(--color-pure)"
+        transform="translate(-1 -3.8)"
+      />
+    </svg>
+  )
+}
 
 export function Login() {
   const [pending, setPending] = useState<OAuthProvider | null>(null)
@@ -14,44 +26,35 @@ export function Login() {
       console.error(`[auth] ${provider} sign-in failed`, error.message)
       setPending(null)
     }
-    // On success Supabase redirects away, so no reset needed.
   }
 
   return (
-    <div className="flex h-full flex-col bg-fog">
-      <div className="relative z-10 px-6 pt-14 pb-2 text-center">
-        <Logo className="text-3xl" />
-        <p className="mt-2 text-[0.8rem] text-black/88">{m.tagline()}</p>
+    <div className="login-axis relative flex h-full flex-col overflow-hidden bg-fog">
+      <div className="login-axis-lights" aria-hidden="true">
+        <span className="login-glow login-glow-a" />
+        <span className="login-glow login-glow-b" />
+        <span className="login-glow login-glow-c" />
+        <span className="login-glow login-glow-d" />
+        <span className="login-glow login-glow-e" />
       </div>
 
-      <div className="flex flex-1 items-center justify-center px-2">
-        <img
-          src="/assets/login-hero.png"
-          alt="Garaje con vehículo"
-          className="block h-auto w-full max-w-80"
-        />
+      <div className="relative z-10 flex flex-1 flex-col items-center px-8 pt-[4.75rem] text-center">
+        <SeibiMark className="login-axis-icon" />
+        <h1 className="login-axis-title">
+          {m.login_hello()}
+          <em>{m.login_hello_em()}</em>
+        </h1>
+        <p className="login-axis-desc">{m.tagline()}</p>
       </div>
 
-      <div className="relative z-10 flex flex-col gap-3 px-7 pb-11">
-        <button
-          type="button"
-          disabled={pending !== null}
-          onClick={() => handleSignIn('apple')}
-          className="flex w-full items-center justify-center gap-2.5 rounded-full border border-coal/8 bg-pure px-5 py-[0.95rem] text-[0.9rem] font-semibold text-coal shadow-[0_2px_12px_rgba(20,21,23,0.08)] transition-transform active:scale-[0.98] disabled:opacity-60"
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="h-[18px] w-[18px]">
-            <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-          </svg>
-          {m.login_apple()}
-        </button>
-
+      <div className="relative z-10 flex flex-col gap-3 px-7 pb-3">
         <button
           type="button"
           disabled={pending !== null}
           onClick={() => handleSignIn('google')}
-          className="flex w-full items-center justify-center gap-2.5 rounded-full border border-coal/8 bg-pure px-5 py-[0.95rem] text-[0.9rem] font-semibold text-coal shadow-[0_2px_12px_rgba(20,21,23,0.08)] transition-transform active:scale-[0.98] disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2.5 rounded-full bg-radiant px-5 py-[0.95rem] text-[0.95rem] font-semibold text-pure shadow-[0_8px_22px_rgba(255,79,24,0.28)] transition-transform active:scale-[0.98] disabled:opacity-60"
         >
-          <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]">
+          <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" aria-hidden="true">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
@@ -60,13 +63,30 @@ export function Login() {
           {m.login_google()}
         </button>
 
-        <p className="mt-1.5 text-center text-[0.65rem] leading-relaxed text-black/88">
-          {m.login_terms_prefix()}
-          <a href="#" className="text-radiant no-underline">{m.login_terms_tos()}</a>
-          {m.login_terms_and()}
-          <a href="#" className="text-radiant no-underline">{m.login_terms_privacy()}</a>.
-        </p>
+        <button
+          type="button"
+          disabled={pending !== null}
+          onClick={() => handleSignIn('apple')}
+          className="flex w-full items-center justify-center gap-2.5 rounded-full bg-coal px-5 py-[0.95rem] text-[0.95rem] font-semibold text-pure transition-transform active:scale-[0.98] disabled:opacity-60"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" className="h-[18px] w-[18px]">
+            <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+          </svg>
+          {m.login_apple()}
+        </button>
       </div>
+
+      <p className="relative z-10 px-7 pb-10 pt-2 text-center text-[0.65rem] leading-relaxed text-coal/55">
+        {m.login_terms_prefix()}
+        <a href="#" className="text-radiant no-underline">
+          {m.login_terms_tos()}
+        </a>
+        {m.login_terms_and()}
+        <a href="#" className="text-radiant no-underline">
+          {m.login_terms_privacy()}
+        </a>
+        .
+      </p>
     </div>
   )
 }

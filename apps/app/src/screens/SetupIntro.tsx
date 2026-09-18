@@ -25,28 +25,26 @@ export function SetupIntro({ onContinue }: SetupIntroProps) {
   }, [holdIntro])
 
   return (
-    <div className="setup-intro flex h-full flex-col bg-fog px-7 pt-16 pb-11">
-      <div className="setup-intro-glow" aria-hidden="true" />
+    <div className="setup-intro flex h-full flex-col bg-fog">
+      <div className="login-axis-lights" aria-hidden="true">
+        <span className="login-glow login-glow-a" />
+        <span className="login-glow login-glow-b" />
+        <span className="login-glow login-glow-c" />
+        <span className="login-glow login-glow-d" />
+        <span className="login-glow login-glow-e" />
+      </div>
 
-      <div className="relative z-10 flex flex-1 flex-col items-center justify-center text-center">
+      <div className="setup-intro-brand">
         <Logo className="setup-intro-logo text-3xl" />
+      </div>
 
-        <p className="setup-intro-eyebrow mt-10 text-[0.72rem] font-semibold tracking-[0.18em] text-radiant uppercase">
-          {m.setup_intro_eyebrow()}
-        </p>
-
-        <h1 className="setup-intro-title mt-4 max-w-72 text-[1.85rem] leading-tight tracking-tight text-coal">
-          {m.setup_intro_title()}{' '}
-          <em className="text-radiant not-italic">{m.setup_intro_title_em()}</em>
+      <div className="setup-intro-copy">
+        <p className="setup-intro-eyebrow">{m.setup_intro_eyebrow()}</p>
+        <h1 className="setup-intro-title">
+          <span className="setup-intro-title-line">{m.setup_intro_title()}</span>
+          <em>{m.setup_intro_title_em()}</em>
         </h1>
-
-        <p className="setup-intro-desc mt-4 max-w-78 text-[0.92rem] leading-relaxed text-black/55">
-          {m.setup_intro_desc()}
-        </p>
-
-        <div className="setup-intro-pulse mt-10" aria-hidden="true">
-          <span />
-          <span />
+        <div className="setup-intro-wait" aria-hidden="true">
           <span />
         </div>
       </div>
