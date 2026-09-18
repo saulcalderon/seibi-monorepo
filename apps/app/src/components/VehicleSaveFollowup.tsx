@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   isMaintQuizReady,
-  isQuizAnswered,
   majorityUnknown,
   MAINT_QUIZ,
   MAINT_WHEN_OPTIONS,
@@ -9,9 +8,10 @@ import {
   type MaintQuizAnswers,
   type MaintQuizQuestion,
 } from '../lib/vehicleMaintQuiz'
+import { StarterCareGrid } from './StarterCareGrid'
 import * as m from '../paraglide/messages.js'
 
-type Phase = 'loading' | 'ask' | 'quiz' | 'recommend' | 'adding'
+type Phase = 'loading' | 'quiz' | 'recommend' | 'adding'
 type LoadBeat = 'spin' | 'done'
 
 const LOAD_SPIN_MS = 3400
@@ -64,14 +64,12 @@ function whenLabel(id: string) {
 
 function QuizField({
   question,
-  index,
   answers,
   open,
   onToggle,
   onChange,
 }: {
   question: MaintQuizQuestion
-  index: number
   answers: MaintQuizAnswers
   open: boolean
   onToggle: () => void
@@ -79,82 +77,50 @@ function QuizField({
 }) {
   const note = answers[quizNoteKey(question.id)] ?? ''
   const picked = answers[question.id] ?? ''
-  const done = isQuizAnswered(answers, question.id)
   const preview = picked ? whenLabel(picked) : m.save_quiz_choice_empty()
 
   return (
-    <article className={`vehicle-save-q${done ? ' is-done' : ''}`}>
-      <header className="vehicle-save-q-head">
-        <span className="vehicle-save-q-num" aria-hidden="true">
-          {String(index + 1).padStart(2, '0')}
-        </span>
-        <h2 className="vehicle-save-q-title">{quizTitle(question.titleKey)}</h2>
-      </header>
-
-      <label className="vehicle-save-quiz-write">
-        <span className="vehicle-edit-label">{m.save_quiz_write_label()}</span>
+    <article className={`know-quiz-card${open ? ' is-open' : ''}`}>
+      <h2 className="text-[0.95rem] font-semibold text-coal">
+        {quizTitle(question.titleKey)}
+      </h2>
+      {question.kind === 'open' ? (
         <textarea
-          className="vehicle-save-open"
+          className="know-quiz-note mt-3"
           value={note}
-          onChange={(event) =>
-            onChange({ [quizNoteKey(question.id)]: event.target.value })
-          }
-          placeholder={
-            question.kind === 'open'
-              ? m.save_quiz_other_placeholder()
-              : m.save_quiz_write_placeholder()
-          }
-          rows={1}
+          rows={2}
+          placeholder={m.save_quiz_other_placeholder()}
+          onChange={(event) => onChange({ [quizNoteKey(question.id)]: event.target.value })}
         />
-      </label>
-
-      {question.kind === 'choice' ? (
-        <div className="vehicle-save-choices">
-          <p className="vehicle-edit-label">{m.save_quiz_choice_label()}</p>
+      ) : (
+        <div className="know-quiz-field mt-3">
           <button
             type="button"
-            className={`vehicle-save-choices-tab${open ? ' is-open' : ''}${
-              picked ? ' is-picked' : ''
-            }`}
+            className={`know-quiz-pick${picked ? ' is-picked' : ''}`}
             aria-expanded={open}
+            aria-haspopup="listbox"
             onClick={onToggle}
           >
-            <span>
-              <strong>{preview}</strong>
-            </span>
-            <span className="vehicle-save-choices-chevron" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M6 9l6 6 6-6"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
+            <span>{preview}</span>
           </button>
           {open ? (
-            <div className="vehicle-save-choices-list" role="listbox">
-              {MAINT_WHEN_OPTIONS.map((option) => {
-                const selected = picked === option.id
-                return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    role="option"
-                    aria-selected={selected}
-                    className={`vehicle-save-choices-option${selected ? ' is-on' : ''}`}
-                    onClick={() => onChange({ [question.id]: option.id })}
-                  >
-                    {whenLabel(option.id)}
-                  </button>
-                )
-              })}
+            <div className="know-quiz-menu" role="listbox">
+              {MAINT_WHEN_OPTIONS.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  role="option"
+                  aria-selected={picked === option.id}
+                  className={`know-quiz-option${picked === option.id ? ' is-on' : ''}`}
+                  onClick={() => onChange({ [question.id]: option.id })}
+                >
+                  {whenLabel(option.id)}
+                </button>
+              ))}
             </div>
           ) : null}
         </div>
-      ) : null}
+      )}
     </article>
   )
 }
@@ -168,7 +134,7 @@ export function VehicleSaveFollowup({
   onReady: () => void
   onComplete: (recommendMinor: boolean, answers?: MaintQuizAnswers) => void
 }) {
-  const [phase, setPhase] = useState<Phase>('ask')
+  const [phase, setPhase] = useState<Phase>('loading')
   const [phaseDir, setPhaseDir] = useState<'forward' | 'back'>('forward')
   const [loadBeat, setLoadBeat] = useState<LoadBeat>('spin')
   const [openChoice, setOpenChoice] = useState<string | null>(null)
@@ -185,6 +151,18 @@ export function VehicleSaveFollowup({
   }, [])
 
   useEffect(() => {
+    if (!openChoice) return
+    function onPointerDown(event: PointerEvent) {
+      const target = event.target
+      if (!(target instanceof Element)) return
+      if (target.closest('.know-quiz-card.is-open')) return
+      setOpenChoice(null)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
+  }, [openChoice])
+
+  useEffect(() => {
     if (phase !== 'loading' && phase !== 'adding') return
     const reduce = prefersReducedMotion()
     const spinMs = phase === 'adding' ? ADD_SPIN_MS : LOAD_SPIN_MS
@@ -198,7 +176,8 @@ export function VehicleSaveFollowup({
         onCompleteRef.current(true, answersRef.current)
         return
       }
-      onCompleteRef.current(false)
+      setPhaseDir('forward')
+      setPhase('quiz')
     }, reduce ? 250 : doneMs)
     return () => window.clearTimeout(timer)
   }, [phase, loadBeat])
@@ -221,14 +200,18 @@ export function VehicleSaveFollowup({
 
   function handleBack() {
     if (phase === 'loading' || phase === 'adding') return
-    if (phase === 'ask') {
-      onCancel()
+    if (phase === 'recommend') {
+      goPhase('quiz', 'back')
       return
     }
     if (phase === 'quiz') {
       setOpenChoice(null)
-      goPhase('ask', 'back')
+      onCancel()
     }
+  }
+
+  function skipQuiz() {
+    onComplete(false)
   }
 
   function patchAnswers(patch: MaintQuizAnswers) {
@@ -239,16 +222,15 @@ export function VehicleSaveFollowup({
 
   const spinning = loadBeat === 'spin'
   const adding = phase === 'adding'
-  const showAsk = phase === 'ask' || phase === 'loading'
   const showQuiz = phase === 'quiz'
-  const showRecommend = phase === 'recommend' || phase === 'adding'
+  const showRecommend = phase === 'recommend'
   const showFloat = phase === 'loading' || phase === 'adding'
-  const paneKey = showAsk ? 'ask' : showQuiz ? 'quiz' : 'recommend'
+  const paneKey = showQuiz ? 'quiz' : 'recommend'
   const paneClass = `vehicle-setup-pane${phaseDir === 'back' ? ' is-back' : ''}`
 
   return (
     <div className="avisos-screen vehicle-setup-screen vehicle-save-followup">
-      {showAsk || showQuiz ? (
+      {showQuiz || phase === 'recommend' ? (
         <header className="avisos-header">
           <button type="button" className="avisos-back" onClick={handleBack}>
             {m.setup_back()}
@@ -256,59 +238,16 @@ export function VehicleSaveFollowup({
         </header>
       ) : null}
 
+      {showQuiz || showRecommend ? (
       <div key={paneKey} className={paneClass}>
-      {showAsk ? (
-        <div className="vehicle-save-ask">
-          <span className="vehicle-save-ask-mark" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="8.2" stroke="currentColor" strokeWidth="1.7" />
-              <path
-                d="M8.2 12.2l2.6 2.6 5-5.4"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
-          <h1 className="avisos-title">{m.save_ask_title()}</h1>
-          <p className="avisos-context">{m.save_ask_desc()}</p>
-          <div className="vehicle-save-ask-pills">
-            <button
-              type="button"
-              className="vehicle-save-ask-btn is-yes"
-              onClick={() => {
-                setLoadBeat('spin')
-                goPhase('loading')
-              }}
-            >
-              {m.save_ask_yes()}
-            </button>
-            <button
-              type="button"
-              className="vehicle-save-ask-btn is-no"
-              onClick={() => {
-                setOpenChoice(null)
-                goPhase('quiz')
-              }}
-            >
-              {m.save_ask_no()}
-            </button>
-          </div>
-        </div>
-      ) : null}
-
       {showQuiz ? (
         <>
-          <p className="avisos-eyebrow">{m.save_quiz_eyebrow()}</p>
           <h1 className="avisos-title vehicle-save-form-title">{m.save_quiz_title()}</h1>
-          <p className="avisos-context vehicle-save-form-lead">{m.save_quiz_desc()}</p>
-          <div className="vehicle-setup-body vehicle-save-quiz vehicle-save-form">
-            {MAINT_QUIZ.map((question, index) => (
+          <div className="vehicle-save-form mt-6 flex flex-col gap-4 pb-4">
+            {MAINT_QUIZ.map((question) => (
               <QuizField
                 key={question.id}
                 question={question}
-                index={index}
                 answers={answers}
                 open={openChoice === question.id}
                 onToggle={() =>
@@ -326,31 +265,30 @@ export function VehicleSaveFollowup({
           >
             {m.setup_next()}
           </button>
+          <button type="button" className="vehicle-save-skip" onClick={skipQuiz}>
+            {m.save_quiz_skip()}
+          </button>
         </>
       ) : null}
 
       {showRecommend ? (
-        <div className="vehicle-save-priority">
-          <div className="vehicle-save-priority-card">
-            <p className="avisos-eyebrow">{m.save_quiz_eyebrow()}</p>
-            <h1 className="avisos-title vehicle-save-priority-title">
-              {m.save_recommend_title()}
-            </h1>
-            <p className="avisos-context">{m.save_recommend_desc()}</p>
-            <button
-              type="button"
-              className="vehicle-save-ask-btn is-yes"
-              onClick={() => {
-                setLoadBeat('spin')
-                goPhase('adding')
-              }}
-            >
-              {m.save_recommend_cta()}
-            </button>
-          </div>
-        </div>
+        <>
+          <h1 className="avisos-title vehicle-save-form-title">{m.save_recommend_title()}</h1>
+          <StarterCareGrid />
+          <button
+            type="button"
+            className="vehicle-setup-cta"
+            onClick={() => {
+              setLoadBeat('spin')
+              goPhase('adding')
+            }}
+          >
+            {m.save_recommend_cta()}
+          </button>
+        </>
       ) : null}
       </div>
+      ) : null}
 
       {showFloat ? (
         <div className="vehicle-save-float" role="status" aria-live="polite">
