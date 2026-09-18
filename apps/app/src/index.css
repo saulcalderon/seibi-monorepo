@@ -519,7 +519,8 @@ html.is-standalone #root {
   color: var(--color-coal);
   font-synthesis: none;
 }
-.login-axis-title em {
+.login-axis-title em,
+.login-axis-title-to {
   font-style: normal;
 }
 .login-axis-desc {

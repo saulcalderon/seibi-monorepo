@@ -1,6 +1,7 @@
 import { useEffect, useState, type TransitionEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { authIdentityFromUser, initialsFromName } from '../lib/authIdentity'
+import { getFirstRunName } from '../lib/firstRunProfile'
 import { useAuthSession, useSignOutToLogin } from '../lib/authSession'
 import {
   formatMileage,
@@ -280,7 +281,7 @@ export function Perfil({ vehicle }: { vehicle: VehicleProfile | null }) {
   const { user, status } = useAuthSession()
   const identity = authIdentityFromUser(user)
   const sessionResolved = status !== 'resolving_initial_session'
-  const displayName = identity.displayName ?? m.profile_guest_name()
+  const displayName = identity.displayName ?? getFirstRunName() ?? m.profile_guest_name()
   const showNoSessionCue = import.meta.env.DEV && status === 'signed_out'
   const [garage, setGarage] = useState(() => getGarage())
   const [garageOpen, setGarageOpen] = useState(false)
