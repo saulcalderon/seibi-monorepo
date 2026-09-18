@@ -37,7 +37,7 @@ The UI maps enum codes back to the Spanish word.
 | Service | `services` | Servicio |
 | Type | `type` — enum `maintenance` \| `repair` | Tipo — mantenimiento \| reparación |
 | Shop | `shop` (free-text column, not its own table) | Taller |
-| Reminder | `reminders` | Recordatorio |
+| Reminder | `reminders` | Recordatorio (tab v1: **Avisos**) |
 | Mileage | `mileage_readings` | Kilometraje |
 | Odometer measure | `odometer_measure` — enum `km` \| `mi` | Medida del odómetro — km \| millas |
 | Estimate | `estimates` | Estimado |
@@ -70,5 +70,9 @@ column behind it is English (`plate`, `shop`, `type`). `type` stores
   and fields such as `placa` are not a precedent; the schema does not copy them.
 - Type is an enum: the column is `type`, the values are `maintenance` and
   `repair`. Linear and the UI still say mantenimiento and reparación.
+- The v1 Reminder tab is labeled **Avisos**, not Recordatorios or
+  Mantenimiento. The long word crowded the floating dock; Avisos is the
+  list the tab opens. The glossary term stays Reminder. Type is not on
+  screen in v1, so Tipo’s “mantenimiento” does not collide with the tab.
 - Agents write Linear in Spanish (Linear / UI column) and code in English
   (CONTEXT.md + Schema). They do not name a table `vehiculos`.

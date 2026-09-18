@@ -37,10 +37,9 @@ function formatServiceWhen(at: number) {
 /** Full Historial for the active Vehículo (any date). */
 export function servicesForVehicle(vehicle: VehicleProfile | null): ServiceItem[] {
   if (!vehicle) return []
-  const items = loggedServicesForVehicle(vehicle.id)
   return withServiceNotes(
     vehicle.id,
-    items.sort((a, b) => b.performedAt - a.performedAt),
+    loggedServicesForVehicle(vehicle.id).sort((a, b) => b.performedAt - a.performedAt),
   )
 }
 

@@ -98,7 +98,7 @@ export function WearRing({
   animate = true,
 }: {
   pct: number
-  onClick: () => void
+  onClick?: () => void
   delayMs?: number
   animate?: boolean
 }) {
@@ -155,7 +155,7 @@ export function WearRing({
       onClick={(event) => {
         event.preventDefault()
         event.stopPropagation()
-        onClick()
+        onClick?.()
       }}
     >
       {replacing ? (
