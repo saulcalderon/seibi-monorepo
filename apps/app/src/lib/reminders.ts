@@ -1,9 +1,7 @@
 import {
   formatVehicleLabel,
   mileageToKm,
-  oilKmRemaining,
   OIL_INTERVAL_KM,
-  vehicleNeedsService,
   type VehicleProfile,
 } from './vehicleProfile'
 import { loggedPartResetsForVehicle, type PartReset } from './services'
@@ -247,69 +245,46 @@ export function upcomingMaintenanceForVehicle(
     .slice(0, limit)
 }
 
-/** Recordatorios for the active Vehículo. Empty until a Vehículo exists. */
+/** Recordatorios del Vehículo: extras aceptados + piezas que el usuario ya registró. */
 export function remindersForVehicle(vehicle: VehicleProfile | null): ReminderItem[] {
   if (!vehicle) return []
 
   const km = mileageToKm(vehicle.mileage, vehicle.mileageUnit)
   const resets = loggedPartResetsForVehicle(vehicle.id)
-  const needsService = vehicleNeedsService(vehicle) && !resets.oil
-  const oilLeft = kmLeftAfterReset(
-    oilKmRemaining(vehicle.mileage, vehicle.mileageUnit),
-    KM_INTERVAL.oil,
-    km,
-    resets.oil,
-  )
-  const brakeDays = daysLeftAfterReset(12 + (km % 40), DAY_INTERVAL.brakes, resets.brakes)
-  const tireLeft = kmLeftAfterReset(10_000 - (km % 10_000), KM_INTERVAL.tires, km, resets.tires)
-  const alignDays = daysLeftAfterReset(40 + (km % 50), DAY_INTERVAL.alignment, resets.alignment)
-  const filterLeft = kmLeftAfterReset(
-    8_000 - (km % 8_000),
-    KM_INTERVAL['air-filter'],
-    km,
-    resets['air-filter'],
-  )
-  const coolantDays = daysLeftAfterReset(90 + (km % 60), DAY_INTERVAL.coolant, resets.coolant)
-  const sparkLeft = kmLeftAfterReset(20_000 - (km % 20_000), KM_INTERVAL.spark, km, resets.spark)
-  const batteryDays = daysLeftAfterReset(120 + (km % 80), DAY_INTERVAL.battery, resets.battery)
+  const extras = extraItemsForVehicle(vehicle.id)
+  const taken = new Set(extras.map((item) => item.id))
+  const items: ReminderItem[] = [...extras]
 
-  const items: ReminderItem[] = [
-    ...extraItemsForVehicle(vehicle.id),
-    kmItem(
-      'oil',
-      'Cambio de aceite',
-      'Cada 5,000 km',
-      oilLeft,
-      KM_INTERVAL.oil,
-      needsService || oilLeft <= 0,
-    ),
-    dayItem('brakes', 'Revisión de frenos', 'Cada 12 meses', brakeDays),
-    {
-      ...kmItem('tires', 'Rotación de llantas', 'Cada 10,000 km', tireLeft, KM_INTERVAL.tires),
-      tone: kmTone(tireLeft),
-    },
-    dayItem('alignment', 'Alineación y balanceo', 'Cada 12 meses', alignDays),
-    {
-      ...kmItem('air-filter', 'Filtro de aire', 'Cada 15,000 km', filterLeft, KM_INTERVAL['air-filter']),
-      tone: kmTone(filterLeft),
-    },
-    dayItem('coolant', 'Refrigerante', 'Cada 24 meses', coolantDays),
-    {
-      ...kmItem('spark', 'Cambio de bujías', 'Cada 40,000 km', sparkLeft, KM_INTERVAL.spark),
-      tone: kmTone(sparkLeft),
-    },
-    dayItem('battery', 'Revisión de batería', 'Cada 24 meses', batteryDays),
-  ]
-
-  return items
-    .map((item) => {
-      const reset = resets[item.id]
-      return reset ? { ...item, lastServicedAt: reset.at } : item
+  function addKm(id: string, name: string, meta: string, interval: number) {
+    const reset = resets[id]
+    if (!reset || taken.has(id)) return
+    const left = kmLeftAfterReset(interval, interval, km, reset)
+    items.push({
+      ...kmItem(id, name, meta, left, interval, left <= 0, reset.at),
+      tone: kmTone(left),
     })
-    .sort(
-      (a, b) =>
-        a.remainingPct - b.remainingPct || TONE_ORDER[a.tone] - TONE_ORDER[b.tone],
-    )
+  }
+
+  function addDays(id: keyof typeof DAY_INTERVAL, name: string, meta: string) {
+    const reset = resets[id]
+    if (!reset || taken.has(id)) return
+    const interval = DAY_INTERVAL[id]
+    items.push(dayItem(id, name, meta, daysLeftAfterReset(interval, interval, reset), reset.at))
+  }
+
+  addKm('oil', 'Cambio de aceite', 'Cada 5,000 km', KM_INTERVAL.oil)
+  addDays('brakes', 'Revisión de frenos', 'Cada 12 meses')
+  addKm('tires', 'Rotación de llantas', 'Cada 10,000 km', KM_INTERVAL.tires)
+  addDays('alignment', 'Alineación y balanceo', 'Cada 12 meses')
+  addKm('air-filter', 'Filtro de aire', 'Cada 8,000 km', KM_INTERVAL['air-filter'])
+  addDays('coolant', 'Refrigerante', 'Cada 24 meses')
+  addKm('spark', 'Cambio de bujías', 'Cada 40,000 km', KM_INTERVAL.spark)
+  addDays('battery', 'Revisión de batería', 'Cada 24 meses')
+
+  return items.sort(
+    (a, b) =>
+      a.remainingPct - b.remainingPct || TONE_ORDER[a.tone] - TONE_ORDER[b.tone],
+  )
 }
 
 export type ServiceUrgency = 'ok' | 'warn' | 'danger'

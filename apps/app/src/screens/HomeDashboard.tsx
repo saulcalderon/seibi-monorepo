@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { GarageCarStage } from '../components/GarageCarStage'
+import { MileageUpdateModal } from '../components/VehicleHero'
 import {
   formatMileageAmount,
   formatMileageUnit,
@@ -13,7 +15,8 @@ import {
   type ReminderItem,
 } from '../lib/reminders'
 import { recentServicesForVehicle, subscribeServicesChange } from '../lib/services'
-import { ServiceIconGlyph } from './Servicios'
+import { ServiceAddSheet, ServiceIconGlyph } from './Servicios'
+import { ReminderPartIcon } from './Avisos'
 import * as m from '../paraglide/messages.js'
 
 function reminderDueCopy(item: ReminderItem, active: VehicleProfile | null) {
@@ -52,20 +55,37 @@ function HeaderBtn({
   )
 }
 
+function ShortcutTile({
+  label,
+  onClick,
+  disabled,
+  children,
+}: {
+  label: string
+  onClick: () => void
+  disabled?: boolean
+  children: ReactNode
+}) {
+  return (
+    <button type="button" className="seibi-shortcut" onClick={onClick} disabled={disabled}>
+      <span className="seibi-shortcut-icon" aria-hidden="true">
+        {children}
+      </span>
+      <span>{label}</span>
+    </button>
+  )
+}
+
 function GearIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
-        d="M12 15.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4z"
+        d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a6.76 6.76 0 010 .255c-.008.378.137.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.55 6.55 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.93 6.93 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869z"
         stroke="currentColor"
-        strokeWidth="1.7"
-      />
-      <path
-        d="M19.4 12a7.4 7.4 0 00-.1-1l2-1.5-2-3.5-2.4 1a7.6 7.6 0 00-1.7-1l-.3-2.6h-4l-.3 2.6a7.6 7.6 0 00-1.7 1l-2.4-1-2 3.5 2 1.5a7.4 7.4 0 000 2l-2 1.5 2 3.5 2.4-1a7.6 7.6 0 001.7 1l.3 2.6h4l.3-2.6a7.6 7.6 0 001.7-1l2.4 1 2-3.5-2-1.5c.1-.3.1-.7.1-1z"
-        stroke="currentColor"
-        strokeWidth="1.4"
+        strokeWidth="1.55"
         strokeLinejoin="round"
       />
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.55" />
     </svg>
   )
 }
@@ -105,6 +125,8 @@ export function HomeDashboard({
   const [editArmed, setEditArmed] = useState(false)
   const [, setServicesTick] = useState(0)
   const recent = showVehicleData ? recentServicesForVehicle(vehicle, 3) : []
+  const [mileageOpen, setMileageOpen] = useState(false)
+  const [addingPart, setAddingPart] = useState(false)
 
   function selectVehicle(id: string) {
     setAddFocused(false)
@@ -225,7 +247,11 @@ export function HomeDashboard({
           <div className="seibi-stage-car">
             <GarageCarStage vehicle={vehicle} />
           </div>
-          <div className="seibi-stage-id" key={vehicle?.id ?? 'empty'}>
+          <div
+            className={`seibi-stage-id${vehicle ? '' : ' is-empty'}`}
+            key={vehicle?.id ?? 'empty'}
+            aria-hidden={!vehicle}
+          >
             {vehicle ? (
               <>
                 <p className="seibi-hero-brand">{vehicle.brand}</p>
@@ -234,12 +260,7 @@ export function HomeDashboard({
                   <p className="seibi-hero-year">{vehicle.year}</p>
                 </div>
               </>
-            ) : (
-              <>
-                <h2 className="seibi-hero-title">{m.home_vehicle_empty_title()}</h2>
-                <p className="seibi-hero-empty-hint">{m.home_vehicle_empty_hint()}</p>
-              </>
-            )}
+            ) : null}
           </div>
         </div>
         <div className="seibi-stage-add-pane" aria-hidden={!addFocused}>
@@ -389,6 +410,49 @@ export function HomeDashboard({
         </div>
       </section>
 
+      <section className="seibi-section" data-section="atajos" aria-label={m.home_section_shortcuts()}>
+        <div className="seibi-shortcuts is-pair">
+          <ShortcutTile
+            label={m.home_shortcut_km()}
+            disabled={!vehicle}
+            onClick={() => setMileageOpen(true)}
+          >
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="13" r="7.2" stroke="currentColor" strokeWidth="1.7" />
+              <path
+                d="M12 13l3.4-2.4M8.2 8.1A7.2 7.2 0 0115.8 8.1"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+              />
+            </svg>
+          </ShortcutTile>
+          <ShortcutTile
+            label={m.home_shortcut_part()}
+            disabled={!vehicle}
+            onClick={() => setAddingPart(true)}
+          >
+            <svg viewBox="0 0 24 24" fill="none">
+              <rect
+                x="5.2"
+                y="5.2"
+                width="13.6"
+                height="13.6"
+                rx="3"
+                stroke="currentColor"
+                strokeWidth="1.7"
+              />
+              <path
+                d="M12 8.6v6.8M8.6 12h6.8"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+              />
+            </svg>
+          </ShortcutTile>
+        </div>
+      </section>
+
       <section data-section="recordatorios" className="seibi-section">
         <div className="seibi-section-head">
           <h2>{m.home_section_upcoming()}</h2>
@@ -408,20 +472,7 @@ export function HomeDashboard({
                   onClick={() => onOpenAvisos(item.id)}
                 >
                   <span className="seibi-maint-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M8 4h8l1.5 5H6.5L8 4zM7 9v9a2 2 0 002 2h6a2 2 0 002-2V9"
-                        stroke="currentColor"
-                        strokeWidth="1.7"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M10 13h4"
-                        stroke="currentColor"
-                        strokeWidth="1.7"
-                        strokeLinecap="round"
-                      />
-                    </svg>
+                    <ReminderPartIcon id={item.id} />
                   </span>
                   <span className="seibi-maint-copy">
                     <strong>{item.name}</strong>
@@ -473,6 +524,28 @@ export function HomeDashboard({
           </p>
         )}
       </section>
+
+      {mileageOpen && vehicle
+        ? createPortal(
+            <MileageUpdateModal
+              vehicle={vehicle}
+              onClose={() => setMileageOpen(false)}
+              onSaved={() => setMileageOpen(false)}
+            />,
+            document.getElementById('root') ?? document.body,
+          )
+        : null}
+
+      {addingPart && vehicle
+        ? createPortal(
+            <ServiceAddSheet
+              vehicle={vehicle}
+              onClose={() => setAddingPart(false)}
+              onSaved={() => setServicesTick((n) => n + 1)}
+            />,
+            document.getElementById('root') ?? document.body,
+          )
+        : null}
     </div>
   )
 }

@@ -357,7 +357,7 @@ function LockIcon() {
   )
 }
 
-function MileageUpdateModal({
+export function MileageUpdateModal({
   vehicle,
   onClose,
   onSaved,

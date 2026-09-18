@@ -73,11 +73,9 @@ function SwitchRow({
   )
 }
 
-
 function prefersReduceMotion() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
-
 
 function ChevronIcon() {
   return (
@@ -105,6 +103,7 @@ function GarageSheet({
   onRemoved: (next: GarageState) => void
 }) {
   const [pendingId, setPendingId] = useState<string | null>(null)
+  const [confirmText, setConfirmText] = useState('')
   const [open, setOpen] = useState(() => prefersReduceMotion())
   const [leaving, setLeaving] = useState(false)
 
@@ -141,16 +140,34 @@ function GarageSheet({
     onClose()
   }
 
-  function askOrRemove(id: string) {
+  function labelsMatch(typed: string, expected: string) {
+    return (
+      typed.trim().replace(/\s+/g, ' ').toLocaleLowerCase('es') ===
+      expected.trim().replace(/\s+/g, ' ').toLocaleLowerCase('es')
+    )
+  }
+
+  function askRemove(id: string) {
     if (leaving) return
-    if (pendingId === id) {
-      const next = removeVehicle(id)
-      onRemoved(next)
-      setPendingId(null)
-      if (next.vehicles.length === 0) requestClose()
-      return
-    }
     setPendingId(id)
+    setConfirmText('')
+  }
+
+  function cancelRemove() {
+    setPendingId(null)
+    setConfirmText('')
+  }
+
+  const pending = vehicles.find((item) => item.id === pendingId) ?? null
+  const pendingLabel = pending ? formatVehicleLabel(pending) : ''
+  const canRemove = pending ? labelsMatch(confirmText, pendingLabel) : false
+
+  function confirmRemove() {
+    if (!pending || leaving || !canRemove) return
+    const next = removeVehicle(pending.id)
+    onRemoved(next)
+    cancelRemove()
+    if (next.vehicles.length === 0) requestClose()
   }
 
   const host = document.getElementById('root') ?? document.body
@@ -183,7 +200,6 @@ function GarageSheet({
         <ul className="perfil-garage-list">
           {vehicles.map((item) => {
             const active = item.id === activeId
-            const asking = pendingId === item.id
             return (
               <li key={item.id} className={`perfil-garage-item${active ? ' is-active' : ''}`}>
                 <div className="perfil-garage-item-copy">
@@ -198,21 +214,66 @@ function GarageSheet({
                 ) : null}
                 <button
                   type="button"
-                  className={`perfil-garage-remove${asking ? ' is-ask' : ''}`}
-                  onClick={() => askOrRemove(item.id)}
+                  className="perfil-garage-remove"
+                  onClick={() => askRemove(item.id)}
                 >
-                  {asking ? m.perfil_garage_remove_ask() : m.perfil_garage_remove()}
+                  {m.perfil_garage_remove()}
                 </button>
               </li>
             )
           })}
         </ul>
       )}
+      {pending ? (
+        <div className="perfil-garage-confirm">
+          <button
+            type="button"
+            className="perfil-garage-confirm-backdrop"
+            aria-label={m.perfil_garage_remove_cancel()}
+            onClick={cancelRemove}
+          />
+          <div
+            className="perfil-garage-confirm-card"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="perfil-garage-remove-title"
+          >
+            <h2 id="perfil-garage-remove-title">{m.perfil_garage_remove_title()}</h2>
+            <p className="perfil-garage-confirm-warn">
+              {m.perfil_garage_remove_warn({ name: pendingLabel })}
+            </p>
+            <label className="perfil-garage-confirm-field">
+              <span>{m.perfil_garage_remove_label()}</span>
+              <strong className="perfil-garage-confirm-phrase">{pendingLabel}</strong>
+              <input
+                value={confirmText}
+                onChange={(event) => setConfirmText(event.target.value)}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                autoFocus
+              />
+            </label>
+            <div className="perfil-garage-confirm-actions">
+              <button type="button" className="perfil-garage-confirm-cancel" onClick={cancelRemove}>
+                {m.perfil_garage_remove_cancel()}
+              </button>
+              <button
+                type="button"
+                className="perfil-garage-confirm-go"
+                disabled={!canRemove}
+                onClick={confirmRemove}
+              >
+                {m.perfil_garage_remove_confirm()}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>,
     host,
   )
 }
-
 
 export function Perfil({ vehicle }: { vehicle: VehicleProfile | null }) {
   const signOutToLogin = useSignOutToLogin()

@@ -54,16 +54,22 @@ function reminderMeter(item: ReminderItem) {
   }
 }
 
-function ReminderPartIcon({ id }: { id: string }) {
+export function ReminderPartIcon({ id }: { id: string }) {
   if (id === 'brakes') {
     return (
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <circle cx="12" cy="12" r="7.2" stroke="currentColor" strokeWidth="1.6" />
-        <circle cx="12" cy="12" r="2.4" stroke="currentColor" strokeWidth="1.6" />
+        <circle cx="11" cy="12" r="7.35" stroke="currentColor" strokeWidth="1.65" />
+        <circle cx="11" cy="12" r="2.2" stroke="currentColor" strokeWidth="1.65" />
+        <circle cx="11" cy="7.6" r="0.8" fill="currentColor" />
+        <circle cx="14.8" cy="9.6" r="0.8" fill="currentColor" />
+        <circle cx="14.8" cy="14.4" r="0.8" fill="currentColor" />
+        <circle cx="11" cy="16.4" r="0.8" fill="currentColor" />
+        <circle cx="7.2" cy="14.4" r="0.8" fill="currentColor" />
+        <circle cx="7.2" cy="9.6" r="0.8" fill="currentColor" />
         <path
-          d="M12 4.8v2.2M12 17v2.2M4.8 12h2.2M17 12h2.2"
+          d="M17.55 7.15c2.4 1.5 3.9 4.05 3.9 7.05s-1.5 5.55-3.9 7.05"
           stroke="currentColor"
-          strokeWidth="1.6"
+          strokeWidth="2"
           strokeLinecap="round"
         />
       </svg>
@@ -72,10 +78,15 @@ function ReminderPartIcon({ id }: { id: string }) {
   if (id === 'tires') {
     return (
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <circle cx="8" cy="8" r="3.1" stroke="currentColor" strokeWidth="1.55" />
-        <circle cx="16" cy="8" r="3.1" stroke="currentColor" strokeWidth="1.55" />
-        <circle cx="8" cy="16" r="3.1" stroke="currentColor" strokeWidth="1.55" />
-        <circle cx="16" cy="16" r="3.1" stroke="currentColor" strokeWidth="1.55" />
+        <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2.3" />
+        <circle cx="12" cy="12" r="4.35" stroke="currentColor" strokeWidth="1.5" />
+        <circle cx="12" cy="12" r="1.2" stroke="currentColor" strokeWidth="1.5" />
+        <path
+          d="M12 7.65v1.85M16.13 10.12l-1.58.75M15.28 15.53l-1.46-.97M8.72 15.53l1.46-.97M7.87 10.12l1.58.75"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
       </svg>
     )
   }
@@ -90,11 +101,12 @@ function ReminderPartIcon({ id }: { id: string }) {
   if (id === 'air-filter') {
     return (
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="4.8" y="6" width="14.4" height="12" rx="2" stroke="currentColor" strokeWidth="1.6" />
         <path
-          d="M5 6h14l-5.5 7v4.5L10.5 19v-6L5 6z"
+          d="M8.2 8.3v7.4M10.7 8.3v7.4M13.3 8.3v7.4M15.8 8.3v7.4"
           stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
+          strokeWidth="1.5"
+          strokeLinecap="round"
         />
       </svg>
     )
@@ -140,12 +152,29 @@ function ReminderPartIcon({ id }: { id: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
-        d="M8 9V7h8v2h2.5v4.5H17V18H7v-2.5H5.5V11H8V9z"
+        d="M6.35 3.35h5.4v2.2H6.35z"
+        stroke="currentColor"
+        strokeWidth="1.55"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M4.55 5.55h9.05l.7 13.35c.06.95-.7 1.75-1.68 1.75H5.53c-.98 0-1.74-.8-1.68-1.75L4.55 5.55z"
         stroke="currentColor"
         strokeWidth="1.6"
         strokeLinejoin="round"
       />
-      <path d="M10 7V5h4v2M9 12h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path
+        d="M11.75 4.45c2.2.25 4.35 1.7 5.7 3.85"
+        stroke="currentColor"
+        strokeWidth="1.55"
+        strokeLinecap="round"
+      />
+      <path
+        d="M18.55 9.4s1.75 1.9 1.75 3.05a1.75 1.75 0 11-3.5 0c0-1.15 1.75-3.05 1.75-3.05z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
     </svg>
   )
 }
@@ -315,12 +344,6 @@ function ReminderCard({
           </div>
           <div className="aviso-live-copy">
             <p className="aviso-live-name">{copy.subtitle}</p>
-            <div className="aviso-live-meta-row">
-              <span className="aviso-live-badge">{item.meta}</span>
-              <span className="aviso-live-part-icon" aria-hidden="true">
-                <ReminderPartIcon id={item.id} />
-              </span>
-            </div>
           </div>
         </div>
       </button>
@@ -383,7 +406,6 @@ function chunkReminders(items: ReminderItem[], size: number) {
   return pages
 }
 
-
 export function Avisos({
   vehicle,
   focusReminderId = null,
@@ -399,7 +421,7 @@ export function Avisos({
     ? m.home_vehicle_context({ vehicle: label })
     : m.home_vehicle_context_empty()
 
-  type AvisosFilter = 'all' | ReminderTone
+  type AvisosFilter = ReminderTone
 
   const groups: {
     id: AvisosFilter
@@ -407,12 +429,6 @@ export function Avisos({
     label: string
     items: ReminderItem[]
   }[] = [
-    {
-      id: 'all',
-      toneClass: 'tone-all',
-      label: m.home_avisos_all(),
-      items: reminders,
-    },
     {
       id: 'danger',
       toneClass: 'tone-danger',
@@ -433,15 +449,18 @@ export function Avisos({
     },
   ]
 
-  const [activeFilter, setActiveFilter] = useState<AvisosFilter>('all')
-  const [displayedFilter, setDisplayedFilter] = useState<AvisosFilter>('all')
+  const startFilter =
+    groups.find((group) => group.items.length > 0)?.id ?? 'ok'
+
+  const [activeFilter, setActiveFilter] = useState<AvisosFilter>(startFilter)
+  const [displayedFilter, setDisplayedFilter] = useState<AvisosFilter>(startFilter)
   const [swapPhase, setSwapPhase] = useState<'idle' | 'out' | 'in'>('idle')
   const [shownCount, setShownCount] = useState(AVISO_PAGE)
   const [revealOpen, setRevealOpen] = useState(false)
   const [openItem, setOpenItem] = useState<ReminderItem | null>(null)
   const collapseTimer = useRef<number>(0)
   const swapTimer = useRef<number>(0)
-  const pendingFilter = useRef<AvisosFilter>('all')
+  const pendingFilter = useRef<AvisosFilter>(startFilter)
   const ringsInstant = useRef(false)
   const visible = groups.find((group) => group.id === displayedFilter) ?? groups[0]
   const headItems = visible.items.slice(0, AVISO_PAGE)
@@ -563,15 +582,41 @@ export function Avisos({
 
   return (
     <div className="avisos-screen">
-      <header className="avisos-header seibi-screen-header">
-        <h1 className="avisos-eyebrow avisos-main-title">
-          {m.home_upcoming_eyebrow()}
-        </h1>
-        <p className="seibi-screen-header-vehicle">{context}</p>
+      <header className="avisos-header seibi-screen-header avisos-head">
+        <div className="avisos-head-row">
+          <span className="avisos-head-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <rect x="4.4" y="6.2" width="15.2" height="13.6" rx="2.2" stroke="currentColor" strokeWidth="1.7" />
+              <path
+                d="M8 4.4v3.4M16 4.4v3.4M4.4 10.2h15.2"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+              />
+              <circle cx="12" cy="15.1" r="1.55" fill="currentColor" />
+            </svg>
+          </span>
+          <div className="avisos-head-copy">
+            <h1 className="avisos-eyebrow avisos-main-title">
+              {m.home_upcoming_eyebrow()}
+            </h1>
+            {label ? <p className="avisos-head-vehicle">{context}</p> : null}
+          </div>
+        </div>
+        {vehicle && reminders.length > 0 ? (
+          <ul className="avisos-head-pulse" aria-label={m.home_avisos_groups()}>
+            {groups.map((group) => (
+              <li key={group.id} className={`avisos-head-pulse-item ${group.toneClass}`}>
+                <strong>{group.items.length}</strong>
+                <span>{group.label}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </header>
 
       <div className="avisos-filters" role="tablist" aria-label={m.home_avisos_groups()}>
-        {[...groups.slice(1), groups[0]].map((group) => {
+        {groups.map((group) => {
           const selected = group.id === activeFilter
           return (
             <button
@@ -582,10 +627,12 @@ export function Avisos({
               className={`avisos-chip ${group.toneClass}${selected ? ' is-active' : ''}`}
               onClick={() => selectFilter(group.id)}
             >
-              {m.home_avisos_chip({
-                label: group.label,
-                count: String(group.items.length),
-              })}
+              {group.items.length > 0
+                ? m.home_avisos_chip({
+                    label: group.label,
+                    count: String(group.items.length),
+                  })
+                : group.label}
             </button>
           )
         })}

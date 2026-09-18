@@ -22,6 +22,44 @@ const MONTH_OPTIONS = Array.from({ length: 12 }, (_, month) => {
 type PeriodPickerKind = 'month' | 'year'
 
 
+function ServiciosHead({
+  title,
+  vehicleLine,
+  onBack,
+}: {
+  title: string
+  vehicleLine: string | null
+  onBack?: () => void
+}) {
+  return (
+    <header className="avisos-header seibi-screen-header avisos-head">
+      {onBack ? (
+        <button type="button" className="avisos-back" onClick={onBack}>
+          {m.setup_back()}
+        </button>
+      ) : null}
+      <div className="avisos-head-row">
+        <span className="avisos-head-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path
+              d="M8 6.5H6.5A1.5 1.5 0 005 8v11.5A1.5 1.5 0 006.5 21h11a1.5 1.5 0 001.5-1.5V8a1.5 1.5 0 00-1.5-1.5H16"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinejoin="round"
+            />
+            <rect x="8" y="3.5" width="8" height="4.4" rx="1.2" stroke="currentColor" strokeWidth="1.7" />
+            <path d="M9.2 12.2h5.6M9.2 15.6h3.8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+          </svg>
+        </span>
+        <div className="avisos-head-copy">
+          <h1 className="avisos-eyebrow servicios-main-title">{title}</h1>
+          {vehicleLine ? <p className="avisos-head-vehicle">{vehicleLine}</p> : null}
+        </div>
+      </div>
+    </header>
+  )
+}
+
 function matchesServicePeriod(
   item: ServiceItem,
   month: number | 'all',
@@ -39,12 +77,29 @@ export function ServiceIconGlyph({ icon }: { icon: ServiceIcon }) {
     return (
       <svg viewBox="0 0 24 24" fill="none">
         <path
-          d="M8 4h8l1.5 5H6.5L8 4zM7 9v9a2 2 0 002 2h6a2 2 0 002-2V9"
+          d="M9.2 3.2h5.6v2.2H9.2z"
           stroke="currentColor"
-          strokeWidth="1.7"
+          strokeWidth="1.6"
           strokeLinejoin="round"
         />
-        <path d="M10 13h4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+        <path
+          d="M10.15 5.4h3.7v1.8h-3.7z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M7.05 7.2h9.9l1.15 12.3c.08.9-.64 1.7-1.58 1.7H7.48c-.94 0-1.66-.8-1.58-1.7L7.05 7.2z"
+          stroke="currentColor"
+          strokeWidth="1.65"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M17 9.4c2.15.15 3.45 1.45 3.45 3.2S19.15 15.7 17 15.85"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+        />
       </svg>
     )
   }
@@ -52,12 +107,19 @@ export function ServiceIconGlyph({ icon }: { icon: ServiceIcon }) {
   if (icon === 'brakes') {
     return (
       <svg viewBox="0 0 24 24" fill="none">
+        <circle cx="11" cy="12" r="7.35" stroke="currentColor" strokeWidth="1.65" />
+        <circle cx="11" cy="12" r="2.2" stroke="currentColor" strokeWidth="1.65" />
+        <circle cx="11" cy="7.6" r="0.8" fill="currentColor" />
+        <circle cx="14.8" cy="9.6" r="0.8" fill="currentColor" />
+        <circle cx="14.8" cy="14.4" r="0.8" fill="currentColor" />
+        <circle cx="11" cy="16.4" r="0.8" fill="currentColor" />
+        <circle cx="7.2" cy="14.4" r="0.8" fill="currentColor" />
+        <circle cx="7.2" cy="9.6" r="0.8" fill="currentColor" />
         <path
-          d="M14.5 5.5l4 4M4 20l1.2-4.2L15.7 5.3a2 2 0 012.8 0l.2.2a2 2 0 010 2.8L8.2 18.8 4 20z"
+          d="M17.55 7.15c2.4 1.5 3.9 4.05 3.9 7.05s-1.5 5.55-3.9 7.05"
           stroke="currentColor"
-          strokeWidth="1.7"
+          strokeWidth="2"
           strokeLinecap="round"
-          strokeLinejoin="round"
         />
       </svg>
     )
@@ -66,12 +128,13 @@ export function ServiceIconGlyph({ icon }: { icon: ServiceIcon }) {
   if (icon === 'tires') {
     return (
       <svg viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="7.5" stroke="currentColor" strokeWidth="1.7" />
-        <circle cx="12" cy="12" r="2.2" stroke="currentColor" strokeWidth="1.7" />
+        <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2.3" />
+        <circle cx="12" cy="12" r="4.35" stroke="currentColor" strokeWidth="1.5" />
+        <circle cx="12" cy="12" r="1.2" stroke="currentColor" strokeWidth="1.5" />
         <path
-          d="M12 4.5V7M12 17v2.5M4.5 12H7M17 12h2.5"
+          d="M12 7.65v1.85M16.13 10.12l-1.58.75M15.28 15.53l-1.46-.97M8.72 15.53l1.46-.97M7.87 10.12l1.58.75"
           stroke="currentColor"
-          strokeWidth="1.7"
+          strokeWidth="1.5"
           strokeLinecap="round"
         />
       </svg>
@@ -81,11 +144,12 @@ export function ServiceIconGlyph({ icon }: { icon: ServiceIcon }) {
   if (icon === 'filter') {
     return (
       <svg viewBox="0 0 24 24" fill="none">
+        <rect x="4.8" y="6" width="14.4" height="12" rx="2" stroke="currentColor" strokeWidth="1.7" />
         <path
-          d="M5 6h14l-5.5 7v4.5L10.5 19v-6L5 6z"
+          d="M8.2 8.3v7.4M10.7 8.3v7.4M13.3 8.3v7.4M15.8 8.3v7.4"
           stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinejoin="round"
+          strokeWidth="1.5"
+          strokeLinecap="round"
         />
       </svg>
     )
@@ -409,7 +473,7 @@ function ServiceDetailSheet({
   )
 }
 
-function ServiceAddSheet({
+export function ServiceAddSheet({
   vehicle,
   onClose,
   onSaved,
@@ -456,7 +520,6 @@ function ServiceAddSheet({
             {m.home_services_detail_close()}
           </button>
         </header>
-        <p className="servicios-desc">{m.home_part_desc()}</p>
 
         <label className="servicios-add-field">
           <span>{m.home_part_name_label()}</span>
@@ -629,12 +692,10 @@ export function Servicios({
 
   return (
     <div className="avisos-screen servicios-screen servicios-screen--enter">
-      <header className="avisos-header seibi-screen-header">
-        <h1 className="avisos-eyebrow servicios-main-title">
-          {m.home_services_eyebrow()}
-        </h1>
-        <p className="seibi-screen-header-vehicle">{context}</p>
-      </header>
+      <ServiciosHead
+        title={m.home_services_eyebrow()}
+        vehicleLine={label ? context : null}
+      />
 
       <div className="avisos-legend" aria-label="Resumen de servicios">
         <span className="avisos-chip tone-ok">

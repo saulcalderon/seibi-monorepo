@@ -1,7 +1,4 @@
-import {
-  formatVehicleLabel,
-  type VehicleProfile,
-} from './vehicleProfile'
+import { formatVehicleLabel, type VehicleProfile } from './vehicleProfile'
 
 export type ServiceIcon = 'oil' | 'brakes' | 'tires' | 'filter' | 'battery' | 'alignment'
 
@@ -40,7 +37,6 @@ function formatServiceWhen(at: number) {
 /** Full Historial for the active Vehículo (any date). */
 export function servicesForVehicle(vehicle: VehicleProfile | null): ServiceItem[] {
   if (!vehicle) return []
-
   return withServiceNotes(
     vehicle.id,
     loggedServicesForVehicle(vehicle.id).sort((a, b) => b.performedAt - a.performedAt),
