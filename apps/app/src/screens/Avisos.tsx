@@ -4,11 +4,9 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
   type TransitionEvent,
 } from 'react'
 import { createPortal } from 'react-dom'
-import { WearRing } from '../components/wearUi'
 import {
   reminderVehicleLabel,
   remindersForVehicle,
@@ -29,29 +27,34 @@ function formatLastService(at: number) {
   })
 }
 
-function reminderMeter(item: ReminderItem) {
-  if (item.remainingKm != null) {
-    return {
-      label: m.home_reminder_pilot_km_left(),
-      value: item.remainingKm.toLocaleString('es-MX'),
-      unit: 'km',
-      long: item.remainingKm >= 1_000,
-    }
-  }
+function reminderToneLabel(tone: ReminderTone) {
+  if (tone === 'danger') return m.home_avisos_urgent()
+  if (tone === 'warn') return m.home_avisos_soon()
+  return m.home_avisos_ok()
+}
+
+function reminderRowDate(item: ReminderItem) {
+  const days = item.remainingDays ?? 0
+  const date = new Date()
+  date.setHours(0, 0, 0, 0)
+  date.setDate(date.getDate() + Math.max(0, days))
+  return date.toLocaleDateString('es-MX', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+function reminderRowLeft(item: ReminderItem) {
   if (item.remainingDays != null) {
-    return {
-      label: m.home_reminder_pilot_days_left(),
-      value: String(Math.max(0, item.remainingDays)),
-      unit: item.remainingDays <= 0 ? 'vencido' : 'días',
-      long: false,
-    }
+    if (item.remainingDays <= 0) return m.home_reminder_row_overdue()
+    if (item.remainingDays === 1) return m.home_reminder_row_day_left()
+    return m.home_reminder_row_days_left({ days: String(item.remainingDays) })
   }
-  return {
-    label: m.home_reminder_pilot_days_left(),
-    value: '—',
-    unit: '',
-    long: false,
+  if (item.remainingKm != null) {
+    return m.home_upcoming_km_left({ km: item.remainingKm.toLocaleString('es-MX') })
   }
+  return item.due
 }
 
 export function ReminderPartIcon({ id }: { id: string }) {
@@ -266,121 +269,47 @@ function ReminderCard({
   item,
   focused,
   hidden = false,
-  ringDelayMs = 0,
-  animateRing = true,
   onOpen,
 }: {
   item: ReminderItem
   focused: boolean
   hidden?: boolean
-  ringDelayMs?: number
-  animateRing?: boolean
   onOpen?: () => void
 }) {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const cardRef = useRef<HTMLElement>(null)
   const copy = reminderLiveCopy(item)
-  const meter = reminderMeter(item)
-  const replacing = wearLevelFromPct(item.remainingPct) === 'replace'
-
-  const closeMenu = useEffectEvent(() => {
-    setMenuOpen(false)
-  })
-
-  useEffect(() => {
-    if (hidden) setMenuOpen(false)
-  }, [hidden])
-
-  useEffect(() => {
-    if (!menuOpen) return
-
-    function onPointerDown(event: PointerEvent) {
-      const target = event.target as Node | null
-      if (target && cardRef.current?.contains(target)) return
-      closeMenu()
-    }
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') closeMenu()
-    }
-
-    document.addEventListener('pointerdown', onPointerDown)
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown)
-      document.removeEventListener('keydown', onKeyDown)
-    }
-  }, [menuOpen])
-
-  const actions = [
-    { id: 'schedule', label: m.home_reminder_schedule() },
-    { id: 'update', label: m.home_reminder_update() },
-    { id: 'snooze', label: m.home_reminder_snooze() },
-  ] as const
+  const when = reminderRowDate(item)
+  const left = reminderRowLeft(item)
+  const badge = reminderToneLabel(item.tone)
 
   return (
     <article
-      ref={cardRef}
       id={`aviso-${item.id}`}
       data-reminder-id={item.id}
       hidden={hidden}
-      className={`aviso-live tone-${item.tone}${replacing ? ' is-replace' : ''}${
-        focused ? ' is-focused' : ''
-      }${menuOpen ? ' is-menu-open' : ''}`}
+      className={`aviso-live tone-${item.tone}${focused ? ' is-focused' : ''}`}
     >
       <button
         type="button"
         className="aviso-live-open"
-        aria-label={`${copy.title}. ${copy.subtitle}`}
+        aria-label={`${copy.subtitle}. ${left}. ${badge}`}
         onClick={onOpen}
       >
-        <div className="aviso-live-pilot">
-          <div className="aviso-live-pilot-meter">
-            <p className="aviso-live-pilot-label">{meter.label}</p>
-            <span className="aviso-live-pilot-count" aria-hidden="true">
-              <strong>{meter.value}</strong>
-              {meter.unit ? <em>{meter.unit}</em> : null}
-            </span>
-          </div>
-          <div className="aviso-live-copy">
-            <p className="aviso-live-name">{copy.subtitle}</p>
-          </div>
-        </div>
+        <span className="aviso-live-icon" aria-hidden="true">
+          <ReminderPartIcon id={item.id} />
+        </span>
+        <span className="aviso-live-copy">
+          <strong className="aviso-live-name">{item.name}</strong>
+        </span>
+        <span className="aviso-live-when">
+          <span className="aviso-live-date">{when}</span>
+          <span className="aviso-live-left">{left}</span>
+        </span>
+        <span
+          className="aviso-live-dot"
+          style={{ background: WEAR_COLOR[wearLevelFromPct(item.remainingPct)] }}
+          aria-hidden="true"
+        />
       </button>
-      <WearRing pct={item.remainingPct} delayMs={ringDelayMs} animate={animateRing} />
-      <button
-        type="button"
-        className={`aviso-live-more${menuOpen ? ' is-open' : ''}`}
-        aria-label={m.home_reminder_more()}
-        aria-haspopup="menu"
-        aria-expanded={menuOpen}
-        onClick={(event) => {
-          event.preventDefault()
-          event.stopPropagation()
-          setMenuOpen((open) => !open)
-        }}
-      >
-        <span aria-hidden="true">···</span>
-      </button>
-      {menuOpen ? (
-        <div className="dash-upcoming-menu" role="menu" aria-label={m.home_reminder_more()}>
-          {actions.map((action) => (
-            <button
-              key={action.id}
-              type="button"
-              role="menuitem"
-              className="dash-upcoming-menu-item"
-              onClick={(event) => {
-                event.preventDefault()
-                event.stopPropagation()
-                setMenuOpen(false)
-              }}
-            >
-              {action.label}
-            </button>
-          ))}
-        </div>
-      ) : null}
     </article>
   )
 }
@@ -461,7 +390,6 @@ export function Avisos({
   const collapseTimer = useRef<number>(0)
   const swapTimer = useRef<number>(0)
   const pendingFilter = useRef<AvisosFilter>(startFilter)
-  const ringsInstant = useRef(false)
   const visible = groups.find((group) => group.id === displayedFilter) ?? groups[0]
   const headItems = visible.items.slice(0, AVISO_PAGE)
   const extraChunks = chunkReminders(visible.items.slice(AVISO_PAGE), AVISO_PAGE)
@@ -526,13 +454,11 @@ export function Avisos({
     setActiveFilter(id)
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (reduce) {
-      ringsInstant.current = true
       setDisplayedFilter(id)
       resetPaging()
       setSwapPhase('idle')
       return
     }
-    ringsInstant.current = true
     window.clearTimeout(swapTimer.current)
     setSwapPhase('out')
     swapTimer.current = window.setTimeout(() => {
@@ -549,34 +475,14 @@ export function Avisos({
     resetPaging()
   }
 
-  function renderCard(item: ReminderItem, index: number) {
-    const instant = ringsInstant.current
-    const previous = visible.items[index - 1]
-    const previousLevel = previous
-      ? wearLevelFromPct(previous.remainingPct)
-      : null
-    const currentLevel = wearLevelFromPct(item.remainingPct)
-    const changesWear = Boolean(previousLevel && previousLevel !== currentLevel)
-    const dividerStyle = changesWear
-      ? ({
-          '--divider-from': WEAR_COLOR[previousLevel!],
-          '--divider-to': WEAR_COLOR[currentLevel],
-        } as CSSProperties)
-      : undefined
+  function renderCard(item: ReminderItem) {
     return (
-      <div
+      <ReminderCard
         key={item.id}
-        className={`aviso-tone-slot${changesWear ? ' has-tone-divider' : ''}`}
-        style={dividerStyle}
-      >
-        <ReminderCard
-          item={item}
-          focused={focusReminderId === item.id}
-          ringDelayMs={instant ? 0 : 1080 + index * 50}
-          animateRing={!instant}
-          onOpen={() => setOpenItem(item)}
-        />
-      </div>
+        item={item}
+        focused={focusReminderId === item.id}
+        onOpen={() => setOpenItem(item)}
+      />
     )
   }
 
@@ -604,39 +510,34 @@ export function Avisos({
           </div>
         </div>
         {vehicle && reminders.length > 0 ? (
-          <ul className="avisos-head-pulse" aria-label={m.home_avisos_groups()}>
-            {groups.map((group) => (
-              <li key={group.id} className={`avisos-head-pulse-item ${group.toneClass}`}>
-                <strong>{group.items.length}</strong>
-                <span>{group.label}</span>
-              </li>
-            ))}
-          </ul>
+          <div
+            className="avisos-head-pulse seibi-recuadros"
+            role="tablist"
+            aria-label={m.home_avisos_groups()}
+          >
+            {groups.map((group) => {
+              const selected = group.id === activeFilter
+              return (
+                <button
+                  key={group.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  className={`avisos-head-pulse-item seibi-recuadro ${group.toneClass}${
+                    selected ? ' is-active' : ''
+                  }`}
+                  onClick={() => selectFilter(group.id)}
+                >
+                  <span className="seibi-recuadro-icon">{group.items.length}</span>
+                  <span className="seibi-recuadro-copy">
+                    <strong>{group.label}</strong>
+                  </span>
+                </button>
+              )
+            })}
+          </div>
         ) : null}
       </header>
-
-      <div className="avisos-filters" role="tablist" aria-label={m.home_avisos_groups()}>
-        {groups.map((group) => {
-          const selected = group.id === activeFilter
-          return (
-            <button
-              key={group.id}
-              type="button"
-              role="tab"
-              aria-selected={selected}
-              className={`avisos-chip ${group.toneClass}${selected ? ' is-active' : ''}`}
-              onClick={() => selectFilter(group.id)}
-            >
-              {group.items.length > 0
-                ? m.home_avisos_chip({
-                    label: group.label,
-                    count: String(group.items.length),
-                  })
-                : group.label}
-            </button>
-          )
-        })}
-      </div>
 
       <section
         className="avisos-group"
@@ -652,8 +553,9 @@ export function Avisos({
         >
           {visible.items.length > 0 ? (
             <>
+              <div className="aviso-live-sheet">
               <div className="aviso-live-list">
-                {headItems.map((item, index) => renderCard(item, index))}
+                {headItems.map((item) => renderCard(item))}
               </div>
               {visible.items.length > AVISO_PAGE ? (
                 <div className={`aviso-live-more-stack${canShowMore ? ' has-peek' : ''}`}>
@@ -680,9 +582,7 @@ export function Avisos({
                       >
                         <div className="aviso-live-reveal-inner">
                           <div className="aviso-live-list">
-                            {chunk.map((item, itemIndex) =>
-                              renderCard(item, unlockAt + itemIndex),
-                            )}
+                            {chunk.map((item) => renderCard(item))}
                           </div>
                         </div>
                       </div>
@@ -713,6 +613,7 @@ export function Avisos({
                   </button>
                 </div>
               ) : null}
+              </div>
             </>
           ) : (
             <p className="avisos-group-empty">{m.home_avisos_group_empty()}</p>
