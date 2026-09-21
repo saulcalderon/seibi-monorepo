@@ -8,14 +8,19 @@ Service is due, and what that work might cost.
 **Vehicle**:
 An automobile owned by a user. Every Service, Reminder, and Mileage reading
 belongs to exactly one Vehicle. A Plate is optional. Mileage on a Vehicle
-uses one odometer measure. A Vehicle may have no Mileage readings yet. A
-Vehicle can be withdrawn from the garage without destroying its Services
-or Mileage readings. A withdrawn Vehicle can be restored.
+uses one odometer measure. A Vehicle may have no Mileage readings yet.
 _Avoid_: auto, car, unit
+
+**Withdrawn**:
+A Vehicle the user has removed from their Vehicles without destroying it.
+A Withdrawn Vehicle does not appear among the user's Vehicles until it is
+restored. Services and Mileage readings stay on it.
+_Avoid_: deleted, removed, archived
 
 **Plate**:
 The registration identifier on a Vehicle. Optional and not unique; two
-Vehicles may share a Plate, or share brand, model, and year.
+Vehicles may share a Plate, or share brand, model, and year. An absent
+Plate is shown as absent; Seibi does not invent one.
 _Avoid_: placa, license
 
 **Service**:
@@ -75,6 +80,6 @@ _Avoid_: setup, FTUE, walkthrough
 **Onboarding**:
 The first run after sign-in: a welcome, then questions about how they
 maintain a Vehicle. A Vehicle is not required to finish it. The first
-Vehicle may be created during Onboarding; creating one later in the
-garage is not Onboarding.
+Vehicle may be created during Onboarding; creating one later is not
+Onboarding.
 _Avoid_: setup, first-run, FTUE

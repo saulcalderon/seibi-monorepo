@@ -4,14 +4,13 @@ import { MileageUnitBox } from '../components/MileageUnitBox'
 import { SetupOptionButton } from '../components/SetupOptionButton'
 import { SetupPhaseShell } from '../components/SetupPhaseShell'
 import {
-  addVehicle,
-  getActiveVehicle,
   mileageToKm,
   modelBelongsToBrand,
   resolveBrandName,
   type MileageUnit,
   type VehicleBrandOption,
 } from '../lib/vehicleProfile'
+import { createVehicle, parseMileageReading } from '../lib/vehicles'
 import { pathQuestionCount, type KnowledgeProfile } from '../lib/firstRunProfile'
 import * as m from '../paraglide/messages.js'
 
@@ -85,16 +84,19 @@ function vehicleReady(step: number, draft: VehicleDraft) {
 
 export type FirstRunVehicleDraft = VehicleDraft
 
-export function saveFirstRunVehicle(draft: VehicleDraft) {
-  addVehicle({
+export function saveFirstRunVehicle(
+  draft: VehicleDraft,
+  existingVehicleId?: string | null,
+) {
+  return createVehicle({
     brand: resolveBrandName(draft.brand, draft.brandOther),
     model: draft.model.trim(),
-    year: draft.year,
-    mileage: draft.mileage,
-    mileageUnit: draft.mileageUnit,
-    placa: '',
+    year: Number(draft.year),
+    plate: null,
+    odometerMeasure: draft.mileageUnit,
+    firstReading: parseMileageReading(draft.mileage),
+    existingVehicleId,
   })
-  return getActiveVehicle()
 }
 
 type PathIconId =

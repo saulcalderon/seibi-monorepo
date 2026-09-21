@@ -5371,6 +5371,28 @@ html.is-standalone #root {
   cursor: not-allowed;
 }
 
+.vehicle-setup-error {
+  margin: 0 0 0.75rem;
+  text-align: center;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #b42318;
+}
+
+.vehicle-edit-readonly {
+  margin: 0 0 0.85rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.04);
+  font-size: 0.95rem;
+}
+
+.mileage-modal-current {
+  margin: 1.1rem 0 1rem;
+  font-size: 1.35rem;
+  font-weight: 650;
+}
+
 .vehicle-setup-screen .vehicle-setup-bar {
   margin: 0.15rem 0 1rem;
 }

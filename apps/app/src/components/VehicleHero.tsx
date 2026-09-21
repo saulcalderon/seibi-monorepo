@@ -1,26 +1,24 @@
 import { useEffect, useRef, useState, type AnimationEvent, type PointerEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import {
-  addVehicle,
   formatMileage,
   formatMileageAmount,
   formatMileageUnit,
-  getActiveVehicle,
-  getGarage,
   mileageToKm,
   resolveBrandName,
-  sanitizePlaca,
-  setActiveVehicle,
-  updateVehicle,
+  sanitizePlate,
   vehicleArtSrc,
   vehicleMatchesFleetQuery,
   modelBelongsToBrand,
   VEHICLE_BRANDS,
-  type GarageState,
   type MileageUnit,
   type VehicleBrandOption,
   type VehicleProfile,
 } from '../lib/vehicleProfile'
+import { useCreateVehicle, useUpdateVehicle, useVehicles } from '../lib/useVehicles'
+import { parseMileageReading, pendingVehicleIdFrom, plateOrNull } from '../lib/vehicles'
+import { useAuthSession } from '../lib/authSession'
+import { useNavigate } from '@tanstack/react-router'
 import { GarageCarStage } from './GarageCarStage'
 import { BrandSearchField, ModelSearchField } from './BrandSearchField'
 import { MileageUnitBox } from './MileageUnitBox'
@@ -40,7 +38,7 @@ type Draft = {
   year: string
   mileage: string
   mileageUnit: MileageUnit
-  placa: string
+  plate: string
 }
 
 const emptyDraft: Draft = {
@@ -50,7 +48,7 @@ const emptyDraft: Draft = {
   year: '',
   mileage: '',
   mileageUnit: 'km',
-  placa: '',
+  plate: '',
 }
 
 function draftFromVehicle(vehicle: VehicleProfile): Draft {
@@ -62,7 +60,7 @@ function draftFromVehicle(vehicle: VehicleProfile): Draft {
     year: vehicle.year,
     mileage: vehicle.mileage,
     mileageUnit: vehicle.mileageUnit === 'mi' ? 'mi' : 'km',
-    placa: vehicle.placa,
+    plate: vehicle.plate,
   }
 }
 
@@ -73,17 +71,12 @@ function draftToInput(draft: Draft) {
     year: draft.year.trim(),
     mileage: draft.mileage.replace(/,/g, '').trim(),
     mileageUnit: draft.mileageUnit,
-    placa: sanitizePlaca(draft.placa),
+    plate: sanitizePlate(draft.plate),
   }
 }
 
-function isDraftComplete(draft: Draft): boolean {
-  return (
-    canContinue(0, draft) &&
-    canContinue(1, draft) &&
-    canContinue(2, draft) &&
-    canContinue(3, draft)
-  )
+function isIdentityComplete(draft: Draft): boolean {
+  return canContinue(0, draft) && canContinue(1, draft) && canContinue(2, draft)
 }
 
 function canContinue(step: number, draft: Draft): boolean {
@@ -152,12 +145,17 @@ export function VehicleSetupScreen({
   onSaved,
 }: {
   onBack: () => void
-  onSaved: (garage: GarageState) => void
+  onSaved: (vehicle: VehicleProfile) => void
 }) {
+  const createVehicle = useCreateVehicle()
+  const navigate = useNavigate()
+  const { status } = useAuthSession()
   const [step, setStep] = useState(0)
   const [stepDir, setStepDir] = useState<'forward' | 'back'>('forward')
   const [draft, setDraft] = useState<Draft>(emptyDraft)
   const [leaving, setLeaving] = useState(false)
+  const [pendingVehicleId, setPendingVehicleId] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const ready = canContinue(step, draft)
   const isLast = step === SETUP_STEPS - 1
 
@@ -196,16 +194,36 @@ export function VehicleSetupScreen({
     setStep((current) => Math.max(0, current - 1))
   }
 
-  function handleNext() {
-    if (!ready) return
+  async function handleNext() {
+    if (!ready || createVehicle.isPending) return
     if (!isLast) {
       setStepDir('forward')
       setStep((current) => Math.min(SETUP_STEPS - 1, current + 1))
       return
     }
 
-    const garage = addVehicle(draftToInput(draft))
-    onSaved(garage)
+    if (status !== 'signed_in') {
+      void navigate({ to: '/login', replace: true })
+      return
+    }
+
+    const input = draftToInput(draft)
+    setSaveError(null)
+    try {
+      const vehicle = await createVehicle.mutateAsync({
+        brand: input.brand,
+        model: input.model,
+        year: Number(input.year),
+        plate: plateOrNull(input.plate),
+        odometerMeasure: input.mileageUnit,
+        firstReading: parseMileageReading(input.mileage),
+        existingVehicleId: pendingVehicleId,
+      })
+      onSaved(vehicle)
+    } catch (error) {
+      setPendingVehicleId(pendingVehicleIdFrom(error) ?? pendingVehicleId)
+      setSaveError(m.vehicle_save_error())
+    }
   }
 
   function handleOverlayAnimationEnd(event: AnimationEvent<HTMLDivElement>) {
@@ -318,11 +336,11 @@ export function VehicleSetupScreen({
                 <span className="vehicle-setup-optional">{m.setup_placa_optional()}</span>
               </p>
               <SetupField
-                value={draft.placa}
-                onChange={(placa) =>
+                value={draft.plate}
+                onChange={(plate) =>
                   setDraft((current) => ({
                     ...current,
-                    placa: sanitizePlaca(placa),
+                    plate: sanitizePlate(plate),
                   }))
                 }
                 placeholder={m.setup_placa_placeholder()}
@@ -333,11 +351,12 @@ export function VehicleSetupScreen({
       </div>
       </div>
 
+      {saveError ? <p className="vehicle-setup-error">{saveError}</p> : null}
       <button
         type="button"
         className="vehicle-setup-cta"
-        disabled={!ready}
-        onClick={handleNext}
+        disabled={!ready || createVehicle.isPending}
+        onClick={() => void handleNext()}
       >
         {isLast ? m.home_vehicle_setup_save() : m.setup_next()}
       </button>
@@ -360,19 +379,10 @@ function LockIcon() {
 export function MileageUpdateModal({
   vehicle,
   onClose,
-  onSaved,
 }: {
   vehicle: VehicleProfile
   onClose: () => void
-  onSaved: (garage: GarageState) => void
 }) {
-  const [mileage, setMileage] = useState(vehicle.mileage)
-  const [mileageUnit, setMileageUnit] = useState<MileageUnit>(
-    vehicle.mileageUnit === 'mi' ? 'mi' : 'km',
-  )
-  const km = mileageToKm(mileage, mileageUnit)
-  const ready = Number.isFinite(km) && km >= 0 && km < 2_000_000 && mileage.trim().length > 0
-
   useEffect(() => {
     const previous = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -380,20 +390,6 @@ export function MileageUpdateModal({
       document.body.style.overflow = previous
     }
   }, [])
-
-  function handleSave() {
-    if (!ready) return
-    onSaved(
-      updateVehicle(vehicle.id, {
-        brand: vehicle.brand,
-        model: vehicle.model,
-        year: vehicle.year,
-        mileage: mileage.replace(/,/g, '').trim(),
-        mileageUnit,
-        placa: vehicle.placa,
-      }),
-    )
-  }
 
   return (
     <div
@@ -425,25 +421,14 @@ export function MileageUpdateModal({
           {vehicle.brand} {vehicle.model} · {vehicle.year}
         </p>
         <p className="mileage-modal-desc">{m.home_mileage_update_desc()}</p>
+        <p className="mileage-modal-current">
+          {vehicle.mileage.trim()
+            ? formatMileage(vehicle.mileage, vehicle.mileageUnit)
+            : m.home_garage_km_empty()}
+        </p>
 
-        <div className="vehicle-setup-field has-unit mileage-modal-field">
-          <input
-            value={mileage}
-            onChange={(event) => setMileage(event.target.value.replace(/[^\d]/g, ''))}
-            placeholder={m.setup_4_placeholder()}
-            inputMode="numeric"
-            autoFocus
-          />
-          <MileageUnitBox unit={mileageUnit} onChange={setMileageUnit} />
-        </div>
-
-        <button
-          type="button"
-          className="vehicle-setup-cta"
-          disabled={!ready}
-          onClick={handleSave}
-        >
-          {m.home_mileage_update_save()}
+        <button type="button" className="vehicle-setup-cta" onClick={onClose}>
+          {m.home_vehicle_sheet_close()}
         </button>
       </div>
     </div>
@@ -511,10 +496,12 @@ function VehicleEditSheet({
 }: {
   vehicle: VehicleProfile
   onClose: () => void
-  onSaved: (garage: GarageState) => void
+  onSaved: (vehicle: VehicleProfile) => void
 }) {
+  const updateVehicle = useUpdateVehicle()
   const [draft, setDraft] = useState<Draft>(() => draftFromVehicle(vehicle))
-  const ready = isDraftComplete(draft)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const ready = isIdentityComplete(draft)
   const { dragY, dragging, grabProps } = useSheetDrag(onClose)
 
   useEffect(() => {
@@ -525,9 +512,22 @@ function VehicleEditSheet({
     }
   }, [])
 
-  function handleSave() {
-    if (!ready) return
-    onSaved(updateVehicle(vehicle.id, draftToInput(draft)))
+  async function handleSave() {
+    if (!ready || updateVehicle.isPending) return
+    const input = draftToInput(draft)
+    setSaveError(null)
+    try {
+      const next = await updateVehicle.mutateAsync({
+        id: vehicle.id,
+        brand: input.brand,
+        model: input.model,
+        year: Number(input.year),
+        plate: plateOrNull(input.plate),
+      })
+      onSaved(next)
+    } catch {
+      setSaveError(m.vehicle_save_error())
+    }
   }
 
   return (
@@ -607,30 +607,19 @@ function VehicleEditSheet({
             />
 
             <label className="vehicle-edit-label">{m.home_garage_km_label()}</label>
-            <SetupField
-              value={draft.mileage}
-              onChange={(mileage) =>
-                setDraft((current) => ({
-                  ...current,
-                  mileage: mileage.replace(/[^\d]/g, ''),
-                }))
-              }
-              placeholder={m.setup_4_placeholder()}
-              inputMode="numeric"
-              unit={draft.mileageUnit}
-              onUnitChange={(mileageUnit) =>
-                setDraft((current) => ({ ...current, mileageUnit }))
-              }
-              autoFocus
-            />
+            <p className="vehicle-edit-readonly">
+              {vehicle.mileage.trim()
+                ? formatMileage(vehicle.mileage, vehicle.mileageUnit)
+                : m.home_garage_km_empty()}
+            </p>
 
             <label className="vehicle-edit-label">{m.home_garage_placa_label()}</label>
             <SetupField
-              value={draft.placa}
-              onChange={(placa) =>
+              value={draft.plate}
+              onChange={(plate) =>
                 setDraft((current) => ({
                   ...current,
-                  placa: sanitizePlaca(placa),
+                  plate: sanitizePlate(plate),
                 }))
               }
               placeholder={m.setup_placa_placeholder()}
@@ -639,11 +628,12 @@ function VehicleEditSheet({
         </div>
 
         <footer className="vehicle-sheet-footer">
+          {saveError ? <p className="vehicle-setup-error">{saveError}</p> : null}
           <button
             type="button"
             className="vehicle-setup-cta"
-            disabled={!ready}
-            onClick={handleSave}
+            disabled={!ready || updateVehicle.isPending}
+            onClick={() => void handleSave()}
           >
             {m.home_vehicle_edit_save()}
           </button>
@@ -711,8 +701,14 @@ function VehicleSelectCard({
         <div className="garage-card-badge-km">
           <p>{m.home_garage_km_label()}</p>
           <strong>
-            <span>{formatMileageAmount(vehicle.mileage)}</span>
-            <span>{formatMileageUnit(vehicle.mileageUnit)}</span>
+            {vehicle.mileage.trim() ? (
+              <>
+                <span>{formatMileageAmount(vehicle.mileage)}</span>
+                <span>{formatMileageUnit(vehicle.mileageUnit)}</span>
+              </>
+            ) : (
+              <span>{m.home_garage_km_empty()}</span>
+            )}
           </strong>
         </div>
         <div className="garage-card-badge-divider" aria-hidden="true" />
@@ -954,8 +950,8 @@ function FleetListSheet({
                           <span className="fleet-sheet-item-model">
                             {vehicle.model} <span>{vehicle.year}</span>
                           </span>
-                          {vehicle.placa ? (
-                            <span className="fleet-sheet-item-placa">{vehicle.placa}</span>
+                          {vehicle.plate ? (
+                            <span className="fleet-sheet-item-placa">{vehicle.plate}</span>
                           ) : null}
                         </span>
                       </span>
@@ -999,7 +995,9 @@ function FleetListSheet({
                               strokeLinecap="round"
                             />
                           </svg>
-                          {formatMileage(vehicle.mileage, vehicle.mileageUnit)}
+                          {vehicle.mileage.trim()
+                            ? formatMileage(vehicle.mileage, vehicle.mileageUnit)
+                            : m.home_garage_km_empty()}
                         </span>
                       </span>
                       <span
@@ -1062,17 +1060,17 @@ export function VehicleHero({
   editVehicleId?: string | null
   mileageOpenNonce?: number
 }) {
-  const [garage, setGarage] = useState<GarageState>(() => getGarage())
+  const { vehicles, activeId, activeVehicle, selectVehicle: persistActive } = useVehicles()
   const [editingVehicle, setEditingVehicle] = useState<VehicleProfile | null>(null)
   const [mileageVehicle, setMileageVehicle] = useState<VehicleProfile | null>(null)
   const [addFocused, setAddFocused] = useState(false)
   const trackRef = useRef<HTMLDivElement>(null)
   const appliedEditNonce = useRef(editOpenNonce)
   const appliedMileageNonce = useRef(mileageOpenNonce)
-  const active = getActiveVehicle(garage)
+  const active = addFocused ? null : activeVehicle
 
   useEffect(() => {
-    onActiveChange(getActiveVehicle(garage))
+    onActiveChange(activeVehicle)
     // Sync once on mount; later updates go through select/save.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -1085,28 +1083,19 @@ export function VehicleHero({
   }, [showChrome])
 
   useEffect(() => {
-    function syncGarage() {
-      setGarage(getGarage())
-    }
-    window.addEventListener('seibi-garage-change', syncGarage)
-    return () => window.removeEventListener('seibi-garage-change', syncGarage)
-  }, [])
-
-  useEffect(() => {
     if (editOpenNonce === appliedEditNonce.current) return
     appliedEditNonce.current = editOpenNonce
     if (!editOpenNonce || !editVehicleId) return
-    const found = getGarage().vehicles.find((item) => item.id === editVehicleId) ?? null
+    const found = vehicles.find((item) => item.id === editVehicleId) ?? null
     if (found) setEditingVehicle(found)
-  }, [editOpenNonce, editVehicleId])
+  }, [editOpenNonce, editVehicleId, vehicles])
 
   useEffect(() => {
     if (mileageOpenNonce === appliedMileageNonce.current) return
     appliedMileageNonce.current = mileageOpenNonce
     if (!mileageOpenNonce) return
-    const current = getActiveVehicle(getGarage())
-    if (current) setMileageVehicle(current)
-  }, [mileageOpenNonce])
+    if (activeVehicle) setMileageVehicle(activeVehicle)
+  }, [mileageOpenNonce, activeVehicle])
 
   useEffect(() => {
     if (!trackRef.current) return
@@ -1128,9 +1117,8 @@ export function VehicleHero({
 
   function selectVehicle(id: string) {
     setAddFocused(false)
-    const next = setActiveVehicle(id, garage)
-    setGarage(next)
-    onActiveChange(getActiveVehicle(next))
+    persistActive(id)
+    onActiveChange(vehicles.find((item) => item.id === id) ?? null)
   }
 
   function selectAddCard() {
@@ -1189,12 +1177,12 @@ export function VehicleHero({
       {showChrome ? (
       <section
         data-section="vehiculo"
-        className={`dash-lockable garage-hero${unlocked || garage.vehicles.length === 0 ? ' is-unlocked' : ' is-locked'}${
+        className={`dash-lockable garage-hero${unlocked || vehicles.length === 0 ? ' is-unlocked' : ' is-locked'}${
           highlighted ? ' is-highlighted' : ''
         }`}
-        aria-disabled={garage.vehicles.length > 0 && !unlocked}
+        aria-disabled={vehicles.length > 0 && !unlocked}
       >
-        {garage.vehicles.length > 0 && !unlocked ? <LockIcon /> : null}
+        {vehicles.length > 0 && !unlocked ? <LockIcon /> : null}
 
         <div className="garage-hero-head">
           <div>
@@ -1207,7 +1195,7 @@ export function VehicleHero({
               type="button"
               className="garage-add-btn"
               aria-label={m.home_garage_add()}
-              disabled={garage.vehicles.length > 0 && !unlocked}
+              disabled={vehicles.length > 0 && !unlocked}
               onClick={openAddVehicle}
             >
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -1313,7 +1301,7 @@ export function VehicleHero({
           </div>
         </div>
 
-        {garage.vehicles.length === 0 ? (
+        {vehicles.length === 0 ? (
           <button type="button" className="garage-empty" onClick={openAddVehicle}>
             <p className="garage-empty-title">{m.home_vehicle_empty_title()}</p>
             <p className="garage-empty-hint">{m.home_vehicle_empty_hint()}</p>
@@ -1321,7 +1309,7 @@ export function VehicleHero({
         ) : (
           <>
             <div ref={trackRef} className="garage-track">
-              {garage.vehicles.map((vehicle, index) => (
+              {vehicles.map((vehicle, index) => (
                 <div
                   key={vehicle.id}
                   data-vehicle-id={vehicle.id}
@@ -1330,7 +1318,7 @@ export function VehicleHero({
                   <VehicleSelectCard
                     vehicle={vehicle}
                     index={index}
-                    active={vehicle.id === garage.activeId && !addFocused}
+                    active={vehicle.id === activeId && !addFocused}
                     onSelect={() => selectVehicle(vehicle.id)}
                     onServiceFocus={onServiceFocus}
                     onEdit={() => {
@@ -1363,16 +1351,14 @@ export function VehicleHero({
             <VehicleEditSheet
               key={editingVehicle.id}
               vehicle={
-                garage.vehicles.find((item) => item.id === editingVehicle.id) ??
+                vehicles.find((item) => item.id === editingVehicle.id) ??
                 editingVehicle
               }
               onClose={() => setEditingVehicle(null)}
-              onSaved={(next) => {
-                setGarage(next)
+              onSaved={(saved) => {
                 setEditingVehicle(null)
-                const saved = getActiveVehicle(next)
                 onActiveChange(saved)
-                if (saved) onSaved(saved)
+                onSaved(saved)
               }}
             />,
             portalHost(),
@@ -1384,17 +1370,10 @@ export function VehicleHero({
             <MileageUpdateModal
               key={`km-${mileageVehicle.id}`}
               vehicle={
-                garage.vehicles.find((item) => item.id === mileageVehicle.id) ??
+                vehicles.find((item) => item.id === mileageVehicle.id) ??
                 mileageVehicle
               }
               onClose={() => setMileageVehicle(null)}
-              onSaved={(next) => {
-                setGarage(next)
-                setMileageVehicle(null)
-                const saved = getActiveVehicle(next)
-                onActiveChange(saved)
-                if (saved) onSaved(saved)
-              }}
             />,
             portalHost(),
           )
@@ -1403,8 +1382,8 @@ export function VehicleHero({
       {fleetListOpen
         ? createPortal(
             <FleetListSheet
-              vehicles={garage.vehicles}
-              activeId={garage.activeId}
+              vehicles={vehicles}
+              activeId={activeId}
               onClose={() => onFleetListOpenChange?.(false)}
               onSelect={(id) => {
                 selectVehicle(id)

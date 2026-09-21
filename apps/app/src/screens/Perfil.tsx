@@ -3,12 +3,10 @@ import { createPortal } from 'react-dom'
 import { authIdentityFromUser, initialsFromName } from '../lib/authIdentity'
 import { getFirstRunName } from '../lib/firstRunProfile'
 import { useAuthSession, useSignOutToLogin } from '../lib/authSession'
+import { useVehicles, useWithdrawVehicle } from '../lib/useVehicles'
 import {
   formatMileage,
   formatVehicleLabel,
-  getGarage,
-  removeVehicle,
-  type GarageState,
   type VehicleProfile,
 } from '../lib/vehicleProfile'
 import { getTheme, setTheme } from '../lib/theme'
@@ -96,15 +94,15 @@ function GarageSheet({
   vehicles,
   activeId,
   onClose,
-  onRemoved,
 }: {
   vehicles: VehicleProfile[]
   activeId: string | null
   onClose: () => void
-  onRemoved: (next: GarageState) => void
 }) {
+  const withdrawVehicle = useWithdrawVehicle()
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [confirmText, setConfirmText] = useState('')
+  const [withdrawError, setWithdrawError] = useState<string | null>(null)
   const [open, setOpen] = useState(() => prefersReduceMotion())
   const [leaving, setLeaving] = useState(false)
 
@@ -157,18 +155,24 @@ function GarageSheet({
   function cancelRemove() {
     setPendingId(null)
     setConfirmText('')
+    setWithdrawError(null)
   }
 
   const pending = vehicles.find((item) => item.id === pendingId) ?? null
   const pendingLabel = pending ? formatVehicleLabel(pending) : ''
   const canRemove = pending ? labelsMatch(confirmText, pendingLabel) : false
 
-  function confirmRemove() {
-    if (!pending || leaving || !canRemove) return
-    const next = removeVehicle(pending.id)
-    onRemoved(next)
-    cancelRemove()
-    if (next.vehicles.length === 0) requestClose()
+  async function confirmWithdraw() {
+    if (!pending || leaving || !canRemove || withdrawVehicle.isPending) return
+    const wasLast = vehicles.length === 1
+    setWithdrawError(null)
+    try {
+      await withdrawVehicle.mutateAsync(pending.id)
+      cancelRemove()
+      if (wasLast) requestClose()
+    } catch {
+      setWithdrawError(m.vehicle_save_error())
+    }
   }
 
   const host = document.getElementById('root') ?? document.body
@@ -206,8 +210,12 @@ function GarageSheet({
                 <div className="perfil-garage-item-copy">
                   <p className="perfil-garage-item-name">{formatVehicleLabel(item)}</p>
                   <p className="perfil-garage-item-meta">
-                    {item.placa ? `${item.placa} · ` : ''}
-                    {m.perfil_active_km({ km: formatMileage(item.mileage, item.mileageUnit) })}
+                    {item.plate ? `${item.plate} · ` : ''}
+                    {m.perfil_active_km({
+                      km: item.mileage.trim()
+                        ? formatMileage(item.mileage, item.mileageUnit)
+                        : m.home_garage_km_empty(),
+                    })}
                   </p>
                 </div>
                 {active ? (
@@ -259,11 +267,12 @@ function GarageSheet({
               <button type="button" className="perfil-garage-confirm-cancel" onClick={cancelRemove}>
                 {m.perfil_garage_remove_cancel()}
               </button>
+              {withdrawError ? <p className="vehicle-setup-error">{withdrawError}</p> : null}
               <button
                 type="button"
                 className="perfil-garage-confirm-go"
-                disabled={!canRemove}
-                onClick={confirmRemove}
+                disabled={!canRemove || withdrawVehicle.isPending}
+                onClick={() => void confirmWithdraw()}
               >
                 {m.perfil_garage_remove_confirm()}
               </button>
@@ -279,22 +288,16 @@ function GarageSheet({
 export function Perfil({ vehicle }: { vehicle: VehicleProfile | null }) {
   const signOutToLogin = useSignOutToLogin()
   const { user, status } = useAuthSession()
+  const { vehicles, activeId } = useVehicles()
   const identity = authIdentityFromUser(user)
   const sessionResolved = status !== 'resolving_initial_session'
   const displayName = identity.displayName ?? getFirstRunName() ?? m.profile_guest_name()
   const showNoSessionCue = import.meta.env.DEV && status === 'signed_out'
-  const [garage, setGarage] = useState(() => getGarage())
   const [garageOpen, setGarageOpen] = useState(false)
-  const fleetCount = garage.vehicles.length
+  const fleetCount = vehicles.length
   const label = vehicle ? formatVehicleLabel(vehicle) : null
   const [night, setNight] = useState(() => getTheme() === 'night')
   const [notifs, setNotifs] = useState(() => getNotificationsEnabled())
-
-  useEffect(() => {
-    const sync = () => setGarage(getGarage())
-    window.addEventListener('seibi-garage-change', sync)
-    return () => window.removeEventListener('seibi-garage-change', sync)
-  }, [])
 
   function toggleNight() {
     const next = !night
@@ -343,7 +346,11 @@ export function Perfil({ vehicle }: { vehicle: VehicleProfile | null }) {
             <>
               <span className="perfil-card-title">{label}</span>
               <span className="perfil-card-meta">
-                {m.perfil_active_km({ km: formatMileage(vehicle.mileage, vehicle.mileageUnit) })}
+                {m.perfil_active_km({
+                  km: vehicle.mileage.trim()
+                    ? formatMileage(vehicle.mileage, vehicle.mileageUnit)
+                    : m.home_garage_km_empty(),
+                })}
               </span>
             </>
           ) : (
@@ -359,10 +366,9 @@ export function Perfil({ vehicle }: { vehicle: VehicleProfile | null }) {
 
       {garageOpen ? (
         <GarageSheet
-          vehicles={garage.vehicles}
-          activeId={garage.activeId}
+          vehicles={vehicles}
+          activeId={activeId}
           onClose={() => setGarageOpen(false)}
-          onRemoved={(next) => setGarage(next)}
         />
       ) : null}
 

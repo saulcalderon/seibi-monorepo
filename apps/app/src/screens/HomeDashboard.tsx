@@ -338,8 +338,14 @@ export function HomeDashboard({
                   <div className="seibi-hero-stat seibi-hero-stat--km">
                     <p>{m.home_garage_km_label()}</p>
                     <strong>
-                      <span className="seibi-hero-km-value">{formatMileageAmount(item.mileage)}</span>
-                      <span className="seibi-hero-km-unit">{formatMileageUnit(item.mileageUnit)}</span>
+                      {item.mileage.trim() ? (
+                        <>
+                          <span className="seibi-hero-km-value">{formatMileageAmount(item.mileage)}</span>
+                          <span className="seibi-hero-km-unit">{formatMileageUnit(item.mileageUnit)}</span>
+                        </>
+                      ) : (
+                        <span className="seibi-hero-km-value">{m.home_garage_km_empty()}</span>
+                      )}
                     </strong>
                   </div>
                   <div className="seibi-hero-stats-divider" aria-hidden="true" />
@@ -530,7 +536,6 @@ export function HomeDashboard({
             <MileageUpdateModal
               vehicle={vehicle}
               onClose={() => setMileageOpen(false)}
-              onSaved={() => setMileageOpen(false)}
             />,
             document.getElementById('root') ?? document.body,
           )
