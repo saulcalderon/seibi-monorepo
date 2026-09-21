@@ -23,9 +23,11 @@ later. The repo is a **single app today but monorepo-ready** via pnpm workspaces
 - Supabase provides **Apple/Google OAuth out of the box** (already mocked in the
   prototype) plus Postgres for relational maintenance data, keeping the frontend a clean
   SPA and removing any need for Start's server layer.
-- Offline is **read-only for launch**: TanStack Query with a persisted IndexedDB cache
-  lets users view vehicles/history/reminders offline. Full offline editing (local-first
-  sync via e.g. PowerSync) is deferred; it slots into Supabase later if needed.
+- Offline cache is **not in play**. TanStack Query stays in memory. There is no
+  IndexedDB persister — nothing was writing to it (Vehicles are fetched live;
+  history and reminders still use their own local stores). A persisted offline
+  read cache can come back later; full offline editing (local-first sync via e.g.
+  PowerSync) stays deferred.
 
 ## Considered options
 
@@ -44,5 +46,5 @@ later. The repo is a **single app today but monorepo-ready** via pnpm workspaces
   `apps/marketing` when it needs a framework.
 - Shared code will live in `packages/*` once a second app appears; use direct/deep imports
   (no barrel files) to protect bundle size.
-- Upgrading offline reads → offline writes means adopting a local-first sync layer later,
-  a non-trivial but contained change.
+- Adding a persisted query cache later is a contained wiring change. Offline
+  *writes* still mean a local-first sync layer.

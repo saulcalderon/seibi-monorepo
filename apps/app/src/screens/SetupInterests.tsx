@@ -66,9 +66,13 @@ function InterestGlyph({ id }: { id: InterestId }) {
 export function SetupInterests({
   onBack,
   onContinue,
+  saving = false,
+  error = null,
 }: {
   onBack: () => void
-  onContinue: (interests: InterestId[]) => void
+  onContinue: (interests: InterestId[]) => void | Promise<void>
+  saving?: boolean
+  error?: string | null
 }) {
   const [picked, setPicked] = useState<InterestId[]>([])
 
@@ -82,11 +86,11 @@ export function SetupInterests({
     <SetupPhaseShell
       registro="interests"
       onBack={onBack}
-      nextDisabled={picked.length === 0}
+      nextDisabled={picked.length === 0 || saving}
       onNext={() => {
-        if (picked.length === 0) return
+        if (picked.length === 0 || saving) return
         saveFirstRunProfile({ interests: picked })
-        onContinue(picked)
+        void onContinue(picked)
       }}
     >
       <h1 className="text-center text-[1.75rem] leading-tight tracking-tight text-balance text-coal">
@@ -95,6 +99,7 @@ export function SetupInterests({
       <p className="mx-auto mt-2 max-w-80 text-center text-[0.88rem] leading-relaxed text-black/55">
         {m.know_interest_desc()}
       </p>
+      {error ? <p className="vehicle-setup-error mt-3">{error}</p> : null}
       <div className="know-interest-grid mt-7">
         {INTEREST_IDS.map((id) => {
           const copy = interestCopy(id)

@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import type { User } from '@supabase/supabase-js'
+import { queryClient } from './queryClient'
+import { VEHICLES_QUERY_ROOT } from './vehicles'
 import { signOut, supabase } from './supabase'
 
 export type AuthStatus = 'resolving_initial_session' | 'signed_in' | 'signed_out'
@@ -38,6 +40,18 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe()
     }
   }, [])
+
+  useEffect(() => {
+    if (status === 'signed_out') {
+      queryClient.removeQueries({ queryKey: [VEHICLES_QUERY_ROOT] })
+      return
+    }
+    if (!user?.id) return
+    queryClient.removeQueries({
+      predicate: (query) =>
+        query.queryKey[0] === VEHICLES_QUERY_ROOT && query.queryKey[1] !== user.id,
+    })
+  }, [status, user?.id])
 
   return (
     <AuthSessionContext.Provider value={{ user, status }}>

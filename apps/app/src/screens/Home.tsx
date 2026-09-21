@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { VehicleHero, VehicleSetupScreen } from '../components/VehicleHero'
-import { useRequireProductionSession } from '../lib/authSession'
-import { getActiveVehicle, getGarage, setActiveVehicle as persistActiveVehicle, type VehicleProfile } from '../lib/vehicleProfile'
+import { useAuthSession, useRequireProductionSession } from '../lib/authSession'
+import { useVehicles } from '../lib/useVehicles'
+import type { VehicleProfile } from '../lib/vehicleProfile'
 import {
   getNotificationsEnabled,
   subscribeNotificationsEnabled,
@@ -394,9 +396,9 @@ function DashNav({
 
 export function Home() {
   useRequireProductionSession()
-  const [activeVehicle, setActiveVehicle] = useState<VehicleProfile | null>(() =>
-    getActiveVehicle(getGarage()),
-  )
+  const navigate = useNavigate()
+  const { status } = useAuthSession()
+  const { vehicles, activeVehicle, selectVehicle, isSignedIn, isError } = useVehicles()
   const [fleetListOpen, setFleetListOpen] = useState(false)
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState(readDismissedNotificationIds)
   const [nav, setNav] = useState<NavTab>(() => {
@@ -457,6 +459,10 @@ export function Home() {
   }
 
   function openAddVehicle() {
+    if (!isSignedIn) {
+      void navigate({ to: '/login', replace: true })
+      return
+    }
     setFocusReminderId(null)
     setFocusServiceId(null)
     setNav('agregar')
@@ -482,13 +488,11 @@ export function Home() {
   }), [])
 
   useEffect(() => {
-    const syncGarage = () => {
-      const garage = getGarage()
-      setActiveVehicle(getActiveVehicle(garage))
+    if (status === 'resolving_initial_session') return
+    if (nav === 'agregar' && !isSignedIn) {
+      void navigate({ to: '/login', replace: true })
     }
-    window.addEventListener('seibi-garage-change', syncGarage)
-    return () => window.removeEventListener('seibi-garage-change', syncGarage)
-  }, [])
+  }, [isSignedIn, nav, navigate, status])
 
   function renderVehicleHero(showChrome: boolean) {
     return (
@@ -510,16 +514,16 @@ export function Home() {
         }
         fleetListOpen={fleetListOpen}
         onFleetListOpenChange={setFleetListOpen}
-        onActiveChange={(vehicle) => {
-          setActiveVehicle(vehicle)
+        onActiveChange={() => {
+          /* active vehicle comes from useVehicles */
         }}
         onFleetVehicleSelect={() => {
           setFleetListOpen(false)
           goHome()
         }}
         onServiceFocus={() => openAvisos()}
-        onSaved={(profile) => {
-          setActiveVehicle(profile)
+        onSaved={() => {
+          /* create/edit already write through useVehicles */
         }}
       />
     )
@@ -558,9 +562,10 @@ export function Home() {
         </DashPane>
       ) : (
         <DashPane key="home" variant="home">
+          {isError ? <p className="vehicle-setup-error">{m.vehicle_list_error()}</p> : null}
           <HomeDashboard
             vehicle={activeVehicle}
-            vehicles={getGarage().vehicles}
+            vehicles={vehicles}
             notificationCount={notificationCount}
             onOpenFleet={() => setFleetListOpen(true)}
             onOpenNotifications={openNotifications}
@@ -568,8 +573,7 @@ export function Home() {
             onOpenAvisos={openAvisos}
             onOpenServicios={openServicios}
             onSelectVehicle={(id) => {
-              const next = persistActiveVehicle(id)
-              setActiveVehicle(getActiveVehicle(next))
+              selectVehicle(id)
             }}
             onEditVehicle={(id) => {
               setEditVehicleId(id)
@@ -586,8 +590,7 @@ export function Home() {
       {nav === 'agregar' ? (
         <VehicleSetupScreen
           onBack={() => goHome()}
-          onSaved={(garage) => {
-            setActiveVehicle(getActiveVehicle(garage))
+          onSaved={() => {
             goHome()
           }}
         />
