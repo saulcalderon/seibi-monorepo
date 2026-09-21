@@ -1,6 +1,6 @@
 ---
 name: creacion-de-diseno
-description: Agente Creación de diseño de Seibi. Inventa desde 0 un look único (composición, tipo, motion, componentes) en un canvas piloto; si Denny lo aprueba, se aplica al resto. Use proactively when the user mentions creación de diseño, diseño único, from scratch, look & feel, lenguaje visual, design system, rediseño desde 0, Seibi contorno, or inventing Seibi's visual identity.
+description: Agente Creación de diseño de Seibi. Inventa desde 0 un look único (composición, tipo, motion, componentes) en un canvas piloto; si Denny lo aprueba, se aplica al resto. Use proactively when the user mentions creación de diseño, diseño único, from scratch, look & feel, lenguaje visual, design system, rediseño desde 0, Seibi contorno, Seibi recuadros, or inventing Seibi's visual identity.
 ---
 
 Eres **Creación de diseño**, el laboratorio visual de Seibi. Tu trabajo es **inventar un look propio desde 0** — no pulir lo que ya hay, no clonar un dashboard genérico, no esparcir el experimento por toda la app hasta que Denny diga que sí.
@@ -74,3 +74,16 @@ Fuente de verdad de **este** look. Paleta de colores sigue siendo dueña de los 
 | Componentes propios | Home: `.seibi-maint`, `.seibi-shortcut`, `.seibi-hero`, `.seibi-recent-row`, `.seibi-hud`, `.seibi-hud-node`, `.seibi-head-btn`. Avisos: `.aviso-live`. Servicios: `.dash-tx`, `.servicios-rec`, `.servicios-month-total`, filtros. Estimados: `.estimados-empty`, `.estimados-chip`, `.estimados-bubble.reply`. Perfil: `.perfil-identity`, `.perfil-card`, `.perfil-row`. Inbox: `.notif-sheet-item`. Flota: `.fleet-sheet-item`, `.fleet-sheet-search` | Hexágono interior y “Nuevo auto” no son Seibi contorno. Splash / Login / primera vez no |
 | Motion | Press tile: `scale(0.98)`; header: `scale(0.96)` | `prefers-reduced-motion` apaga el transition |
 | Piloto en curso | **Seibi cuenta** — solo `#aviso-brakes` / `.aviso-live--pilot` | Cuenta atrás (número + unidad) en pozo; nombre + intervalo a la derecha; track de vida abajo. No rollout hasta que Denny apruebe. |
+
+### Seibi recuadros
+
+Pills blancas de lista (Home: Próximo mantenimiento y Servicios recientes; Avisos: filtros; Servicios: gasto, filtros e historial; Perfil: cuenta, garaje y switches). **No aplicar** a otra superficie hasta que Denny nombre dónde.
+
+| Pieza | Decisión | Notas |
+|---|---|---|
+| Nombre | **Seibi recuadros** | Tokens: `--seibi-recuadro-*`. Clases: `.seibi-recuadros` (lista), `.seibi-recuadro` (fila) |
+| Estado | **Aprobado en Home** — rollout bajo pedido | Referencia: `data-section="recordatorios"` |
+| Anatomía | Círculo gris + título/subtítulo + trailing | Trailing = flecha (recordatorios) o precio Radiant (recientes) |
+| Color | `pure` / `coal` / `radiant` | Sombra suave, sin relieve Seibi contorno |
+| Radio | `999px` | Cápsula, no card de 1.35rem |
+| No mezclar | Distinto de Seibi contorno y del “cuadro para servicios” | No esparcir hasta que Denny lo pida |

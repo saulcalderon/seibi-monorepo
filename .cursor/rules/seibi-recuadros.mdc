@@ -1,0 +1,23 @@
+---
+description: Seibi recuadros — pills blancas de lista. Usar cuando Denny pida recuadros, seibi recuadros, o aplicar este look a otra lista.
+globs: apps/app/src/{screens,index.css}
+alwaysApply: false
+---
+
+# Seibi recuadros
+
+Look de pills blancas de Home (`data-section="recordatorios"`). Tokens `--seibi-recuadro-*` y clases `.seibi-recuadros` / `.seibi-recuadro*` en `apps/app/src/index.css`.
+
+## Anatomía
+
+1. **Lista** (`.seibi-recuadros`): columna, gap `--seibi-recuadro-gap`.
+2. **Fila** (`.seibi-recuadro`): fondo `--color-pure`, radio 999px, sombra suave.
+3. **Círculo** (`.seibi-recuadro-icon`) + **copy** (título + subtítulo) + **trailing**.
+4. Trailing: `.seibi-recuadro-go` (flecha) o `.seibi-recuadro-cost` (precio Radiant).
+
+Hoy está en Próximo mantenimiento, Servicios recientes, filtros de Avisos (`.avisos-head-pulse`), Servicios (gasto del mes, filtros Mes/Año e historial) y Perfil (identidad, garaje, modo oscuro, notificaciones y lista de flota). **No aplicar** a otra superficie hasta que Denny la nombre.
+
+## No hacer
+
+- No mezclar con Seibi contorno (relieve / fog) ni con el “cuadro para servicios”.
+- No inventar hex; usa tokens `pure` / `coal` / `radiant`.
