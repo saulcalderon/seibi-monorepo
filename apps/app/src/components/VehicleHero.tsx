@@ -900,11 +900,6 @@ function FleetListSheet({
           <span aria-hidden="true" />
         </header>
 
-        <h2 id="fleet-sheet-title" className="vehicle-setup-title">
-          {m.home_fleet_title()}
-        </h2>
-        <p className="fleet-sheet-desc">{m.home_fleet_desc()}</p>
-
         <label className="fleet-sheet-search">
           <span className="fleet-sheet-search-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none">
@@ -920,6 +915,10 @@ function FleetListSheet({
           />
         </label>
 
+        <h2 id="fleet-sheet-title" className="vehicle-setup-title">
+          {m.home_fleet_title()}
+        </h2>
+
         {filtered.length === 0 ? (
           <p className="fleet-sheet-empty">{m.home_fleet_empty()}</p>
         ) : (
@@ -928,7 +927,6 @@ function FleetListSheet({
               const active = vehicle.id === activeId
               const { needsService, urgency } = vehicleServiceHealth(vehicle)
               const artIndex = vehicles.findIndex((item) => item.id === vehicle.id)
-              const mark = vehicle.brand.trim().charAt(0).toUpperCase() || 'V'
               const statusLabel = active
                 ? m.home_fleet_active()
                 : needsService
@@ -946,18 +944,13 @@ function FleetListSheet({
                   >
                     <span className="fleet-sheet-item-top">
                       <span className="fleet-sheet-item-identity">
-                        <span className="fleet-sheet-item-mark" aria-hidden="true">
-                          {mark}
+                        <span className="fleet-sheet-item-brand">{vehicle.brand}</span>
+                        <span className="fleet-sheet-item-model">
+                          {vehicle.model} <span>{vehicle.year}</span>
                         </span>
-                        <span className="fleet-sheet-item-names">
-                          <span className="fleet-sheet-item-brand">{vehicle.brand}</span>
-                          <span className="fleet-sheet-item-model">
-                            {vehicle.model} <span>{vehicle.year}</span>
-                          </span>
-                          {vehicle.placa ? (
-                            <span className="fleet-sheet-item-placa">{vehicle.placa}</span>
-                          ) : null}
-                        </span>
+                        {vehicle.placa ? (
+                          <span className="fleet-sheet-item-placa">{vehicle.placa}</span>
+                        ) : null}
                       </span>
                       <img
                         className="fleet-sheet-item-art"

@@ -13,7 +13,7 @@ Trabaja en la rama `dennys/Onboarding-2`. Preview en viewport de teléfono (390�
 
 ## Superficies (orden)
 
-1. **Card en Home (Seibi contorno)** — sección `data-section="recordatorios"` en `apps/app/src/screens/HomeDashboard.tsx`. Título `home_section_upcoming`. Card `.seibi-maint` (nombre + due + anillo de vida). Tap abre la lista; el anillo abre “Vida de la pieza”. El look se llama **Seibi contorno** (ver Creación de diseño).
+1. **Lista en Home (Seibi recuadros)** — sección `data-section="recordatorios"` en `apps/app/src/screens/HomeDashboard.tsx`. Título `home_section_upcoming`. Filas `.seibi-recuadro` (icono + nombre + due + flecha). Tap abre Avisos. El look se llama **Seibi recuadros** (ver Creación de diseño).
 2. **Lista completa (Avisos)** — tab `recordatorios` / nav “Avisos”. Screen `apps/app/src/screens/Avisos.tsx`. Título `home_upcoming_title`. Cards `.aviso-live` con semáforo, track de progreso y menú (agendar / actualizar / snooze).
 3. **Lógica de Recordatorios** — `apps/app/src/lib/reminders.ts` (`remindersForVehicle`, `upcomingMaintenanceForVehicle`, tones `danger | warn | ok`). Solo toca esto si el diseño lo pide (copy de due, orden, intervalos). Hoy es preview: intervalos + kilometraje, no backend.
 
@@ -30,7 +30,7 @@ Lee `CONTEXT.md` y ADR-0002 antes de nombrar conceptos. El copy de UI usa los no
 - Paleta: tokens canónicos en el agente **Paleta de colores** (`.cursor/agents/paleta-de-colores.md`). No inventes hex; usa `fog`, `pure`, `coal`, `radiant`
 - Titulares: Clash Display Semibold. Cuerpo: Archivo Regular
 - Fondo de Home: `bg-fog`. El shell `#root` ya enmarca la app a 390px en desktop
-- **Seibi contorno**: el look de la card Home (relieve, sin tinte naranja, anillo de vida). No mezclarlo con las teclas de Accesos rápidos. Definición en Creación de diseño.
+- **Seibi recuadros**: el look de la lista Home (pill blanca, círculo, flecha). No mezclarlo con Seibi contorno ni con las teclas de Accesos rápidos. Definición en Creación de diseño.
 - Semáforo: `danger` (vencido / urgente), `warn` (próximo), `ok` (al día). Vida de pieza: `WEAR_COLOR` en `reminders.ts`
 - Respetar `prefers-reduced-motion` y safe areas
 - Stack: TanStack Router + Vite SPA, Tailwind, Paraglide, PWA. Ver `docs/adr/0001-frontend-stack.md`

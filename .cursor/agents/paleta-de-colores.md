@@ -49,12 +49,12 @@ Fuente: `apps/app/src/index.css`
 
 | Token | Hex | Tailwind | Uso |
 |---|---|---|---|
-| `--color-fog` | `#F2F4F7` | `fog` | Fondo de toda la app |
+| `--color-fog` | `#F2F4F7` | `fog` | Fondo de toda la app. En Home, el lavado superior es `radiant` mezclado sobre `pure`/`fog` (sin hex nuevo) |
 | `--color-pure` | `#FFFFFF` | `pure` | Fondo de recuadros / cards |
 | `--color-coal` | `#141517` | `coal` | Iconos y texto |
-| `--color-radiant` | `#FF4F18` | `radiant` | Detalles, acentos, CTA, wordmark “bi” |
+| `--color-radiant` | `#E85322` | `radiant` | Detalles, acentos, CTA, wordmark “bi”, lavado de Home (óxido más intenso; entre `#C95A38` y `#FF4F18`) |
 
-Aliases (no usar en código nuevo): `splash` → fog, `ink` → coal, `milano` → radiant.
+Aliases (no usar en código nuevo): `splash` → fog, `ink` → coal, `milano` → radiant. `milano-dark` → `#C43D14`.
 
 Tipografía (no es color, pero viaja con la marca): Clash Display Semibold (titulares), Archivo Regular (cuerpo).
 

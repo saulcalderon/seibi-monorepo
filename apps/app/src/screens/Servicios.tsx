@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import {
   addLoggedService,
   monthlySpendForVehicle,
-  recentServicesForVehicle,
   saveServiceComment,
   saveServiceInvoicePhoto,
   servicesForVehicle,
@@ -14,7 +13,73 @@ import {
 import type { VehicleProfile } from '../lib/vehicleProfile'
 import * as m from '../paraglide/messages.js'
 
-type ServiciosView = 'preview' | 'all'
+const SERVICE_SEARCH_ALIASES: Record<ServiceIcon, string[]> = {
+  oil: ['aceite', 'lubricante', 'motor'],
+  brakes: ['freno', 'frenos', 'pastillas', 'discos'],
+  tires: ['llanta', 'llantas', 'neumatico', 'goma'],
+  filter: ['filtro', 'aire', 'cabin'],
+  battery: ['bateria', 'pila', 'acumulador'],
+  alignment: ['alineacion', 'direccion', 'suspension'],
+}
+
+function compactSearchText(value: string) {
+  return value
+    .toLocaleLowerCase('es')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '')
+}
+
+function serviceSearchBlob(item: ServiceItem) {
+  const when = item.performedAt
+    ? new Date(item.performedAt).toLocaleString('es-MX', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      })
+    : ''
+  return [
+    item.name,
+    item.meta,
+    item.cost,
+    item.taller,
+    item.comment,
+    when,
+    ...SERVICE_SEARCH_ALIASES[item.icon],
+  ]
+    .filter(Boolean)
+    .join(' ')
+}
+
+function serviceQueryTokens(query: string) {
+  return query
+    .toLocaleLowerCase('es')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .split(/[^a-z0-9]+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 2)
+}
+
+function matchesServiceQuery(item: ServiceItem, query: string) {
+  const needle = query.trim()
+  if (!needle) return true
+  const haystack = compactSearchText(serviceSearchBlob(item))
+  const compactNeedle = compactSearchText(needle)
+  if (compactNeedle && haystack.includes(compactNeedle)) return true
+  const tokens = serviceQueryTokens(needle)
+  return tokens.length > 0 && tokens.every((token) => haystack.includes(token))
+}
+
+function scoreServiceQuery(item: ServiceItem, query: string) {
+  const compactNeedle = compactSearchText(query)
+  if (!compactNeedle) return 0
+  const name = compactSearchText(item.name)
+  if (name === compactNeedle) return 4
+  if (name.startsWith(compactNeedle)) return 3
+  if (name.includes(compactNeedle)) return 2
+  return 1
+}
 
 const MONTH_OPTIONS = Array.from({ length: 12 }, (_, month) => {
   const label = new Date(2024, month, 1).toLocaleString('es-MX', { month: 'long' })
@@ -26,8 +91,103 @@ const MONTH_OPTIONS = Array.from({ length: 12 }, (_, month) => {
 
 type PeriodPickerKind = 'month' | 'year'
 
-const PREVIEW_INITIAL = 2
-const PREVIEW_EXTRA = 3
+function matchesServicePeriod(
+  item: ServiceItem,
+  month: number | 'all',
+  year: number | 'all',
+) {
+  if (!item.performedAt) return month === 'all' && year === 'all'
+  const date = new Date(item.performedAt)
+  if (year !== 'all' && date.getFullYear() !== year) return false
+  if (month !== 'all' && date.getMonth() !== month) return false
+  return true
+}
+
+function ServicePeriodPicker({
+  kind,
+  value,
+  years,
+  onSelect,
+  onClose,
+}: {
+  kind: PeriodPickerKind
+  value: number | 'all'
+  years: number[]
+  onSelect: (next: number | 'all') => void
+  onClose: () => void
+}) {
+  const title =
+    kind === 'month' ? m.home_services_filter_month() : m.home_services_filter_year()
+  const options =
+    kind === 'month'
+      ? [
+          { value: 'all' as const, label: m.home_services_filter_all() },
+          ...MONTH_OPTIONS.map((month) => ({
+            value: month.value as number | 'all',
+            label: month.label,
+          })),
+        ]
+      : [
+          { value: 'all' as const, label: m.home_services_filter_all() },
+          ...years.map((year) => ({
+            value: year as number | 'all',
+            label: String(year),
+          })),
+        ]
+
+  return (
+    <div
+      className="servicios-period"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="servicios-period-title"
+    >
+      <button
+        type="button"
+        className="servicios-period-backdrop"
+        aria-label={m.home_vehicle_sheet_close()}
+        onClick={onClose}
+      />
+      <div className="servicios-period-panel">
+        <header className="servicios-period-head">
+          <div>
+            <p className="servicios-period-eyebrow">{m.home_services_badge()}</p>
+            <h2 id="servicios-period-title">{title}</h2>
+          </div>
+          <button type="button" className="servicios-period-close" onClick={onClose}>
+            {m.home_vehicle_sheet_close()}
+          </button>
+        </header>
+        <div
+          className={`servicios-period-grid${kind === 'year' ? ' is-years' : ''}`}
+          role="listbox"
+          aria-label={title}
+        >
+          {options.map((option) => {
+            const selected = option.value === value
+            return (
+              <button
+                key={String(option.value)}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                className={`servicios-period-option${selected ? ' is-selected' : ''}${
+                  option.value === 'all' ? ' is-all' : ''
+                }`}
+                onClick={() => {
+                  onSelect(option.value)
+                  onClose()
+                }}
+              >
+                {option.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function ServiciosHead({
   title,
@@ -65,18 +225,6 @@ function ServiciosHead({
       </div>
     </header>
   )
-}
-
-function matchesServicePeriod(
-  item: ServiceItem,
-  month: number | 'all',
-  year: number | 'all',
-) {
-  if (!item.performedAt) return month === 'all' && year === 'all'
-  const date = new Date(item.performedAt)
-  if (year !== 'all' && date.getFullYear() !== year) return false
-  if (month !== 'all' && date.getMonth() !== month) return false
-  return true
 }
 
 export function ServiceIconGlyph({ icon }: { icon: ServiceIcon }) {
@@ -190,20 +338,6 @@ export function ServiceIconGlyph({ icon }: { icon: ServiceIcon }) {
   )
 }
 
-function Chevron() {
-  return (
-    <svg className="servicios-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M10 7l5 5-5 5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
 function ServiceRow({
   item,
   focused,
@@ -221,20 +355,19 @@ function ServiceRow({
 }) {
   const body = (
     <>
-      <span className="dash-tx-icon" aria-hidden="true">
+      <span className="seibi-recuadro-icon" aria-hidden="true">
         <ServiceIconGlyph icon={item.icon} />
       </span>
-      <div>
-        <p className="dash-tx-name">{item.name}</p>
-        <p className="dash-tx-meta">{item.meta}</p>
-      </div>
-      <strong>{item.cost}</strong>
-      {interactive ? <Chevron /> : null}
+      <span className="seibi-recuadro-copy">
+        <strong>{item.name}</strong>
+        <span>{item.meta}</span>
+      </span>
+      <strong className="seibi-recuadro-cost">{item.cost}</strong>
     </>
   )
 
   const rowClass = [
-    interactive && onOpen ? 'dash-tx dash-tx--button servicios-row' : 'dash-tx',
+    'seibi-recuadro servicios-row',
     focused ? 'is-focused is-heartbeat' : '',
     className,
   ]
@@ -382,252 +515,6 @@ function resolveActivityMonth(items: ServiceItem[]) {
   const newest = items[0]
   const date = new Date(newest.performedAt)
   return { year: date.getFullYear(), month: date.getMonth() }
-}
-
-function MonthActivityCalendar({
-  year,
-  month,
-  items,
-  onPickService,
-  onMonthChange,
-}: {
-  year: number
-  month: number
-  items: ServiceItem[]
-  onPickService: (serviceId: string) => void
-  onMonthChange: (year: number, month: number) => void
-}) {
-  const monthLabel = useMemo(() => {
-    const label = new Date(year, month, 1).toLocaleString('es-MX', {
-      month: 'long',
-      year: 'numeric',
-    })
-    return label.charAt(0).toUpperCase() + label.slice(1)
-  }, [year, month])
-
-  const byDay = useMemo(() => {
-    const map = new Map<number, ServiceItem[]>()
-    for (const item of items) {
-      if (!item.performedAt) continue
-      const date = new Date(item.performedAt)
-      if (date.getFullYear() !== year || date.getMonth() !== month) continue
-      const day = date.getDate()
-      const bucket = map.get(day)
-      if (bucket) bucket.push(item)
-      else map.set(day, [item])
-    }
-    for (const bucket of map.values()) {
-      bucket.sort((a, b) => b.performedAt - a.performedAt)
-    }
-    return map
-  }, [items, year, month])
-
-  const now = new Date()
-  const canGoNext =
-    year < now.getFullYear() || (year === now.getFullYear() && month < now.getMonth())
-
-  const startPad = (new Date(year, month, 1).getDay() + 6) % 7
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const cells = [
-    ...Array.from({ length: startPad }, () => null),
-    ...Array.from({ length: daysInMonth }, (_, index) => index + 1),
-  ]
-
-  function pieceStyle(index: number, colHint?: number) {
-    const col = colHint ?? index % 7
-    const fromX = (col - 3) * 36
-    const fromY = col % 2 === 0 ? -28 : 22
-    return {
-      ['--cal-i' as string]: index,
-      ['--cal-from-x' as string]: fromX,
-      ['--cal-from-y' as string]: fromY,
-    } as CSSProperties
-  }
-
-  function shiftMonth(delta: -1 | 1) {
-    const next = new Date(year, month + delta, 1)
-    onMonthChange(next.getFullYear(), next.getMonth())
-  }
-
-  return (
-    <div
-      className="servicios-month-cal servicios-month-cal--assemble"
-      aria-label={m.home_services_calendar()}
-    >
-      <div className="servicios-month-cal-nav">
-        <button
-          type="button"
-          className="servicios-month-cal-tab"
-          aria-label={m.home_services_calendar_prev()}
-          onClick={() => shiftMonth(-1)}
-        >
-          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path
-              d="M10 3.5L5.5 8 10 12.5"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
-        <p className="servicios-month-cal-label servicios-month-cal-piece" style={pieceStyle(0, 3)}>
-          {monthLabel}
-        </p>
-        <button
-          type="button"
-          className="servicios-month-cal-tab"
-          aria-label={m.home_services_calendar_next()}
-          disabled={!canGoNext}
-          onClick={() => shiftMonth(1)}
-        >
-          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path
-              d="M6 3.5L10.5 8 6 12.5"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
-      </div>
-      <div className="servicios-month-cal-weekdays" aria-hidden="true">
-        {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((day, index) => (
-          <span
-            key={`${day}-${index}`}
-            className="servicios-month-cal-piece"
-            style={pieceStyle(index + 1, index)}
-          >
-            {day}
-          </span>
-        ))}
-      </div>
-      <div className="servicios-month-cal-grid">
-        {cells.map((day, index) => {
-          if (day == null) {
-            return <span key={`pad-${index}`} className="servicios-month-cal-day is-empty" />
-          }
-          const dayItems = byDay.get(day) ?? []
-          const hasService = dayItems.length > 0
-          const style = pieceStyle(index + 8, index % 7)
-          if (!hasService) {
-            return (
-              <span
-                key={day}
-                className="servicios-month-cal-day servicios-month-cal-piece"
-                style={style}
-              >
-                {day}
-              </span>
-            )
-          }
-          const target = dayItems[0]
-          return (
-            <button
-              key={day}
-              type="button"
-              className="servicios-month-cal-day has-service servicios-month-cal-piece"
-              style={style}
-              aria-label={m.home_services_calendar_day({
-                day: String(day),
-                count: dayItems.length,
-              })}
-              onClick={() => onPickService(target.id)}
-            >
-              {day}
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-function ServicePeriodPicker({
-  kind,
-  value,
-  years,
-  onSelect,
-  onClose,
-}: {
-  kind: PeriodPickerKind
-  value: number | 'all'
-  years: number[]
-  onSelect: (next: number | 'all') => void
-  onClose: () => void
-}) {
-  const title =
-    kind === 'month' ? m.home_services_filter_month() : m.home_services_filter_year()
-  const options =
-    kind === 'month'
-      ? [
-          { value: 'all' as const, label: m.home_services_filter_all() },
-          ...MONTH_OPTIONS.map((month) => ({
-            value: month.value as number | 'all',
-            label: month.label,
-          })),
-        ]
-      : [
-          { value: 'all' as const, label: m.home_services_filter_all() },
-          ...years.map((year) => ({
-            value: year as number | 'all',
-            label: String(year),
-          })),
-        ]
-
-  return (
-    <div
-      className="servicios-period"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="servicios-period-title"
-    >
-      <button
-        type="button"
-        className="servicios-period-backdrop"
-        aria-label={m.home_vehicle_sheet_close()}
-        onClick={onClose}
-      />
-      <div className="servicios-period-panel">
-        <header className="servicios-period-head">
-          <div>
-            <p className="servicios-period-eyebrow">{m.home_services_badge()}</p>
-            <h2 id="servicios-period-title">{title}</h2>
-          </div>
-          <button type="button" className="servicios-period-close" onClick={onClose}>
-            {m.home_vehicle_sheet_close()}
-          </button>
-        </header>
-        <div
-          className={`servicios-period-grid${kind === 'year' ? ' is-years' : ''}`}
-          role="listbox"
-          aria-label={title}
-        >
-          {options.map((option) => {
-            const selected = option.value === value
-            return (
-              <button
-                key={String(option.value)}
-                type="button"
-                role="option"
-                aria-selected={selected}
-                className={`servicios-period-option${selected ? ' is-selected' : ''}${
-                  option.value === 'all' ? ' is-all' : ''
-                }`}
-                onClick={() => {
-                  onSelect(option.value)
-                  onClose()
-                }}
-              >
-                {option.label}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-    </div>
-  )
 }
 
 function compressInvoicePhoto(file: File): Promise<string> {
@@ -1027,22 +914,16 @@ export function Servicios({
   vehicle,
   focusServiceId = null,
   onFocusHandled,
-  preferAll = false,
 }: {
   vehicle: VehicleProfile | null
   focusServiceId?: string | null
   onFocusHandled?: () => void
-  preferAll?: boolean
 }) {
-  const [view, setView] = useState<ServiciosView>(() =>
-    focusServiceId || preferAll ? 'all' : 'preview',
-  )
   const [highlightId, setHighlightId] = useState<string | null>(focusServiceId)
-  const [pulseToken, setPulseToken] = useState(0)
-  const [recentExpanded, setRecentExpanded] = useState(false)
   const [calMonth, setCalMonth] = useState(() =>
     resolveActivityMonth(servicesForVehicle(vehicle)),
   )
+  const [search, setSearch] = useState('')
   const [filterMonth, setFilterMonth] = useState<number | 'all'>('all')
   const [filterYear, setFilterYear] = useState<number | 'all'>('all')
   const [periodPicker, setPeriodPicker] = useState<PeriodPickerKind | null>(null)
@@ -1053,26 +934,9 @@ export function Servicios({
     () => servicesForVehicle(vehicle),
     [vehicle, servicesTick],
   )
-  const recent = useMemo(
-    () => recentServicesForVehicle(vehicle),
-    [vehicle, servicesTick],
-  )
   const monthSpend = useMemo(
     () => monthlySpendForVehicle(vehicle, calMonth),
     [vehicle, servicesTick, calMonth],
-  )
-  const monthServices = useMemo(
-    () =>
-      services
-        .filter((item) => {
-          if (!item.performedAt) return false
-          const date = new Date(item.performedAt)
-          return (
-            date.getFullYear() === calMonth.year && date.getMonth() === calMonth.month
-          )
-        })
-        .sort((a, b) => b.performedAt - a.performedAt),
-    [services, calMonth],
   )
   const label = serviceVehicleLabel(vehicle)
   const context = label
@@ -1087,34 +951,38 @@ export function Servicios({
     if (years.size === 0) years.add(new Date().getFullYear())
     return [...years].sort((a, b) => b - a)
   }, [services])
-  const filteredServices = useMemo(
-    () =>
-      services.filter((item) => matchesServicePeriod(item, filterMonth, filterYear)),
-    [services, filterMonth, filterYear],
-  )
+  const filteredServices = useMemo(() => {
+    const matches = services.filter(
+      (item) =>
+        matchesServicePeriod(item, filterMonth, filterYear) &&
+        matchesServiceQuery(item, search),
+    )
+    if (!search.trim()) return matches
+    return [...matches].sort((a, b) => {
+      const score = scoreServiceQuery(b, search) - scoreServiceQuery(a, search)
+      if (score !== 0) return score
+      return b.performedAt - a.performedAt
+    })
+  }, [services, search, filterMonth, filterYear])
 
   useEffect(() => subscribeServicesChange(() => setServicesTick((value) => value + 1)), [])
 
   useEffect(() => {
     setCalMonth(resolveActivityMonth(servicesForVehicle(vehicle)))
-    setRecentExpanded(false)
+    setSearch('')
+    setFilterMonth('all')
+    setFilterYear('all')
   }, [vehicle])
 
   useEffect(() => {
-    if (focusServiceId) {
-      setHighlightId(focusServiceId)
-      setView('all')
-      const item = servicesForVehicle(vehicle).find((entry) => entry.id === focusServiceId)
-      if (item) setDetail(item)
-      return
-    }
-    if (preferAll) {
-      setView('all')
-    }
-  }, [focusServiceId, preferAll, vehicle])
+    if (!focusServiceId) return
+    setHighlightId(focusServiceId)
+    const item = servicesForVehicle(vehicle).find((entry) => entry.id === focusServiceId)
+    if (item) setDetail(item)
+  }, [focusServiceId, vehicle])
 
   useEffect(() => {
-    if (!highlightId || (view !== 'all' && view !== 'preview')) return
+    if (!highlightId) return
     const node = document.querySelector<HTMLElement>(
       `[data-service-id="${highlightId}"]`,
     )
@@ -1129,36 +997,11 @@ export function Servicios({
       window.clearTimeout(start)
       window.clearTimeout(clear)
     }
-  }, [highlightId, onFocusHandled, pulseToken, view])
-
-  function focusServiceFromCalendar(id: string) {
-    setView('preview')
-    setDetail(null)
-    const index = recent.findIndex((item) => item.id === id)
-    if (index >= PREVIEW_INITIAL) setRecentExpanded(true)
-    setHighlightId(id)
-    setPulseToken((value) => value + 1)
-  }
+  }, [highlightId, onFocusHandled])
 
   function openService(id: string) {
     const item = services.find((entry) => entry.id === id) ?? null
     if (item) setDetail(item)
-  }
-
-  function openAll() {
-    setHighlightId(null)
-    setFilterMonth('all')
-    setFilterYear('all')
-    setView('all')
-  }
-
-  function backToRecent() {
-    setHighlightId(null)
-    setFilterMonth('all')
-    setFilterYear('all')
-    setDetail(null)
-    setRecentExpanded(false)
-    setView('preview')
   }
 
   const addSheet =
@@ -1204,75 +1047,6 @@ export function Servicios({
   const yearTriggerLabel =
     filterYear === 'all' ? m.home_services_filter_all() : String(filterYear)
 
-  if (view === 'all') {
-    return (
-      <div
-        key="servicios-historial"
-        className="avisos-screen servicios-screen servicios-screen--enter"
-      >
-        <ServiciosHead
-          title={m.home_services_badge()}
-          vehicleLine={label ? context : null}
-          onBack={backToRecent}
-        />
-
-        <div className="avisos-legend" aria-label="Resumen de servicios">
-          <span className="avisos-chip tone-ok">
-            {`${filteredServices.length} servicios`}
-          </span>
-        </div>
-
-        <div className="servicios-filters" aria-label="Filtrar por fecha">
-          <div className="servicios-filter">
-            <span id="servicios-filter-month-label">{m.home_services_filter_month()}</span>
-            <button
-              type="button"
-              className={`servicios-filter-trigger${filterMonth !== 'all' ? ' is-active' : ''}`}
-              aria-labelledby="servicios-filter-month-label"
-              aria-haspopup="dialog"
-              aria-expanded={periodPicker === 'month'}
-              onClick={() => setPeriodPicker('month')}
-            >
-              <span>{monthTriggerLabel}</span>
-            </button>
-          </div>
-          <div className="servicios-filter">
-            <span id="servicios-filter-year-label">{m.home_services_filter_year()}</span>
-            <button
-              type="button"
-              className={`servicios-filter-trigger${filterYear !== 'all' ? ' is-active' : ''}`}
-              aria-labelledby="servicios-filter-year-label"
-              aria-haspopup="dialog"
-              aria-expanded={periodPicker === 'year'}
-              onClick={() => setPeriodPicker('year')}
-            >
-              <span>{yearTriggerLabel}</span>
-            </button>
-          </div>
-        </div>
-
-        <section className="dash-tx-list" aria-label={m.home_services_badge()}>
-          {filteredServices.length > 0 ? (
-            filteredServices.map((item) => (
-              <ServiceRow
-                key={item.id}
-                item={item}
-                focused={highlightId === item.id}
-                interactive
-                onOpen={() => openService(item.id)}
-              />
-            ))
-          ) : (
-            <p className="dash-tx-empty">{m.home_services_filter_empty()}</p>
-          )}
-        </section>
-        {addSheet}
-        {detailSheet}
-        {periodSheet}
-      </div>
-    )
-  }
-
   return (
     <div
       key="servicios-recientes"
@@ -1297,97 +1071,132 @@ export function Servicios({
         </button>
       </div>
 
-      <div className="servicios-month-block">
-        <p className="servicios-month-list-label">{m.home_services_month_list()}</p>
-
-        <MonthActivityCalendar
-          year={calMonth.year}
-          month={calMonth.month}
-          items={services}
-          onPickService={focusServiceFromCalendar}
-          onMonthChange={(year, month) => {
-            setCalMonth({ year, month })
-            setRecentExpanded(false)
-          }}
-        />
-
-        <section className="dash-tx-list" aria-label={m.home_services_month_list()}>
-          {monthServices.length > 0 ? (
-            <>
-              {monthServices.slice(0, PREVIEW_INITIAL).map((item) => (
-                <ServiceRow
-                  key={item.id}
-                  item={item}
-                  focused={highlightId === item.id}
-                  interactive
-                  onOpen={() => openService(item.id)}
-                />
-              ))}
-              {monthServices.length > PREVIEW_INITIAL ? (
-                <div
-                  className={`servicios-more-wrap${recentExpanded ? ' is-open' : ''}`}
-                >
-                  <div
-                    className={`servicios-reveal-panel${recentExpanded ? ' is-open' : ' is-peek'}`}
-                  >
-                    <div className="servicios-reveal-panel-inner">
-                      <div className="servicios-reveal-list">
-                        {monthServices
-                          .slice(PREVIEW_INITIAL, PREVIEW_INITIAL + PREVIEW_EXTRA)
-                          .map((item) => (
-                            <ServiceRow
-                              key={item.id}
-                              item={item}
-                              focused={highlightId === item.id}
-                              interactive={recentExpanded}
-                              onOpen={
-                                recentExpanded ? () => openService(item.id) : undefined
-                              }
-                            />
-                          ))}
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="servicios-see-more"
-                    onClick={() => setRecentExpanded((value) => !value)}
-                  >
-                    {recentExpanded
-                      ? m.home_services_see_less()
-                      : m.home_services_see_more()}
-                  </button>
-                </div>
-              ) : null}
-            </>
-          ) : (
-            <p className="dash-tx-empty">{m.home_recent_empty()}</p>
-          )}
-        </section>
-      </div>
-
       <div className="servicios-month-spend">
         <p className="servicios-month-list-label">{m.home_services_month_total()}</p>
-        <div className="servicios-month-total" aria-label={m.home_services_month_total()}>
-          <div>
-            <p className="servicios-month-period">{monthSpend.label}</p>
-            <p className="servicios-month-count">
+        <div
+          className="seibi-recuadro servicios-month-total"
+          aria-label={m.home_services_month_total()}
+        >
+          <span className="seibi-recuadro-copy">
+            <strong className="servicios-month-period">{monthSpend.label}</strong>
+            <span className="servicios-month-count">
               {m.home_services_month_count({ count: monthSpend.count })}
-            </p>
-          </div>
-          <div className="servicios-month-sum">
+            </span>
+          </span>
+          <span className="servicios-month-sum">
             <span>{m.home_services_month_sum()}</span>
             <MonthSpendSum total={monthSpend.total} />
-          </div>
+          </span>
         </div>
-        <button type="button" className="servicios-history-link" onClick={openAll}>
-          {m.home_services_history_open()}
-          <span aria-hidden="true">›</span>
-        </button>
       </div>
+
+      <p className="servicios-month-list-label">{m.home_services_badge()}</p>
+      <label className="servicios-search">
+        <span className="servicios-search-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.7" />
+            <path d="M16 16l4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+          </svg>
+        </span>
+        <input
+          type="search"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder={m.home_services_search()}
+          aria-label={m.home_services_search()}
+        />
+        {search.trim() ? (
+          <button
+            type="button"
+            className="servicios-search-clear"
+            onClick={() => setSearch('')}
+            aria-label={m.home_services_search_clear()}
+          >
+            ×
+          </button>
+        ) : null}
+      </label>
+
+      <div className="servicios-filters" aria-label="Filtrar por fecha">
+        <div className="servicios-filter">
+          <span id="servicios-filter-month-label">{m.home_services_filter_month()}</span>
+          <button
+            type="button"
+            className={`seibi-recuadro servicios-filter-trigger${filterMonth !== 'all' ? ' is-active' : ''}`}
+            aria-labelledby="servicios-filter-month-label"
+            aria-haspopup="dialog"
+            aria-expanded={periodPicker === 'month'}
+            onClick={() => setPeriodPicker('month')}
+          >
+            <span className="seibi-recuadro-copy">
+              <strong>{monthTriggerLabel}</strong>
+            </span>
+            <span className="seibi-recuadro-go" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M7 10l5 5 5-5"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+          </button>
+        </div>
+        <div className="servicios-filter">
+          <span id="servicios-filter-year-label">{m.home_services_filter_year()}</span>
+          <button
+            type="button"
+            className={`seibi-recuadro servicios-filter-trigger${filterYear !== 'all' ? ' is-active' : ''}`}
+            aria-labelledby="servicios-filter-year-label"
+            aria-haspopup="dialog"
+            aria-expanded={periodPicker === 'year'}
+            onClick={() => setPeriodPicker('year')}
+          >
+            <span className="seibi-recuadro-copy">
+              <strong>{yearTriggerLabel}</strong>
+            </span>
+            <span className="seibi-recuadro-go" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M7 10l5 5 5-5"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <section className="seibi-recuadros" aria-label={m.home_services_badge()}>
+        {filteredServices.length > 0 ? (
+          filteredServices.map((item) => (
+            <ServiceRow
+              key={item.id}
+              item={item}
+              focused={highlightId === item.id}
+              interactive
+              onOpen={() => openService(item.id)}
+            />
+          ))
+        ) : (
+          <p className="dash-tx-empty">
+            {search.trim()
+              ? m.home_services_search_empty()
+              : filterMonth !== 'all' || filterYear !== 'all'
+                ? m.home_services_filter_empty()
+                : m.home_recent_empty()}
+          </p>
+        )}
+      </section>
 
       {detailSheet}
       {addSheet}
+      {periodSheet}
     </div>
   )
 }

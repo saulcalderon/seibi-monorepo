@@ -6,18 +6,24 @@ import {
   formatMileageAmount,
   formatMileageUnit,
   oilKmRemaining,
-  vehicleArtSrc,
   type VehicleProfile,
 } from '../lib/vehicleProfile'
 import {
   upcomingMaintenanceForVehicle,
-  vehicleServiceHealth,
+  vehicleMaintenanceTone,
   type ReminderItem,
+  type ReminderTone,
 } from '../lib/reminders'
 import { recentServicesForVehicle, subscribeServicesChange } from '../lib/services'
 import { ServiceAddSheet, ServiceIconGlyph } from './Servicios'
 import { ReminderPartIcon } from './Avisos'
 import * as m from '../paraglide/messages.js'
+
+function fleetStatusLabel(tone: ReminderTone) {
+  if (tone === 'danger') return m.home_avisos_urgent()
+  if (tone === 'warn') return m.home_avisos_soon()
+  return m.home_garage_status_ready()
+}
 
 function reminderDueCopy(item: ReminderItem, active: VehicleProfile | null) {
   if (item.id === 'oil' && active) {
@@ -274,11 +280,12 @@ export function HomeDashboard({
       <section data-section="vehiculo" className="seibi-fleet">
         <div
           ref={fleetRef}
-          className={`seibi-fleet-track${fleetMany ? '' : ' is-single'}`}
+          className={`seibi-fleet-track seibi-fleet-track--side${fleetMany ? '' : ' is-single'}`}
         >
-          {vehicles.map((item, index) => {
+          {vehicles.map((item) => {
             const active = item.id === vehicle?.id && !addFocused
-            const healthCard = vehicleServiceHealth(item)
+            const statusTone = vehicleMaintenanceTone(item)
+            const statusLabel = fleetStatusLabel(statusTone)
             return (
               <div
                 key={item.id}
@@ -289,6 +296,7 @@ export function HomeDashboard({
                 role="button"
                 tabIndex={0}
                 aria-pressed={active}
+                aria-label={`${item.model} ${formatMileageAmount(item.mileage)} ${formatMileageUnit(item.mileageUnit)} ${statusLabel}`}
                 onAnimationEnd={(event) => {
                   if (event.animationName === 'seibi-hero-arrive') setPulseId(null)
                 }}
@@ -302,7 +310,7 @@ export function HomeDashboard({
               >
                 <img
                   className="seibi-hero-thumb"
-                  src={vehicleArtSrc(index)}
+                  src="/assets/info-car.png"
                   alt=""
                   draggable={false}
                 />
@@ -328,51 +336,20 @@ export function HomeDashboard({
                   <GearIcon />
                 </button>
                 <div className="seibi-hero-top">
-                  <div>
-                    <h2 className="seibi-hero-title">
-                      {item.model} <span>{item.year}</span>
-                    </h2>
-                  </div>
+                  <h2 className="seibi-hero-title">{item.model}</h2>
                 </div>
                 <div className="seibi-hero-stats">
                   <div className="seibi-hero-stat seibi-hero-stat--km">
-                    <p>{m.home_garage_km_label()}</p>
                     <strong>
                       <span className="seibi-hero-km-value">{formatMileageAmount(item.mileage)}</span>
                       <span className="seibi-hero-km-unit">{formatMileageUnit(item.mileageUnit)}</span>
                     </strong>
                   </div>
-                  <div className="seibi-hero-stats-divider" aria-hidden="true" />
                   <div className="seibi-hero-stat">
-                    <p>{m.home_garage_status_label()}</p>
-                    {healthCard.needsService ? (
-                      <button
-                        type="button"
-                        className={`seibi-hero-stat-action is-${healthCard.urgency}`}
-                        aria-label={
-                          active && editArmed
-                            ? m.home_service_focus_open()
-                            : m.home_service_select_first()
-                        }
-                        onClick={(event) => {
-                          event.preventDefault()
-                          event.stopPropagation()
-                          if (!active) {
-                            selectVehicle(item.id)
-                            return
-                          }
-                          if (!editArmed) return
-                          const urgent = upcomingMaintenanceForVehicle(item, 1)[0]
-                          onOpenAvisos(urgent?.id)
-                        }}
-                      >
-                        Requiere
-                        <br />
-                        servicio
-                      </button>
-                    ) : (
-                      <strong className="is-ok">{m.home_garage_status_ready()}</strong>
-                    )}
+                    <span
+                      className={`seibi-fleet-dot is-${statusTone}`}
+                      aria-label={statusLabel}
+                    />
                   </div>
                 </div>
               </div>
@@ -463,20 +440,31 @@ export function HomeDashboard({
           ) : null}
         </div>
         {showVehicleData && upcoming.length > 0 ? (
-          <div className="seibi-maint-list">
+          <div className="seibi-recuadros seibi-maint-list">
             {upcoming.map((item) => (
-              <div key={item.id} className="seibi-maint">
+              <div key={item.id} className="seibi-recuadro seibi-maint">
                 <button
                   type="button"
-                  className="seibi-maint-main"
+                  className="seibi-recuadro-main seibi-maint-main"
                   onClick={() => onOpenAvisos(item.id)}
                 >
-                  <span className="seibi-maint-icon" aria-hidden="true">
+                  <span className="seibi-recuadro-icon seibi-maint-icon" aria-hidden="true">
                     <ReminderPartIcon id={item.id} />
                   </span>
-                  <span className="seibi-maint-copy">
+                  <span className="seibi-recuadro-copy seibi-maint-copy">
                     <strong>{item.name}</strong>
                     <span>{reminderDueCopy(item, vehicle)}</span>
+                  </span>
+                  <span className="seibi-recuadro-go seibi-maint-go" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M5 12h14M13 6l6 6-6 6"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                   </span>
                 </button>
               </div>
@@ -499,22 +487,22 @@ export function HomeDashboard({
           ) : null}
         </div>
         {recent.length > 0 ? (
-          <div className="seibi-recent">
+          <div className="seibi-recuadros seibi-recent">
             {recent.map((item) => (
               <button
                 key={item.id}
                 type="button"
-                className="seibi-recent-row"
+                className="seibi-recuadro seibi-recent-row"
                 onClick={() => onOpenServicios(item.id)}
               >
-                <span className="seibi-recent-icon" aria-hidden="true">
+                <span className="seibi-recuadro-icon seibi-recent-icon" aria-hidden="true">
                   <ServiceIconGlyph icon={item.icon} />
                 </span>
-                <span className="seibi-recent-copy">
+                <span className="seibi-recuadro-copy seibi-recent-copy">
                   <strong>{item.name}</strong>
                   <span>{item.meta}</span>
                 </span>
-                <strong className="seibi-recent-cost">{item.cost}</strong>
+                <strong className="seibi-recuadro-cost seibi-recent-cost">{item.cost}</strong>
               </button>
             ))}
           </div>

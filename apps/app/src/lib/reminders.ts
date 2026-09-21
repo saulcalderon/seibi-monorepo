@@ -289,6 +289,14 @@ export function remindersForVehicle(vehicle: VehicleProfile | null): ReminderIte
 
 export type ServiceUrgency = 'ok' | 'warn' | 'danger'
 
+/** Worst mantenimiento tone for the fleet selector: danger > warn > ok. */
+export function vehicleMaintenanceTone(vehicle: VehicleProfile): ReminderTone {
+  const items = remindersForVehicle(vehicle)
+  if (items.some((item) => item.tone === 'danger')) return 'danger'
+  if (items.some((item) => item.tone === 'warn')) return 'warn'
+  return 'ok'
+}
+
 /**
  * Selector status from that vehicle's mantenimientos.
  * Listo = apto para circular. Requiere servicio = hay algo vencido o crítico.
@@ -299,7 +307,7 @@ export function vehicleServiceHealth(vehicle: VehicleProfile): {
 } {
   const blocking = remindersForVehicle(vehicle).filter((item) => item.tone === 'danger')
   if (blocking.length === 0) {
-    return { needsService: false, urgency: 'ok' }
+    return { needsService: false, urgency: vehicleMaintenanceTone(vehicle) }
   }
   const worstPct = blocking.reduce((min, item) => Math.min(min, item.remainingPct), 100)
   return {

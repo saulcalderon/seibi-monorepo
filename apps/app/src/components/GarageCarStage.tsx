@@ -1,6 +1,6 @@
 import { Suspense, useMemo, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { ContactShadows, OrbitControls } from '@react-three/drei'
+import { OrbitControls } from '@react-three/drei'
 import type { Group } from 'three'
 import type { VehicleProfile } from '../lib/vehicleProfile'
 
@@ -183,7 +183,7 @@ function StylizedCar({ color }: { color: string }) {
   })
 
   return (
-    <group ref={group} position={[0, 0.48, 0]} rotation={[0, -Math.PI * 0.32, 0]}>
+    <group ref={group} position={[0, 0.48, 0]}>
       <Body color={color} />
     </group>
   )
@@ -192,49 +192,25 @@ function StylizedCar({ color }: { color: string }) {
 function GarageScene({ color }: { color: string }) {
   return (
     <>
-      <ambientLight intensity={0.35} />
-      <hemisphereLight args={['#fff8e0', '#cbb87a', 0.65]} />
-      <directionalLight
-        position={[4.5, 6.5, 3.5]}
-        intensity={1.7}
-        castShadow
-        shadow-mapSize={[1024, 1024]}
-        shadow-bias={-0.00025}
-      />
-      <directionalLight position={[-3.8, 2.4, -2.8]} intensity={0.95} color="#ffcfa0" />
-      <spotLight
-        position={[0.2, 5.8, 2]}
-        angle={0.5}
-        penumbra={0.8}
-        intensity={1.5}
-        color="#ffffff"
-      />
-      <pointLight position={[2.6, 0.9, 2]} intensity={0.8} color="#FF4F18" distance={9} />
+      <ambientLight intensity={0.55} />
+      <hemisphereLight args={['#ffffff', '#f2f4f7', 0.55]} />
+      <directionalLight position={[4.5, 6.5, 3.5]} intensity={1.25} />
+      <directionalLight position={[-3.8, 2.4, -2.8]} intensity={0.45} />
 
       <StylizedCar color={color} />
-
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-        <circleGeometry args={[3.8, 64]} />
-        <meshStandardMaterial color="#F2F4F7" metalness={0.12} roughness={0.42} />
-      </mesh>
-      <ContactShadows
-        position={[0, 0.015, 0]}
-        opacity={0.58}
-        scale={10}
-        blur={2.8}
-        far={4.5}
-        color="#2a1808"
-      />
 
       <OrbitControls
         makeDefault
         enablePan={false}
         enableZoom={false}
-        autoRotate
-        autoRotateSpeed={1.15}
-        minPolarAngle={Math.PI / 2.35}
-        maxPolarAngle={Math.PI / 2.02}
-        target={[0, 0.55, 0]}
+        enableRotate
+        autoRotate={false}
+        enableDamping
+        dampingFactor={0.08}
+        rotateSpeed={0.72}
+        minPolarAngle={Math.PI / 3.2}
+        maxPolarAngle={Math.PI / 2.08}
+        target={[0, 0.42, 0]}
       />
     </>
   )
@@ -248,13 +224,12 @@ export function GarageCarStage({ vehicle }: { vehicle: VehicleProfile | null }) 
   }
 
   return (
-    <div className="garage-stage" aria-hidden="true">
+    <div className="garage-stage" aria-label="Girar vehículo">
       <Canvas
         className="garage-stage-canvas"
         dpr={[1, 1.75]}
-        camera={{ position: [4.6, 1.05, 4.0], fov: 26, near: 0.1, far: 50 }}
+        camera={{ position: [3.25, 1.86, -5.35], fov: 30, near: 0.1, far: 50 }}
         gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
-        shadows
       >
         <Suspense fallback={null}>
           <GarageScene color={color} />

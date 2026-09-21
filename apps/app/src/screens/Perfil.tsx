@@ -34,7 +34,7 @@ function IdentityAvatar({
   const showPhoto = Boolean(avatarUrl) && !imageFailed
 
   return (
-    <span className="perfil-avatar" aria-hidden="true">
+    <span className="seibi-recuadro-icon perfil-avatar" aria-hidden="true">
       {showPhoto ? (
         <img
           className="profile-avatar-image"
@@ -61,12 +61,14 @@ function SwitchRow({
   return (
     <button
       type="button"
-      className="perfil-night"
+      className="seibi-recuadro perfil-night"
       role="switch"
       aria-checked={on}
       onClick={onToggle}
     >
-      <span className="perfil-night-label">{label}</span>
+      <span className="seibi-recuadro-copy">
+        <strong>{label}</strong>
+      </span>
       <span className={`perfil-night-track${on ? ' is-on' : ''}`} aria-hidden="true">
         <span className="perfil-night-knob" />
       </span>
@@ -198,18 +200,18 @@ function GarageSheet({
       {vehicles.length === 0 ? (
         <p className="perfil-garage-empty">{m.perfil_garage_empty()}</p>
       ) : (
-        <ul className="perfil-garage-list">
+        <ul className="seibi-recuadros perfil-garage-list">
           {vehicles.map((item) => {
             const active = item.id === activeId
             return (
-              <li key={item.id} className={`perfil-garage-item${active ? ' is-active' : ''}`}>
-                <div className="perfil-garage-item-copy">
-                  <p className="perfil-garage-item-name">{formatVehicleLabel(item)}</p>
-                  <p className="perfil-garage-item-meta">
+              <li key={item.id} className={`seibi-recuadro perfil-garage-item${active ? ' is-active' : ''}`}>
+                <span className="seibi-recuadro-copy perfil-garage-item-copy">
+                  <strong className="perfil-garage-item-name">{formatVehicleLabel(item)}</strong>
+                  <span className="perfil-garage-item-meta">
                     {item.placa ? `${item.placa} · ` : ''}
                     {m.perfil_active_km({ km: formatMileage(item.mileage, item.mileageUnit) })}
-                  </p>
-                </div>
+                  </span>
+                </span>
                 {active ? (
                   <span className="perfil-garage-pill">{m.home_fleet_active()}</span>
                 ) : null}
@@ -314,48 +316,63 @@ export function Perfil({ vehicle }: { vehicle: VehicleProfile | null }) {
         <h1 className="avisos-eyebrow">{m.perfil_eyebrow()}</h1>
       </header>
 
-      <section className="perfil-identity" aria-label={m.perfil_account()}>
-        <IdentityAvatar name={displayName} avatarUrl={identity.avatarUrl} />
-        <div>
-          <p className="perfil-name">{sessionResolved ? displayName : '\u00a0'}</p>
-          {identity.email ? <p className="perfil-email">{identity.email}</p> : null}
-          {showNoSessionCue ? (
-            <p className="profile-session-cue">{m.profile_no_session()}</p>
-          ) : null}
-        </div>
-      </section>
+      <div className="seibi-recuadros">
+        <section className="seibi-recuadro perfil-identity" aria-label={m.perfil_account()}>
+          <IdentityAvatar name={displayName} avatarUrl={identity.avatarUrl} />
+          <span className="seibi-recuadro-copy">
+            <strong className="perfil-name">{sessionResolved ? displayName : '\u00a0'}</strong>
+            {identity.email ? <span className="perfil-email">{identity.email}</span> : null}
+            {showNoSessionCue ? (
+              <span className="profile-session-cue">{m.profile_no_session()}</span>
+            ) : null}
+          </span>
+        </section>
 
-      <button
-        type="button"
-        className="perfil-card"
-        aria-label={m.perfil_garage()}
-        aria-expanded={garageOpen}
-        onClick={() => setGarageOpen(true)}
-      >
-        <span className="perfil-card-head">
-          <span className="perfil-card-label">{m.perfil_garage()}</span>
-          <span className="perfil-card-chevron">
+        <button
+          type="button"
+          className="seibi-recuadro perfil-card"
+          aria-label={m.perfil_garage()}
+          aria-expanded={garageOpen}
+          onClick={() => setGarageOpen(true)}
+        >
+          <span className="seibi-recuadro-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M4 17.5V10l8-5.5 8 5.5v7.5a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 17.5z"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M9.5 19v-5h5v5"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+          <span className="seibi-recuadro-copy">
+            <strong>
+              {vehicle && label ? label : m.perfil_garage_empty()}
+            </strong>
+            <span>
+              {vehicle
+                ? `${m.perfil_active_km({ km: formatMileage(vehicle.mileage, vehicle.mileageUnit) })} · ${
+                    fleetCount === 1
+                      ? m.perfil_fleet_one()
+                      : m.perfil_fleet_many({ count: String(fleetCount) })
+                  }`
+                : m.perfil_garage()}
+            </span>
+          </span>
+          <span className="seibi-recuadro-go" aria-hidden="true">
             <ChevronIcon />
           </span>
-        </span>
-        <span className="perfil-card-body">
-          {vehicle && label ? (
-            <>
-              <span className="perfil-card-title">{label}</span>
-              <span className="perfil-card-meta">
-                {m.perfil_active_km({ km: formatMileage(vehicle.mileage, vehicle.mileageUnit) })}
-              </span>
-            </>
-          ) : (
-            <span className="perfil-card-title">{m.perfil_garage_empty()}</span>
-          )}
-        </span>
-        <span className="perfil-card-foot">
-          {fleetCount === 1
-            ? m.perfil_fleet_one()
-            : m.perfil_fleet_many({ count: String(fleetCount) })}
-        </span>
-      </button>
+        </button>
+
+        <SwitchRow label={m.perfil_night_mode()} on={night} onToggle={toggleNight} />
+        <SwitchRow label={m.perfil_notifications()} on={notifs} onToggle={toggleNotifs} />
+      </div>
 
       {garageOpen ? (
         <GarageSheet
@@ -365,9 +382,6 @@ export function Perfil({ vehicle }: { vehicle: VehicleProfile | null }) {
           onRemoved={(next) => setGarage(next)}
         />
       ) : null}
-
-      <SwitchRow label={m.perfil_night_mode()} on={night} onToggle={toggleNight} />
-      <SwitchRow label={m.perfil_notifications()} on={notifs} onToggle={toggleNotifs} />
 
       <button type="button" className="perfil-logout" onClick={() => void signOutToLogin()}>
         {m.home_logout()}
