@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react'
 import type { AnimationEvent } from 'react'
+import { Logo } from '../components/Logo'
 
 interface SplashProps {
   onDone: () => void
 }
 
-const SPLASH_FALLBACK_MS = 4600
+const SPLASH_FALLBACK_MS = 2600
 
 function shouldHoldSplash() {
   if (typeof window === 'undefined') return false
@@ -29,33 +30,16 @@ export function Splash({ onDone }: SplashProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [holdSplash])
 
-  const handleMarkDone = (event: AnimationEvent<HTMLSpanElement>) => {
-    if (event.animationName === 'splash-bar-fill') finish()
+  const handleMarkDone = (event: AnimationEvent<SVGSVGElement>) => {
+    if (event.animationName === 'splash-mark-in') finish()
   }
 
   return (
     <div className="relative flex h-full flex-col items-center justify-center bg-fog">
       <div className="splash-brand">
-        <h1 className="splash-mark" aria-label="Seibi">
-          <span className="splash-s" aria-hidden="true">
-            S
-          </span>
-          <span className="splash-letter splash-e" aria-hidden="true">
-            <span>e</span>
-          </span>
-          <span className="splash-letter splash-i1" aria-hidden="true">
-            <span>i</span>
-          </span>
-          <span className="splash-letter splash-b" aria-hidden="true">
-            <span>b</span>
-          </span>
-          <span className="splash-letter splash-i2" aria-hidden="true">
-            <span>i</span>
-          </span>
+        <h1 className="splash-mark">
+          <Logo className="splash-logo" onAnimationEnd={handleMarkDone} />
         </h1>
-        <div className="splash-bar-track" aria-hidden="true">
-          <span className="splash-underline" onAnimationEnd={handleMarkDone} />
-        </div>
       </div>
     </div>
   )

@@ -1,20 +1,8 @@
 import { useState } from 'react'
+import { Logo } from '../components/Logo'
 import { signInWithProvider } from '../lib/supabase'
 import type { OAuthProvider } from '../lib/supabase'
 import * as m from '../paraglide/messages.js'
-
-function SeibiMark({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 64 64" fill="none" aria-hidden="true">
-      <rect width="64" height="64" rx="18" fill="currentColor" />
-      <path
-        d="M40.5 23.2c-2.2-2.4-5.6-3.5-10.2-3.5-7.4 0-12.1 3.6-12.1 8.6 0 4.2 3.2 6.7 10.4 8.1l3.4.7c4.3.8 6.2 2 6.2 4.1 0 2.6-2.6 4.3-6.9 4.3-3.8 0-6.8-1.3-8.6-3.8l-4.6 3.4C21.3 49.4 26.2 52 34.2 52c8.3 0 13.6-4 13.6-9.7 0-4.5-3-7.2-10.2-8.6l-3.5-.7c-4-.8-6-1.9-6-3.9 0-2.3 2.3-3.9 6.2-3.9 3.3 0 5.8 1.1 7.2 3.2l4.6-3.2z"
-        fill="var(--color-pure)"
-        transform="translate(-1 -3.8)"
-      />
-    </svg>
-  )
-}
 
 export function Login() {
   const [pending, setPending] = useState<OAuthProvider | null>(null)
@@ -39,7 +27,7 @@ export function Login() {
       </div>
 
       <div className="relative z-10 flex flex-1 flex-col items-center px-8 pt-[4.75rem] text-center">
-        <SeibiMark className="login-axis-icon" />
+        <Logo className="login-axis-icon" />
         <h1 className="login-axis-title">
           <span>{m.login_hello()}</span>
           <span className="login-axis-title-to">{m.login_hello_to()}</span>

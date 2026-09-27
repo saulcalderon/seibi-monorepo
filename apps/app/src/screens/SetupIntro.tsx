@@ -35,7 +35,7 @@ export function SetupIntro({ onContinue }: SetupIntroProps) {
       </div>
 
       <div className="setup-intro-brand">
-        <Logo className="setup-intro-logo text-3xl" />
+        <Logo className="setup-intro-logo" />
       </div>
 
       <div className="setup-intro-copy">
