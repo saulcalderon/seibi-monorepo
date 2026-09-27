@@ -3,7 +3,7 @@
 // sources. Off-topic questions are declined.
 
 import { handler, HttpError, json, readJson } from '../_shared/http.ts'
-import { cleanSources, respond, SOURCE_SCHEMA, type Source } from '../_shared/openai.ts'
+import { cleanSources, plainText, respond, SOURCE_SCHEMA, type Source } from '../_shared/openai.ts'
 import {
   adminClient,
   ownedVehicle,
@@ -54,7 +54,7 @@ Rules:
 - Base facts and numbers on sources you find; list them in "sources". Never invent specifications, intervals, or prices. If you are not sure, say so.
 - Prices are always ranges and always estimates, not quotes. Mention that they vary by city, part quality and origin, shop type, and labor.
 - For anything that affects safety (brakes, steering, tires, overheating, warning lights), recommend having a mechanic check it.
-- Keep answers short: at most 120 words, short paragraphs or a short list. Plain text, no Markdown headings.`
+- Keep answers short: at most 120 words, short paragraphs or a short list. Plain text: no Markdown, no URLs in the answer (put them in sources).`
 }
 
 Deno.serve(handler(async (req) => {
@@ -111,7 +111,7 @@ Deno.serve(handler(async (req) => {
         user_id: user.id,
         vehicle_id: vehicle?.id ?? null,
         role: 'assistant',
-        content: data.answer,
+        content: plainText(data.answer ?? ''),
         sources,
         created_at: new Date(now).toISOString(),
       },

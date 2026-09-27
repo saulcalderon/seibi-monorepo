@@ -5,7 +5,7 @@
 
 import { handler, HttpError, json, readJson } from '../_shared/http.ts'
 import { marketFor, normalizeKey, type Market } from '../_shared/keys.ts'
-import { cleanSources, respond, SOURCE_SCHEMA, type Source } from '../_shared/openai.ts'
+import { cleanSources, plainText, respond, SOURCE_SCHEMA, type Source } from '../_shared/openai.ts'
 import {
   adminClient,
   ownedVehicle,
@@ -94,7 +94,7 @@ ${tasks.map((t) => `  ${t.code}: ${t.name}`).join('\n')}
 - If the source has a separate "severe" or "special operating conditions" schedule, fill severe_distance_km/severe_months and set has_severe=true.
 - Inspections count only when the source schedules them at a fixed interval.
 - body_type is the vehicle's body style (${BODY_TYPES.join(', ')}), or null if unsure.
-- summary: one or two sentences in Spanish, for the vehicle owner, naming the source (for example "Según el manual del propietario de Toyota…"). If found=false, explain in Spanish that no official schedule was found.
+- summary: one or two sentences in Spanish, for the vehicle owner, naming the source (for example "Según el manual del propietario de Toyota…"). If found=false, explain in Spanish that no official schedule was found. Plain text only: no URLs, no Markdown, no citations in the summary.
 - sources: every page you relied on.`
 }
 
@@ -154,7 +154,7 @@ async function runLookup(scheduleId: string, vehicle: VehicleRow, market: Market
         body_type: bodyType,
         has_severe: found && data.has_severe,
         sources: found ? sources : [],
-        summary: data.summary,
+        summary: plainText(data.summary ?? ''),
         error: null,
         looked_up_at: new Date().toISOString(),
       })

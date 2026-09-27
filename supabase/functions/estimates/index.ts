@@ -4,7 +4,7 @@
 
 import { handler, HttpError, json, readJson } from '../_shared/http.ts'
 import { normalizeKey, sha256 } from '../_shared/keys.ts'
-import { cleanSources, respond, SOURCE_SCHEMA, type Source } from '../_shared/openai.ts'
+import { cleanSources, plainText, respond, SOURCE_SCHEMA, type Source } from '../_shared/openai.ts'
 import {
   adminClient,
   ownedVehicle,
@@ -86,7 +86,7 @@ Rules — follow all of them:
 - factors: what moves the price for this vehicle and place (engine, part origin, shop type, labor hours, local availability).
 - confidence: high only with several consistent, recent, local sources; low when sources are scarce, old, or foreign.
 - If you cannot find enough information, set found=false, leave the ranges null, and explain in summary what is missing.
-- title: short Spanish name of the job. summary: two sentences, plain Spanish, no jargon.
+- title: short Spanish name of the job. summary: two sentences, plain Spanish, no jargon, no URLs or Markdown.
 - If the request is not about vehicle maintenance, repairs, services, or parts, set found=false and say in summary that Seibi only estimates vehicle maintenance.`
 }
 
@@ -158,6 +158,9 @@ Deno.serve(handler(async (req) => {
     const sources = cleanSources(data.sources ?? [], citations)
     const result: EstimateResult = {
       ...data,
+      summary: plainText(data.summary ?? ''),
+      includes: (data.includes ?? []).map(plainText),
+      factors: (data.factors ?? []).map(plainText),
       // No sources means no numbers we can stand behind.
       found: data.found && sources.length > 0,
       sources,

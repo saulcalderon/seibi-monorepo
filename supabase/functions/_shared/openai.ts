@@ -129,3 +129,17 @@ export const SOURCE_SCHEMA = {
   required: ['title', 'url'],
   properties: { title: { type: 'string' }, url: { type: 'string' } },
 }
+
+/**
+ * Plain text for the UI: drops the Markdown links and bare URLs the model
+ * adds inline. Sources are shown separately from the `sources` list.
+ */
+export function plainText(text: string): string {
+  return text
+    .replace(/\s*\(\[[^\]]*\]\(https?:[^)]*\)\)/g, '')
+    .replace(/\[([^\]]+)\]\(https?:[^)]*\)/g, '$1')
+    .replace(/\s*\(?https?:\/\/[^\s)]*[^\s).,;]\)?/g, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/[ \t]+([.,;])/g, '$1')
+    .trim()
+}

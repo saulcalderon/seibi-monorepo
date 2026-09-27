@@ -25,6 +25,7 @@ import { useGarage, type VehicleView } from '../lib/garage'
 import { knowledgeProfile, taskLabel } from '../lib/knowledge'
 import { COUNTRIES, useProfile, useUpdateProfile, type Country } from '../lib/profile'
 import { taskIcon, taskMap } from '../lib/tasks'
+import { plainText } from '../lib/text'
 import { useActiveVehicle } from '../lib/activeVehicle'
 import { Button, IconButton } from '../ui/Button'
 import { Card, IconTile, SectionHeader } from '../ui/Card'
@@ -325,7 +326,7 @@ function EstimateCard({
 
       <div className="flex flex-col gap-4 p-5">
         {!r.found ? (
-          <p className="text-[0.9rem] text-muted">{r.summary}</p>
+          <p className="text-[0.9rem] text-muted [overflow-wrap:anywhere]">{plainText(r.summary)}</p>
         ) : (
           <>
             <div className="grid grid-cols-2 gap-2">
@@ -346,7 +347,7 @@ function EstimateCard({
                 ) : null,
               )}
             </dl>
-            <p className="text-[0.88rem] text-muted">{r.summary}</p>
+            <p className="text-[0.88rem] text-muted [overflow-wrap:anywhere]">{plainText(r.summary)}</p>
             {r.includes.length > 0 ? (
               <div>
                 <p className="text-[0.8rem] font-bold text-muted">Suele incluir</p>
@@ -580,7 +581,7 @@ function Bubble({ message }: { message: ChatMessage }) {
           mine ? 'rounded-br-md bg-inverse text-on-inverse' : 'rounded-bl-md bg-surface shadow-card',
         )}
       >
-        <p className="whitespace-pre-wrap">{message.content}</p>
+        <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{mine ? message.content : plainText(message.content)}</p>
         {!mine && message.sources.length > 0 ? (
           <ul className="mt-2 flex flex-col gap-1 border-t border-line pt-2">
             {message.sources.slice(0, 3).map((s) => (

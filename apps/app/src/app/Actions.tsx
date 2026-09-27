@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { BellPlus, CalendarPlus, CarFront, Gauge, Wrench, type LucideIcon } from 'lucide-react'
 import { ServiceForm, type ServiceFormInit } from '../forms/ServiceForm'
@@ -14,6 +14,7 @@ import { ReminderDetail } from '../components/ReminderDetail'
 import { useActiveVehicle } from '../lib/activeVehicle'
 import type { RoutineRecord, VehicleView } from '../lib/garage'
 import { useGarage } from '../lib/garage'
+import { invokeFunction } from '../lib/functions'
 import { Sheet } from '../ui/Sheet'
 
 type Open =
@@ -84,6 +85,20 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
   }, [fallbackId])
 
   const vehicleFor = (id: string) => vehicles.find((v) => v.id === id) ?? null
+
+  // While a Model render is generating, nudge vehicle-render: it checks fal
+  // itself when the webhook is late or unreachable (ADR-0008).
+  const generatingIds = vehicles.filter((v) => v.render?.generating).map((v) => v.id).join(',')
+  useEffect(() => {
+    if (!generatingIds) return
+    const nudge = () => {
+      for (const vehicleId of generatingIds.split(',')) {
+        void invokeFunction('vehicle-render', { vehicleId }).catch(() => undefined)
+      }
+    }
+    const timer = window.setInterval(nudge, 20_000)
+    return () => window.clearInterval(timer)
+  }, [generatingIds])
 
   return (
     <ActionsContext.Provider value={actions}>

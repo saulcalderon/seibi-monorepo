@@ -1,6 +1,9 @@
 // Starts or reuses the Model render for a Vehicle (ADR-0008). Renders are
 // shared per brand, model, year, and paint; generation is asynchronous and
-// finishes in vehicle-render-webhook.
+// normally finishes in vehicle-render-webhook. When a step has waited longer
+// than the webhook should take, this function asks fal directly and
+// finishes it, so a lost or unreachable webhook never leaves a render
+// "generating" forever. The app calls it again while a render is pending.
 
 import { handler, json, readJson } from '../_shared/http.ts'
 import {
@@ -9,7 +12,13 @@ import {
   renderKey,
   submitPoster,
 } from '../_shared/fal.ts'
+import { completeStep, failStep, pollFal } from '../_shared/renderSteps.ts'
 import { adminClient, ownedVehicle, requireUser } from '../_shared/supabase.ts'
+
+/** Give the webhook this long before polling fal ourselves. */
+const POLL_AFTER_MS = 20_000
+/** A step still unfinished after this is abandoned. */
+const GIVE_UP_AFTER_MS = 20 * 60_000
 
 Deno.serve(handler(async (req) => {
   await requireUser(req)
@@ -26,7 +35,7 @@ Deno.serve(handler(async (req) => {
 
   const { data: existing, error: findError } = await db
     .from('model_renders')
-    .select('id, status, attempts')
+    .select('id, render_key, status, attempts, fal_request_id, error, updated_at')
     .eq('render_key', key)
     .maybeSingle()
   if (findError) throw findError
@@ -57,6 +66,27 @@ Deno.serve(handler(async (req) => {
     }
   } else if (existing.status === 'failed' && existing.attempts < MAX_RENDER_ATTEMPTS) {
     start = true
+  } else if (
+    (existing.status === 'pending' || (existing.status === 'poster_ready' && !existing.error)) &&
+    existing.fal_request_id
+  ) {
+    const waited = Date.now() - Date.parse(existing.updated_at)
+    if (waited > POLL_AFTER_MS) {
+      const step = existing.status === 'pending' ? 'poster' : 'glb'
+      try {
+        const poll = await pollFal(step, existing.fal_request_id)
+        if (poll.state === 'done') {
+          await completeStep(db, existing, step, poll.payload)
+        } else if (poll.state === 'failed') {
+          await failStep(db, existing.id, step, poll.error)
+        } else if (waited > GIVE_UP_AFTER_MS) {
+          await failStep(db, existing.id, step, `fal ${step} still unfinished after 20 minutes`)
+        }
+      } catch (error) {
+        console.error('vehicle-render poll failed', error)
+        await failStep(db, existing.id, step, error instanceof Error ? error.message : 'poll failed')
+      }
+    }
   }
 
   if (vehicle.render_id !== renderId) {

@@ -49,6 +49,7 @@ import {
   useWithdrawVehicle,
 } from '../lib/mutations'
 import { paintLabel } from '../lib/paint'
+import { plainText } from '../lib/text'
 import { useProfile } from '../lib/profile'
 import { taskIcon, taskMap } from '../lib/tasks'
 import { Button, IconButton } from '../ui/Button'
@@ -202,7 +203,9 @@ function ScheduleBanner({ vehicle }: { vehicle: VehicleView }) {
           <ShieldCheck className="size-4 shrink-0" aria-hidden />
           Plan del fabricante para tu {vehicle.brand} {vehicle.model} {vehicle.year}
         </p>
-        {vehicle.schedule?.summary ? <p className="mt-1 opacity-90">{vehicle.schedule.summary}</p> : null}
+        {vehicle.schedule?.summary ? (
+          <p className="mt-1 opacity-90 [overflow-wrap:anywhere]">{plainText(vehicle.schedule.summary)}</p>
+        ) : null}
       </div>
     )
   }
@@ -211,7 +214,7 @@ function ScheduleBanner({ vehicle }: { vehicle: VehicleView }) {
       <p className="font-semibold text-ink">Recomendación general, no específica de tu modelo</p>
       <p className="mt-1">
         {vehicle.schedule?.status === 'general'
-          ? vehicle.schedule.summary ?? 'No encontramos un plan publicado por el fabricante para este modelo.'
+          ? plainText(vehicle.schedule.summary) || 'No encontramos un plan publicado por el fabricante para este modelo.'
           : 'Aún no tenemos el plan del fabricante para este modelo.'}{' '}
         Revisa el manual del propietario si lo tienes.
       </p>

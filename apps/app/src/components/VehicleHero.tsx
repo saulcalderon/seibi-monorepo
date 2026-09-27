@@ -16,8 +16,7 @@ export function VehicleHero({ vehicle, className }: { vehicle: VehicleView; clas
   const [ready3d, setReady3d] = useState(false)
   const [failed3d, setFailed3d] = useState(false)
   const show3d = Boolean(glb) && !failed3d
-  const generating =
-    vehicle.render?.status === 'pending' || vehicle.render?.status === 'poster_ready'
+  const generating = vehicle.render?.generating ?? false
 
   return (
     <div className={cx('relative isolate', className)}>

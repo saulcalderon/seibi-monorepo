@@ -92,6 +92,8 @@ export type RenderInfo = {
   status: 'pending' | 'poster_ready' | 'ready' | 'failed'
   posterUrl: string | null
   glbUrl: string | null
+  /** Still waiting on fal: no poster yet, or a poster whose 3D step has not failed. */
+  generating: boolean
 }
 
 export type VehicleRecord = {
@@ -165,7 +167,7 @@ const SELECT = `
     id, status, has_severe, summary, sources,
     items:maintenance_schedule_items(task_code, distance_km, months, severe_distance_km, severe_months)
   ),
-  render:model_renders(status, poster_path, glb_path)
+  render:model_renders(status, poster_path, glb_path, error)
 `
 
 export async function fetchGarage(userId: string): Promise<VehicleRecord[]> {
@@ -195,6 +197,7 @@ export async function fetchGarage(userId: string): Promise<VehicleRecord[]> {
       status: RenderInfo['status']
       poster_path: string | null
       glb_path: string | null
+      error: string | null
     } | null
 
     return {
@@ -295,6 +298,8 @@ export async function fetchGarage(userId: string): Promise<VehicleRecord[]> {
             status: render.status,
             posterUrl: publicRenderUrl(render.poster_path),
             glbUrl: publicRenderUrl(render.glb_path),
+            generating:
+              render.status === 'pending' || (render.status === 'poster_ready' && !render.error),
           }
         : null,
     } satisfies VehicleRecord
@@ -375,9 +380,7 @@ export function useGarage() {
       (q.state.data ?? []).some(
         (v) =>
           !v.withdrawnAt &&
-          (v.schedule?.status === 'pending' ||
-            v.render?.status === 'pending' ||
-            v.render?.status === 'poster_ready'),
+          (v.schedule?.status === 'pending' || v.render?.generating),
       )
         ? 8_000
         : false,
