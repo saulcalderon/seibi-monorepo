@@ -160,27 +160,27 @@ export function Fleet() {
             </motion.ul>
           )}
 
-          {garage.withdrawn.length > 0 ? (
-            <div className="px-5 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowWithdrawn((s) => !s)}
-                className="min-h-11 text-[0.88rem] font-semibold text-muted"
-                aria-expanded={showWithdrawn}
-              >
-                {showWithdrawn ? 'Ocultar' : 'Ver'} Vehículos retirados ({garage.withdrawn.length})
-              </button>
-              {showWithdrawn ? (
-                <div className="mt-2 flex flex-col gap-2">
-                  {garage.withdrawn.map((v) => (
-                    <WithdrawnRow key={v.id} vehicle={v} />
-                  ))}
-                </div>
-              ) : null}
+        </div>
+      )}
+      {!garage.isLoading && !garage.isError && garage.withdrawn.length > 0 ? (
+        <div className="px-5 pt-2">
+          <button
+            type="button"
+            onClick={() => setShowWithdrawn((s) => !s)}
+            className="min-h-11 text-[0.88rem] font-semibold text-muted"
+            aria-expanded={showWithdrawn}
+          >
+            {showWithdrawn ? 'Ocultar' : 'Ver'} Vehículos retirados ({garage.withdrawn.length})
+          </button>
+          {showWithdrawn ? (
+            <div className="mt-2 flex flex-col gap-2">
+              {garage.withdrawn.map((v) => (
+                <WithdrawnRow key={v.id} vehicle={v} />
+              ))}
             </div>
           ) : null}
         </div>
-      )}
+      ) : null}
     </Screen>
   )
 }

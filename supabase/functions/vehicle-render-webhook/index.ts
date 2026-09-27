@@ -21,7 +21,18 @@ type FalWebhook = {
   payload?: Record<string, unknown>
 }
 
+/** Only fal's own file hosts; never fetch an arbitrary URL from a payload. */
+function isFalFile(url: string) {
+  try {
+    const u = new URL(url)
+    return u.protocol === 'https:' && /(^|\.)fal\.(media|run|ai)$/.test(u.hostname)
+  } catch {
+    return false
+  }
+}
+
 async function copyToStorage(url: string, path: string, contentType: string, maxBytes: number) {
+  if (!isFalFile(url)) throw new Error(`unexpected file host: ${url.slice(0, 80)}`)
   const res = await fetch(url)
   if (!res.ok) throw new Error(`download ${res.status}`)
   const bytes = new Uint8Array(await res.arrayBuffer())

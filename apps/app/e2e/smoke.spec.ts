@@ -57,7 +57,7 @@ test('a new user sets up a Vehicle and sees its Reminders', async ({ page }) => 
   // Record a Service for a tire rotation.
   await page.getByRole('button', { name: 'Acciones rápidas' }).click()
   await page.getByRole('dialog').getByRole('button', { name: /Registrar Servicio/ }).click()
-  await page.getByRole('button', { name: /Rotación de llantas/ }).first().click()
+  await page.getByRole('dialog').getByRole('button', { name: /Rotación de llantas/ }).click()
   await page.getByLabel('Costo total').fill('30')
   await page.getByRole('button', { name: 'Guardar Servicio' }).click()
   await expect(page.getByText('Servicio registrado')).toBeVisible()

@@ -61,7 +61,10 @@ select throws_ok(
 
 -- Reference data --------------------------------------------------------------
 select ok((select count(*) from maintenance_tasks) >= 20, 'Maintenance tasks are readable');
-select ok((select count(*) from maintenance_schedules) = 1, 'Maintenance schedules are readable');
+select ok(
+  exists (select 1 from maintenance_schedules where id = 'dddddddd-0000-0000-0000-000000000001'),
+  'Maintenance schedules are readable'
+);
 select throws_ok(
   $$insert into maintenance_schedules (brand_key, model_key, year) values ('x', 'y', 2020)$$,
   '42501', null, 'users cannot write Maintenance schedules'

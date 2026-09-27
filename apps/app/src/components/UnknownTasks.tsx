@@ -3,7 +3,7 @@ import type { Reminder } from '@seibi/maintenance-engine/reminders'
 import { History } from 'lucide-react'
 import { useActions } from '../app/Actions'
 import { knowledgeProfile, taskLabel, type KnowledgeLevel } from '../lib/knowledge'
-import { taskIcon, type MaintenanceTask } from '../lib/tasks'
+import { COMMON_TASKS, taskIcon, type MaintenanceTask } from '../lib/tasks'
 import { Card, IconTile } from '../ui/Card'
 import { cx } from '../ui/cx'
 
@@ -30,7 +30,13 @@ export function UnknownTasks({
   const [all, setAll] = useState(false)
   const k = knowledgeProfile(level)
   if (reminders.length === 0) return null
-  const shown = all ? reminders : reminders.slice(0, initial)
+  // Ask about the tasks people know best first.
+  const rank = (code: string) => {
+    const i = COMMON_TASKS.indexOf(code)
+    return i === -1 ? COMMON_TASKS.length + (tasks.get(code)?.sortOrder ?? 0) : i
+  }
+  const ordered = [...reminders].sort((a, b) => rank(a.taskCode) - rank(b.taskCode))
+  const shown = all ? ordered : ordered.slice(0, initial)
   const dontKnow = reminders.filter((r) => r.unknownReason === 'dont_know').length
 
   return (
