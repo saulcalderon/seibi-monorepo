@@ -34,6 +34,9 @@ export type ReminderState = {
   taskCode: string
   lastUnknown: boolean
   snoozedUntil: string | null
+  /** Remembered last time, used only when no Service item exists for the task. */
+  rememberedOn?: string | null
+  rememberedReading?: number | null
 }
 
 export type ReminderStatus = 'overdue' | 'soon' | 'unknown' | 'ok'
@@ -50,7 +53,7 @@ export type Reminder = {
   interval: { distance: number | null; months: number | null }
   source: 'model' | 'general'
   severe: boolean
-  lastDone: { performedOn: string; reading: number | null } | null
+  lastDone: { performedOn: string; reading: number | null; remembered: boolean } | null
   /** Odometer at which the task is due, in the Vehicle's measure. */
   dueReading: number | null
   /** Distance left (negative when overdue), in the Vehicle's measure. */
@@ -131,7 +134,17 @@ export function computeReminders(input: ComputeInput): ComputeResult {
     }
     const state = states.get(item.taskCode)
     const snoozed = !!state?.snoozedUntil && state.snoozedUntil >= today
-    const last = lastEvent(events, item.taskCode)
+    const recorded = lastEvent(events, item.taskCode)
+    const last: (TaskEvent & { remembered: boolean }) | null = recorded
+      ? { ...recorded, remembered: false }
+      : state?.rememberedOn
+        ? {
+            taskCode: item.taskCode,
+            performedOn: state.rememberedOn,
+            reading: state.rememberedReading ?? null,
+            remembered: true,
+          }
+        : null
 
     if (!last) {
       reminders.push({
@@ -198,7 +211,7 @@ export function computeReminders(input: ComputeInput): ComputeResult {
       interval,
       source: item.source ?? 'general',
       severe: useSevere,
-      lastDone: { performedOn: last.performedOn, reading: last.reading },
+      lastDone: { performedOn: last.performedOn, reading: last.reading, remembered: last.remembered },
       dueReading,
       remainingDistance: remainingDistance == null ? null : Math.round(remainingDistance),
       dueOn,

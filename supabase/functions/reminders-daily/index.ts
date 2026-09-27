@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
         readings:mileage_readings(reading, recorded_on),
         services(performed_on, deleted_at, reading:mileage_readings(reading), items:service_items(task_code)),
         routines(round_trip_distance, days_per_week),
-        states:reminder_states(task_code, last_unknown, snoozed_until),
+        states:reminder_states(task_code, last_unknown, snoozed_until, remembered_on, remembered_reading),
         reminders(title, due_on, done_at, deleted_at)
       `)
       .eq('user_id', userId)
@@ -127,6 +127,8 @@ Deno.serve(async (req) => {
           taskCode: s.task_code,
           lastUnknown: s.last_unknown,
           snoozedUntil: s.snoozed_until,
+          rememberedOn: s.remembered_on,
+          rememberedReading: s.remembered_reading,
         })),
         today,
       })

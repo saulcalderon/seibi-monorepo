@@ -130,6 +130,31 @@ describe('computeReminders', () => {
     expect(reminders[0].unknownReason).toBe('dont_know')
   })
 
+  it('uses a remembered last time when there is no Service', () => {
+    const { reminders } = computeReminders({
+      ...base,
+      schedule: [OIL],
+      readings: [{ reading: 40000, recordedOn: '2026-09-26' }],
+      events: [],
+      states: [{ taskCode: 'engine_oil', lastUnknown: false, snoozedUntil: null, rememberedOn: '2026-01-01' }],
+    })
+    expect(reminders[0].status).toBe('overdue')
+    expect(reminders[0].lastDone).toEqual({ performedOn: '2026-01-01', reading: null, remembered: true })
+    expect(reminders[0].remainingDistance).toBeNull()
+  })
+
+  it('prefers a recorded Service over a remembered date', () => {
+    const { reminders } = computeReminders({
+      ...base,
+      schedule: [OIL],
+      readings: [{ reading: 40500, recordedOn: '2026-09-26' }],
+      events: [{ taskCode: 'engine_oil', performedOn: '2026-09-01', reading: 40000 }],
+      states: [{ taskCode: 'engine_oil', lastUnknown: false, snoozedUntil: null, rememberedOn: '2025-01-01' }],
+    })
+    expect(reminders[0].lastDone?.remembered).toBe(false)
+    expect(reminders[0].status).toBe('ok')
+  })
+
   it('is ok well inside both intervals', () => {
     const { reminders } = computeReminders({
       ...base,

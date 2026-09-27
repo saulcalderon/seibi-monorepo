@@ -371,15 +371,21 @@ create trigger reminders_set_updated_at
   before update on public.reminders
   for each row execute function public.set_updated_at();
 
--- Per derived Reminder state: the user does not know the last Service,
--- or snoozed it until a date.
+-- Per derived Reminder state: the user does not know the last Service, or
+-- remembers roughly when it was (a date and, if known, the odometer) without
+-- a Service for it, or snoozed it until a date.
 create table public.reminder_states (
   vehicle_id uuid not null references public.vehicles (id) on delete cascade,
   task_code text not null references public.maintenance_tasks (code),
   last_unknown boolean not null default false,
+  remembered_on date,
+  remembered_reading integer,
   snoozed_until date,
   updated_at timestamptz not null default now(),
-  primary key (vehicle_id, task_code)
+  primary key (vehicle_id, task_code),
+  constraint reminder_states_remembered_reading_non_negative check (
+    remembered_reading is null or remembered_reading >= 0
+  )
 );
 
 create trigger reminder_states_set_updated_at

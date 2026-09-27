@@ -68,7 +68,10 @@ Maintenance schedule, the last Service item for that task, the current
 odometer, the Usage rate, and elapsed time. Derived Reminders are computed,
 not stored; a Reminder the user writes by hand (a date and a note) is
 stored. A Reminder is due when the distance or the time runs out, whichever
-comes first.
+comes first. When the user has no Service for a task but remembers roughly
+when it was last done (and maybe the odometer then), Seibi keeps that
+remembered date on the Reminder; it is not a Service and has no Mileage
+reading.
 _Avoid_: alert, notice, notification
 
 **Appointment**:
