@@ -312,6 +312,18 @@ describe('vehicle summary', () => {
   it('health is unknown with no Reminders', () => {
     expect(vehicleHealth([])).toBe('unknown')
   })
+  it('health ignores tasks with no known last Service', () => {
+    const { reminders: mixed } = computeReminders({
+      measure: 'km',
+      schedule: [OIL, BATTERY],
+      readings: [{ reading: 41000, recordedOn: '2026-09-26' }],
+      events: [{ taskCode: 'engine_oil', performedOn: '2026-09-01', reading: 40000 }],
+      routines: [],
+      today: '2026-09-26',
+    })
+    expect(mixed.find((r) => r.taskCode === 'battery')?.status).toBe('unknown')
+    expect(vehicleHealth(mixed)).toBe('ok')
+  })
   it('counts pending Reminders', () => {
     expect(pendingCount(reminders)).toBe(1)
   })

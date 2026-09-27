@@ -240,17 +240,22 @@ export function compareReminders(a: Reminder, b: Reminder): number {
 
 export type VehicleHealth = ReminderStatus
 
-/** The worst status among a Vehicle's Reminders; snoozed ones count as ok. */
+/**
+ * The worst status among the Reminders Seibi can date; snoozed ones count as
+ * ok. Tasks with no known last Service do not make the Vehicle look worse:
+ * a new Vehicle would otherwise read "unknown" until every task is filled
+ * in. With nothing dated at all, the health is `unknown`.
+ */
 export function vehicleHealth(reminders: readonly Reminder[]): VehicleHealth {
   let worst: ReminderStatus = 'ok'
-  let any = false
+  let known = false
   for (const r of reminders) {
-    any = true
+    if (r.status === 'unknown') continue
+    known = true
     const status = r.snoozed && r.status !== 'overdue' ? 'ok' : r.status
     if (STATUS_RANK[status] < STATUS_RANK[worst]) worst = status
   }
-  if (!any) return 'unknown'
-  return worst
+  return known ? worst : 'unknown'
 }
 
 /** The next Reminder to act on: the first that is not snoozed and has a date. */

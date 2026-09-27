@@ -18,6 +18,11 @@ last Service item for that task. Distance is projected from the Usage rate
 interval or 30 days), `overdue`, or `unknown` (no last Service and the user
 did not know).
 
+A Vehicle's health is the worst status among Reminders that have a date.
+`unknown` Reminders do not count: every new Vehicle starts with a dozen of
+them, and it would read "revisar" until the user filled in each one. Seibi
+asks about them in a separate "Completa tu historial" prompt instead.
+
 ## Considered options
 
 - **Stored `reminders` rows updated by triggers** — rejected: every Service,
