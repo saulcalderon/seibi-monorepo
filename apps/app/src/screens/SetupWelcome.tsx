@@ -28,7 +28,7 @@ export function SetupWelcome({
     <div className="know-welcome flex h-full flex-col bg-fog px-7 pt-16 pb-11">
       <div className="know-welcome-glow" aria-hidden="true" />
       <div className="relative z-10 flex flex-1 flex-col items-center justify-center text-center">
-        <Logo className="know-welcome-logo text-3xl" />
+        <Logo className="know-welcome-logo" />
         <p className="know-welcome-eyebrow mt-10 text-[0.72rem] font-semibold tracking-[0.18em] text-radiant uppercase">
           {m.know_welcome_eyebrow()}
         </p>

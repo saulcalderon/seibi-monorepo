@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { Logo } from '../components/Logo'
 import { GarageCarStage } from '../components/GarageCarStage'
 import { MileageUpdateModal } from '../components/VehicleHero'
 import {
@@ -204,9 +205,7 @@ export function HomeDashboard({
     <div className="seibi-dash">
       <header className="seibi-dash-head">
         <div className="seibi-dash-brand">
-          <p className="seibi-logo">
-            SEIB<span className="seibi-logo-i">I</span>
-          </p>
+          <Logo className="seibi-logo" />
         </div>
         <div className="seibi-dash-actions">
           <HeaderBtn label={m.home_fleet_open()} onClick={onOpenFleet}>
