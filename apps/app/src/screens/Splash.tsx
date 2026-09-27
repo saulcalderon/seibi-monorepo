@@ -2,45 +2,39 @@ import { useEffect, useRef } from 'react'
 import type { AnimationEvent } from 'react'
 import { Logo } from '../components/Logo'
 
-interface SplashProps {
-  onDone: () => void
-}
-
 const SPLASH_FALLBACK_MS = 2600
 
-function shouldHoldSplash() {
-  if (typeof window === 'undefined') return false
-  return new URLSearchParams(window.location.search).has('stay')
-}
-
-export function Splash({ onDone }: SplashProps) {
+export function Splash({ onDone }: { onDone: () => void }) {
   const doneRef = useRef(false)
-  const holdSplash = shouldHoldSplash()
+  const hold = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('stay')
 
   const finish = () => {
-    if (holdSplash || doneRef.current) return
+    if (hold || doneRef.current) return
     doneRef.current = true
     onDone()
   }
 
   useEffect(() => {
-    if (holdSplash) return
-    const timer = setTimeout(finish, SPLASH_FALLBACK_MS)
+    if (hold) return
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    const timer = setTimeout(finish, reduce ? 400 : SPLASH_FALLBACK_MS)
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [holdSplash])
-
-  const handleMarkDone = (event: AnimationEvent<SVGSVGElement>) => {
-    if (event.animationName === 'splash-mark-in') finish()
-  }
+  }, [hold])
 
   return (
-    <div className="relative flex h-full flex-col items-center justify-center bg-fog">
-      <div className="splash-brand">
-        <h1 className="splash-mark">
-          <Logo className="splash-logo" onAnimationEnd={handleMarkDone} />
-        </h1>
-      </div>
+    <div className="flex h-full flex-col items-center justify-center bg-bg">
+      <h1 className="m-0 flex items-center justify-center">
+        <Logo
+          className="splash-logo"
+          onAnimationEnd={(e: AnimationEvent<SVGSVGElement>) => {
+            if (e.animationName === 'splash-mark-in') finish()
+          }}
+        />
+      </h1>
+      <p className="mt-6 font-display text-[1.05rem] font-semibold tracking-wide text-muted">
+        Mantenimiento con total claridad
+      </p>
     </div>
   )
 }

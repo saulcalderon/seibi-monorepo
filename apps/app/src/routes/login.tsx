@@ -1,18 +1,11 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
+import { getSession, homePathFor } from '../lib/routing'
 import { Login } from '../screens/Login'
-import { isSetupDone } from '../lib/setupProgress'
-import { supabase } from '../lib/supabase'
 
 export const Route = createFileRoute('/login')({
   beforeLoad: async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-    if (session) {
-      throw redirect({
-        to: isSetupDone(session.user.id) ? '/home' : '/onboarding',
-      })
-    }
+    const session = await getSession()
+    if (session) throw redirect({ to: await homePathFor(session) })
   },
   component: Login,
 })

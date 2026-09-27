@@ -1,17 +1,11 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-import { markIntroDone, pathAfterSplash } from '../lib/introProgress'
-import { supabase } from '../lib/supabase'
-import { Onboarding } from '../screens/Onboarding'
+import { markIntroDone, pathAfterSplash } from '../lib/routing'
+import { Intro } from '../screens/Intro'
 
 export const Route = createFileRoute('/intro')({
   beforeLoad: async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-    const next = pathAfterSplash(session?.user.id ?? null)
-    if (next !== '/intro') {
-      throw redirect({ to: next })
-    }
+    const next = await pathAfterSplash()
+    if (next !== '/intro' && next !== '/login') throw redirect({ to: next })
   },
   component: IntroRoute,
 })
@@ -19,7 +13,7 @@ export const Route = createFileRoute('/intro')({
 function IntroRoute() {
   const navigate = useNavigate()
   return (
-    <Onboarding
+    <Intro
       onFinish={() => {
         markIntroDone()
         void navigate({ to: '/login', replace: true })

@@ -1,397 +1,320 @@
-import { useEffect, useState, type TransitionEvent } from 'react'
-import { createPortal } from 'react-dom'
-import { authIdentityFromUser, initialsFromName } from '../lib/authIdentity'
-import { getFirstRunName } from '../lib/firstRunProfile'
+import { useState } from 'react'
+import { Link, useNavigate } from '@tanstack/react-router'
+import {
+  BookOpen,
+  ChevronRight,
+  Crown,
+  FileText,
+  GraduationCap,
+  LogOut,
+  MapPin,
+  Palette,
+  ShieldCheck,
+  Trash2,
+  UserRound,
+} from 'lucide-react'
+import { Screen } from '../app/Screen'
+import { deleteAccount } from '../lib/account'
 import { useAuthSession, useSignOutToLogin } from '../lib/authSession'
-import { useVehicles, useWithdrawVehicle } from '../lib/useVehicles'
-import {
-  formatMileage,
-  formatVehicleLabel,
-  type VehicleProfile,
-} from '../lib/vehicleProfile'
-import { getTheme, setTheme } from '../lib/theme'
-import {
-  getNotificationsEnabled,
-  setNotificationsEnabled,
-} from '../lib/notificationsPref'
-import * as m from '../paraglide/messages.js'
+import { errorMessage } from '../lib/functions'
+import { identityFromUser, initials } from '../lib/identity'
+import { KNOWLEDGE_LEVELS, levelTitle, type KnowledgeLevel } from '../lib/knowledge'
+import { COUNTRIES, useProfile, useUpdateProfile, type Country } from '../lib/profile'
+import { disablePush, enablePush, pushPermission, pushSupported } from '../lib/push'
+import { getThemePreference, setThemePreference, type ThemePreference } from '../lib/theme'
+import { Button } from '../ui/Button'
+import { Card, IconTile, ListRow, SectionHeader } from '../ui/Card'
+import { cx } from '../ui/cx'
+import { useToast } from '../ui/feedback'
+import { Segmented, SelectField, TextField, Toggle } from '../ui/fields'
+import { Sheet } from '../ui/Sheet'
 
-function IdentityAvatar({
-  name,
-  avatarUrl,
-}: {
-  name: string
-  avatarUrl: string | null
-}) {
-  const [imageFailed, setImageFailed] = useState(false)
-
-  useEffect(() => {
-    setImageFailed(false)
-  }, [avatarUrl])
-
-  const showPhoto = Boolean(avatarUrl) && !imageFailed
-
-  return (
-    <span className="seibi-recuadro-icon perfil-avatar" aria-hidden="true">
-      {showPhoto ? (
-        <img
-          className="profile-avatar-image"
-          src={avatarUrl ?? undefined}
-          alt=""
-          onError={() => setImageFailed(true)}
-        />
-      ) : (
-        initialsFromName(name)
-      )}
-    </span>
-  )
-}
-
-function SwitchRow({
-  label,
-  on,
-  onToggle,
-}: {
-  label: string
-  on: boolean
-  onToggle: () => void
-}) {
-  return (
-    <button
-      type="button"
-      className="seibi-recuadro perfil-night"
-      role="switch"
-      aria-checked={on}
-      onClick={onToggle}
-    >
-      <span className="seibi-recuadro-copy">
-        <strong>{label}</strong>
-      </span>
-      <span className={`perfil-night-track${on ? ' is-on' : ''}`} aria-hidden="true">
-        <span className="perfil-night-knob" />
-      </span>
-    </button>
-  )
-}
-
-function prefersReduceMotion() {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
-}
-
-function ChevronIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M9 6l6 6-6 6"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function GarageSheet({
-  vehicles,
-  activeId,
-  onClose,
-}: {
-  vehicles: VehicleProfile[]
-  activeId: string | null
-  onClose: () => void
-}) {
-  const withdrawVehicle = useWithdrawVehicle()
-  const [pendingId, setPendingId] = useState<string | null>(null)
-  const [confirmText, setConfirmText] = useState('')
-  const [withdrawError, setWithdrawError] = useState<string | null>(null)
-  const [open, setOpen] = useState(() => prefersReduceMotion())
-  const [leaving, setLeaving] = useState(false)
-
-  useEffect(() => {
-    const previous = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = previous
-    }
-  }, [])
-
-  useEffect(() => {
-    if (prefersReduceMotion()) return
-    const outer = window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => setOpen(true))
-    })
-    return () => window.cancelAnimationFrame(outer)
-  }, [])
-
-  function requestClose() {
-    if (leaving) return
-    if (prefersReduceMotion()) {
-      onClose()
-      return
-    }
-    setLeaving(true)
-    setOpen(false)
-  }
-
-  function onSheetEnd(event: TransitionEvent<HTMLDivElement>) {
-    if (!leaving) return
-    if (event.target !== event.currentTarget) return
-    if (event.propertyName !== 'transform') return
-    onClose()
-  }
-
-  function labelsMatch(typed: string, expected: string) {
-    return (
-      typed.trim().replace(/\s+/g, ' ').toLocaleLowerCase('es') ===
-      expected.trim().replace(/\s+/g, ' ').toLocaleLowerCase('es')
-    )
-  }
-
-  function askRemove(id: string) {
-    if (leaving) return
-    setPendingId(id)
-    setConfirmText('')
-  }
-
-  function cancelRemove() {
-    setPendingId(null)
-    setConfirmText('')
-    setWithdrawError(null)
-  }
-
-  const pending = vehicles.find((item) => item.id === pendingId) ?? null
-  const pendingLabel = pending ? formatVehicleLabel(pending) : ''
-  const canRemove = pending ? labelsMatch(confirmText, pendingLabel) : false
-
-  async function confirmWithdraw() {
-    if (!pending || leaving || !canRemove || withdrawVehicle.isPending) return
-    const wasLast = vehicles.length === 1
-    setWithdrawError(null)
-    try {
-      await withdrawVehicle.mutateAsync(pending.id)
-      cancelRemove()
-      if (wasLast) requestClose()
-    } catch {
-      setWithdrawError(m.vehicle_save_error())
-    }
-  }
-
-  const host = document.getElementById('root') ?? document.body
-  const countLabel =
-    vehicles.length === 1
-      ? m.home_fleet_count_one()
-      : m.home_fleet_count_many({ count: String(vehicles.length) })
-
-  return createPortal(
-    <div
-      className={`perfil-garage-screen${open ? ' is-open' : ''}${leaving ? ' is-leave' : ''}`}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="perfil-garage-title"
-      onTransitionEnd={onSheetEnd}
-    >
-      <header className="avisos-header">
-        <button type="button" className="avisos-back" onClick={requestClose}>
-          {m.setup_back()}
-        </button>
-        <p className="avisos-eyebrow">{countLabel}</p>
-        <h1 id="perfil-garage-title" className="avisos-title">
-          {m.home_fleet_title()}
-        </h1>
-        <p className="avisos-context">{m.perfil_garage_sheet_desc()}</p>
-      </header>
-      {vehicles.length === 0 ? (
-        <p className="perfil-garage-empty">{m.perfil_garage_empty()}</p>
-      ) : (
-        <ul className="seibi-recuadros perfil-garage-list">
-          {vehicles.map((item) => {
-            const active = item.id === activeId
-            return (
-              <li key={item.id} className={`seibi-recuadro perfil-garage-item${active ? ' is-active' : ''}`}>
-                <span className="seibi-recuadro-copy perfil-garage-item-copy">
-                  <strong className="perfil-garage-item-name">{formatVehicleLabel(item)}</strong>
-                  <span className="perfil-garage-item-meta">
-                    {item.plate ? `${item.plate} · ` : ''}
-                    {m.perfil_active_km({
-                      km: item.mileage.trim()
-                        ? formatMileage(item.mileage, item.mileageUnit)
-                        : m.home_garage_km_empty(),
-                    })}
-                  </span>
-                </span>
-                {active ? (
-                  <span className="perfil-garage-pill">{m.home_fleet_active()}</span>
-                ) : null}
-                <button
-                  type="button"
-                  className="perfil-garage-remove"
-                  onClick={() => askRemove(item.id)}
-                >
-                  {m.perfil_garage_remove()}
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-      {pending ? (
-        <div className="perfil-garage-confirm">
-          <button
-            type="button"
-            className="perfil-garage-confirm-backdrop"
-            aria-label={m.perfil_garage_remove_cancel()}
-            onClick={cancelRemove}
-          />
-          <div
-            className="perfil-garage-confirm-card"
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="perfil-garage-remove-title"
-          >
-            <h2 id="perfil-garage-remove-title">{m.perfil_garage_remove_title()}</h2>
-            <p className="perfil-garage-confirm-warn">
-              {m.perfil_garage_remove_warn({ name: pendingLabel })}
-            </p>
-            <label className="perfil-garage-confirm-field">
-              <span>{m.perfil_garage_remove_label()}</span>
-              <strong className="perfil-garage-confirm-phrase">{pendingLabel}</strong>
-              <input
-                value={confirmText}
-                onChange={(event) => setConfirmText(event.target.value)}
-                autoComplete="off"
-                autoCorrect="off"
-                spellCheck={false}
-                autoFocus
-              />
-            </label>
-            <div className="perfil-garage-confirm-actions">
-              <button type="button" className="perfil-garage-confirm-cancel" onClick={cancelRemove}>
-                {m.perfil_garage_remove_cancel()}
-              </button>
-              {withdrawError ? <p className="vehicle-setup-error">{withdrawError}</p> : null}
-              <button
-                type="button"
-                className="perfil-garage-confirm-go"
-                disabled={!canRemove || withdrawVehicle.isPending}
-                onClick={() => void confirmWithdraw()}
-              >
-                {m.perfil_garage_remove_confirm()}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-    </div>,
-    host,
-  )
-}
-
-export function Perfil({ vehicle }: { vehicle: VehicleProfile | null }) {
-  const signOutToLogin = useSignOutToLogin()
-  const { user, status } = useAuthSession()
-  const { vehicles, activeId } = useVehicles()
-  const identity = authIdentityFromUser(user)
-  const sessionResolved = status !== 'resolving_initial_session'
-  const displayName = identity.displayName ?? getFirstRunName() ?? m.profile_guest_name()
-  const showNoSessionCue = import.meta.env.DEV && status === 'signed_out'
-  const [garageOpen, setGarageOpen] = useState(false)
-  const fleetCount = vehicles.length
-  const label = vehicle ? formatVehicleLabel(vehicle) : null
-  const [night, setNight] = useState(() => getTheme() === 'night')
-  const [notifs, setNotifs] = useState(() => getNotificationsEnabled())
-
-  function toggleNight() {
-    const next = !night
-    setNight(next)
-    setTheme(next ? 'night' : 'day')
-  }
-
-  function toggleNotifs() {
-    const next = !notifs
-    setNotifs(next)
-    setNotificationsEnabled(next)
-  }
+export function Perfil() {
+  const { user } = useAuthSession()
+  const profile = useProfile()
+  const update = useUpdateProfile()
+  const signOut = useSignOutToLogin()
+  const toast = useToast()
+  const identity = identityFromUser(user)
+  const [sheet, setSheet] = useState<'name' | 'level' | 'location' | 'delete' | null>(null)
+  const [theme, setTheme] = useState<ThemePreference>(getThemePreference())
+  const [pushOn, setPushOn] = useState(pushPermission() === 'granted' && (profile.data?.notificationsEnabled ?? true))
+  const p = profile.data
+  const name = p?.displayName ?? identity.fullName ?? identity.email ?? 'Tu cuenta'
+  const country = COUNTRIES.find((c) => c.id === p?.country)
 
   return (
-    <div className="perfil-screen">
-      <header className="avisos-header">
-        <h1 className="avisos-eyebrow">{m.perfil_eyebrow()}</h1>
-      </header>
-
-      <div className="seibi-recuadros">
-        <section className="seibi-recuadro perfil-identity" aria-label={m.perfil_account()}>
-          <IdentityAvatar name={displayName} avatarUrl={identity.avatarUrl} />
-          <span className="seibi-recuadro-copy">
-            <strong className="perfil-name">{sessionResolved ? displayName : '\u00a0'}</strong>
-            {identity.email ? <span className="perfil-email">{identity.email}</span> : null}
-            {showNoSessionCue ? (
-              <span className="profile-session-cue">{m.profile_no_session()}</span>
-            ) : null}
+    <Screen back title="Perfil">
+      <div className="flex flex-col gap-6 px-5">
+        <Card className="flex items-center gap-4 p-5">
+          <span className="inline-flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-inverse text-[1.2rem] font-bold text-on-inverse">
+            {identity.avatarUrl ? (
+              <img src={identity.avatarUrl} alt="" className="size-full object-cover" referrerPolicy="no-referrer" />
+            ) : (
+              initials(name)
+            )}
           </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[1.15rem] font-bold">{name}</p>
+            {identity.email ? <p className="truncate text-[0.85rem] text-muted">{identity.email}</p> : null}
+          </div>
+        </Card>
+
+        <section className="flex flex-col gap-3">
+          <SectionHeader title="Tú" />
+          <Card className="divide-y divide-line overflow-hidden">
+            <ListRow
+              leading={<IconTile icon={UserRound} size="sm" />}
+              title="Cómo te llamamos"
+              subtitle={p?.displayName ?? 'Sin nombre'}
+              onClick={() => setSheet('name')}
+            />
+            <ListRow
+              leading={<IconTile icon={GraduationCap} size="sm" />}
+              title="Nivel de conocimiento"
+              subtitle={levelTitle(p?.knowledgeLevel)}
+              onClick={() => setSheet('level')}
+            />
+            <ListRow
+              leading={<IconTile icon={MapPin} size="sm" />}
+              title="Ubicación"
+              subtitle={country ? `${p?.city ? `${p.city}, ` : ''}${country.name}` : 'Sin definir'}
+              onClick={() => setSheet('location')}
+            />
+          </Card>
         </section>
 
-        <button
-          type="button"
-          className="seibi-recuadro perfil-card"
-          aria-label={m.perfil_garage()}
-          aria-expanded={garageOpen}
-          onClick={() => setGarageOpen(true)}
-        >
-          <span className="seibi-recuadro-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path
-                d="M4 17.5V10l8-5.5 8 5.5v7.5a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 17.5z"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M9.5 19v-5h5v5"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
-          <span className="seibi-recuadro-copy">
-            <strong>
-              {vehicle && label ? label : m.perfil_garage_empty()}
-            </strong>
-            <span>
-              {vehicle
-                ? `${m.perfil_active_km({
-                    km: vehicle.mileage.trim()
-                      ? formatMileage(vehicle.mileage, vehicle.mileageUnit)
-                      : m.home_garage_km_empty(),
-                  })} · ${
-                    fleetCount === 1
-                      ? m.perfil_fleet_one()
-                      : m.perfil_fleet_many({ count: String(fleetCount) })
-                  }`
-                : m.perfil_garage()}
-            </span>
-          </span>
-          <span className="seibi-recuadro-go" aria-hidden="true">
-            <ChevronIcon />
-          </span>
-        </button>
+        <section className="flex flex-col gap-3">
+          <SectionHeader title="Preferencias" />
+          <Card className="divide-y divide-line overflow-hidden">
+            <Toggle
+              label="Notificaciones de avisos"
+              description={
+                !pushSupported()
+                  ? 'Instala Seibi en tu pantalla de inicio para recibir notificaciones.'
+                  : pushPermission() === 'denied'
+                    ? 'Bloqueadas en la configuración de tu teléfono.'
+                    : 'Te avisamos cuando se acerque un mantenimiento.'
+              }
+              checked={pushOn}
+              disabled={!pushSupported() || pushPermission() === 'denied'}
+              onChange={async (next) => {
+                if (!user) return
+                try {
+                  if (next) {
+                    const ok = await enablePush(user.id)
+                    setPushOn(ok)
+                    if (ok) update.mutate({ notificationsEnabled: true })
+                  } else {
+                    await disablePush()
+                    setPushOn(false)
+                    update.mutate({ notificationsEnabled: false })
+                  }
+                } catch {
+                  toast('No pudimos cambiar las notificaciones', 'error')
+                }
+              }}
+            />
+            <div className="flex items-center gap-3 px-4 py-3">
+              <IconTile icon={Palette} size="sm" />
+              <div className="flex-1">
+                <Segmented
+                  label="Tema"
+                  value={theme}
+                  onChange={(t) => {
+                    setTheme(t)
+                    setThemePreference(t)
+                  }}
+                  options={[
+                    { value: 'system', label: 'Auto' },
+                    { value: 'day', label: 'Claro' },
+                    { value: 'night', label: 'Oscuro' },
+                  ]}
+                />
+              </div>
+            </div>
+          </Card>
+        </section>
 
-        <SwitchRow label={m.perfil_night_mode()} on={night} onToggle={toggleNight} />
-        <SwitchRow label={m.perfil_notifications()} on={notifs} onToggle={toggleNotifs} />
+        <section className="flex flex-col gap-3">
+          <SectionHeader title="Planes" />
+          <Card className="overflow-hidden">
+            <div className="flex items-center gap-3 p-4">
+              <IconTile icon={Crown} tone="radiant" />
+              <div className="min-w-0 flex-1">
+                <p className="font-bold">Seibi Común</p>
+                <p className="text-[0.82rem] text-muted">Todo incluido mientras estamos en lanzamiento.</p>
+              </div>
+              <span className="rounded-full bg-radiant-soft px-2.5 py-1 text-[0.72rem] font-bold text-radiant">
+                Próximamente
+              </span>
+            </div>
+            <p className="border-t border-line px-4 py-3 text-[0.8rem] text-muted">
+              Los planes Plus y Premium para flotas grandes llegarán pronto. Te avisaremos antes de cualquier cambio.
+            </p>
+          </Card>
+        </section>
+
+        <section className="flex flex-col gap-3">
+          <SectionHeader title="Legal y ayuda" />
+          <Card className="divide-y divide-line overflow-hidden">
+            <Link to="/legal/terminos" className="block">
+              <ListRow leading={<IconTile icon={FileText} size="sm" />} title="Términos de uso" chevron />
+            </Link>
+            <Link to="/legal/privacidad" className="block">
+              <ListRow leading={<IconTile icon={ShieldCheck} size="sm" />} title="Política de privacidad" chevron />
+            </Link>
+            <a href="mailto:hola@seibiapp.com" className="block">
+              <ListRow leading={<IconTile icon={BookOpen} size="sm" />} title="Escríbenos" subtitle="hola@seibiapp.com" chevron />
+            </a>
+          </Card>
+        </section>
+
+        <div className="flex flex-col gap-2">
+          <Button variant="secondary" icon={LogOut} onClick={() => void signOut()}>
+            Cerrar sesión
+          </Button>
+          <Button variant="ghost" icon={Trash2} className="text-overdue" onClick={() => setSheet('delete')}>
+            Eliminar mi cuenta
+          </Button>
+        </div>
+        <p className="pb-2 text-center text-[0.75rem] text-subtle">Seibi · {import.meta.env.VITE_APP_VERSION ?? 'MVP'}</p>
       </div>
 
-      {garageOpen ? (
-        <GarageSheet
-          vehicles={vehicles}
-          activeId={activeId}
-          onClose={() => setGarageOpen(false)}
-        />
-      ) : null}
+      <NameSheet open={sheet === 'name'} onClose={() => setSheet(null)} />
+      <LevelSheet open={sheet === 'level'} onClose={() => setSheet(null)} />
+      <LocationSheet open={sheet === 'location'} onClose={() => setSheet(null)} />
+      <DeleteSheet open={sheet === 'delete'} onClose={() => setSheet(null)} />
+    </Screen>
+  )
+}
 
-      <button type="button" className="perfil-logout" onClick={() => void signOutToLogin()}>
-        {m.home_logout()}
-      </button>
-    </div>
+function NameSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const profile = useProfile()
+  const update = useUpdateProfile()
+  const [name, setName] = useState(profile.data?.displayName ?? '')
+  return (
+    <Sheet open={open} onClose={onClose} title="¿Cómo te llamamos?">
+      <form
+        className="flex flex-col gap-4 pb-2"
+        onSubmit={(e) => {
+          e.preventDefault()
+          update.mutate({ displayName: name }, { onSuccess: onClose })
+        }}
+      >
+        <TextField label="Nombre" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} autoFocus />
+        <Button type="submit" size="lg" block loading={update.isPending}>
+          Guardar
+        </Button>
+      </form>
+    </Sheet>
+  )
+}
+
+function LevelSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const profile = useProfile()
+  const update = useUpdateProfile()
+  const current = profile.data?.knowledgeLevel
+  return (
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title="Nivel de conocimiento"
+      description="Cambia cómo te explicamos las cosas. Tus datos y avisos no cambian."
+    >
+      <div className="flex flex-col gap-2 pb-2" role="radiogroup" aria-label="Nivel">
+        {KNOWLEDGE_LEVELS.map((l) => (
+          <button
+            key={l.id}
+            type="button"
+            role="radio"
+            aria-checked={current === l.id}
+            onClick={() => update.mutate({ knowledgeLevel: l.id as KnowledgeLevel }, { onSuccess: onClose })}
+            className={cx(
+              'flex items-start gap-3 rounded-2xl p-4 text-left ring-1',
+              current === l.id ? 'bg-radiant-soft ring-radiant' : 'bg-surface ring-line',
+            )}
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block font-bold">{l.title}</span>
+              <span className="block text-[0.84rem] text-muted">{l.description}</span>
+            </span>
+            {current === l.id ? <ChevronRight className="mt-1 size-4 text-radiant" aria-hidden /> : null}
+          </button>
+        ))}
+      </div>
+    </Sheet>
+  )
+}
+
+function LocationSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const profile = useProfile()
+  const update = useUpdateProfile()
+  const [country, setCountry] = useState<Country>(profile.data?.country ?? 'SV')
+  const [city, setCity] = useState(profile.data?.city ?? '')
+  return (
+    <Sheet open={open} onClose={onClose} title="Ubicación" description="La usamos para estimar precios de tu zona.">
+      <form
+        className="flex flex-col gap-4 pb-2"
+        onSubmit={(e) => {
+          e.preventDefault()
+          update.mutate({ country, city }, { onSuccess: onClose })
+        }}
+      >
+        <SelectField label="País" value={country} onChange={(e) => setCountry(e.target.value as Country)}>
+          {COUNTRIES.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.flag} {c.name}
+            </option>
+          ))}
+        </SelectField>
+        <TextField label="Ciudad" value={city} onChange={(e) => setCity(e.target.value)} />
+        <Button type="submit" size="lg" block loading={update.isPending}>
+          Guardar
+        </Button>
+      </form>
+    </Sheet>
+  )
+}
+
+function DeleteSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const navigate = useNavigate()
+  const [confirm, setConfirm] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  return (
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title="Eliminar mi cuenta"
+      description="Se borran para siempre tu cuenta, tus Vehículos, Servicios, facturas, avisos y consultas. No se puede deshacer."
+    >
+      <form
+        className="flex flex-col gap-4 pb-2"
+        onSubmit={async (e) => {
+          e.preventDefault()
+          setBusy(true)
+          setError(null)
+          try {
+            await deleteAccount()
+            void navigate({ to: '/login', replace: true })
+          } catch (err) {
+            setError(errorMessage(err))
+            setBusy(false)
+          }
+        }}
+      >
+        <TextField
+          label='Escribe "ELIMINAR" para confirmar'
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          autoCapitalize="characters"
+          error={error}
+        />
+        <Button type="submit" variant="danger" size="lg" block loading={busy} disabled={confirm.trim().toUpperCase() !== 'ELIMINAR'}>
+          Eliminar definitivamente
+        </Button>
+      </form>
+    </Sheet>
   )
 }

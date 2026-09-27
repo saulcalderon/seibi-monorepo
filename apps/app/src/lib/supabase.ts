@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import type { Database } from './database.types'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -11,7 +12,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   )
 }
 
-export const supabase = createClient(supabaseUrl ?? '', supabaseAnonKey ?? '', {
+export const supabase = createClient<Database>(supabaseUrl ?? '', supabaseAnonKey ?? '', {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
@@ -19,7 +20,8 @@ export const supabase = createClient(supabaseUrl ?? '', supabaseAnonKey ?? '', {
   },
 })
 
-export type OAuthProvider = 'apple' | 'google'
+/** Apple Sign-In is hidden until it is configured in the hosted project. */
+export type OAuthProvider = 'google'
 
 export function signInWithProvider(provider: OAuthProvider) {
   return supabase.auth.signInWithOAuth({
@@ -30,4 +32,9 @@ export function signInWithProvider(provider: OAuthProvider) {
 
 export function signOut() {
   return supabase.auth.signOut()
+}
+
+export function publicRenderUrl(path: string | null | undefined) {
+  if (!path) return null
+  return supabase.storage.from('vehicle-renders').getPublicUrl(path).data.publicUrl
 }

@@ -1,81 +1,110 @@
 import { useState } from 'react'
+import { Link } from '@tanstack/react-router'
+import { motion } from 'motion/react'
 import { Logo } from '../components/Logo'
-import { signInWithProvider } from '../lib/supabase'
-import type { OAuthProvider } from '../lib/supabase'
-import * as m from '../paraglide/messages.js'
+import { Silhouette } from '../components/VehicleVisual'
+import { signInWithProvider, supabase } from '../lib/supabase'
+import { Button } from '../ui/Button'
+import { TextField } from '../ui/fields'
+
+function GoogleMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
+      <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.2-2.1 3.5-5.1 3.5-8.7Z" />
+      <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24Z" />
+      <path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6H1.3a12 12 0 0 0 0 10.8l4-3.1Z" />
+      <path fill="#EA4335" d="M12 4.8c1.8 0 3.4.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.9 3.6-4.9 6.7-4.9Z" />
+    </svg>
+  )
+}
 
 export function Login() {
-  const [pending, setPending] = useState<OAuthProvider | null>(null)
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  async function handleSignIn(provider: OAuthProvider) {
-    setPending(provider)
-    const { error } = await signInWithProvider(provider)
-    if (error) {
-      console.error(`[auth] ${provider} sign-in failed`, error.message)
-      setPending(null)
+  async function google() {
+    setPending(true)
+    setError(null)
+    const { error: e } = await signInWithProvider('google')
+    if (e) {
+      setError('No pudimos abrir Google. Intenta de nuevo.')
+      setPending(false)
     }
   }
 
   return (
-    <div className="login-axis relative flex h-full flex-col overflow-hidden bg-fog">
-      <div className="login-axis-lights" aria-hidden="true">
-        <span className="login-glow login-glow-a" />
-        <span className="login-glow login-glow-b" />
-        <span className="login-glow login-glow-c" />
-        <span className="login-glow login-glow-d" />
-        <span className="login-glow login-glow-e" />
-      </div>
-
-      <div className="relative z-10 flex flex-1 flex-col items-center px-8 pt-[4.75rem] text-center">
-        <Logo className="login-axis-icon" />
-        <h1 className="login-axis-title">
-          <span>{m.login_hello()}</span>
-          <span className="login-axis-title-to">{m.login_hello_to()}</span>
-          <em>{m.login_hello_em()}</em>
-        </h1>
-        <p className="login-axis-desc">{m.tagline()}</p>
-      </div>
-
-      <div className="relative z-10 flex flex-col gap-3 px-7 pb-3">
-        <button
-          type="button"
-          disabled={pending !== null}
-          onClick={() => handleSignIn('google')}
-          className="flex w-full items-center justify-center gap-2.5 rounded-full bg-radiant px-5 py-[0.95rem] text-[0.95rem] font-semibold text-pure shadow-[0_8px_22px_rgba(255,79,24,0.28)] transition-transform active:scale-[0.98] disabled:opacity-60"
+    <div className="relative flex h-full flex-col overflow-hidden bg-bg pt-safe pb-safe">
+      <div className="pointer-events-none absolute -right-24 top-24 size-72 rounded-full bg-radiant/15 blur-3xl" aria-hidden />
+      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center px-6">
+        <Logo className="text-[3.2rem]" />
+        <motion.div
+          initial={{ x: 60, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ type: 'spring', damping: 20, delay: 0.1 }}
+          className="mt-8"
         >
-          <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" aria-hidden="true">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-          </svg>
-          {m.login_google()}
-        </button>
-
-        <button
-          type="button"
-          disabled={pending !== null}
-          onClick={() => handleSignIn('apple')}
-          className="flex w-full items-center justify-center gap-2.5 rounded-full bg-coal px-5 py-[0.95rem] text-[0.95rem] font-semibold text-pure transition-transform active:scale-[0.98] disabled:opacity-60"
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="h-[18px] w-[18px]">
-            <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-          </svg>
-          {m.login_apple()}
-        </button>
+          <Silhouette bodyType="sedan" color="silver" className="h-28 w-72" />
+        </motion.div>
       </div>
-
-      <p className="relative z-10 px-7 pb-10 pt-2 text-center text-[0.65rem] leading-relaxed text-coal/55">
-        {m.login_terms_prefix()}
-        <a href="#" className="text-radiant no-underline">
-          {m.login_terms_tos()}
-        </a>
-        {m.login_terms_and()}
-        <a href="#" className="text-radiant no-underline">
-          {m.login_terms_privacy()}
-        </a>
-        .
-      </p>
+      <div className="flex flex-col gap-4 px-6 pb-4">
+        <div>
+          <h1 className="text-[2rem] leading-[1.08]">Mantenimiento con total claridad</h1>
+          <p className="mt-2 text-[0.98rem] text-muted">Entra para guardar tus Vehículos y recibir tus avisos.</p>
+        </div>
+        <Button size="lg" variant="secondary" block loading={pending} onClick={() => void google()} className="shadow-card">
+          {!pending ? <GoogleMark /> : null}
+          Continuar con Google
+        </Button>
+        {error ? (
+          <p role="alert" className="text-center text-[0.85rem] font-medium text-overdue">
+            {error}
+          </p>
+        ) : null}
+        {import.meta.env.DEV ? <DevEmailLogin /> : null}
+        <p className="text-center text-[0.78rem] text-subtle">
+          Al continuar aceptas los{' '}
+          <Link to="/legal/terminos" className="font-semibold underline">
+            Términos
+          </Link>{' '}
+          y la{' '}
+          <Link to="/legal/privacidad" className="font-semibold underline">
+            Política de privacidad
+          </Link>
+          .
+        </p>
+      </div>
     </div>
+  )
+}
+
+/** Local development only: email + password against local Supabase. */
+function DevEmailLogin() {
+  const [email, setEmail] = useState('demo@seibi.test')
+  const [password, setPassword] = useState('password123')
+  const [msg, setMsg] = useState<string | null>(null)
+  return (
+    <details className="rounded-2xl bg-surface p-3 ring-1 ring-line">
+      <summary className="cursor-pointer text-[0.82rem] font-semibold text-muted">Entrar con correo (solo desarrollo)</summary>
+      <form
+        className="mt-3 flex flex-col gap-3"
+        onSubmit={async (e) => {
+          e.preventDefault()
+          setMsg(null)
+          let { error } = await supabase.auth.signInWithPassword({ email, password })
+          if (error) {
+            ;({ error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: 'Demo Seibi' } } }))
+          }
+          if (error) setMsg(error.message)
+          else window.location.assign('/auth/callback')
+        }}
+      >
+        <TextField label="Correo" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <TextField label="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <Button type="submit" variant="inverse">
+          Entrar
+        </Button>
+        {msg ? <p className="text-[0.8rem] text-overdue">{msg}</p> : null}
+      </form>
+    </details>
   )
 }

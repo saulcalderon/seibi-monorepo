@@ -48,5 +48,8 @@ later. The repo is a **single app today but monorepo-ready** via pnpm workspaces
   `apps/marketing` when it needs a framework.
 - Shared code will live in `packages/*` once a second app appears; use direct/deep imports
   (no barrel files) to protect bundle size.
+- SEI-34 wrote the MVP screens with inline Spanish strings; Paraglide is
+  still compiled but holds no UI copy. Moving strings into
+  `messages/es.json` is the first step before adding a second locale.
 - Adding a persisted query cache later is a contained wiring change. Offline
   *writes* still mean a local-first sync layer.

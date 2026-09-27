@@ -32,8 +32,26 @@ cp apps/app/.env.example apps/app/.env.local
 | --- | --- |
 | `VITE_SUPABASE_URL` | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | Supabase anon (public) key |
+| `VITE_VAPID_PUBLIC_KEY` | Web Push public key (optional; notifications stay off without it) |
+| `VITE_SENTRY_DSN` | Sentry DSN (optional; Sentry stays off without it) |
 
-Without these, the app starts but Supabase auth/data calls will fail.
+Without the Supabase pair, the app starts but auth/data calls fail. Server
+secrets (OpenAI, fal, VAPID private key) live in Supabase, not here — see
+[`supabase/functions/README.md`](./supabase/functions/README.md).
+
+### Local Supabase
+
+Docker must be running.
+
+```bash
+npx supabase start                 # database, auth, storage, functions runtime
+npx supabase test db               # pgTAP: schema + RLS
+pnpm --filter @seibi/app dev --mode e2e   # app against local Supabase
+```
+
+`--mode e2e` reads `apps/app/.env.e2e` (the public local demo keys). In
+development the login screen also offers an email login, so you do not need
+Google OAuth locally.
 
 ## Scripts
 
@@ -46,12 +64,16 @@ Run from the repo root:
 | `pnpm preview` | Preview the production build |
 | `pnpm typecheck` | Typecheck all packages |
 | `pnpm lint` | Lint all packages |
+| `pnpm test` | Unit tests (maintenance engine) |
+| `pnpm --filter @seibi/app test:e2e` | Playwright smoke test (needs local Supabase) |
 
 ## Structure
 
 ```
-apps/app/          # TanStack Router + Vite SPA (PWA)
-packages/          # Shared packages (reserved; empty for now)
+apps/app/                     # TanStack Router + Vite SPA (PWA)
+packages/maintenance-engine/  # Reminder math shared by the app and Edge Functions
+supabase/migrations/          # Schema + RLS
+supabase/functions/           # Edge Functions (OpenAI, fal, push, account deletion)
 docs/adr/          # Architecture decision records
 CONTEXT.md         # Domain language
 ```
