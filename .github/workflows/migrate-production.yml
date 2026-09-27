@@ -1,4 +1,6 @@
-# After a PR lands on main: apply pending migrations to production.
+# After a PR lands on main: apply pending migrations to production, then
+# deploy Edge Functions (ADR-0006). Function secrets are set once with
+# `supabase secrets set`; this workflow does not touch them.
 # Database tests are not run in CI.
 # The app image stays with Dokploy and the Dockerfile — this workflow does not deploy the app.
 name: Migrate production
@@ -65,3 +67,6 @@ jobs:
 
       - name: Confirm remote is current
         run: supabase migration list
+
+      - name: Deploy Edge Functions
+        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"

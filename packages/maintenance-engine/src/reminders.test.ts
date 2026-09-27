@@ -4,6 +4,7 @@ import { mileagePrompt } from './mileagePrompt.ts'
 import { currentOdometer, isSevereUse, usageRate } from './odometer.ts'
 import {
   computeReminders,
+  effectiveSchedule,
   nextReminder,
   pendingCount,
   vehicleHealth,
@@ -322,5 +323,29 @@ describe('mileagePrompt', () => {
       due: true,
       reason: 'no_usage',
     })
+  })
+})
+
+describe('effectiveSchedule', () => {
+  const general = [
+    { code: 'engine_oil', generalDistanceKm: 5000, generalMonths: 6 },
+    { code: 'tire_rotation', generalDistanceKm: 10000, generalMonths: 6 },
+    { code: 'tires', generalDistanceKm: null, generalMonths: null },
+  ]
+  it('uses the general schedule with no cited schedule', () => {
+    expect(effectiveSchedule(null, general).map((i) => [i.taskCode, i.source])).toEqual([
+      ['engine_oil', 'general'],
+      ['tire_rotation', 'general'],
+    ])
+  })
+  it('prefers the cited interval and fills gaps with general ones', () => {
+    const merged = effectiveSchedule(
+      [{ taskCode: 'engine_oil', distanceKm: 8000, months: 12 }],
+      general,
+    )
+    expect(merged.map((i) => [i.taskCode, i.distanceKm, i.source])).toEqual([
+      ['engine_oil', 8000, 'model'],
+      ['tire_rotation', 10000, 'general'],
+    ])
   })
 })

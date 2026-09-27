@@ -386,3 +386,11 @@ s3_region = "env(S3_REGION)"
 s3_access_key = "env(S3_ACCESS_KEY)"
 # Configures AWS_SECRET_ACCESS_KEY for S3 bucket
 s3_secret_key = "env(S3_SECRET_KEY)"
+
+# SEI-34 Edge Functions. fal and pg_cron call these two without a user JWT;
+# each checks its own secret instead.
+[functions.vehicle-render-webhook]
+verify_jwt = false
+
+[functions.reminders-daily]
+verify_jwt = false

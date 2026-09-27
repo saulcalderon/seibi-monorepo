@@ -36,6 +36,17 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Unit tests
+        run: pnpm test
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Check Edge Functions
+        working-directory: supabase/functions
+        run: for f in */index.ts; do deno check "$f"; done
+
       - name: Build
         run: pnpm build
         env:

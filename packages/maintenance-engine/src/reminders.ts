@@ -18,6 +18,8 @@ export type TaskInterval = {
   months: number | null
   severeDistanceKm?: number | null
   severeMonths?: number | null
+  /** `model` when a cited Maintenance schedule sets it, `general` otherwise (ADR-0007). */
+  source?: 'model' | 'general'
 }
 
 /** A Service item with a Maintenance task, flattened with its Service. */
@@ -46,6 +48,7 @@ export type Reminder = {
   unknownReason?: 'ask' | 'dont_know'
   /** Interval actually applied, in the Vehicle's measure and months. */
   interval: { distance: number | null; months: number | null }
+  source: 'model' | 'general'
   severe: boolean
   lastDone: { performedOn: string; reading: number | null } | null
   /** Odometer at which the task is due, in the Vehicle's measure. */
@@ -136,6 +139,7 @@ export function computeReminders(input: ComputeInput): ComputeResult {
         status: 'unknown',
         unknownReason: state?.lastUnknown ? 'dont_know' : 'ask',
         interval,
+        source: item.source ?? 'general',
         severe: useSevere,
         lastDone: null,
         dueReading: null,
@@ -192,6 +196,7 @@ export function computeReminders(input: ComputeInput): ComputeResult {
       taskCode: item.taskCode,
       status,
       interval,
+      source: item.source ?? 'general',
       severe: useSevere,
       lastDone: { performedOn: last.performedOn, reading: last.reading },
       dueReading,
@@ -249,4 +254,34 @@ export function pendingCount(reminders: readonly Reminder[]): number {
   return reminders.filter(
     (r) => !r.snoozed && (r.status === 'overdue' || r.status === 'soon'),
   ).length
+}
+
+export type GeneralTask = {
+  code: string
+  generalDistanceKm: number | null
+  generalMonths: number | null
+}
+
+/**
+ * The intervals a Vehicle runs on: its cited Maintenance schedule, plus the
+ * general interval for any task the schedule does not cover. With no cited
+ * schedule, the general schedule alone.
+ */
+export function effectiveSchedule(
+  model: readonly TaskInterval[] | null,
+  general: readonly GeneralTask[],
+): TaskInterval[] {
+  const out: TaskInterval[] = (model ?? []).map((i) => ({ ...i, source: 'model' as const }))
+  const covered = new Set(out.map((i) => i.taskCode))
+  for (const t of general) {
+    if (covered.has(t.code)) continue
+    if (t.generalDistanceKm == null && t.generalMonths == null) continue
+    out.push({
+      taskCode: t.code,
+      distanceKm: t.generalDistanceKm,
+      months: t.generalMonths,
+      source: 'general',
+    })
+  }
+  return out
 }

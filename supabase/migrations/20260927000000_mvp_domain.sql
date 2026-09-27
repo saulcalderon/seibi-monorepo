@@ -186,11 +186,13 @@ values
 
 create table public.maintenance_schedules (
   id uuid primary key default gen_random_uuid(),
-  -- Lookup key: normalized brand, model, year, and engine (empty when unknown).
+  -- Lookup key: normalized brand, model, year, engine (empty when unknown), and market.
   brand_key text not null,
   model_key text not null,
   year smallint not null,
   engine_key text not null default '',
+  -- Market whose manual applies: 'US' or 'LATAM' (El Salvador).
+  market text not null default 'US',
   status public.schedule_status not null default 'pending',
   body_type public.body_type,
   has_severe boolean not null default false,
@@ -200,7 +202,8 @@ create table public.maintenance_schedules (
   looked_up_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint maintenance_schedules_key unique (brand_key, model_key, year, engine_key),
+  constraint maintenance_schedules_key unique (brand_key, model_key, year, engine_key, market),
+  constraint maintenance_schedules_market check (market in ('US', 'LATAM')),
   constraint maintenance_schedules_sources_array check (jsonb_typeof(sources) = 'array')
 );
 
