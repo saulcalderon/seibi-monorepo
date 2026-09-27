@@ -23,6 +23,8 @@ later. The repo is a **single app today but monorepo-ready** via pnpm workspaces
 - Supabase provides **Apple/Google OAuth out of the box** (already mocked in the
   prototype) plus Postgres for relational maintenance data, keeping the frontend a clean
   SPA and removing any need for Start's server layer.
+- Server work that needs secrets or cron runs in Supabase Edge Functions
+  (ADR-0006); the SPA itself stays client-rendered.
 - Offline cache is **not in play**. TanStack Query stays in memory. There is no
   IndexedDB persister — nothing was writing to it (Vehicles are fetched live;
   history and reminders still use their own local stores). A persisted offline
