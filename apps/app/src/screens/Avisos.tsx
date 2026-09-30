@@ -1,635 +1,284 @@
-import {
-  useEffect,
-  useEffectEvent,
-  useMemo,
-  useRef,
-  useState,
-  type TransitionEvent,
-} from 'react'
-import { createPortal } from 'react-dom'
-import {
-  reminderVehicleLabel,
-  remindersForVehicle,
-  wearLevelFromPct,
-  WEAR_COLOR,
-  type ReminderItem,
-  type ReminderTone,
-} from '../lib/reminders'
-import type { VehicleProfile } from '../lib/vehicleProfile'
-import * as m from '../paraglide/messages.js'
+import { useState } from 'react'
+import { BellPlus, BellRing, CalendarClock, CarFront, PartyPopper, Plus } from 'lucide-react'
+import type { Reminder } from '@seibi/maintenance-engine/reminders'
+import { daysBetween } from '@seibi/maintenance-engine/days'
+import { useActions } from '../app/Actions'
+import { Screen } from '../app/Screen'
+import { ReminderRow } from '../components/ReminderRow'
+import { UnknownTasks } from '../components/UnknownTasks'
+import { useAuthSession } from '../lib/authSession'
+import { formatDay, relativeDays, todayIso } from '../lib/format'
+import { useGarage, type VehicleView } from '../lib/garage'
+import { useCompleteManualReminder } from '../lib/mutations'
+import { useProfile, useUpdateProfile } from '../lib/profile'
+import { enablePush, pushPermission, pushSupported } from '../lib/push'
+import { taskMap } from '../lib/tasks'
+import { Button, IconButton } from '../ui/Button'
+import { Card, IconTile, SectionHeader } from '../ui/Card'
+import { Chip } from '../ui/fields'
+import { EmptyState, ErrorState, ScreenSkeleton, useToast } from '../ui/feedback'
 
-function formatLastService(at: number) {
-  return new Date(at).toLocaleDateString('es-MX', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
-}
+type Entry = { vehicle: VehicleView; reminder: Reminder }
 
-function reminderToneLabel(tone: ReminderTone) {
-  if (tone === 'danger') return m.home_avisos_urgent()
-  if (tone === 'warn') return m.home_avisos_soon()
-  return m.home_avisos_ok()
-}
+export function Avisos() {
+  const garage = useGarage()
+  const actions = useActions()
+  const profile = useProfile()
+  const [vehicleFilter, setVehicleFilter] = useState<string | 'all'>('all')
+  const [showOk, setShowOk] = useState(false)
+  const complete = useCompleteManualReminder()
+  const toast = useToast()
+  const byCode = taskMap(garage.tasks)
+  const today = todayIso()
 
-function reminderRowDate(item: ReminderItem) {
-  const days = item.remainingDays ?? 0
-  const date = new Date()
-  date.setHours(0, 0, 0, 0)
-  date.setDate(date.getDate() + Math.max(0, days))
-  return date.toLocaleDateString('es-MX', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
-}
+  if (garage.isLoading) {
+    return (
+      <Screen title="Avisos">
+        <ScreenSkeleton />
+      </Screen>
+    )
+  }
+  if (garage.isError) {
+    return (
+      <Screen title="Avisos">
+        <ErrorState onRetry={garage.refetch} />
+      </Screen>
+    )
+  }
+  if (garage.vehicles.length === 0) {
+    return (
+      <Screen title="Avisos">
+        <EmptyState
+          icon={CarFront}
+          title="Aún no hay avisos"
+          body="Agrega un Vehículo y te diremos qué mantenimiento le toca y cuándo."
+          action={
+            <Button icon={Plus} onClick={actions.addVehicle}>
+              Agregar Vehículo
+            </Button>
+          }
+        />
+      </Screen>
+    )
+  }
 
-function reminderRowLeft(item: ReminderItem) {
-  if (item.remainingDays != null) {
-    if (item.remainingDays <= 0) return m.home_reminder_row_overdue()
-    if (item.remainingDays === 1) return m.home_reminder_row_day_left()
-    return m.home_reminder_row_days_left({ days: String(item.remainingDays) })
-  }
-  if (item.remainingKm != null) {
-    return m.home_upcoming_km_left({ km: item.remainingKm.toLocaleString('es-MX') })
-  }
-  return item.due
-}
+  const vehicles = garage.vehicles.filter((v) => vehicleFilter === 'all' || v.id === vehicleFilter)
+  const all: Entry[] = vehicles.flatMap((vehicle) => vehicle.reminders.map((reminder) => ({ vehicle, reminder })))
+  const pick = (fn: (r: Reminder) => boolean) =>
+    all
+      .filter((e) => fn(e.reminder))
+      .sort((a, b) => (a.reminder.expectedOn ?? '9999') < (b.reminder.expectedOn ?? '9999') ? -1 : 1)
 
-export function ReminderPartIcon({ id }: { id: string }) {
-  if (id === 'brakes') {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <circle cx="11" cy="12" r="7.35" stroke="currentColor" strokeWidth="1.65" />
-        <circle cx="11" cy="12" r="2.2" stroke="currentColor" strokeWidth="1.65" />
-        <circle cx="11" cy="7.6" r="0.8" fill="currentColor" />
-        <circle cx="14.8" cy="9.6" r="0.8" fill="currentColor" />
-        <circle cx="14.8" cy="14.4" r="0.8" fill="currentColor" />
-        <circle cx="11" cy="16.4" r="0.8" fill="currentColor" />
-        <circle cx="7.2" cy="14.4" r="0.8" fill="currentColor" />
-        <circle cx="7.2" cy="9.6" r="0.8" fill="currentColor" />
-        <path
-          d="M17.55 7.15c2.4 1.5 3.9 4.05 3.9 7.05s-1.5 5.55-3.9 7.05"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
+  const overdue = pick((r) => !r.snoozed && r.status === 'overdue')
+  const soon = pick((r) => !r.snoozed && r.status === 'soon')
+  const snoozed = pick((r) => r.snoozed && r.status !== 'unknown')
+  const ok = pick((r) => !r.snoozed && r.status === 'ok')
+  const manual = vehicles
+    .flatMap((vehicle) => vehicle.openManualReminders.map((m) => ({ vehicle, m })))
+    .sort((a, b) => (a.m.dueOn < b.m.dueOn ? -1 : 1))
+  const appointments = vehicles
+    .flatMap((vehicle) => vehicle.upcomingAppointments.map((a) => ({ vehicle, a })))
+    .sort((a, b) => (a.a.scheduledOn < b.a.scheduledOn ? -1 : 1))
+  const multi = garage.vehicles.length > 1
+
+  const list = (entries: Entry[]) => (
+    <Card className="divide-y divide-line overflow-hidden">
+      {entries.map(({ vehicle, reminder }) => (
+        <ReminderRow
+          key={`${vehicle.id}:${reminder.taskCode}`}
+          reminder={reminder}
+          task={byCode.get(reminder.taskCode)}
+          measure={vehicle.measure}
+          level={profile.data?.knowledgeLevel}
+          vehicleLabel={multi ? vehicle.model : undefined}
+          onClick={() => actions.openReminder(vehicle.id, reminder.taskCode)}
         />
-      </svg>
-    )
-  }
-  if (id === 'tires') {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2.3" />
-        <circle cx="12" cy="12" r="4.35" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="12" cy="12" r="1.2" stroke="currentColor" strokeWidth="1.5" />
-        <path
-          d="M12 7.65v1.85M16.13 10.12l-1.58.75M15.28 15.53l-1.46-.97M8.72 15.53l1.46-.97M7.87 10.12l1.58.75"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-      </svg>
-    )
-  }
-  if (id === 'alignment') {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <circle cx="12" cy="12" r="7.2" stroke="currentColor" strokeWidth="1.6" />
-        <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    )
-  }
-  if (id === 'air-filter') {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <rect x="4.8" y="6" width="14.4" height="12" rx="2" stroke="currentColor" strokeWidth="1.6" />
-        <path
-          d="M8.2 8.3v7.4M10.7 8.3v7.4M13.3 8.3v7.4M15.8 8.3v7.4"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-      </svg>
-    )
-  }
-  if (id === 'coolant') {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M12 4.5S7 10.2 7 13.4a5 5 0 0010 0C17 10.2 12 4.5 12 4.5z"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-      </svg>
-    )
-  }
-  if (id === 'spark') {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M10.5 3h3v6l2 2.5v4.2a2.8 2.8 0 01-2.8 2.8h-1.4A2.8 2.8 0 018.5 15.7V11.5L10.5 9V3z"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-        <path d="M12 18.8v2.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    )
-  }
-  if (id === 'battery') {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <rect x="4" y="7.5" width="14" height="9" rx="1.6" stroke="currentColor" strokeWidth="1.6" />
-        <path
-          d="M18 10.2h2v3.6h-2M8.2 12h4.2M10.3 10.2v3.6"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-      </svg>
-    )
-  }
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M6.35 3.35h5.4v2.2H6.35z"
-        stroke="currentColor"
-        strokeWidth="1.55"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M4.55 5.55h9.05l.7 13.35c.06.95-.7 1.75-1.68 1.75H5.53c-.98 0-1.74-.8-1.68-1.75L4.55 5.55z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M11.75 4.45c2.2.25 4.35 1.7 5.7 3.85"
-        stroke="currentColor"
-        strokeWidth="1.55"
-        strokeLinecap="round"
-      />
-      <path
-        d="M18.55 9.4s1.75 1.9 1.75 3.05a1.75 1.75 0 11-3.5 0c0-1.15 1.75-3.05 1.75-3.05z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-    </svg>
+      ))}
+    </Card>
   )
-}
 
-function reminderLiveCopy(item: ReminderItem) {
-  const overdue = item.due.match(/^Vencido\s*[·•\-]\s*(.+)$/i)
-  if (overdue) {
-    return {
-      title: 'Vencido',
-      subtitle: item.name,
-    }
-  }
-  return {
-    title: item.due,
-    subtitle: item.name,
-  }
-}
-
-function ReminderDetailSheet({
-  item,
-  onClose,
-}: {
-  item: ReminderItem
-  onClose: () => void
-}) {
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
-  }, [onClose])
-
-  const lastLabel = item.lastServicedAt
-    ? formatLastService(item.lastServicedAt)
-    : m.home_reminder_detail_last_empty()
-  const kmLabel =
-    item.remainingKm != null
-      ? `${item.remainingKm.toLocaleString('es-MX')} km`
-      : m.home_reminder_detail_na()
-  const daysLabel =
-    item.remainingDays != null
-      ? String(item.remainingDays)
-      : m.home_reminder_detail_na()
+  const group = (title: string, entries: Entry[]) =>
+    entries.length > 0 ? (
+      <section className="flex flex-col gap-3">
+        <SectionHeader title={`${title} (${entries.length})`} />
+        {list(entries)}
+      </section>
+    ) : null
 
   return (
-    <div className="aviso-detail" role="dialog" aria-modal="true" aria-labelledby="aviso-detail-title">
-      <button
-        type="button"
-        className="aviso-detail-backdrop"
-        aria-label={m.home_reminder_detail_close()}
-        onClick={onClose}
-      />
-      <div className="aviso-detail-panel">
-        <header className="aviso-detail-head">
-          <div>
-            <p className="aviso-detail-eyebrow">{m.home_reminder_detail_title()}</p>
-            <h2 id="aviso-detail-title">{item.name}</h2>
-          </div>
-          <button type="button" className="aviso-detail-close" onClick={onClose}>
-            {m.home_reminder_detail_close()}
-          </button>
-        </header>
-
-        <p className="aviso-detail-interval">
-          {m.home_reminder_detail_interval()}: {item.meta}
-        </p>
-
-        <dl className="aviso-detail-stats">
-          <div className="aviso-detail-stat aviso-detail-stat--wide">
-            <dt>{m.home_reminder_detail_last()}</dt>
-            <dd>{lastLabel}</dd>
-          </div>
-          <div className="aviso-detail-stat">
-            <dt>{m.home_reminder_detail_km()}</dt>
-            <dd>{kmLabel}</dd>
-          </div>
-          <div className="aviso-detail-stat">
-            <dt>{m.home_reminder_detail_days()}</dt>
-            <dd>{daysLabel}</dd>
-          </div>
-        </dl>
-      </div>
-    </div>
-  )
-}
-
-function ReminderCard({
-  item,
-  focused,
-  hidden = false,
-  onOpen,
-}: {
-  item: ReminderItem
-  focused: boolean
-  hidden?: boolean
-  onOpen?: () => void
-}) {
-  const copy = reminderLiveCopy(item)
-  const when = reminderRowDate(item)
-  const left = reminderRowLeft(item)
-  const badge = reminderToneLabel(item.tone)
-
-  return (
-    <article
-      id={`aviso-${item.id}`}
-      data-reminder-id={item.id}
-      hidden={hidden}
-      className={`aviso-live tone-${item.tone}${focused ? ' is-focused' : ''}`}
-    >
-      <button
-        type="button"
-        className="aviso-live-open"
-        aria-label={`${copy.subtitle}. ${left}. ${badge}`}
-        onClick={onOpen}
-      >
-        <span className="aviso-live-icon" aria-hidden="true">
-          <ReminderPartIcon id={item.id} />
-        </span>
-        <span className="aviso-live-copy">
-          <strong className="aviso-live-name">{item.name}</strong>
-        </span>
-        <span className="aviso-live-when">
-          <span className="aviso-live-date">{when}</span>
-          <span className="aviso-live-left">{left}</span>
-        </span>
-        <span
-          className="aviso-live-dot"
-          style={{ background: WEAR_COLOR[wearLevelFromPct(item.remainingPct)] }}
-          aria-hidden="true"
-        />
-      </button>
-    </article>
-  )
-}
-
-export { ReminderCard }
-
-export function recentRemindersForVehicle(
-  vehicle: VehicleProfile | null,
-  limit = 2,
-) {
-  return remindersForVehicle(vehicle)
-    .filter((item) => item.tone === 'danger' || item.tone === 'warn')
-    .slice(0, limit)
-}
-
-const AVISO_PAGE = 6
-
-function chunkReminders(items: ReminderItem[], size: number) {
-  const pages: ReminderItem[][] = []
-  for (let index = 0; index < items.length; index += size) {
-    pages.push(items.slice(index, index + size))
-  }
-  return pages
-}
-
-export function Avisos({
-  vehicle,
-  focusReminderId = null,
-  onFocusHandled,
-}: {
-  vehicle: VehicleProfile | null
-  focusReminderId?: string | null
-  onFocusHandled?: () => void
-}) {
-  const reminders = useMemo(() => remindersForVehicle(vehicle), [vehicle])
-  const label = reminderVehicleLabel(vehicle)
-  const context = label
-    ? m.home_vehicle_context({ vehicle: label })
-    : m.home_vehicle_context_empty()
-
-  type AvisosFilter = ReminderTone
-
-  const groups: {
-    id: AvisosFilter
-    toneClass: string
-    label: string
-    items: ReminderItem[]
-  }[] = [
-    {
-      id: 'danger',
-      toneClass: 'tone-danger',
-      label: m.home_avisos_urgent(),
-      items: reminders.filter((item) => item.tone === 'danger'),
-    },
-    {
-      id: 'warn',
-      toneClass: 'tone-warn',
-      label: m.home_avisos_soon(),
-      items: reminders.filter((item) => item.tone === 'warn'),
-    },
-    {
-      id: 'ok',
-      toneClass: 'tone-ok',
-      label: m.home_avisos_ok(),
-      items: reminders.filter((item) => item.tone === 'ok'),
-    },
-  ]
-
-  const startFilter =
-    groups.find((group) => group.items.length > 0)?.id ?? 'ok'
-
-  const [activeFilter, setActiveFilter] = useState<AvisosFilter>(startFilter)
-  const [displayedFilter, setDisplayedFilter] = useState<AvisosFilter>(startFilter)
-  const [swapPhase, setSwapPhase] = useState<'idle' | 'out' | 'in'>('idle')
-  const [shownCount, setShownCount] = useState(AVISO_PAGE)
-  const [revealOpen, setRevealOpen] = useState(false)
-  const [openItem, setOpenItem] = useState<ReminderItem | null>(null)
-  const collapseTimer = useRef<number>(0)
-  const swapTimer = useRef<number>(0)
-  const pendingFilter = useRef<AvisosFilter>(startFilter)
-  const visible = groups.find((group) => group.id === displayedFilter) ?? groups[0]
-  const headItems = visible.items.slice(0, AVISO_PAGE)
-  const extraChunks = chunkReminders(visible.items.slice(AVISO_PAGE), AVISO_PAGE)
-  const canShowMore = shownCount < visible.items.length
-  const finishFocus = useEffectEvent(() => {
-    onFocusHandled?.()
-  })
-
-  function resetPaging() {
-    window.clearTimeout(collapseTimer.current)
-    setShownCount(AVISO_PAGE)
-    setRevealOpen(false)
-  }
-
-  useEffect(() => {
-    return () => {
-      window.clearTimeout(swapTimer.current)
-    }
-  }, [])
-
-  function expandPaging(count: number) {
-    const next = Math.min(count, visible.items.length)
-    setShownCount(next)
-    setRevealOpen(next > AVISO_PAGE)
-  }
-
-  useEffect(() => {
-    if (!focusReminderId) return
-    const focused = reminders.find((item) => item.id === focusReminderId)
-    if (focused) {
-      window.clearTimeout(swapTimer.current)
-      setSwapPhase('idle')
-      setActiveFilter(focused.tone)
-      setDisplayedFilter(focused.tone)
-      pendingFilter.current = focused.tone
-      const index = reminders
-        .filter((item) => item.tone === focused.tone)
-        .findIndex((item) => item.id === focused.id)
-      if (index >= 0) {
-        const next = Math.max(AVISO_PAGE, Math.ceil((index + 1) / AVISO_PAGE) * AVISO_PAGE)
-        setShownCount(next)
-        setRevealOpen(next > AVISO_PAGE)
+    <Screen
+      title="Avisos"
+      subtitle={
+        overdue.length + soon.length > 0
+          ? `${overdue.length + soon.length} por atender`
+          : 'Todo al día'
       }
-    }
-    const reminderId = focusReminderId
-    const start = window.setTimeout(() => {
-      document
-        .querySelector<HTMLElement>(`[data-reminder-id="${reminderId}"]`)
-        ?.scrollIntoView({ block: 'nearest' })
-    }, 80)
-    const clear = window.setTimeout(() => finishFocus(), 400)
-    return () => {
-      window.clearTimeout(start)
-      window.clearTimeout(clear)
-    }
-  }, [focusReminderId, reminders])
-
-  function selectFilter(id: AvisosFilter) {
-    onFocusHandled?.()
-    if (id === activeFilter && swapPhase === 'idle') return
-    pendingFilter.current = id
-    setActiveFilter(id)
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reduce) {
-      setDisplayedFilter(id)
-      resetPaging()
-      setSwapPhase('idle')
-      return
-    }
-    window.clearTimeout(swapTimer.current)
-    setSwapPhase('out')
-    swapTimer.current = window.setTimeout(() => {
-      resetPaging()
-      setDisplayedFilter(pendingFilter.current)
-      setSwapPhase('in')
-      swapTimer.current = window.setTimeout(() => setSwapPhase('idle'), 460)
-    }, 180)
-  }
-
-  function handleRevealEnd(event: TransitionEvent<HTMLDivElement>) {
-    if (event.propertyName !== 'grid-template-rows') return
-    if (revealOpen) return
-    resetPaging()
-  }
-
-  function renderCard(item: ReminderItem) {
-    return (
-      <ReminderCard
-        key={item.id}
-        item={item}
-        focused={focusReminderId === item.id}
-        onOpen={() => setOpenItem(item)}
-      />
-    )
-  }
-
-  return (
-    <div className="avisos-screen">
-      <header className="avisos-header seibi-screen-header avisos-head">
-        <div className="avisos-head-row">
-          <span className="avisos-head-mark" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-              <rect x="4.4" y="6.2" width="15.2" height="13.6" rx="2.2" stroke="currentColor" strokeWidth="1.7" />
-              <path
-                d="M8 4.4v3.4M16 4.4v3.4M4.4 10.2h15.2"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-              />
-              <circle cx="12" cy="15.1" r="1.55" fill="currentColor" />
-            </svg>
-          </span>
-          <div className="avisos-head-copy">
-            <h1 className="avisos-eyebrow avisos-main-title">
-              {m.home_upcoming_eyebrow()}
-            </h1>
-            {label ? <p className="avisos-head-vehicle">{context}</p> : null}
-          </div>
-        </div>
-        {vehicle && reminders.length > 0 ? (
-          <div
-            className="avisos-head-pulse seibi-recuadros"
-            role="tablist"
-            aria-label={m.home_avisos_groups()}
-          >
-            {groups.map((group) => {
-              const selected = group.id === activeFilter
-              return (
-                <button
-                  key={group.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={selected}
-                  className={`avisos-head-pulse-item seibi-recuadro ${group.toneClass}${
-                    selected ? ' is-active' : ''
-                  }`}
-                  onClick={() => selectFilter(group.id)}
-                >
-                  <span className="seibi-recuadro-icon">{group.items.length}</span>
-                  <span className="seibi-recuadro-copy">
-                    <strong>{group.label}</strong>
-                  </span>
-                </button>
-              )
-            })}
+      actions={
+        <IconButton icon={BellPlus} label="Nuevo Recordatorio" variant="secondary" onClick={() => actions.addReminder()} />
+      }
+    >
+      <div className="flex flex-col gap-6">
+        {multi ? (
+          <div className="scroll-area flex gap-2 overflow-x-auto px-5">
+            <Chip selected={vehicleFilter === 'all'} onClick={() => setVehicleFilter('all')}>
+              Todos
+            </Chip>
+            {garage.vehicles.map((v) => (
+              <Chip
+                key={v.id}
+                selected={vehicleFilter === v.id}
+                onClick={() => setVehicleFilter(v.id)}
+                count={v.pending || undefined}
+              >
+                {v.model}
+              </Chip>
+            ))}
           </div>
         ) : null}
-      </header>
 
-      <section
-        className="avisos-group"
-        aria-label={m.home_avisos_chip({
-          label: visible.label,
-          count: String(visible.items.length),
-        })}
-      >
-        <div
-          className={`avisos-swap${
-            swapPhase === 'out' ? ' is-out' : swapPhase === 'in' ? ' is-in' : ''
-          }`}
-        >
-          {visible.items.length > 0 ? (
-            <>
-              <div className="aviso-live-sheet">
-              <div className="aviso-live-list">
-                {headItems.map((item) => renderCard(item))}
-              </div>
-              {visible.items.length > AVISO_PAGE ? (
-                <div className={`aviso-live-more-stack${canShowMore ? ' has-peek' : ''}`}>
-                  {extraChunks.map((chunk, page) => {
-                    const unlockAt = AVISO_PAGE * (page + 1)
-                    const open = revealOpen && shownCount > unlockAt
-                    const peek =
-                      canShowMore &&
-                      !open &&
-                      extraChunks.findIndex((_, index) => {
-                        const at = AVISO_PAGE * (index + 1)
-                        return !(revealOpen && shownCount > at)
-                      }) === page
-                    return (
-                      <div
-                        key={`aviso-page-${page}`}
-                        className={`aviso-live-reveal${open ? ' is-open' : ''}${
-                          peek ? ' is-peek' : ''
-                        }`}
-                        aria-hidden={peek || undefined}
-                        onTransitionEnd={
-                          page === extraChunks.length - 1 ? handleRevealEnd : undefined
-                        }
-                      >
-                        <div className="aviso-live-reveal-inner">
-                          <div className="aviso-live-list">
-                            {chunk.map((item) => renderCard(item))}
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                  <button
-                    type="button"
-                    className="aviso-live-see-more"
-                    onClick={() => {
-                      if (canShowMore) {
-                        expandPaging(shownCount + AVISO_PAGE)
-                        return
+        <div className="flex flex-col gap-6 px-5">
+          <PushBanner />
+
+          {overdue.length + soon.length === 0 ? (
+            <Card className="flex items-center gap-3 p-4">
+              <IconTile icon={PartyPopper} tone="ok" />
+              <p className="text-[0.9rem] text-muted">
+                No hay nada pendiente. Te avisaremos cuando se acerque el próximo mantenimiento.
+              </p>
+            </Card>
+          ) : null}
+
+          {group('Vencidos', overdue)}
+          {group('Pronto', soon)}
+          {vehicles.map((v) => (
+            <UnknownTasks
+              key={v.id}
+              vehicleId={v.id}
+              vehicleLabel={multi ? v.model : undefined}
+              reminders={v.reminders.filter((r) => r.status === 'unknown')}
+              tasks={byCode}
+              level={profile.data?.knowledgeLevel}
+              initial={4}
+            />
+          ))}
+
+          {appointments.length + manual.length > 0 ? (
+            <section className="flex flex-col gap-3">
+              <SectionHeader title="Fechas guardadas" />
+              <Card className="divide-y divide-line overflow-hidden">
+                {appointments.map(({ vehicle, a }) => (
+                  <div key={a.id} className="flex items-center gap-3 px-4 py-3.5">
+                    <IconTile icon={CalendarClock} tone="radiant" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[0.92rem] font-semibold">
+                        Cita{multi ? ` · ${vehicle.model}` : ''}
+                        {a.shop ? ` · ${a.shop}` : ''}
+                      </p>
+                      <p className="text-[0.8rem] text-muted">
+                        {formatDay(a.scheduledOn, 'long')} · {relativeDays(daysBetween(today, a.scheduledOn))}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() =>
+                        actions.logService({ vehicleId: vehicle.id, taskCodes: a.taskCodes, appointmentId: a.id, shop: a.shop })
                       }
-                      setRevealOpen(false)
-                      window.clearTimeout(collapseTimer.current)
-                      const reduce = window.matchMedia(
-                        '(prefers-reduced-motion: reduce)',
-                      ).matches
-                      collapseTimer.current = window.setTimeout(
-                        () => resetPaging(),
-                        reduce ? 0 : 480,
-                      )
-                    }}
-                  >
-                    {canShowMore
-                      ? m.home_services_see_more()
-                      : m.home_services_see_less()}
-                  </button>
-                </div>
-              ) : null}
-              </div>
-            </>
-          ) : (
-            <p className="avisos-group-empty">{m.home_avisos_group_empty()}</p>
-          )}
-        </div>
-      </section>
+                    >
+                      Hecho
+                    </Button>
+                  </div>
+                ))}
+                {manual.map(({ vehicle, m }) => (
+                  <div key={m.id} className="flex items-center gap-3 px-4 py-3.5">
+                    <IconTile icon={BellRing} tone={m.dueOn < today ? 'overdue' : 'neutral'} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[0.92rem] font-semibold">
+                        {m.title}
+                        {multi ? <span className="font-normal text-muted"> · {vehicle.model}</span> : null}
+                      </p>
+                      <p className="text-[0.8rem] text-muted">
+                        {formatDay(m.dueOn, 'long')} · {relativeDays(daysBetween(today, m.dueOn))}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={async () => {
+                        await complete.mutateAsync({ id: m.id, done: true })
+                        toast('Hecho')
+                      }}
+                    >
+                      Hecho
+                    </Button>
+                  </div>
+                ))}
+              </Card>
+            </section>
+          ) : null}
 
-      {openItem
-        ? createPortal(
-            <ReminderDetailSheet
-              item={openItem}
-              onClose={() => setOpenItem(null)}
-            />,
-            document.getElementById('root') ?? document.body,
-          )
-        : null}
-    </div>
+          {group('Pospuestos', snoozed)}
+
+          {ok.length > 0 ? (
+            <section className="flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => setShowOk((s) => !s)}
+                aria-expanded={showOk}
+                className="flex min-h-11 items-center justify-between px-1 text-left"
+              >
+                <h2 className="text-[1.05rem]">Al día ({ok.length})</h2>
+                <span className="text-[0.85rem] font-semibold text-radiant">{showOk ? 'Ocultar' : 'Ver'}</span>
+              </button>
+              {showOk ? list(ok) : null}
+            </section>
+          ) : null}
+        </div>
+      </div>
+    </Screen>
+  )
+}
+
+function PushBanner() {
+  const { user } = useAuthSession()
+  const profile = useProfile()
+  const update = useUpdateProfile()
+  const toast = useToast()
+  const [permission, setPermission] = useState(pushPermission())
+  const [busy, setBusy] = useState(false)
+
+  if (!pushSupported() || permission === 'granted' || permission === 'denied') return null
+  if (profile.data && !profile.data.notificationsEnabled) return null
+
+  return (
+    <Card className="flex items-center gap-3 p-4">
+      <IconTile icon={BellRing} tone="radiant" />
+      <div className="min-w-0 flex-1">
+        <p className="text-[0.92rem] font-bold">Recibe los avisos en tu teléfono</p>
+        <p className="text-[0.8rem] text-muted">Una notificación cuando algo se acerque. Nada más.</p>
+      </div>
+      <Button
+        size="sm"
+        loading={busy}
+        onClick={async () => {
+          if (!user) return
+          setBusy(true)
+          try {
+            const ok = await enablePush(user.id)
+            setPermission(pushPermission())
+            if (ok) {
+              update.mutate({ notificationsEnabled: true })
+              toast('Notificaciones activadas')
+            }
+          } catch {
+            toast('No pudimos activar las notificaciones', 'error')
+          } finally {
+            setBusy(false)
+          }
+        }}
+      >
+        Activar
+      </Button>
+    </Card>
   )
 }

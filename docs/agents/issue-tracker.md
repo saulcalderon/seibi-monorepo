@@ -2,6 +2,8 @@
 
 Issues and PRDs for this repo live in Linear workspace **Seibi** (`https://linear.app/seibi`), team **Seibi** (key `SEI`). Use the Linear MCP for all operations — not GitHub Issues.
 
+**Which Linear server:** a Linear MCP connection is authorized for one workspace. Prefer the `linear-seibi` server (`mcp__linear-seibi__*`) when it is configured. Any other Linear server — such as the claude.ai connector — may point at a different workspace; confirm with `get_workspace` that it returns **Seibi** before reading or writing.
+
 Default product project: **[App móvil Seibi](https://linear.app/seibi/project/app-movil-seibi-69b2a870770c)**. Attach new product work to this project unless the user names another one.
 
 ## Language

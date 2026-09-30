@@ -30,8 +30,14 @@ ENV CI=true
 # VITE_* values are inlined at build time, so they must be present here.
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_ANON_KEY
+ARG VITE_VAPID_PUBLIC_KEY
+ARG VITE_SENTRY_DSN
+ARG VITE_APP_VERSION
 ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
 ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
+ENV VITE_VAPID_PUBLIC_KEY=$VITE_VAPID_PUBLIC_KEY
+ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
+ENV VITE_APP_VERSION=$VITE_APP_VERSION
 # Bring the installed node_modules (root + workspace) from deps.
 COPY --from=deps /app/ ./
 # .dockerignore keeps node_modules out of the context, so this adds only source.

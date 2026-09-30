@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { isSetupDone } from '../lib/setupProgress'
+import { LoaderCircle } from 'lucide-react'
+import { homePathFor, markIntroDone } from '../lib/routing'
 import { supabase } from '../lib/supabase'
 
 export const Route = createFileRoute('/auth/callback')({
@@ -11,37 +12,39 @@ function AuthCallbackRoute() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    let cancelled = false
-
+    let done = false
+    const route = async () => {
+      const { data } = await supabase.auth.getSession()
+      if (done) return
+      if (data.session) {
+        done = true
+        markIntroDone()
+        void navigate({ to: await homePathFor(data.session), replace: true })
+      }
+    }
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      if (cancelled) return
-
-      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-        if (session) {
-          void navigate({
-            to: isSetupDone(session.user.id) ? '/home' : '/onboarding',
-            replace: true,
-          })
-          return
-        }
-
-        if (event === 'INITIAL_SESSION') {
-          void navigate({ to: '/login', replace: true })
-        }
+      if (session) void route()
+      else if (event === 'INITIAL_SESSION') {
+        // The OAuth code exchange may still be running; give it a moment.
+        window.setTimeout(async () => {
+          const { data } = await supabase.auth.getSession()
+          if (!data.session && !done) void navigate({ to: '/login', replace: true })
+        }, 2500)
       }
     })
-
+    void route()
     return () => {
-      cancelled = true
+      done = true
       subscription.unsubscribe()
     }
   }, [navigate])
 
   return (
-    <div className="flex h-full items-center justify-center bg-fog">
-      <p className="text-[0.85rem] text-black/60">Signing you in…</p>
+    <div className="flex h-full flex-col items-center justify-center gap-3 bg-bg">
+      <LoaderCircle className="size-6 animate-spin text-radiant" aria-hidden />
+      <p className="text-[0.9rem] text-muted">Entrando a Seibi…</p>
     </div>
   )
 }

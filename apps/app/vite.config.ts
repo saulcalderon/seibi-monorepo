@@ -16,7 +16,16 @@ export default defineConfig({
       outdir: './src/paraglide',
     }),
     VitePWA({
-      registerType: 'autoUpdate',
+      // Our own service worker: precache + Web Push (ADR-0006).
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
+      registerType: 'prompt',
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
+        // The 3D chunk (three.js) is large; precache it too so the hero opens offline.
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+      },
       includeAssets: [
         'apple-touch-icon.png',
         'favicon.ico',
@@ -28,7 +37,7 @@ export default defineConfig({
       manifest: {
         name: 'Seibi',
         short_name: 'Seibi',
-        description: 'Mantenimiento con total claridad',
+        description: 'Mantenimiento de tus Vehículos con total claridad: avisos, historial y precios estimados.',
         lang: 'es',
         dir: 'ltr',
         theme_color: '#121214',
@@ -55,23 +64,6 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
-          },
-        ],
-      },
-      workbox: {
-        // Cache the app shell + media so the PWA opens offline (read-only cache;
-        // see docs/adr/0001-frontend-stack.md).
-        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
-        navigateFallback: '/index.html',
-        runtimeCaching: [
-          {
-            urlPattern: ({ request }) => request.destination === 'video',
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'seibi-media',
-              expiration: { maxEntries: 8 },
-              rangeRequests: true,
-            },
           },
         ],
       },

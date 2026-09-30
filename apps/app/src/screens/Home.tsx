@@ -1,613 +1,418 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { useNavigate } from '@tanstack/react-router'
-import { VehicleHero, VehicleSetupScreen } from '../components/VehicleHero'
-import { useAuthSession, useRequireProductionSession } from '../lib/authSession'
-import { useVehicles } from '../lib/useVehicles'
-import type { VehicleProfile } from '../lib/vehicleProfile'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { motion } from 'motion/react'
 import {
-  getNotificationsEnabled,
-  subscribeNotificationsEnabled,
-} from '../lib/notificationsPref'
-import { recentServicesForVehicle } from '../lib/services'
-import { remindersForVehicle } from '../lib/reminders'
-import { Avisos } from './Avisos'
-import { HomeDashboard } from './HomeDashboard'
-import { Perfil } from './Perfil'
-import { Servicios } from './Servicios'
-import * as m from '../paraglide/messages.js'
-
-function DashPane({
-  variant = 'screen',
-  className,
-  children,
-}: {
-  variant?: 'home' | 'screen'
-  className?: string
-  children: ReactNode
-}) {
-  const [entering, setEntering] = useState(true)
-
-  useEffect(() => {
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const id = window.setTimeout(() => setEntering(false), reduce ? 0 : 1150)
-    return () => window.clearTimeout(id)
-  }, [])
-
-  return (
-    <div
-      className={[
-        'dash-scroll',
-        'dash-pane',
-        entering ? 'dash-pane--enter' : '',
-        variant === 'home' ? 'dash-pane--home' : 'dash-pane--screen',
-        className,
-      ]
-        .filter(Boolean)
-        .join(' ')}
-    >
-      {children}
-    </div>
-  )
-}
-
-function IconButton({
-  label,
-  onClick,
-  children,
-}: {
-  label: string
-  onClick?: () => void
-  children: ReactNode
-}) {
-  return (
-    <button type="button" className="dash-icon-btn" aria-label={label} onClick={onClick}>
-      {children}
-    </button>
-  )
-}
-
-const DISMISSED_NOTIF_KEY = 'seibi-dismissed-notifications'
-
-function readDismissedNotificationIds(): string[] {
-  try {
-    const raw = localStorage.getItem(DISMISSED_NOTIF_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw) as unknown
-    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : []
-  } catch {
-    return []
-  }
-}
-
-function writeDismissedNotificationIds(ids: string[]) {
-  localStorage.setItem(DISMISSED_NOTIF_KEY, JSON.stringify(ids))
-}
-
-type AppNotification = {
-  id: string
-  kind: 'aviso' | 'servicio'
-  title: string
-  body: string
-  target: 'avisos' | 'servicios'
-  reminderId?: string
-  serviceId?: string
-}
-
-function notificationsForVehicle(vehicle: VehicleProfile | null): AppNotification[] {
-  const items: AppNotification[] = []
-
-  for (const reminder of remindersForVehicle(vehicle)) {
-    if (reminder.tone === 'ok') continue
-    items.push({
-      id: `aviso-${reminder.id}`,
-      kind: 'aviso',
-      title: reminder.name,
-      body: `${reminder.due} · ${reminder.meta}`,
-      target: 'avisos',
-      reminderId: reminder.id,
-    })
-  }
-
-  const recent = recentServicesForVehicle(vehicle, 1)[0]
-  if (recent) {
-    items.push({
-      id: `servicio-${recent.id}`,
-      kind: 'servicio',
-      title: recent.name,
-      body: `${recent.meta} · ${recent.cost}`,
-      target: 'servicios',
-      serviceId: recent.id,
-    })
-  }
-
-  return items
-}
-
-function kindLabel(kind: AppNotification['kind']) {
-  if (kind === 'aviso') return m.home_notifications_kind_aviso()
-  return m.home_notifications_kind_servicio()
-}
-
-const NOTIF_SLIDE_MS = 380
-const NOTIF_STAGGER_MS = 70
-
-function NotificationsScreen({
-  items,
-  onBack,
-  onSelect,
-  onClear,
-}: {
-  items: AppNotification[]
-  onBack: () => void
-  onSelect: (item: AppNotification) => void
-  onClear: () => void
-}) {
-  const [clearing, setClearing] = useState(false)
-  const clearTimer = useRef<number | null>(null)
-
-  useEffect(() => {
-    return () => {
-      if (clearTimer.current !== null) window.clearTimeout(clearTimer.current)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (items.length === 0) setClearing(false)
-  }, [items.length])
-
-  function handleClear() {
-    if (clearing || items.length === 0) return
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reduceMotion) {
-      onClear()
-      return
-    }
-    setClearing(true)
-    const wait = NOTIF_SLIDE_MS + NOTIF_STAGGER_MS * Math.max(0, items.length - 1)
-    clearTimer.current = window.setTimeout(() => {
-      onClear()
-    }, wait)
-  }
-
-  return (
-    <div className="avisos-screen notif-screen">
-      <header className="avisos-header">
-        <button type="button" className="avisos-back" onClick={onBack}>
-          {m.setup_back()}
-        </button>
-        <p className="avisos-eyebrow">{m.home_notifications()}</p>
-        <h1 className="avisos-title">{m.home_notifications_title()}</h1>
-        <p className="avisos-context">{m.home_notifications_desc()}</p>
-      </header>
-
-      {items.length === 0 ? (
-        <p className="notif-sheet-empty">{m.home_notifications_empty()}</p>
-      ) : (
-        <>
-          <ul className={`notif-sheet-list${clearing ? ' is-clearing' : ''}`}>
-            {items.map((item) => (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  className={`notif-sheet-item kind-${item.kind}`}
-                  onClick={() => {
-                    if (clearing) return
-                    onSelect(item)
-                  }}
-                >
-                  <span className="notif-sheet-kind">{kindLabel(item.kind)}</span>
-                  <span className="notif-sheet-title">{item.title}</span>
-                  <span className="notif-sheet-body">{item.body}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-          <button type="button" className="notif-clear" disabled={clearing} onClick={handleClear}>
-            {m.home_notifications_clear()}
-          </button>
-        </>
-      )}
-    </div>
-  )
-}
-
-function HeaderActions({
-  onOpenFleet,
-  onOpenNotifications,
-  hasNotifications,
-}: {
-  onOpenFleet: () => void
-  onOpenNotifications: () => void
-  hasNotifications: boolean
-}) {
-  return (
-    <>
-      <IconButton label={m.home_fleet_open()} onClick={onOpenFleet}>
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path
-            d="M5 13l1.2-3.6A2 2 0 018.1 8h7.8a2 2 0 011.9 1.4L19 13"
-            stroke="currentColor"
-            strokeWidth="2.1"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M4 16.5h16v2a1 1 0 01-1 1h-1.2a2 2 0 01-3.6 0H9.8a2 2 0 01-3.6 0H5a1 1 0 01-1-1v-2z"
-            stroke="currentColor"
-            strokeWidth="2.1"
-            strokeLinejoin="round"
-          />
-          <path d="M5 13h14" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" />
-        </svg>
-      </IconButton>
-      <IconButton label={m.home_notifications()} onClick={onOpenNotifications}>
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path
-            d="M6 9a6 6 0 0112 0c0 4 1.5 5.5 2 6H4c.5-.5 2-2 2-6z"
-            stroke="currentColor"
-            strokeWidth="2.15"
-            strokeLinejoin="round"
-          />
-          <path d="M10 19a2 2 0 004 0" stroke="currentColor" strokeWidth="2.15" strokeLinecap="round" />
-        </svg>
-        {hasNotifications ? <span className="dash-dot" /> : null}
-      </IconButton>
-    </>
-  )
-}
-
-type NavTab = 'home' | 'recordatorios' | 'perfil' | 'servicios' | 'notificaciones' | 'agregar'
-
-function DashNav({
-  nav,
-  hidden = false,
-  notificationCount = 0,
-  onHome,
-  onAvisos,
-  onServicios,
-  onPerfil,
-}: {
-  nav: NavTab
-  hidden?: boolean
-  notificationCount?: number
-  onHome: () => void
-  onAvisos: () => void
-  onServicios: () => void
-  onPerfil: () => void
-}) {
-  const items = [
-    {
-      id: 'home' as const,
-      label: m.home_nav_home(),
-      onClick: onHome,
-      badge: null as number | null,
-      icon: (
-        <path
-          d="M4 10.5L12 4l8 6.5V20a1 1 0 01-1 1h-5v-6H10v6H5a1 1 0 01-1-1v-9.5z"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinejoin="round"
-        />
-      ),
-    },
-    {
-      id: 'recordatorios' as const,
-      label: m.home_nav_reminders(),
-      onClick: onAvisos,
-      badge: notificationCount > 0 ? notificationCount : null,
-      icon: (
-        <path
-          d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      ),
-    },
-    {
-      id: 'servicios' as const,
-      label: m.home_nav_services(),
-      onClick: onServicios,
-      badge: null as number | null,
-      icon: (
-        <>
-          <path
-            d="M8 6.5H6.5A1.5 1.5 0 005 8v11.5A1.5 1.5 0 006.5 21h11a1.5 1.5 0 001.5-1.5V8a1.5 1.5 0 00-1.5-1.5H16"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinejoin="round"
-          />
-          <rect
-            x="8"
-            y="3.5"
-            width="8"
-            height="4"
-            rx="1"
-            stroke="currentColor"
-            strokeWidth="1.7"
-          />
-          <path
-            d="M8.5 12.5h7M8.5 16h5"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-          />
-        </>
-      ),
-    },
-    {
-      id: 'perfil' as const,
-      label: m.home_nav_profile(),
-      onClick: onPerfil,
-      badge: null as number | null,
-      icon: (
-        <>
-          <circle cx="12" cy="9" r="3.5" stroke="currentColor" strokeWidth="1.8" />
-          <path
-            d="M5.5 19c1.5-3 4-4.5 6.5-4.5S17 16 18.5 19"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-          />
-        </>
-      ),
-    },
-  ]
-
-  return (
-    <nav
-      className={`dash-nav dash-nav--seibi${hidden ? ' is-scroll-hidden' : ''}`}
-      aria-label="Principal"
-      aria-hidden={hidden}
-    >
-      {items.map((item) => {
-        const active = nav === item.id
-        const badge = item.badge
-        const badgeLabel =
-          badge != null
-            ? `${item.label}, ${badge > 9 ? '9+' : badge} notificaciones`
-            : item.label
-        return (
-          <button
-            key={item.id}
-            type="button"
-            className={active ? 'is-active' : ''}
-            aria-label={badgeLabel}
-            aria-current={active ? 'page' : undefined}
-            onClick={item.onClick}
-          >
-            <span className="dash-nav-hit">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                {item.icon}
-              </svg>
-              {badge != null ? (
-                <span className="dash-nav-badge" aria-hidden="true">
-                  {badge > 9 ? '9+' : badge}
-                </span>
-              ) : null}
-            </span>
-            <span className="dash-nav-label">{item.label}</span>
-          </button>
-        )
-      })}
-    </nav>
-  )
-}
+  Calculator,
+  CalendarClock,
+  CarFront,
+  ChevronRight,
+  Gauge,
+  History,
+  PartyPopper,
+  Plus,
+  Search,
+  Sparkles,
+  Wrench,
+} from 'lucide-react'
+import { useActions } from '../app/Actions'
+import { Screen } from '../app/Screen'
+import { ReminderRow } from '../components/ReminderRow'
+import { UnknownTasks } from '../components/UnknownTasks'
+import { VehicleHero } from '../components/VehicleHero'
+import { useActiveVehicle } from '../lib/activeVehicle'
+import { useAuthSession } from '../lib/authSession'
+import { formatDay, formatNumber, formatUsd, greeting, relativeDays, vehicleName } from '../lib/format'
+import { useGarage, type VehicleView } from '../lib/garage'
+import { identityFromUser, initials } from '../lib/identity'
+import { knowledgeProfile, taskLabel } from '../lib/knowledge'
+import { useProfile } from '../lib/profile'
+import { taskIcon, taskMap } from '../lib/tasks'
+import { daysBetween } from '@seibi/maintenance-engine/days'
+import { todayIso } from '../lib/format'
+import { Button } from '../ui/Button'
+import { Card, IconTile, SectionHeader } from '../ui/Card'
+import { cx } from '../ui/cx'
+import { ErrorState, ScreenSkeleton, StatusBadge } from '../ui/feedback'
 
 export function Home() {
-  useRequireProductionSession()
-  const navigate = useNavigate()
-  const { status } = useAuthSession()
-  const { vehicles, activeVehicle, selectVehicle, isSignedIn, isError } = useVehicles()
-  const [fleetListOpen, setFleetListOpen] = useState(false)
-  const [dismissedNotificationIds, setDismissedNotificationIds] = useState(readDismissedNotificationIds)
-  const [nav, setNav] = useState<NavTab>(() => {
-    if (typeof window === 'undefined') return 'home'
-    const tab = new URLSearchParams(window.location.search).get('nav')
-    if (
-      tab === 'servicios' ||
-      tab === 'recordatorios' ||
-      tab === 'perfil' ||
-      tab === 'notificaciones' ||
-      tab === 'agregar'
-    ) {
-      return tab
-    }
-    return 'home'
-  })
-  const [focusReminderId, setFocusReminderId] = useState<string | null>(null)
-  const [focusServiceId, setFocusServiceId] = useState<string | null>(null)
-  const [editOpenNonce, setEditOpenNonce] = useState(0)
-  const [editVehicleId, setEditVehicleId] = useState<string | null>(null)
-  const homeRootRef = useRef<HTMLDivElement>(null)
-  const [notifsOn, setNotifsOn] = useState(() => getNotificationsEnabled())
-  const inbox = notifsOn
-    ? notificationsForVehicle(activeVehicle).filter(
-        (item) => !dismissedNotificationIds.includes(item.id),
-      )
-    : []
-  const notificationCount = inbox.length
+  const { user } = useAuthSession()
+  const profile = useProfile()
+  const garage = useGarage()
+  const { active, select } = useActiveVehicle(garage.vehicles)
+  const actions = useActions()
+  const identity = identityFromUser(user)
+  const name = profile.data?.displayName ?? identity.fullName?.split(' ')[0] ?? null
 
-  function goHome() {
-    setFocusReminderId(null)
-    setFocusServiceId(null)
-    setFleetListOpen(false)
-    setNav('home')
-    window.requestAnimationFrame(() => {
-      homeRootRef.current
-        ?.querySelector('.dash-scroll')
-        ?.scrollTo({ top: 0, behavior: 'auto' })
-    })
-  }
+  const header = (
+    <header className="flex items-center gap-3 px-5 pb-4 pt-2">
+      <div className="min-w-0 flex-1">
+        <p className="text-[0.85rem] font-semibold text-muted">{greeting()}</p>
+        <h1 className="truncate text-[1.65rem] leading-tight">{name ? `Hola, ${name}` : 'Hola'}</h1>
+      </div>
+      <Link
+        to="/perfil"
+        aria-label="Perfil"
+        className="inline-flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-inverse text-[0.9rem] font-bold text-on-inverse ring-2 ring-surface"
+      >
+        {identity.avatarUrl ? (
+          <img src={identity.avatarUrl} alt="" className="size-full object-cover" referrerPolicy="no-referrer" />
+        ) : (
+          initials(name ?? identity.email ?? 'S')
+        )}
+      </Link>
+    </header>
+  )
 
-  function openAvisos(reminderId?: string) {
-    setFocusReminderId(reminderId ?? null)
-    setFocusServiceId(null)
-    setNav('recordatorios')
-  }
-
-  function openServicios(serviceId?: string) {
-    setFocusReminderId(null)
-    setFocusServiceId(serviceId ?? null)
-    setNav('servicios')
-  }
-
-  function openNotifications() {
-    setFocusReminderId(null)
-    setFocusServiceId(null)
-    setNav('notificaciones')
-  }
-
-  function openAddVehicle() {
-    if (!isSignedIn) {
-      void navigate({ to: '/login', replace: true })
-      return
-    }
-    setFocusReminderId(null)
-    setFocusServiceId(null)
-    setNav('agregar')
-  }
-
-  function clearNotifications() {
-    const visible = notificationsForVehicle(activeVehicle).map((item) => item.id)
-    const next = [...new Set([...dismissedNotificationIds, ...visible])]
-    writeDismissedNotificationIds(next)
-    setDismissedNotificationIds(next)
-  }
-
-  function openNotificationTarget(item: AppNotification) {
-    if (item.target === 'avisos') {
-      openAvisos(item.reminderId)
-      return
-    }
-    openServicios(item.serviceId)
-  }
-
-  useEffect(() => subscribeNotificationsEnabled(() => {
-    setNotifsOn(getNotificationsEnabled())
-  }), [])
-
-  useEffect(() => {
-    if (status === 'resolving_initial_session') return
-    if (nav === 'agregar' && !isSignedIn) {
-      void navigate({ to: '/login', replace: true })
-    }
-  }, [isSignedIn, nav, navigate, status])
-
-  function renderVehicleHero(showChrome: boolean) {
+  if (garage.isLoading) {
     return (
-      <VehicleHero
-        showChrome={showChrome}
-        onAddVehicle={openAddVehicle}
-        editOpenNonce={editOpenNonce}
-        editVehicleId={editVehicleId}
-        unlocked
-        kmUnlocked
-        kmHighlighted={false}
-        highlighted={false}
-        toolbarExtras={
-          <HeaderActions
-            onOpenFleet={() => setFleetListOpen(true)}
-            onOpenNotifications={openNotifications}
-            hasNotifications={notificationCount > 0}
-          />
-        }
-        fleetListOpen={fleetListOpen}
-        onFleetListOpenChange={setFleetListOpen}
-        onActiveChange={() => {
-          /* active vehicle comes from useVehicles */
-        }}
-        onFleetVehicleSelect={() => {
-          setFleetListOpen(false)
-          goHome()
-        }}
-        onServiceFocus={() => openAvisos()}
-        onSaved={() => {
-          /* create/edit already write through useVehicles */
-        }}
-      />
+      <Screen>
+        {header}
+        <ScreenSkeleton />
+      </Screen>
+    )
+  }
+  if (garage.isError) {
+    return (
+      <Screen>
+        {header}
+        <ErrorState onRetry={garage.refetch} />
+      </Screen>
+    )
+  }
+  if (!active) {
+    return (
+      <Screen>
+        {header}
+        <FirstVehicle onAdd={actions.addVehicle} />
+      </Screen>
     )
   }
 
   return (
-    <div ref={homeRootRef} className="dash-home is-toolbar-settled">
-      {nav === 'recordatorios' ? (
-        <DashPane key="recordatorios" className="avisos-scroll">
-          <Avisos
-            vehicle={activeVehicle}
-            focusReminderId={focusReminderId}
-            onFocusHandled={() => setFocusReminderId(null)}
-          />
-        </DashPane>
-      ) : nav === 'servicios' ? (
-        <DashPane key="servicios" className="avisos-scroll">
-          <Servicios
-            vehicle={activeVehicle}
-            focusServiceId={focusServiceId}
-            onFocusHandled={() => setFocusServiceId(null)}
-          />
-        </DashPane>
-      ) : nav === 'perfil' ? (
-        <DashPane key="perfil" className="avisos-scroll">
-          <Perfil vehicle={activeVehicle} />
-        </DashPane>
-      ) : nav === 'notificaciones' ? (
-        <DashPane key="notificaciones" className="avisos-scroll">
-          <NotificationsScreen
-            items={inbox}
-            onBack={() => goHome()}
-            onSelect={openNotificationTarget}
-            onClear={clearNotifications}
-          />
-        </DashPane>
-      ) : (
-        <DashPane key="home" variant="home">
-          {isError ? <p className="vehicle-setup-error">{m.vehicle_list_error()}</p> : null}
-          <HomeDashboard
-            vehicle={activeVehicle}
-            vehicles={vehicles}
-            notificationCount={notificationCount}
-            onOpenFleet={() => setFleetListOpen(true)}
-            onOpenNotifications={openNotifications}
-            onAddVehicle={openAddVehicle}
-            onOpenAvisos={openAvisos}
-            onOpenServicios={openServicios}
-            onSelectVehicle={(id) => {
-              selectVehicle(id)
-            }}
-            onEditVehicle={(id) => {
-              setEditVehicleId(id)
-              setEditOpenNonce((value) => value + 1)
-            }}
-          />
-        </DashPane>
-      )}
-
-      {nav === 'home' || nav === 'agregar' || nav === 'notificaciones'
-        ? renderVehicleHero(false)
-        : null}
-
-      {nav === 'agregar' ? (
-        <VehicleSetupScreen
-          onBack={() => goHome()}
-          onSaved={() => {
-            goHome()
-          }}
-        />
+    <Screen>
+      {header}
+      {garage.vehicles.length > 1 ? (
+        <div className="scroll-area -mt-1 mb-3 flex gap-2 overflow-x-auto px-5 pb-1" role="tablist" aria-label="Tus Vehículos">
+          {garage.vehicles.map((v) => (
+            <button
+              key={v.id}
+              type="button"
+              role="tab"
+              aria-selected={v.id === active.id}
+              onClick={() => select(v.id)}
+              className={cx(
+                'inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full px-3.5 text-[0.85rem] font-semibold transition-colors',
+                v.id === active.id ? 'bg-inverse text-on-inverse' : 'bg-surface ring-1 ring-line',
+              )}
+            >
+              <span
+                className={cx(
+                  'size-2 rounded-full',
+                  v.health === 'overdue' ? 'bg-overdue' : v.health === 'soon' ? 'bg-soon' : v.health === 'ok' ? 'bg-ok' : 'bg-unknown',
+                )}
+                aria-hidden
+              />
+              {v.model}
+            </button>
+          ))}
+        </div>
       ) : null}
 
-      <DashNav
-        nav={nav}
-        notificationCount={notificationCount}
-        onHome={() => goHome()}
-        onAvisos={() => {
-          setFocusReminderId(null)
-          setFocusServiceId(null)
-          setNav('recordatorios')
-        }}
-        onServicios={() => openServicios()}
-        onPerfil={() => setNav('perfil')}
+      <motion.div
+        key={active.id}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.33, 1, 0.68, 1] }}
+        className="flex flex-col gap-6 px-5"
+      >
+        <VehicleSummary vehicle={active} />
+        <HomeBody vehicle={active} />
+      </motion.div>
+    </Screen>
+  )
+}
+
+function VehicleSummary({ vehicle }: { vehicle: VehicleView }) {
+  const navigate = useNavigate()
+  return (
+    <Card className="overflow-hidden">
+      <button
+        type="button"
+        onClick={() => void navigate({ to: '/flota/$vehicleId', params: { vehicleId: vehicle.id } })}
+        className="block w-full text-left"
+        aria-label={`Ver ${vehicleName(vehicle)}`}
+      >
+        <div className="flex items-start justify-between gap-2 px-5 pt-5">
+          <div className="min-w-0">
+            <p className="text-[0.8rem] font-semibold text-muted">
+              {vehicle.year}
+              {vehicle.plate ? ` · ${vehicle.plate}` : ''}
+            </p>
+            <h2 className="truncate text-[1.45rem] leading-tight">{vehicleName(vehicle)}</h2>
+          </div>
+          <StatusBadge
+            status={vehicle.health}
+            label={
+              vehicle.health === 'ok'
+                ? 'Al día'
+                : vehicle.health === 'unknown'
+                  ? 'Completa datos'
+                  : `${vehicle.pending} pendiente${vehicle.pending === 1 ? '' : 's'}`
+            }
+          />
+        </div>
+      </button>
+      <VehicleHero vehicle={vehicle} className="h-48" />
+      <div className="grid grid-cols-2 divide-x divide-line border-t border-line">
+        <div className="px-5 py-3.5">
+          <p className="text-[0.75rem] font-semibold text-muted">Kilometraje</p>
+          <p className="text-[1.05rem] font-bold tabular">
+            {vehicle.odometer != null ? `${formatNumber(vehicle.odometer)} ${vehicle.measure}` : '—'}
+          </p>
+        </div>
+        <div className="px-5 py-3.5">
+          <p className="text-[0.75rem] font-semibold text-muted">Uso estimado</p>
+          <p className="text-[1.05rem] font-bold tabular">
+            {vehicle.usage
+              ? `${formatNumber(vehicle.usage.perDay * 7)} ${vehicle.measure}/sem`
+              : '—'}
+          </p>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+function HomeBody({ vehicle }: { vehicle: VehicleView }) {
+  const actions = useActions()
+  const garage = useGarage()
+  const profile = useProfile()
+  const navigate = useNavigate()
+  const k = knowledgeProfile(profile.data?.knowledgeLevel)
+  const byCode = taskMap(garage.tasks)
+
+  const attention = vehicle.reminders.filter(
+    (r) => !r.snoozed && (r.status === 'overdue' || r.status === 'soon'),
+  )
+  const unknown = vehicle.reminders.filter((r) => r.status === 'unknown')
+  const upcoming = vehicle.reminders.filter((r) => !r.snoozed && r.status === 'ok').slice(0, 2)
+  const today = todayIso()
+
+  return (
+    <>
+      {vehicle.mileagePrompt.due ? (
+        <button
+          type="button"
+          onClick={() => actions.updateMileage(vehicle.id)}
+          className="flex items-center gap-3 rounded-[1.25rem] bg-inverse p-4 text-left text-on-inverse shadow-card"
+        >
+          <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-2xl bg-radiant text-white">
+            <Gauge className="size-5" aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[0.95rem] font-bold">¿Cuánto marca hoy el odómetro?</span>
+            <span className="block text-[0.82rem] opacity-70">
+              {vehicle.mileagePrompt.reason === 'no_readings'
+                ? 'Lo necesitamos para calcular tus próximos mantenimientos.'
+                : vehicle.mileagePrompt.reason === 'no_usage'
+                  ? 'Con otra lectura sabremos cuánto lo usas.'
+                  : `Tu último registro fue ${relativeDays(-(vehicle.mileagePrompt.daysSinceLast ?? 0))}.`}
+            </span>
+          </span>
+          <ChevronRight className="size-5 opacity-60" aria-hidden />
+        </button>
+      ) : null}
+
+      {vehicle.scheduleSource === 'pending' ? (
+        <p className="flex items-center gap-2 rounded-2xl bg-radiant-soft px-4 py-3 text-[0.84rem] font-medium text-radiant">
+          <Search className="size-4 shrink-0 animate-pulse" aria-hidden />
+          Buscando el plan de mantenimiento del fabricante para tu {vehicle.model}…
+        </p>
+      ) : null}
+
+      <section className="flex flex-col gap-3">
+        <SectionHeader
+          title={attention.length > 0 ? 'Necesita atención' : 'Lo próximo'}
+          action="Ver todo"
+          onAction={() => void navigate({ to: '/avisos' })}
+        />
+        <Card className="divide-y divide-line overflow-hidden">
+          {attention.length === 0 && upcoming.length === 0 ? (
+            <div className="flex items-center gap-3 px-4 py-4">
+              <IconTile icon={PartyPopper} tone="ok" />
+              <p className="text-[0.9rem] text-muted">
+                {unknown.length > 0
+                  ? 'Cuéntanos cuándo hiciste los últimos Servicios para calcular los próximos.'
+                  : 'Todo está al día. Te avisaremos cuando algo se acerque.'}
+              </p>
+            </div>
+          ) : (
+            [...attention, ...(attention.length < 3 ? upcoming : [])].slice(0, 4).map((r) => (
+              <ReminderRow
+                key={r.taskCode}
+                reminder={r}
+                task={byCode.get(r.taskCode)}
+                measure={vehicle.measure}
+                level={profile.data?.knowledgeLevel}
+                onClick={() => actions.openReminder(vehicle.id, r.taskCode)}
+              />
+            ))
+          )}
+        </Card>
+      </section>
+
+      <UnknownTasks
+        vehicleId={vehicle.id}
+        reminders={vehicle.reminders.filter((r) => r.status === 'unknown')}
+        tasks={byCode}
+        level={profile.data?.knowledgeLevel}
       />
+
+      {vehicle.upcomingAppointments.length > 0 || vehicle.openManualReminders.length > 0 ? (
+        <section className="flex flex-col gap-3">
+          <SectionHeader title="En tu calendario" />
+          <Card className="divide-y divide-line overflow-hidden">
+            {vehicle.upcomingAppointments.slice(0, 2).map((a) => (
+              <div key={a.id} className="flex items-center gap-3 px-4 py-3.5">
+                <IconTile icon={CalendarClock} tone="radiant" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[0.95rem] font-semibold">
+                    {a.taskCodes.length > 0
+                      ? a.taskCodes.map((c) => taskLabel(byCode.get(c), c, k)).join(', ')
+                      : 'Cita en el taller'}
+                  </p>
+                  <p className="text-[0.82rem] text-muted">
+                    {formatDay(a.scheduledOn, 'long')} · {relativeDays(daysBetween(today, a.scheduledOn))}
+                    {a.shop ? ` · ${a.shop}` : ''}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() =>
+                    actions.logService({
+                      vehicleId: vehicle.id,
+                      taskCodes: a.taskCodes,
+                      appointmentId: a.id,
+                      shop: a.shop,
+                    })
+                  }
+                >
+                  Hecho
+                </Button>
+              </div>
+            ))}
+            {vehicle.openManualReminders.slice(0, 2).map((m) => (
+              <div key={m.id} className="flex items-center gap-3 px-4 py-3.5">
+                <IconTile icon={CalendarClock} tone={m.dueOn < today ? 'overdue' : 'neutral'} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[0.95rem] font-semibold">{m.title}</p>
+                  <p className="text-[0.82rem] text-muted">
+                    {formatDay(m.dueOn, 'long')} · {relativeDays(daysBetween(today, m.dueOn))}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </Card>
+        </section>
+      ) : null}
+
+      <section className="flex flex-col gap-3">
+        <SectionHeader
+          title="Últimos Servicios"
+          action={vehicle.services.length > 0 ? 'Historial' : undefined}
+          onAction={() =>
+            void navigate({ to: '/flota/$vehicleId', params: { vehicleId: vehicle.id }, search: { tab: 'historial' } })
+          }
+        />
+        {vehicle.services.length === 0 ? (
+          <Card className="flex items-center gap-3 p-4">
+            <IconTile icon={History} />
+            <p className="flex-1 text-[0.88rem] text-muted">
+              Registra lo que le hagas a tu Vehículo y tendrás su historial completo.
+            </p>
+          </Card>
+        ) : (
+          <Card className="divide-y divide-line overflow-hidden">
+            {vehicle.services.slice(0, 3).map((s) => {
+              const first = s.items[0]
+              return (
+                <div key={s.id} className="flex items-center gap-3 px-4 py-3.5">
+                  <IconTile icon={first?.taskCode ? taskIcon(first.taskCode) : Wrench} size="sm" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[0.92rem] font-semibold">
+                      {s.items.map((i) => (i.taskCode ? taskLabel(byCode.get(i.taskCode), i.taskCode, k) : i.name)).join(', ')}
+                    </p>
+                    <p className="text-[0.8rem] text-muted">
+                      {formatDay(s.performedOn)}
+                      {s.reading != null ? ` · ${formatNumber(s.reading)} ${vehicle.measure}` : ''}
+                    </p>
+                  </div>
+                  {s.totalCost != null ? (
+                    <span className="text-[0.9rem] font-bold tabular">{formatUsd(s.totalCost)}</span>
+                  ) : null}
+                </div>
+              )
+            })}
+          </Card>
+        )}
+        <Button variant="secondary" icon={Plus} onClick={() => actions.logService({ vehicleId: vehicle.id })}>
+          Registrar Servicio
+        </Button>
+      </section>
+
+      <Link
+        to="/estimados"
+        search={{ vehicle: vehicle.id }}
+        className="flex items-center gap-3 rounded-[1.25rem] bg-surface p-4 shadow-card"
+      >
+        <IconTile icon={Calculator} tone="radiant" />
+        <span className="min-w-0 flex-1">
+          <span className="block text-[0.95rem] font-bold">¿Cuánto cuesta un Servicio?</span>
+          <span className="block text-[0.82rem] text-muted">Rangos de precio para tu {vehicle.model} en tu ciudad</span>
+        </span>
+        <ChevronRight className="size-5 text-subtle" aria-hidden />
+      </Link>
+    </>
+  )
+}
+
+function FirstVehicle({ onAdd }: { onAdd: () => void }) {
+  const points = [
+    { icon: Sparkles, title: 'Tu plan de mantenimiento', body: 'Según la marca, el modelo y el año de tu Vehículo.' },
+    { icon: Gauge, title: 'Avisos a tiempo', body: 'Calculados con tu kilometraje y cuánto lo usas.' },
+    { icon: Calculator, title: 'Precios estimados', body: 'Rangos en tu ciudad antes de ir al taller.' },
+  ]
+  return (
+    <div className="flex flex-col gap-5 px-5">
+      <Card className="overflow-hidden p-6 text-center">
+        <span className="mx-auto mb-4 inline-flex size-16 items-center justify-center rounded-[1.4rem] bg-radiant-soft text-radiant">
+          <CarFront className="size-8" aria-hidden />
+        </span>
+        <h2 className="text-[1.35rem]">Agrega tu primer Vehículo</h2>
+        <p className="mx-auto mt-2 max-w-[17rem] text-[0.9rem] text-muted">
+          Solo necesitamos la marca, el modelo, el año y el kilometraje. Toma menos de un minuto.
+        </p>
+        <Button size="lg" icon={Plus} block className="mt-5" onClick={onAdd}>
+          Agregar Vehículo
+        </Button>
+      </Card>
+      <div className="flex flex-col gap-2.5">
+        {points.map(({ icon, title, body }, i) => (
+          <motion.div
+            key={title}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + i * 0.08 }}
+            className="flex items-center gap-3 rounded-[1.25rem] bg-surface p-4 shadow-card"
+          >
+            <IconTile icon={icon} tone="radiant" />
+            <div>
+              <p className="text-[0.95rem] font-bold">{title}</p>
+              <p className="text-[0.82rem] text-muted">{body}</p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
     </div>
   )
 }

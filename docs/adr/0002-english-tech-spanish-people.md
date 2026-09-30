@@ -40,6 +40,14 @@ The UI maps enum codes back to the Spanish word.
 | Reminder | `reminders` | Recordatorio (tab v1: **Avisos**) |
 | Mileage | `mileage_readings` | Kilometraje |
 | Odometer measure | `odometer_measure` — enum `km` \| `mi` | Medida del odómetro — km \| millas |
+| Service item | `service_items` | Pieza o trabajo |
+| Maintenance task | `maintenance_task` (text code, catalog table `maintenance_tasks`) | Tarea de mantenimiento |
+| Maintenance schedule | `maintenance_schedules` | Plan de mantenimiento |
+| Appointment | `appointments` | Cita |
+| Routine | `routines` | Rutina |
+| Usage rate | (derived, no column) | Uso estimado |
+| Knowledge level | `knowledge_level` — enum `none` \| `basic` \| `intermediate` \| `advanced` | Nivel de conocimiento |
+| Model render | `model_renders` | Modelo 3D |
 | Estimate | `estimates` | Estimado |
 | Intro | (no table — first-visit demo) | Introducción |
 | Onboarding | (no table — first run after sign-in) | Onboarding |
@@ -70,6 +78,7 @@ column behind it is English (`plate`, `shop`, `type`). `type` stores
   and fields such as `placa` are not a precedent; the schema does not copy them.
 - Type is an enum: the column is `type`, the values are `maintenance` and
   `repair`. Linear and the UI still say mantenimiento and reparación.
+- ADR-0009 replaces the v1 dock; Avisos keeps its label.
 - The v1 Reminder tab is labeled **Avisos**, not Recordatorios or
   Mantenimiento. The long word crowded the floating dock; Avisos is the
   list the tab opens. The glossary term stays Reminder. Type is not on

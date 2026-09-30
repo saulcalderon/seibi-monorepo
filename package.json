@@ -11,6 +11,7 @@
     "build": "pnpm --filter @seibi/app build",
     "preview": "pnpm --filter @seibi/app preview",
     "typecheck": "pnpm -r typecheck",
-    "lint": "pnpm -r lint"
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r --if-present test"
   }
 }

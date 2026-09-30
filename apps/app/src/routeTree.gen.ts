@@ -13,9 +13,17 @@ import { Route as SetupRouteImport } from './routes/setup'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IntroRouteImport } from './routes/intro'
-import { Route as HomeRouteImport } from './routes/home'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LegalTerminosRouteImport } from './routes/legal.terminos'
+import { Route as LegalPrivacidadRouteImport } from './routes/legal.privacidad'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as AppPerfilRouteImport } from './routes/_app.perfil'
+import { Route as AppHomeRouteImport } from './routes/_app.home'
+import { Route as AppEstimadosRouteImport } from './routes/_app.estimados'
+import { Route as AppAvisosRouteImport } from './routes/_app.avisos'
+import { Route as AppFlotaIndexRouteImport } from './routes/_app.flota.index'
+import { Route as AppFlotaVehicleIdRouteImport } from './routes/_app.flota.$vehicleId'
 
 const SetupRoute = SetupRouteImport.update({
   id: '/setup',
@@ -37,9 +45,8 @@ const IntroRoute = IntroRouteImport.update({
   path: '/intro',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HomeRoute = HomeRouteImport.update({
-  id: '/home',
-  path: '/home',
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -47,78 +54,164 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LegalTerminosRoute = LegalTerminosRouteImport.update({
+  id: '/legal/terminos',
+  path: '/legal/terminos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalPrivacidadRoute = LegalPrivacidadRouteImport.update({
+  id: '/legal/privacidad',
+  path: '/legal/privacidad',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppPerfilRoute = AppPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHomeRoute = AppHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEstimadosRoute = AppEstimadosRouteImport.update({
+  id: '/estimados',
+  path: '/estimados',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAvisosRoute = AppAvisosRouteImport.update({
+  id: '/avisos',
+  path: '/avisos',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFlotaIndexRoute = AppFlotaIndexRouteImport.update({
+  id: '/flota/',
+  path: '/flota/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFlotaVehicleIdRoute = AppFlotaVehicleIdRouteImport.update({
+  id: '/flota/$vehicleId',
+  path: '/flota/$vehicleId',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/home': typeof HomeRoute
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/setup': typeof SetupRoute
+  '/avisos': typeof AppAvisosRoute
+  '/estimados': typeof AppEstimadosRoute
+  '/home': typeof AppHomeRoute
+  '/perfil': typeof AppPerfilRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/legal/privacidad': typeof LegalPrivacidadRoute
+  '/legal/terminos': typeof LegalTerminosRoute
+  '/flota/$vehicleId': typeof AppFlotaVehicleIdRoute
+  '/flota/': typeof AppFlotaIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/home': typeof HomeRoute
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/setup': typeof SetupRoute
+  '/avisos': typeof AppAvisosRoute
+  '/estimados': typeof AppEstimadosRoute
+  '/home': typeof AppHomeRoute
+  '/perfil': typeof AppPerfilRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/legal/privacidad': typeof LegalPrivacidadRoute
+  '/legal/terminos': typeof LegalTerminosRoute
+  '/flota/$vehicleId': typeof AppFlotaVehicleIdRoute
+  '/flota': typeof AppFlotaIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/home': typeof HomeRoute
+  '/_app': typeof AppRouteWithChildren
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/setup': typeof SetupRoute
+  '/_app/avisos': typeof AppAvisosRoute
+  '/_app/estimados': typeof AppEstimadosRoute
+  '/_app/home': typeof AppHomeRoute
+  '/_app/perfil': typeof AppPerfilRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/legal/privacidad': typeof LegalPrivacidadRoute
+  '/legal/terminos': typeof LegalTerminosRoute
+  '/_app/flota/$vehicleId': typeof AppFlotaVehicleIdRoute
+  '/_app/flota/': typeof AppFlotaIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/home'
     | '/intro'
     | '/login'
     | '/onboarding'
     | '/setup'
+    | '/avisos'
+    | '/estimados'
+    | '/home'
+    | '/perfil'
     | '/auth/callback'
+    | '/legal/privacidad'
+    | '/legal/terminos'
+    | '/flota/$vehicleId'
+    | '/flota/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/home'
     | '/intro'
     | '/login'
     | '/onboarding'
     | '/setup'
+    | '/avisos'
+    | '/estimados'
+    | '/home'
+    | '/perfil'
     | '/auth/callback'
+    | '/legal/privacidad'
+    | '/legal/terminos'
+    | '/flota/$vehicleId'
+    | '/flota'
   id:
     | '__root__'
     | '/'
-    | '/home'
+    | '/_app'
     | '/intro'
     | '/login'
     | '/onboarding'
     | '/setup'
+    | '/_app/avisos'
+    | '/_app/estimados'
+    | '/_app/home'
+    | '/_app/perfil'
     | '/auth/callback'
+    | '/legal/privacidad'
+    | '/legal/terminos'
+    | '/_app/flota/$vehicleId'
+    | '/_app/flota/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  HomeRoute: typeof HomeRoute
+  AppRoute: typeof AppRouteWithChildren
   IntroRoute: typeof IntroRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   SetupRoute: typeof SetupRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  LegalPrivacidadRoute: typeof LegalPrivacidadRoute
+  LegalTerminosRoute: typeof LegalTerminosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -151,11 +244,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntroRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/home': {
-      id: '/home'
-      path: '/home'
-      fullPath: '/home'
-      preLoaderRoute: typeof HomeRouteImport
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -165,6 +258,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/legal/terminos': {
+      id: '/legal/terminos'
+      path: '/legal/terminos'
+      fullPath: '/legal/terminos'
+      preLoaderRoute: typeof LegalTerminosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/privacidad': {
+      id: '/legal/privacidad'
+      path: '/legal/privacidad'
+      fullPath: '/legal/privacidad'
+      preLoaderRoute: typeof LegalPrivacidadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/callback': {
       id: '/auth/callback'
       path: '/auth/callback'
@@ -172,17 +279,81 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/perfil': {
+      id: '/_app/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof AppPerfilRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/home': {
+      id: '/_app/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AppHomeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/estimados': {
+      id: '/_app/estimados'
+      path: '/estimados'
+      fullPath: '/estimados'
+      preLoaderRoute: typeof AppEstimadosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/avisos': {
+      id: '/_app/avisos'
+      path: '/avisos'
+      fullPath: '/avisos'
+      preLoaderRoute: typeof AppAvisosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/flota/': {
+      id: '/_app/flota/'
+      path: '/flota'
+      fullPath: '/flota/'
+      preLoaderRoute: typeof AppFlotaIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/flota/$vehicleId': {
+      id: '/_app/flota/$vehicleId'
+      path: '/flota/$vehicleId'
+      fullPath: '/flota/$vehicleId'
+      preLoaderRoute: typeof AppFlotaVehicleIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppAvisosRoute: typeof AppAvisosRoute
+  AppEstimadosRoute: typeof AppEstimadosRoute
+  AppHomeRoute: typeof AppHomeRoute
+  AppPerfilRoute: typeof AppPerfilRoute
+  AppFlotaVehicleIdRoute: typeof AppFlotaVehicleIdRoute
+  AppFlotaIndexRoute: typeof AppFlotaIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppAvisosRoute: AppAvisosRoute,
+  AppEstimadosRoute: AppEstimadosRoute,
+  AppHomeRoute: AppHomeRoute,
+  AppPerfilRoute: AppPerfilRoute,
+  AppFlotaVehicleIdRoute: AppFlotaVehicleIdRoute,
+  AppFlotaIndexRoute: AppFlotaIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  HomeRoute: HomeRoute,
+  AppRoute: AppRouteWithChildren,
   IntroRoute: IntroRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   SetupRoute: SetupRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  LegalPrivacidadRoute: LegalPrivacidadRoute,
+  LegalTerminosRoute: LegalTerminosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
