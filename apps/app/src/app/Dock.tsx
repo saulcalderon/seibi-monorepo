@@ -60,7 +60,7 @@ export function Dock() {
       className="pointer-events-none absolute inset-x-0 bottom-0 z-40 px-3"
       style={{ paddingBottom: 'max(var(--safe-bottom), 0.6rem)' }}
     >
-      <div className="pointer-events-auto relative isolate mx-auto flex h-[var(--dock-height)] max-w-md items-center rounded-[1.6rem] bg-surface/92 px-1.5 shadow-float ring-1 ring-line backdrop-blur-xl">
+      <div className="pointer-events-auto relative isolate mx-auto flex h-[var(--dock-height)] max-w-md items-center rounded-[1.35rem] bg-surface px-1.5 shadow-card ring-1 ring-line">
         {tab(TABS[0])}
         {tab(TABS[1])}
         <div className="flex flex-1 justify-center">
@@ -69,9 +69,12 @@ export function Dock() {
             onClick={openQuick}
             aria-label="Acciones rápidas"
             whileTap={{ scale: 0.92 }}
-            className="-mt-7 inline-flex size-15 items-center justify-center rounded-[1.35rem] bg-radiant text-white shadow-[0_10px_24px_rgb(232_83_34/45%)] ring-4 ring-bg"
+            className="relative inline-flex size-15 items-center justify-center"
           >
-            <Plus className="size-7" strokeWidth={2.6} aria-hidden />
+            <span className="absolute inset-0 rounded-full bg-surface-3" aria-hidden />
+            <span className="relative inline-flex size-12 items-center justify-center rounded-full bg-radiant text-white">
+              <Plus className="size-6" strokeWidth={2.6} aria-hidden />
+            </span>
           </motion.button>
         </div>
         {tab(TABS[2])}

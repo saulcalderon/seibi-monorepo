@@ -76,21 +76,21 @@ export function VehicleDetail({ vehicleId, tab }: { vehicleId: string; tab: Deta
 
   if (garage.isLoading) {
     return (
-      <Screen back>
+      <Screen back className="min-h-full bg-[#f7f2ee]">
         <ScreenSkeleton />
       </Screen>
     )
   }
   if (garage.isError) {
     return (
-      <Screen back>
+      <Screen back className="min-h-full bg-[#f7f2ee]">
         <ErrorState onRetry={garage.refetch} />
       </Screen>
     )
   }
   if (!vehicle) {
     return (
-      <Screen back>
+      <Screen back className="min-h-full bg-[#f7f2ee]">
         <EmptyState
           icon={CarFront}
           title="No encontramos este Vehículo"
@@ -111,6 +111,7 @@ export function VehicleDetail({ vehicleId, tab }: { vehicleId: string; tab: Deta
 
   return (
     <Screen
+      className="min-h-full bg-[#f7f2ee]"
       back
       title={vehicleName(vehicle)}
       subtitle={[vehicle.year, vehicle.trimLevel, vehicle.plate].filter(Boolean).join(' · ')}
@@ -124,21 +125,21 @@ export function VehicleDetail({ vehicleId, tab }: { vehicleId: string; tab: Deta
           onClick={() => actions.updateMileage(vehicle.id)}
           className="rounded-2xl bg-surface p-3 text-left shadow-card"
         >
-          <Gauge className="size-4 text-muted" aria-hidden />
+          <Gauge className="size-4 text-ink" aria-hidden />
           <p className="mt-1.5 text-[0.95rem] font-bold tabular leading-tight">
             {vehicle.odometer != null ? formatNumber(vehicle.odometer) : '—'}
           </p>
           <p className="text-[0.72rem] text-muted">{vehicle.measure} · actualizar</p>
         </button>
         <div className="rounded-2xl bg-surface p-3 shadow-card">
-          <ShieldCheck className={cx('size-4', STATUS_META[vehicle.health].text)} aria-hidden />
+          <ShieldCheck className="size-4 text-ink" aria-hidden />
           <p className="mt-1.5 text-[0.95rem] font-bold leading-tight">{STATUS_META[vehicle.health].label}</p>
           <p className="text-[0.72rem] text-muted">
             {vehicle.pending > 0 ? `${vehicle.pending} pendiente${vehicle.pending > 1 ? 's' : ''}` : 'estado'}
           </p>
         </div>
         <button type="button" onClick={() => setTab('uso')} className="rounded-2xl bg-surface p-3 text-left shadow-card">
-          <Route className="size-4 text-muted" aria-hidden />
+          <Route className="size-4 text-ink" aria-hidden />
           <p className="mt-1.5 text-[0.95rem] font-bold tabular leading-tight">
             {vehicle.usage ? formatNumber(vehicle.usage.perDay * 7) : '—'}
           </p>
@@ -190,7 +191,7 @@ function ScheduleBanner({ vehicle }: { vehicle: VehicleView }) {
   const refresh = useRefreshVehicleData()
   if (vehicle.scheduleSource === 'pending') {
     return (
-      <p className="flex items-center gap-2 rounded-2xl bg-radiant-soft px-4 py-3 text-[0.84rem] font-medium text-radiant">
+      <p className="flex items-center gap-2 rounded-[1.35rem] bg-surface px-4 py-3 text-[0.84rem] font-medium text-ink">
         <Search className="size-4 shrink-0 animate-pulse" aria-hidden />
         Buscando el plan del fabricante para tu {vehicle.model}. Mientras tanto usamos recomendaciones generales.
       </p>
@@ -198,7 +199,7 @@ function ScheduleBanner({ vehicle }: { vehicle: VehicleView }) {
   }
   if (vehicle.scheduleSource === 'model') {
     return (
-      <div className="rounded-2xl bg-ok-soft px-4 py-3 text-[0.84rem] text-ok">
+      <div className="rounded-[1.35rem] bg-surface px-4 py-3 text-[0.84rem] text-ink">
         <p className="flex items-center gap-2 font-semibold">
           <ShieldCheck className="size-4 shrink-0" aria-hidden />
           Plan del fabricante para tu {vehicle.brand} {vehicle.model} {vehicle.year}
@@ -291,7 +292,7 @@ function MaintenanceTab({ vehicle }: { vehicle: VehicleView }) {
           <Card className="divide-y divide-line overflow-hidden">
             {vehicle.upcomingAppointments.map((a) => (
               <div key={a.id} className="flex items-center gap-3 px-4 py-3.5">
-                <IconTile icon={CalendarClock} tone="radiant" />
+                <IconTile icon={CalendarClock} tone="neutral" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[0.92rem] font-semibold">
                     {a.taskCodes.length > 0
@@ -305,6 +306,7 @@ function MaintenanceTab({ vehicle }: { vehicle: VehicleView }) {
                   <div className="mt-2 flex gap-2">
                     <Button
                       size="sm"
+                      variant="secondary"
                       onClick={() =>
                         actions.logService({ vehicleId: vehicle.id, taskCodes: a.taskCodes, appointmentId: a.id, shop: a.shop })
                       }
@@ -328,7 +330,7 @@ function MaintenanceTab({ vehicle }: { vehicle: VehicleView }) {
             ))}
             {vehicle.openManualReminders.map((m) => (
               <div key={m.id} className="flex items-center gap-3 px-4 py-3.5">
-                <IconTile icon={BellPlus} tone={m.dueOn < today ? 'overdue' : 'neutral'} />
+                <IconTile icon={BellPlus} tone="neutral" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[0.92rem] font-semibold">{m.title}</p>
                   <p className="text-[0.8rem] text-muted">
@@ -406,7 +408,7 @@ function HistoryTab({ vehicle }: { vehicle: VehicleView }) {
         </Card>
       </div>
 
-      <Button icon={Plus} onClick={() => actions.logService({ vehicleId: vehicle.id })}>
+      <Button variant="secondary" icon={Plus} onClick={() => actions.logService({ vehicleId: vehicle.id })}>
         Registrar Servicio
       </Button>
 
@@ -477,7 +479,7 @@ function ServiceCard({ vehicle, service }: { vehicle: VehicleView; service: Serv
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
       >
-        <IconTile icon={first?.taskCode ? taskIcon(first.taskCode) : Wrench} tone={service.type === 'repair' ? 'soon' : 'neutral'} />
+        <IconTile icon={first?.taskCode ? taskIcon(first.taskCode) : Wrench} tone="neutral" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-[0.95rem] font-semibold">
             {service.items
@@ -631,7 +633,7 @@ function UsageTab({ vehicle }: { vehicle: VehicleView }) {
               : 'Agrega tus rutinas o actualiza el kilometraje dos veces con una semana de diferencia.'}
         </p>
         {vehicle.severe ? (
-          <p className="mt-3 rounded-xl bg-soon-soft px-3 py-2 text-[0.82rem] font-medium text-soon">
+          <p className="mt-3 rounded-xl bg-surface-3 px-3 py-2 text-[0.82rem] font-medium text-ink">
             Tu uso cuenta como “severo” (mucho recorrido o viajes cortos). Si el fabricante tiene un plan
             para uso severo, lo aplicamos.
           </p>
@@ -683,9 +685,9 @@ function UsageTab({ vehicle }: { vehicle: VehicleView }) {
 
 function DataTab({ vehicle }: { vehicle: VehicleView }) {
   const actions = useActions()
-  const withdraw = useWithdrawVehicle()
   const navigate = useNavigate()
   const toast = useToast()
+  const [withdrawOpen, setWithdrawOpen] = useState(false)
   const rows: Array<[string, string | null]> = [
     ['Marca', vehicle.brand],
     ['Modelo', vehicle.model],
@@ -735,25 +737,94 @@ function DataTab({ vehicle }: { vehicle: VehicleView }) {
         foto de tu Vehículo.
       </p>
 
-      <Button
-        variant="danger"
-        icon={Archive}
-        loading={withdraw.isPending}
-        onClick={async () => {
-          if (
-            !window.confirm(
-              `¿Retirar ${vehicleName(vehicle)} de tu flota? Su historial se conserva y puedes restaurarlo cuando quieras.`,
-            )
-          )
-            return
-          await withdraw.mutateAsync(vehicle.id)
+      <Button variant="danger" icon={Archive} onClick={() => setWithdrawOpen(true)}>
+        Retirar de mi flota
+      </Button>
+      <WithdrawVehicleSheet
+        vehicle={vehicle}
+        open={withdrawOpen}
+        onClose={() => setWithdrawOpen(false)}
+        onWithdrawn={() => {
           toast('Vehículo retirado')
           void navigate({ to: '/flota' })
         }}
-      >
-        Retirar de mi flota
-      </Button>
+      />
     </>
+  )
+}
+
+function recordSpan(vehicle: VehicleView) {
+  const start = [...vehicle.services.map((service) => service.performedOn), vehicle.createdAt.slice(0, 10)].sort()[0]
+  const days = Math.max(0, daysBetween(start, todayIso()))
+  if (days >= 365) {
+    const years = Math.floor(days / 365)
+    return years === 1 ? '1 año' : `${years} años`
+  }
+  return days === 1 ? '1 día' : `${days} días`
+}
+
+function sameText(a: string, b: string) {
+  return a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase()
+}
+
+function WithdrawVehicleSheet({
+  vehicle,
+  open,
+  onClose,
+  onWithdrawn,
+}: {
+  vehicle: VehicleView
+  open: boolean
+  onClose: () => void
+  onWithdrawn: () => void
+}) {
+  const withdraw = useWithdrawVehicle()
+  const [typed, setTyped] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const phrase = `${vehicleName(vehicle)} ${vehicle.year}`
+  const ready = sameText(typed, phrase)
+  const services = vehicle.services.length
+  const close = () => {
+    setTyped('')
+    setError(null)
+    onClose()
+  }
+
+  return (
+    <Sheet
+      open={open}
+      onClose={close}
+      title={`Retirar ${vehicleName(vehicle)}`}
+      description={`Lleva un registro de ${recordSpan(vehicle)}${services > 0 ? `, con ${services} ${services === 1 ? 'Servicio' : 'Servicios'}` : ''}. Sale de tu flota y de Inicio. Puedes restaurarlo durante 30 días. Después se elimina el Vehículo y su registro.`}
+    >
+      <form
+        className="flex flex-col gap-4 pb-2"
+        onSubmit={async (e) => {
+          e.preventDefault()
+          if (!ready) return
+          setError(null)
+          try {
+            await withdraw.mutateAsync(vehicle.id)
+            close()
+            onWithdrawn()
+          } catch (err) {
+            setError(errorMessage(err))
+          }
+        }}
+      >
+        <TextField
+          label={`Escribe "${phrase}" para confirmar`}
+          value={typed}
+          onChange={(e) => setTyped(e.target.value)}
+          autoComplete="off"
+          autoCapitalize="words"
+          error={error}
+        />
+        <Button type="submit" variant="danger" size="lg" block icon={Archive} loading={withdraw.isPending} disabled={!ready}>
+          Retirar de mi flota
+        </Button>
+      </form>
+    </Sheet>
   )
 }
 

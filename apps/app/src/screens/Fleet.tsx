@@ -1,22 +1,27 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'motion/react'
-import { ArchiveRestore, CarFront, Plus, Search, SearchX, X } from 'lucide-react'
+import {
+  ArchiveRestore,
+  CarFront,
+  ChevronRight,
+  Home,
+  Plus,
+  Search,
+  SearchX,
+  X,
+} from 'lucide-react'
 import { useActions } from '../app/Actions'
 import { Screen } from '../app/Screen'
 import { VehicleVisual } from '../components/VehicleVisual'
+import { useActiveVehicle } from '../lib/activeVehicle'
 import { formatNumber, vehicleName } from '../lib/format'
-import { byUrgency, useGarage, type VehicleView } from '../lib/garage'
-import { knowledgeProfile, taskLabel } from '../lib/knowledge'
+import { byUrgency, useGarage, withdrawnDaysLeft, type VehicleView } from '../lib/garage'
 import { useRestoreVehicle } from '../lib/mutations'
-import { useProfile } from '../lib/profile'
-import { reminderDueText } from '../lib/reminderText'
-import { taskMap, type MaintenanceTask } from '../lib/tasks'
 import { Button, IconButton } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { Chip } from '../ui/fields'
-import { EmptyState, ErrorState, Skeleton, StatusBadge, useToast } from '../ui/feedback'
-
+import { EmptyState, ErrorState, Skeleton, STATUS_META, useToast } from '../ui/feedback'
 type Filter = 'all' | 'attention' | 'ok'
 
 function fold(v: string) {
@@ -39,8 +44,16 @@ export function Fleet() {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
   const [showWithdrawn, setShowWithdrawn] = useState(false)
+  const { active } = useActiveVehicle(garage.vehicles)
+  const activeId = active?.id
 
-  const sorted = useMemo(() => [...garage.vehicles].sort(byUrgency), [garage.vehicles])
+  const sorted = useMemo(
+    () =>
+      [...garage.vehicles].sort((a, b) =>
+        a.id === activeId ? -1 : b.id === activeId ? 1 : byUrgency(a, b),
+      ),
+    [garage.vehicles, activeId],
+  )
   const attention = sorted.filter((v) => v.health === 'overdue' || v.health === 'soon')
   const visible = sorted
     .filter((v) =>
@@ -56,6 +69,7 @@ export function Fleet() {
 
   return (
     <Screen
+      className="min-h-full bg-[#f7f2ee]"
       title="Mi flota"
       subtitle={
         total === 0
@@ -96,7 +110,7 @@ export function Fleet() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Buscar por marca, modelo, año o placa"
-                  className="h-12 w-full rounded-2xl bg-surface pl-11 pr-11 text-[0.95rem] shadow-card ring-1 ring-line placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-radiant"
+                  className="h-12 w-full rounded-2xl bg-surface pl-11 pr-11 text-[0.95rem] text-ink ring-1 ring-line placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-ink"
                 />
                 {query ? (
                   <IconButton
@@ -153,7 +167,7 @@ export function Fleet() {
                     animate={{ opacity: 1, y: 0, transition: { delay: Math.min(i, 6) * 0.04 } }}
                     exit={{ opacity: 0, scale: 0.97 }}
                   >
-                    <FleetCard vehicle={v} tasks={garage.tasks} />
+                    <FleetCard vehicle={v} selected={total > 1 && v.id === activeId} />
                   </motion.li>
                 ))}
               </AnimatePresence>
@@ -185,11 +199,8 @@ export function Fleet() {
   )
 }
 
-function FleetCard({ vehicle, tasks }: { vehicle: VehicleView; tasks: MaintenanceTask[] }) {
+function FleetCard({ vehicle, selected }: { vehicle: VehicleView; selected: boolean }) {
   const navigate = useNavigate()
-  const k = knowledgeProfile(useProfile().data?.knowledgeLevel)
-  const next = vehicle.next
-  const task = next ? taskMap(tasks).get(next.taskCode) : undefined
   return (
     <Card>
       <button
@@ -197,45 +208,39 @@ function FleetCard({ vehicle, tasks }: { vehicle: VehicleView; tasks: Maintenanc
         onClick={() => void navigate({ to: '/flota/$vehicleId', params: { vehicleId: vehicle.id } })}
         className="flex w-full flex-col text-left transition-transform active:scale-[0.99]"
       >
-        <div className="flex items-center gap-3 p-4 pb-3">
-          <VehicleVisual
-            render={vehicle.render}
-            bodyType={vehicle.bodyType}
-            color={vehicle.color}
-            alt={vehicleName(vehicle)}
-            className="h-16 w-28 shrink-0"
-          />
+        <div className="flex items-center gap-3 p-3.5">
+          <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-2xl bg-linear-to-b from-surface-2 to-surface-3 ring-1 ring-line">
+            <VehicleVisual
+              render={vehicle.render}
+              bodyType={vehicle.bodyType}
+              color={vehicle.color}
+              alt={vehicleName(vehicle)}
+              className="h-full w-full"
+              crop
+            />
+          </div>
           <div className="min-w-0 flex-1">
-            <p className="line-clamp-2 text-[1.05rem] font-bold leading-tight">{vehicleName(vehicle)}</p>
-            <p className="mt-0.5 text-[0.8rem] text-muted">
-              {vehicle.year}
-              {vehicle.plate ? ` · ${vehicle.plate}` : ''}
-              {' · '}
-              <span className="font-semibold text-ink tabular">
-                {vehicle.odometer != null ? `${formatNumber(vehicle.odometer)} ${vehicle.measure}` : 'Sin kilometraje'}
-              </span>
+            <p className="flex min-w-0 items-center gap-1.5">
+              {selected ? <Home className="size-3.5 shrink-0 text-ink" aria-hidden /> : null}
+              <span className="truncate text-[1.02rem] font-bold leading-tight">{vehicleName(vehicle)}</span>
+              <span className="shrink-0 text-[0.8rem] font-semibold text-muted tabular">{vehicle.year}</span>
             </p>
-            <div className="mt-2">
-              <StatusBadge
-                status={vehicle.health}
-                label={
-                  vehicle.health === 'unknown'
-                    ? 'Sin datos'
-                    : vehicle.pending > 0
-                      ? `${vehicle.pending} pendiente${vehicle.pending === 1 ? '' : 's'}`
-                      : undefined
-                }
-              />
+            <div className="mt-1.5 flex items-center justify-between gap-2">
+              <p className="min-w-0 truncate text-[0.8rem] text-muted">
+                {vehicle.plate ? <span>{vehicle.plate} · </span> : null}
+                <span className="font-semibold text-ink tabular">
+                  {vehicle.odometer != null ? `${formatNumber(vehicle.odometer)} ${vehicle.measure}` : 'Sin km'}
+                </span>
+              </p>
+              <span className="inline-flex h-7 shrink-0 items-center rounded-full bg-surface-2 px-2.5 text-[0.72rem] font-semibold">
+                {vehicle.health === 'unknown' ? 'Sin datos' : STATUS_META[vehicle.health].label}
+              </span>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 border-t border-line px-4 py-3 text-[0.82rem]">
-          <span className="text-muted">Próximo:</span>
-          <span className="min-w-0 flex-1 truncate font-semibold">
-            {next
-              ? `${taskLabel(task, next.taskCode, k)} · ${reminderDueText(next, vehicle.measure)}`
-              : 'Sin pendientes'}
-          </span>
+        <div className="flex items-center gap-2 border-t border-line px-4 py-3 text-[0.82rem] font-semibold">
+          <span className="min-w-0 flex-1 truncate">Toca para ver más de tu Vehículo</span>
+          <ChevronRight className="size-4 shrink-0" aria-hidden />
         </div>
       </button>
     </Card>
@@ -245,8 +250,9 @@ function FleetCard({ vehicle, tasks }: { vehicle: VehicleView; tasks: Maintenanc
 function WithdrawnRow({ vehicle }: { vehicle: VehicleView }) {
   const restore = useRestoreVehicle()
   const toast = useToast()
+  const daysLeft = withdrawnDaysLeft(vehicle.withdrawnAt!)
   return (
-    <div className="flex items-center gap-3 rounded-2xl bg-surface-2 p-3">
+    <div className="flex items-center gap-3 rounded-[1.35rem] bg-surface p-3">
       <VehicleVisual
         render={vehicle.render}
         bodyType={vehicle.bodyType}
@@ -256,7 +262,9 @@ function WithdrawnRow({ vehicle }: { vehicle: VehicleView }) {
       />
       <div className="min-w-0 flex-1">
         <p className="truncate text-[0.9rem] font-semibold">{vehicleName(vehicle)}</p>
-        <p className="text-[0.78rem] text-muted">{vehicle.year} · Retirado</p>
+        <p className="text-[0.78rem] text-muted">
+          {vehicle.year} · Retirado · se elimina en {daysLeft} {daysLeft === 1 ? 'día' : 'días'}
+        </p>
       </div>
       <Button
         size="sm"
