@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { AnimatePresence, motion } from 'motion/react'
+import { motion } from 'motion/react'
 import {
   ArrowUp,
   Building2,
-  Calculator,
   CalendarPlus,
   CarFront,
+  ChevronDown,
   ExternalLink,
   Info,
   MapPin,
@@ -17,11 +17,12 @@ import {
 } from 'lucide-react'
 import { useActions } from '../app/Actions'
 import { Screen } from '../app/Screen'
+import { VehicleVisual } from '../components/VehicleVisual'
 import { useChat, useSendChat, type ChatMessage } from '../lib/chat'
 import { useRequestEstimate, useEstimateHistory, type Estimate, type EstimateResult } from '../lib/estimates'
 import { errorMessage } from '../lib/functions'
-import { formatDay, formatUsdRange, todayIso, vehicleName } from '../lib/format'
-import { useGarage, type VehicleView } from '../lib/garage'
+import { formatDay, formatDistance, formatUsdRange, todayIso, vehicleChoiceLabel, vehicleName } from '../lib/format'
+import { byUrgency, useGarage, type VehicleView } from '../lib/garage'
 import { knowledgeProfile, taskLabel } from '../lib/knowledge'
 import { COUNTRIES, useProfile, useUpdateProfile, type Country } from '../lib/profile'
 import { taskIcon, taskMap } from '../lib/tasks'
@@ -31,7 +32,7 @@ import { Button, IconButton } from '../ui/Button'
 import { Card, IconTile, SectionHeader } from '../ui/Card'
 import { cx } from '../ui/cx'
 import { EmptyState, ErrorState, ScreenSkeleton } from '../ui/feedback'
-import { Chip, Segmented, SelectField, TextField } from '../ui/fields'
+import { Segmented, SelectField, TextField } from '../ui/fields'
 
 type Mode = 'estimate' | 'chat'
 
@@ -39,14 +40,15 @@ const POPULAR = ['engine_oil', 'brake_pads_front', 'battery', 'tires', 'wheel_al
 
 export function Estimados({ vehicleParam, taskParam }: { vehicleParam?: string; taskParam?: string }) {
   const garage = useGarage()
-  const { active } = useActiveVehicle(garage.vehicles)
+  const { active, select } = useActiveVehicle(garage.vehicles)
   const actions = useActions()
   const [mode, setMode] = useState<Mode>('estimate')
   const [vehicleId, setVehicleId] = useState<string | null>(vehicleParam ?? null)
+  const [showVehicles, setShowVehicles] = useState(false)
   const vehicle = garage.vehicles.find((v) => v.id === (vehicleId ?? active?.id)) ?? null
 
   return (
-    <Screen title="Estimados" subtitle="Rangos de precio para tu Vehículo, en tu ciudad.">
+    <Screen title="Estimados" subtitle="Rangos de precio para tu Vehículo, en tu ciudad." className="flex min-h-full flex-col bg-[#f7f2ee]">
       {garage.isLoading ? (
         <ScreenSkeleton />
       ) : garage.isError ? (
@@ -63,8 +65,19 @@ export function Estimados({ vehicleParam, taskParam }: { vehicleParam?: string; 
           }
         />
       ) : (
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-1 flex-col gap-5">
           <div className="flex flex-col gap-3 px-5">
+            <VehicleSwitcher
+              vehicle={vehicle}
+              vehicles={garage.vehicles}
+              open={showVehicles}
+              onToggle={() => setShowVehicles((open) => !open)}
+              onSelect={(id) => {
+                setVehicleId(id)
+                select(id)
+                setShowVehicles(false)
+              }}
+            />
             <Segmented
               label="Modo"
               value={mode}
@@ -74,15 +87,6 @@ export function Estimados({ vehicleParam, taskParam }: { vehicleParam?: string; 
                 { value: 'chat', label: 'Chat de Seibi' },
               ]}
             />
-            {garage.vehicles.length > 1 ? (
-              <div className="scroll-area -mx-5 flex gap-2 overflow-x-auto px-5">
-                {garage.vehicles.map((v) => (
-                  <Chip key={v.id} selected={v.id === vehicle.id} onClick={() => setVehicleId(v.id)}>
-                    {v.model} {v.year}
-                  </Chip>
-                ))}
-              </div>
-            ) : null}
           </div>
           <LocationGate>
             {mode === 'estimate' ? (
@@ -97,6 +101,81 @@ export function Estimados({ vehicleParam, taskParam }: { vehicleParam?: string; 
   )
 }
 
+function vehicleMeta(v: VehicleView) {
+  const km = v.odometer != null ? formatDistance(v.odometer, v.measure) : 'Sin Kilometraje'
+  return v.plate ? `${v.year} · ${v.plate} · ${km}` : `${v.year} · ${km}`
+}
+
+function VehicleSwitcher({
+  vehicle,
+  vehicles,
+  open,
+  onToggle,
+  onSelect,
+}: {
+  vehicle: VehicleView
+  vehicles: VehicleView[]
+  open: boolean
+  onToggle: () => void
+  onSelect: (id: string) => void
+}) {
+  const others = vehicles.filter((v) => v.id !== vehicle.id).sort(byUrgency)
+  const label = vehicleChoiceLabel(vehicle, vehicles)
+  return (
+    <div className="overflow-hidden rounded-2xl bg-surface ring-1 ring-line">
+      <button
+        type="button"
+        aria-expanded={others.length > 0 ? open : undefined}
+        onClick={() => {
+          if (others.length > 0) onToggle()
+        }}
+        className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors active:bg-surface-2"
+      >
+        <span
+          className={cx(
+            'size-2 shrink-0 rounded-full',
+            'bg-ink/30',
+          )}
+          aria-hidden
+        />
+        <span className="min-w-0 flex-1 truncate text-[0.82rem] text-muted">
+          <span className="font-semibold text-ink">{label}</span>
+          {vehicle.pending > 0 ? ` · ${vehicle.pending} por atender` : ' · Al día'}
+        </span>
+        {others.length > 0 ? (
+          <ChevronDown
+            className={cx('size-4 shrink-0 text-subtle transition-transform', open && 'rotate-180')}
+            aria-hidden
+          />
+        ) : null}
+      </button>
+      {open && others.length > 0 ? (
+        <div className="divide-y divide-line border-t border-line">
+          {others.map((v) => (
+            <button
+              key={v.id}
+              type="button"
+              onClick={() => onSelect(v.id)}
+              className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors active:bg-surface-2"
+            >
+              <span className="flex h-8 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-linear-to-b from-surface-2 to-surface-3">
+                <VehicleVisual render={v.render} bodyType={v.bodyType} color={v.color} alt="" crop className="size-full" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[0.84rem] font-semibold">{vehicleChoiceLabel(v, vehicles)}</span>
+                <span className="block truncate text-[0.75rem] text-muted">{vehicleMeta(v)}</span>
+              </span>
+              <span className="shrink-0 text-[0.75rem] font-semibold text-ink">
+                {v.pending > 0 ? `${v.pending} por atender` : 'Al día'}
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 /** Estimates need a country and city. Ask right here if missing. */
 function LocationGate({ children }: { children: React.ReactNode }) {
   const profile = useProfile()
@@ -108,7 +187,7 @@ function LocationGate({ children }: { children: React.ReactNode }) {
   return (
     <Card className="mx-5 flex flex-col gap-4 p-5">
       <div className="flex items-center gap-3">
-        <IconTile icon={MapPin} tone="radiant" />
+        <IconTile icon={MapPin} tone="neutral" />
         <div>
           <p className="font-bold">¿Dónde está tu Vehículo?</p>
           <p className="text-[0.82rem] text-muted">Los precios cambian mucho de una ciudad a otra.</p>
@@ -123,6 +202,7 @@ function LocationGate({ children }: { children: React.ReactNode }) {
       </SelectField>
       <TextField label="Ciudad" value={city} onChange={(e) => setCity(e.target.value)} placeholder="San Salvador" />
       <Button
+        variant="secondary"
         loading={update.isPending}
         disabled={city.trim().length < 2}
         onClick={() => update.mutate({ country, city })}
@@ -152,11 +232,18 @@ function EstimatePanel({
   const history = useEstimateHistory()
   const actions = useActions()
   const [query, setQuery] = useState('')
+  const [asked, setAsked] = useState<string | null>(null)
   const [result, setResult] = useState<Omit<Estimate, 'vehicleId'> | null>(null)
   const [step, setStep] = useState(0)
   const autoRan = useRef(false)
+  const threadRef = useRef<HTMLDivElement>(null)
 
   async function run(input: { taskCode?: string; query?: string }) {
+    const label =
+      input.query?.trim() ||
+      (input.taskCode ? taskLabel(byCode.get(input.taskCode), input.taskCode, k) : '')
+    setAsked(label || 'Consulta')
+    setQuery('')
     setResult(null)
     setStep(0)
     try {
@@ -181,6 +268,15 @@ function EstimatePanel({
     return () => window.clearInterval(t)
   }, [request.isPending])
 
+  useEffect(() => {
+    const node = threadRef.current
+    const scroller = node?.closest('main')
+    const input = document.getElementById('estimate-query')
+    if (!node || !scroller || !input) return
+    const overflow = node.getBoundingClientRect().bottom - input.getBoundingClientRect().top + 16
+    if (overflow > 0) scroller.scrollBy({ top: overflow, behavior: 'smooth' })
+  }, [asked, request.isPending, result?.id])
+
   const pending = vehicle.reminders
     .filter((r) => r.status === 'overdue' || r.status === 'soon')
     .map((r) => r.taskCode)
@@ -188,35 +284,7 @@ function EstimatePanel({
   const pastForVehicle = (history.data ?? []).filter((e) => e.vehicleId === vehicle.id)
 
   return (
-    <div className="flex flex-col gap-5 px-5">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          if (query.trim().length >= 3) void run({ query })
-        }}
-        className="relative"
-      >
-        <label className="sr-only" htmlFor="estimate-query">
-          ¿Qué quieres cotizar?
-        </label>
-        <Search className="pointer-events-none absolute left-4 top-1/2 size-4.5 -translate-y-1/2 text-muted" aria-hidden />
-        <input
-          id="estimate-query"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Ej. cambio de alternador, pastillas de freno"
-          className="h-13 w-full rounded-2xl bg-surface pl-11 pr-14 text-[0.95rem] shadow-card ring-1 ring-line placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-radiant"
-        />
-        <IconButton
-          icon={ArrowUp}
-          label="Estimar"
-          variant="inverse"
-          type="submit"
-          disabled={query.trim().length < 3 || request.isPending}
-          className="absolute right-1 top-1/2 size-11 -translate-y-1/2"
-        />
-      </form>
-
+    <div className="flex flex-1 flex-col gap-5 px-5">
       <div className="flex flex-wrap gap-2">
         {suggestions.map((code) => {
           const Icon = taskIcon(code)
@@ -230,42 +298,62 @@ function EstimatePanel({
             >
               <Icon className="size-4" aria-hidden />
               {taskLabel(byCode.get(code), code, k)}
-              {pending.includes(code) ? <span className="size-1.5 rounded-full bg-overdue" aria-label="Pendiente" /> : null}
+              {pending.includes(code) ? <span className="size-1.5 rounded-full bg-ink/40" aria-label="Pendiente" /> : null}
             </button>
           )
         })}
       </div>
 
-      <AnimatePresence mode="wait">
-        {request.isPending ? (
-          <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <Card className="flex flex-col items-center gap-4 p-8 text-center" aria-live="polite">
-              <motion.span
-                className="inline-flex size-14 items-center justify-center rounded-2xl bg-radiant-soft text-radiant"
-                animate={{ rotate: [0, -8, 8, 0] }}
-                transition={{ repeat: Infinity, duration: 1.6 }}
-              >
-                <Calculator className="size-7" aria-hidden />
-              </motion.span>
-              <p className="font-semibold">{STEPS[step]}</p>
-              <p className="text-[0.82rem] text-muted">Puede tardar hasta un minuto.</p>
-            </Card>
-          </motion.div>
-        ) : request.isError ? (
-          <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <Card className="p-4 text-[0.9rem] text-overdue">{errorMessage(request.error)}</Card>
-          </motion.div>
-        ) : result ? (
-          <motion.div key={result.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <EstimateCard
-              estimate={result}
-              vehicle={vehicle}
-              onAsk={onAsk}
-              onPlan={() => actions.planAppointment(vehicle.id, result.taskCode ? [result.taskCode] : [])}
+      {asked ? (
+        <div ref={threadRef} className="flex scroll-mb-28 flex-col gap-3">
+          <ol className="flex flex-col gap-3" aria-live="polite">
+            <Bubble
+              message={{ id: 'ask', role: 'user', content: asked, sources: [], createdAt: '', vehicleId: null }}
             />
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+            {request.isPending ? (
+              <motion.li
+                className="flex"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                aria-label="Seibi está escribiendo"
+              >
+                <span className="inline-flex items-center gap-2.5 rounded-2xl rounded-bl-md bg-surface px-4 py-3 shadow-card">
+                  <span className="inline-flex gap-1" aria-hidden>
+                    {[0, 1, 2].map((i) => (
+                      <motion.span
+                        key={i}
+                        className="size-1.5 rounded-full bg-muted"
+                        animate={{ opacity: [0.3, 1, 0.3] }}
+                        transition={{ repeat: Infinity, duration: 1, delay: i * 0.15 }}
+                      />
+                    ))}
+                  </span>
+                  <span className="text-[0.82rem] text-muted">{STEPS[step]}</span>
+                </span>
+              </motion.li>
+            ) : null}
+          </ol>
+          {request.isError ? (
+            <Card className="p-4 text-[0.9rem] text-overdue">{errorMessage(request.error)}</Card>
+          ) : null}
+          {result && !request.isPending ? (
+            <motion.div
+              key={result.id}
+              className="scroll-mb-28"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35 }}
+            >
+              <EstimateCard
+                estimate={result}
+                vehicle={vehicle}
+                onAsk={onAsk}
+                onPlan={() => actions.planAppointment(vehicle.id, result.taskCode ? [result.taskCode] : [])}
+              />
+            </motion.div>
+          ) : null}
+        </div>
+      ) : null}
 
       {pastForVehicle.length > 0 && !request.isPending ? (
         <section className="flex flex-col gap-3">
@@ -275,7 +363,10 @@ function EstimatePanel({
               <button
                 key={`${e.id}-${e.createdAt}`}
                 type="button"
-                onClick={() => setResult(e)}
+                onClick={() => {
+                  setAsked(e.result.title || e.query)
+                  setResult(e)
+                }}
                 className="flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left"
               >
                 <IconTile icon={taskIcon(e.taskCode)} size="sm" />
@@ -290,6 +381,34 @@ function EstimatePanel({
           </Card>
         </section>
       ) : null}
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          if (query.trim().length >= 3) void run({ query })
+        }}
+        className="sticky bottom-[calc(var(--dock-height)+var(--safe-bottom)+0.75rem)] z-10 mt-auto"
+      >
+        <label className="sr-only" htmlFor="estimate-query">
+          ¿Qué quieres cotizar?
+        </label>
+        <Search className="pointer-events-none absolute left-4 top-1/2 size-4.5 -translate-y-1/2 text-muted" aria-hidden />
+        <input
+          id="estimate-query"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Ej. cambio de alternador, pastillas de freno"
+          className="h-13 w-full rounded-2xl bg-surface pl-11 pr-14 text-[0.95rem] text-ink ring-1 ring-line placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-ink"
+        />
+        <IconButton
+          icon={ArrowUp}
+          label="Estimar"
+          variant="inverse"
+          type="submit"
+          disabled={query.trim().length < 3 || request.isPending}
+          className="absolute right-1 top-1/2 size-11 -translate-y-1/2"
+        />
+      </form>
     </div>
   )
 }
@@ -317,7 +436,7 @@ function EstimateCard({
 
   return (
     <Card className="overflow-hidden">
-      <div className="bg-inverse px-5 py-4 text-on-inverse">
+      <div className="border-b border-line px-5 py-4">
         <p className="text-[0.78rem] font-semibold opacity-70">
           {vehicleName(vehicle)} {vehicle.year} · {place}
         </p>
@@ -390,7 +509,7 @@ function EstimateCard({
                     href={s.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex max-w-full items-center gap-1 text-[0.82rem] font-semibold text-radiant"
+                    className="inline-flex max-w-full items-center gap-1 text-[0.82rem] font-semibold"
                   >
                     <span className="truncate">{s.title}</span>
                     <ExternalLink className="size-3.5 shrink-0" aria-hidden />
@@ -574,7 +693,11 @@ function ChatPanel({ vehicle }: { vehicle: VehicleView }) {
 function Bubble({ message }: { message: ChatMessage }) {
   const mine = message.role === 'user'
   return (
-    <li className={cx('flex', mine ? 'justify-end' : 'justify-start')}>
+    <motion.li
+      initial={{ opacity: 0, y: 10, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      className={cx('flex', mine ? 'justify-end' : 'justify-start')}
+    >
       <div
         className={cx(
           'max-w-[85%] rounded-2xl px-4 py-3 text-[0.92rem] leading-relaxed',
@@ -590,7 +713,7 @@ function Bubble({ message }: { message: ChatMessage }) {
                   href={s.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex max-w-full items-center gap-1 text-[0.78rem] font-semibold text-radiant"
+                  className="inline-flex max-w-full items-center gap-1 text-[0.78rem] font-semibold"
                 >
                   <span className="truncate">{s.title}</span>
                   <ExternalLink className="size-3 shrink-0" aria-hidden />
@@ -600,6 +723,6 @@ function Bubble({ message }: { message: ChatMessage }) {
           </ul>
         ) : null}
       </div>
-    </li>
+    </motion.li>
   )
 }

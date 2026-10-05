@@ -11,7 +11,18 @@ const VehicleModel3D = lazy(() => import('./VehicleModel3D'))
  * The main Vehicle stage: live 3D when the GLB is ready, otherwise the
  * poster or silhouette. One live canvas per screen at most (ADR-0008).
  */
-export function VehicleHero({ vehicle, className }: { vehicle: VehicleView; className?: string }) {
+export function VehicleHero({
+  vehicle,
+  className,
+  fitMargin,
+  cameraPosition,
+}: {
+  vehicle: VehicleView
+  className?: string
+  /** Extra space around the 3D model so it is not cropped. */
+  fitMargin?: number
+  cameraPosition?: [number, number, number]
+}) {
   const glb = vehicle.render?.glbUrl ?? null
   const [ready3d, setReady3d] = useState(false)
   const [failed3d, setFailed3d] = useState(false)
@@ -49,6 +60,8 @@ export function VehicleHero({ vehicle, className }: { vehicle: VehicleView; clas
           >
             <VehicleModel3D
               url={glb!}
+              margin={fitMargin}
+              cameraPosition={cameraPosition}
               onReady={() => setReady3d(true)}
               onError={() => setFailed3d(true)}
             />

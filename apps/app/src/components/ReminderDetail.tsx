@@ -17,8 +17,7 @@ import { useProfile } from '../lib/profile'
 import { intervalText, reminderDueText } from '../lib/reminderText'
 import { taskIcon, taskMap, useTasks } from '../lib/tasks'
 import { Button } from '../ui/Button'
-import { IconTile } from '../ui/Card'
-import { ProgressBar, StatusBadge, useToast } from '../ui/feedback'
+import { STATUS_META, useToast } from '../ui/feedback'
 import { Sheet } from '../ui/Sheet'
 
 function addDaysIso(days: number) {
@@ -68,34 +67,57 @@ export function ReminderDetail({
   }
 
   return (
-    <Sheet open={open} onClose={onClose} title={title} description={vehicleName(vehicle)}>
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title={title}
+      description={vehicleName(vehicle)}
+      panelClassName="bg-[#f7f2ee]"
+    >
       {reminder ? (
-        <div className="flex flex-col gap-4 pb-2">
-          <div className="flex items-center gap-3 rounded-[1.25rem] bg-surface p-4 shadow-card">
-            <IconTile icon={Icon} tone={reminder.status} />
-            <div className="min-w-0 flex-1">
-              <StatusBadge status={reminder.status} />
-              <p className="mt-1.5 text-[0.95rem] font-semibold">
-                {reminderDueText(reminder, vehicle.measure)}
-              </p>
+        <div className="flex flex-col gap-3 pb-2 text-ink">
+          <div className="rounded-[1.35rem] bg-surface px-3.5 py-3">
+            <div className="flex items-center gap-3">
+              <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-2xl bg-surface-3 text-ink">
+                <Icon className="size-6" strokeWidth={1.75} aria-hidden />
+              </span>
+              <div className="min-w-0 flex-1">
+                <span className="inline-flex h-8 items-center rounded-full bg-surface-2 px-3 text-[0.75rem] font-semibold">
+                  {STATUS_META[reminder.status].label}
+                </span>
+                <p className="mt-0.5 text-[0.8rem] opacity-70">
+                  {reminderDueText(reminder, vehicle.measure)}
+                </p>
+              </div>
             </div>
+            {reminder.status !== 'unknown' ? (
+              <div
+                className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-3"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.max(4, Math.min(100, Math.round(reminder.used * 100)))}
+                aria-label="Intervalo usado"
+              >
+                <div
+                  className="h-full rounded-full bg-ink/30"
+                  style={{ width: `${Math.max(4, Math.min(100, Math.round(reminder.used * 100)))}%` }}
+                />
+              </div>
+            ) : null}
           </div>
 
-          {reminder.status !== 'unknown' ? (
-            <ProgressBar value={reminder.used} status={reminder.status} />
-          ) : null}
-
           {task && (k.explain || reminder.status === 'unknown') ? (
-            <p className="flex gap-2 rounded-2xl bg-surface-2 px-4 py-3 text-[0.86rem] text-muted">
-              <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <p className="flex gap-2 rounded-[1.35rem] bg-surface px-3.5 py-3 text-[0.86rem]">
+              <Info className="mt-0.5 size-4 shrink-0 opacity-70" aria-hidden />
               {task.description}
             </p>
           ) : null}
 
-          <dl className="grid grid-cols-1 gap-3 rounded-[1.25rem] bg-surface p-4 text-[0.88rem] shadow-card">
+          <dl className="grid grid-cols-1 gap-3 rounded-[1.35rem] bg-surface p-4 text-[0.88rem]">
             {intervalText(reminder, vehicle.measure) ? (
               <div>
-                <dt className="text-muted">Frecuencia</dt>
+                <dt className="text-[0.8rem] opacity-70">Frecuencia</dt>
                 <dd className="font-semibold">
                   {intervalText(reminder, vehicle.measure)}
                   {reminder.severe ? ' (uso severo)' : ''}
@@ -104,7 +126,7 @@ export function ReminderDetail({
             ) : null}
             {reminder.lastDone ? (
               <div>
-                <dt className="text-muted">Última vez</dt>
+                <dt className="text-[0.8rem] opacity-70">Última vez</dt>
                 <dd className="font-semibold">
                   {formatDay(reminder.lastDone.performedOn, 'long')}
                   {reminder.lastDone.reading != null
@@ -116,7 +138,7 @@ export function ReminderDetail({
             ) : null}
             {reminder.dueReading != null ? (
               <div>
-                <dt className="text-muted">Toca a los</dt>
+                <dt className="text-[0.8rem] opacity-70">Toca a los</dt>
                 <dd className="font-semibold tabular">
                   {formatNumber(reminder.dueReading)} {vehicle.measure}
                   {reminder.dueOn ? ` o el ${formatDay(reminder.dueOn, 'long')}` : ''}
@@ -124,7 +146,7 @@ export function ReminderDetail({
               </div>
             ) : null}
             <div>
-              <dt className="text-muted">Fuente</dt>
+              <dt className="text-[0.8rem] opacity-70">Fuente</dt>
               <dd className="font-semibold">
                 {reminder.source === 'model'
                   ? `Plan del fabricante para tu ${vehicle.brand} ${vehicle.model}`
@@ -138,7 +160,7 @@ export function ReminderDetail({
                         href={s.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-[0.82rem] font-semibold text-radiant"
+                        className="inline-flex items-center gap-1 text-[0.82rem] font-semibold"
                       >
                         {s.title.length > 48 ? `${s.title.slice(0, 48)}…` : s.title}
                         <ExternalLink className="size-3.5" aria-hidden />
@@ -151,7 +173,7 @@ export function ReminderDetail({
           </dl>
 
           <div className="flex flex-col gap-2">
-            <Button size="lg" icon={CircleCheck} block onClick={onDone}>
+            <Button variant="secondary" size="lg" icon={CircleCheck} block onClick={onDone}>
               Ya lo hice: registrar Servicio
             </Button>
             {reminder.status === 'unknown' ? (

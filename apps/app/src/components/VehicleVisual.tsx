@@ -96,12 +96,15 @@ export function VehicleVisual({
   color,
   className,
   alt,
+  crop = false,
 }: {
   render: RenderInfo | null
   bodyType: BodyType | null
   color: string | null
   className?: string
   alt: string
+  /** Fill the box and trim the poster's studio margins. */
+  crop?: boolean
 }) {
   const [failed, setFailed] = useState(false)
   const poster = !failed ? render?.posterUrl : null
@@ -118,10 +121,13 @@ export function VehicleVisual({
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          className="h-full w-full object-contain mix-blend-multiply dark:mix-blend-normal"
+          className={cx(
+            'h-full w-full mix-blend-multiply dark:mix-blend-normal',
+            crop ? 'scale-[1.22] object-cover' : 'object-contain',
+          )}
         />
       ) : (
-        <Silhouette bodyType={bodyType} color={color} className="h-full w-full" />
+        <Silhouette bodyType={bodyType} color={color} className={cx('h-full w-full', crop && 'px-2')} />
       )}
     </div>
   )

@@ -5,14 +5,14 @@ import { Bounds, Center, ContactShadows, OrbitControls, useGLTF } from '@react-t
 // Live 3D Model render. Lazy-loaded chunk: three.js only ships to screens
 // with a hero (ADR-0008).
 
-function Model({ url, onReady }: { url: string; onReady: () => void }) {
+function Model({ url, onReady, margin }: { url: string; onReady: () => void; margin: number }) {
   const { scene } = useGLTF(url)
   const clone = useMemo(() => scene.clone(true), [scene])
   useEffect(() => {
     onReady()
   }, [clone, onReady])
   return (
-    <Bounds fit clip observe margin={1.15}>
+    <Bounds fit clip observe margin={margin}>
       <Center>
         <primitive object={clone} />
       </Center>
@@ -24,16 +24,19 @@ export default function VehicleModel3D({
   url,
   onReady,
   onError,
+  margin = 0.78,
+  cameraPosition = [2.4, 0.95, 3.8],
 }: {
   url: string
   onReady: () => void
   onError: () => void
+  /** Camera distance multiplier. Higher fits more of the model in frame. */
+  margin?: number
+  /** Starting viewpoint. Bounds keeps this angle and only adjusts distance. */
+  cameraPosition?: [number, number, number]
 }) {
   const hostRef = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(true)
-  const reduceMotion =
-    typeof window !== 'undefined' &&
-    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
   // Stop rendering frames when the hero scrolls out of view.
   useEffect(() => {
@@ -49,27 +52,27 @@ export default function VehicleModel3D({
       <Canvas
         dpr={[1, 2]}
         frameloop={visible ? 'always' : 'never'}
-        camera={{ position: [3.2, 1.4, 4.2], fov: 32 }}
+        camera={{ position: cameraPosition, fov: 32 }}
         gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }}
         onCreated={({ gl }) => {
           gl.domElement.addEventListener('webglcontextlost', onError)
         }}
       >
         <hemisphereLight args={['#ffffff', '#6b6f78', 1.1]} />
-        <directionalLight position={[5, 8, 5]} intensity={1.6} />
-        <directionalLight position={[-6, 4, -4]} intensity={0.6} />
+        <directionalLight position={[-6, 8, -4]} intensity={1.7} />
+        <directionalLight position={[5, 3, 6]} intensity={0.45} />
         <Suspense fallback={null}>
           <ErrorBoundary onError={onError}>
-            <Model url={url} onReady={onReady} />
+            <Model url={url} onReady={onReady} margin={margin} />
           </ErrorBoundary>
           <ContactShadows position={[0, -0.9, 0]} opacity={0.35} scale={8} blur={2.6} far={2} />
         </Suspense>
         <OrbitControls
           enablePan={false}
           enableZoom={false}
-          autoRotate={!reduceMotion}
-          autoRotateSpeed={0.9}
-          minPolarAngle={Math.PI / 3}
+          enableDamping
+          dampingFactor={0.08}
+          minPolarAngle={Math.PI / 3.4}
           maxPolarAngle={Math.PI / 2.05}
         />
       </Canvas>

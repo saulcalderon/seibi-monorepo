@@ -4,34 +4,39 @@ import {
   Calculator,
   CalendarClock,
   CarFront,
+  ChevronLeft,
   ChevronRight,
   Gauge,
-  History,
   PartyPopper,
   Plus,
-  Search,
   Sparkles,
-  Wrench,
+  type LucideIcon,
 } from 'lucide-react'
 import { useActions } from '../app/Actions'
 import { Screen } from '../app/Screen'
-import { ReminderRow } from '../components/ReminderRow'
 import { UnknownTasks } from '../components/UnknownTasks'
 import { VehicleHero } from '../components/VehicleHero'
 import { useActiveVehicle } from '../lib/activeVehicle'
 import { useAuthSession } from '../lib/authSession'
-import { formatDay, formatNumber, formatUsd, greeting, relativeDays, vehicleName } from '../lib/format'
-import { useGarage, type VehicleView } from '../lib/garage'
+import { formatDay, formatNumber, formatUsd, relativeDays, vehicleName } from '../lib/format'
+import { useGarage, type ServiceRecord, type VehicleView } from '../lib/garage'
 import { identityFromUser, initials } from '../lib/identity'
-import { knowledgeProfile, taskLabel } from '../lib/knowledge'
+import { knowledgeProfile, taskLabel, type KnowledgeLevel } from '../lib/knowledge'
 import { useProfile } from '../lib/profile'
+import { reminderDueText } from '../lib/reminderText'
 import { taskIcon, taskMap } from '../lib/tasks'
 import { daysBetween } from '@seibi/maintenance-engine/days'
+import type { Reminder } from '@seibi/maintenance-engine/reminders'
 import { todayIso } from '../lib/format'
 import { Button } from '../ui/Button'
-import { Card, IconTile, SectionHeader } from '../ui/Card'
+import { Card, IconTile } from '../ui/Card'
 import { cx } from '../ui/cx'
-import { ErrorState, ScreenSkeleton, StatusBadge } from '../ui/feedback'
+import { ErrorState, ScreenSkeleton, STATUS_META } from '../ui/feedback'
+
+const TONE_TEXT = 'text-ink'
+const TONE_SOFT = 'bg-surface-3'
+const TONE_CARD = 'bg-surface'
+const TONE_BAR = 'bg-surface'
 
 export function Home() {
   const { user } = useAuthSession()
@@ -43,15 +48,18 @@ export function Home() {
   const name = profile.data?.displayName ?? identity.fullName?.split(' ')[0] ?? null
 
   const header = (
-    <header className="flex items-center gap-3 px-5 pb-4 pt-2">
-      <div className="min-w-0 flex-1">
-        <p className="text-[0.85rem] font-semibold text-muted">{greeting()}</p>
-        <h1 className="truncate text-[1.65rem] leading-tight">{name ? `Hola, ${name}` : 'Hola'}</h1>
-      </div>
+    <header className="flex items-center gap-3 px-5 pb-3 pt-2">
+      <h1 className={cx('min-w-0 flex-1 truncate font-sans text-[1.7rem] font-semibold leading-none tracking-tight', TONE_TEXT)}>
+        Seibi
+      </h1>
       <Link
         to="/perfil"
         aria-label="Perfil"
-        className="inline-flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-inverse text-[0.9rem] font-bold text-on-inverse ring-2 ring-surface"
+        className={cx(
+          'inline-flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full text-[0.9rem] font-bold ring-1 ring-line',
+          TONE_BAR,
+          TONE_TEXT,
+        )}
       >
         {identity.avatarUrl ? (
           <img src={identity.avatarUrl} alt="" className="size-full object-cover" referrerPolicy="no-referrer" />
@@ -88,97 +96,260 @@ export function Home() {
   }
 
   return (
-    <Screen>
+    <Screen className="min-h-full bg-[#f7f2ee]">
       {header}
-      {garage.vehicles.length > 1 ? (
-        <div className="scroll-area -mt-1 mb-3 flex gap-2 overflow-x-auto px-5 pb-1" role="tablist" aria-label="Tus Vehículos">
-          {garage.vehicles.map((v) => (
-            <button
-              key={v.id}
-              type="button"
-              role="tab"
-              aria-selected={v.id === active.id}
-              onClick={() => select(v.id)}
-              className={cx(
-                'inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full px-3.5 text-[0.85rem] font-semibold transition-colors',
-                v.id === active.id ? 'bg-inverse text-on-inverse' : 'bg-surface ring-1 ring-line',
-              )}
-            >
-              <span
-                className={cx(
-                  'size-2 rounded-full',
-                  v.health === 'overdue' ? 'bg-overdue' : v.health === 'soon' ? 'bg-soon' : v.health === 'ok' ? 'bg-ok' : 'bg-unknown',
-                )}
-                aria-hidden
-              />
-              {v.model}
-            </button>
-          ))}
-        </div>
-      ) : null}
-
-      <motion.div
-        key={active.id}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: [0.33, 1, 0.68, 1] }}
-        className="flex flex-col gap-6 px-5"
-      >
-        <VehicleSummary vehicle={active} />
-        <HomeBody vehicle={active} />
-      </motion.div>
+      <div className={cx('flex flex-col gap-5 px-5', TONE_TEXT)}>
+        <VehicleStage vehicle={active} vehicles={garage.vehicles} onSelect={select} />
+        <motion.div
+          key={active.id}
+          className="flex flex-col gap-3"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: EASE }}
+        >
+          <HomeBody vehicle={active} />
+        </motion.div>
+      </div>
     </Screen>
   )
 }
 
-function VehicleSummary({ vehicle }: { vehicle: VehicleView }) {
-  const navigate = useNavigate()
+const EASE = [0.33, 1, 0.68, 1] as const
+
+function ToneIcon({ icon: Icon }: { icon: LucideIcon }) {
   return (
-    <Card className="overflow-hidden">
-      <button
-        type="button"
-        onClick={() => void navigate({ to: '/flota/$vehicleId', params: { vehicleId: vehicle.id } })}
-        className="block w-full text-left"
-        aria-label={`Ver ${vehicleName(vehicle)}`}
-      >
-        <div className="flex items-start justify-between gap-2 px-5 pt-5">
-          <div className="min-w-0">
-            <p className="text-[0.8rem] font-semibold text-muted">
-              {vehicle.year}
-              {vehicle.plate ? ` · ${vehicle.plate}` : ''}
-            </p>
-            <h2 className="truncate text-[1.45rem] leading-tight">{vehicleName(vehicle)}</h2>
+    <span className={cx('inline-flex size-12 shrink-0 items-center justify-center rounded-2xl', TONE_SOFT, TONE_TEXT)}>
+      <Icon className="size-6" strokeWidth={1.75} aria-hidden />
+    </span>
+  )
+}
+
+function SectionLink({ title, onClick }: { title: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cx('inline-flex items-center gap-0.5 px-0.5 py-1 text-[1.02rem] font-semibold', TONE_TEXT)}
+    >
+      {title}
+      <ChevronRight className="size-4" aria-hidden />
+    </button>
+  )
+}
+
+function SuggestionList({
+  reminders,
+  measure,
+  level,
+  tasks,
+  onOpen,
+}: {
+  reminders: Reminder[]
+  measure: VehicleView['measure']
+  level: KnowledgeLevel | null | undefined
+  tasks: ReturnType<typeof taskMap>
+  onOpen: (taskCode: string) => void
+}) {
+  const k = knowledgeProfile(level)
+  return (
+    <div className={cx('overflow-hidden rounded-[1.35rem]', TONE_CARD)}>
+      {reminders.map((r, index) => {
+        const dueOn = r.dueOn ?? r.expectedOn
+        const description = reminderDueText(r, measure)
+        return (
+          <button
+            key={r.taskCode}
+            type="button"
+            onClick={() => onOpen(r.taskCode)}
+            className={cx(
+              'flex w-full items-center gap-3 px-3.5 py-3 text-left active:bg-surface-2',
+              index > 0 && 'border-t border-line',
+            )}
+          >
+            <ToneIcon icon={taskIcon(r.taskCode)} />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[0.98rem] font-semibold leading-tight">
+                {taskLabel(tasks.get(r.taskCode), r.taskCode, k)}
+              </span>
+              <span className="mt-0.5 block truncate text-[0.8rem] opacity-70">{description}</span>
+              {dueOn ? <span className="mt-0.5 block text-[0.8rem] opacity-70 tabular">{formatDay(dueOn)}</span> : null}
+            </span>
+            <span className="inline-flex h-8 shrink-0 items-center rounded-full bg-surface-2 px-3 text-[0.75rem] font-semibold">
+              {STATUS_META[r.status].label}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function OkGrid({
+  reminders,
+  level,
+  tasks,
+  onOpen,
+}: {
+  reminders: Reminder[]
+  level: KnowledgeLevel | null | undefined
+  tasks: ReturnType<typeof taskMap>
+  onOpen: (taskCode: string) => void
+}) {
+  const k = knowledgeProfile(level)
+  return (
+    <div className="grid grid-cols-2 gap-2.5">
+      {reminders.map((r) => {
+        const dueOn = r.dueOn ?? r.expectedOn
+        return (
+          <button
+            key={r.taskCode}
+            type="button"
+            onClick={() => onOpen(r.taskCode)}
+            className={cx('flex items-center gap-2.5 rounded-[1.25rem] px-3 py-3 text-left active:bg-surface-2', TONE_CARD)}
+          >
+            <ToneIcon icon={taskIcon(r.taskCode)} />
+            <span className="min-w-0">
+              <span className="block text-balance text-[0.86rem] font-semibold leading-tight">
+                {taskLabel(tasks.get(r.taskCode), r.taskCode, k)}
+              </span>
+              {dueOn ? <span className="mt-0.5 block text-[0.75rem] opacity-70 tabular">{formatDay(dueOn)}</span> : null}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function RecentServices({
+  services,
+  tasks,
+  level,
+}: {
+  services: ServiceRecord[]
+  tasks: ReturnType<typeof taskMap>
+  level: KnowledgeLevel | null | undefined
+}) {
+  const k = knowledgeProfile(level)
+  return (
+    <div className={cx('overflow-hidden rounded-[1.35rem]', TONE_CARD)}>
+      {services.map((s, index) => {
+        const name = s.items
+          .map((i) => (i.taskCode ? taskLabel(tasks.get(i.taskCode), i.taskCode, k) : i.name))
+          .join(', ')
+        const meta = [s.shop, formatDay(s.performedOn)].filter(Boolean).join(' · ')
+        return (
+          <div
+            key={s.id}
+            className={cx('flex items-center gap-3 px-3.5 py-3', index > 0 && 'border-t border-line')}
+          >
+            <ToneIcon icon={taskIcon(s.items.find((i) => i.taskCode)?.taskCode)} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[0.98rem] font-semibold leading-tight">{name}</p>
+              {meta ? <p className="mt-0.5 truncate text-[0.8rem] opacity-70">{meta}</p> : null}
+            </div>
+            {s.totalCost != null ? (
+              <span className="shrink-0 text-[1.02rem] font-semibold tabular">{formatUsd(s.totalCost)}</span>
+            ) : null}
           </div>
-          <StatusBadge
-            status={vehicle.health}
-            label={
-              vehicle.health === 'ok'
-                ? 'Al día'
-                : vehicle.health === 'unknown'
-                  ? 'Completa datos'
-                  : `${vehicle.pending} pendiente${vehicle.pending === 1 ? '' : 's'}`
-            }
-          />
-        </div>
-      </button>
-      <VehicleHero vehicle={vehicle} className="h-48" />
-      <div className="grid grid-cols-2 divide-x divide-line border-t border-line">
-        <div className="px-5 py-3.5">
-          <p className="text-[0.75rem] font-semibold text-muted">Kilometraje</p>
-          <p className="text-[1.05rem] font-bold tabular">
-            {vehicle.odometer != null ? `${formatNumber(vehicle.odometer)} ${vehicle.measure}` : '—'}
-          </p>
-        </div>
-        <div className="px-5 py-3.5">
-          <p className="text-[0.75rem] font-semibold text-muted">Uso estimado</p>
-          <p className="text-[1.05rem] font-bold tabular">
-            {vehicle.usage
-              ? `${formatNumber(vehicle.usage.perDay * 7)} ${vehicle.measure}/sem`
-              : '—'}
-          </p>
-        </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function VehicleStage({
+  vehicle,
+  vehicles,
+  onSelect,
+}: {
+  vehicle: VehicleView
+  vehicles: VehicleView[]
+  onSelect: (id: string) => void
+}) {
+  const navigate = useNavigate()
+  const actions = useActions()
+  const openDetail = () => void navigate({ to: '/flota/$vehicleId', params: { vehicleId: vehicle.id } })
+  const index = Math.max(0, vehicles.findIndex((v) => v.id === vehicle.id))
+  const step = (delta: number) => {
+    const next = vehicles[(index + delta + vehicles.length) % vehicles.length]
+    if (next && next.id !== vehicle.id) onSelect(next.id)
+  }
+
+  return (
+    <section className="flex flex-col gap-2.5" aria-label={vehicleName(vehicle)}>
+      <div className={cx('flex h-12 items-center rounded-2xl px-1', TONE_BAR)}>
+        {vehicles.length > 1 ? (
+          <button
+            type="button"
+            onClick={() => step(-1)}
+            aria-label="Vehículo anterior"
+            className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl active:bg-surface-2"
+          >
+            <ChevronLeft className="size-5" aria-hidden />
+          </button>
+        ) : (
+          <span className="size-10 shrink-0" aria-hidden />
+        )}
+        <button
+          type="button"
+          onClick={openDetail}
+          aria-label={`Ver ${vehicleName(vehicle)}`}
+          className="flex h-11 min-w-0 flex-1 items-center justify-center gap-2.5 px-2"
+        >
+          <span className="truncate text-[0.78rem] font-semibold tracking-[0.12em]">
+            {vehicle.brand.toUpperCase()}
+          </span>
+          <span className="h-4 w-px shrink-0 bg-ink/20" aria-hidden />
+          <span className="truncate text-[0.92rem] font-semibold">
+            {vehicle.model} {vehicle.year}
+            {vehicle.plate ? ` · ${vehicle.plate}` : ''}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={vehicles.length > 1 ? () => step(1) : openDetail}
+          aria-label={vehicles.length > 1 ? 'Vehículo siguiente' : `Abrir ${vehicleName(vehicle)}`}
+          className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl active:bg-surface-2"
+        >
+          <ChevronRight className="size-5" aria-hidden />
+        </button>
       </div>
-    </Card>
+
+      <div className={cx('overflow-hidden rounded-[1.35rem]', TONE_CARD)}>
+        <div className="relative h-36">
+          <motion.div
+            key={vehicle.id}
+            className="absolute inset-0"
+            initial={{ opacity: 0, x: 36 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.55, ease: EASE }}
+          >
+            <VehicleHero
+              vehicle={vehicle}
+              fitMargin={0.68}
+              cameraPosition={[-5.2, 0.22, 1.15]}
+              className="h-full [&>div.-z-10]:hidden [&>span]:bottom-2"
+            />
+          </motion.div>
+        </div>
+        <button
+          type="button"
+          onClick={() => actions.updateMileage(vehicle.id)}
+          aria-label={
+            vehicle.odometer != null
+              ? `Odómetro, ${formatNumber(vehicle.odometer)} ${vehicle.measure}`
+              : 'Odómetro, sin lectura'
+          }
+          className="flex w-full items-center justify-center gap-2 border-t border-line py-3.5 active:bg-surface-2"
+        >
+          <Gauge className="size-5" strokeWidth={1.75} aria-hidden />
+          <span className="text-[1.2rem] font-semibold leading-tight tracking-tight tabular">
+            {vehicle.odometer != null ? `${formatNumber(vehicle.odometer)} ${vehicle.measure}` : 'Sin lectura'}
+          </span>
+        </button>
+      </div>
+    </section>
   )
 }
 
@@ -194,20 +365,25 @@ function HomeBody({ vehicle }: { vehicle: VehicleView }) {
     (r) => !r.snoozed && (r.status === 'overdue' || r.status === 'soon'),
   )
   const unknown = vehicle.reminders.filter((r) => r.status === 'unknown')
-  const upcoming = vehicle.reminders.filter((r) => !r.snoozed && r.status === 'ok').slice(0, 2)
+  const upcoming = vehicle.reminders.filter((r) => !r.snoozed && r.status === 'ok').slice(0, 4)
   const today = todayIso()
 
   return (
     <>
+      <UnknownTasks
+        vehicleId={vehicle.id}
+        reminders={vehicle.reminders.filter((r) => r.status === 'unknown')}
+        tasks={byCode}
+        level={profile.data?.knowledgeLevel}
+      />
+
       {vehicle.mileagePrompt.due ? (
         <button
           type="button"
           onClick={() => actions.updateMileage(vehicle.id)}
-          className="flex items-center gap-3 rounded-[1.25rem] bg-inverse p-4 text-left text-on-inverse shadow-card"
+          className={cx('flex items-center gap-3 rounded-[1.35rem] p-3.5 text-left', TONE_CARD)}
         >
-          <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-2xl bg-radiant text-white">
-            <Gauge className="size-5" aria-hidden />
-          </span>
+          <ToneIcon icon={Gauge} />
           <span className="min-w-0 flex-1">
             <span className="block text-[0.95rem] font-bold">¿Cuánto marca hoy el odómetro?</span>
             <span className="block text-[0.82rem] opacity-70">
@@ -222,55 +398,44 @@ function HomeBody({ vehicle }: { vehicle: VehicleView }) {
         </button>
       ) : null}
 
-      {vehicle.scheduleSource === 'pending' ? (
-        <p className="flex items-center gap-2 rounded-2xl bg-radiant-soft px-4 py-3 text-[0.84rem] font-medium text-radiant">
-          <Search className="size-4 shrink-0 animate-pulse" aria-hidden />
-          Buscando el plan de mantenimiento del fabricante para tu {vehicle.model}…
-        </p>
-      ) : null}
-
-      <section className="flex flex-col gap-3">
-        <SectionHeader
-          title={attention.length > 0 ? 'Necesita atención' : 'Lo próximo'}
-          action="Ver todo"
-          onAction={() => void navigate({ to: '/avisos' })}
-        />
-        <Card className="divide-y divide-line overflow-hidden">
-          {attention.length === 0 && upcoming.length === 0 ? (
-            <div className="flex items-center gap-3 px-4 py-4">
-              <IconTile icon={PartyPopper} tone="ok" />
-              <p className="text-[0.9rem] text-muted">
-                {unknown.length > 0
-                  ? 'Cuéntanos cuándo hiciste los últimos Servicios para calcular los próximos.'
-                  : 'Todo está al día. Te avisaremos cuando algo se acerque.'}
-              </p>
-            </div>
-          ) : (
-            [...attention, ...(attention.length < 3 ? upcoming : [])].slice(0, 4).map((r) => (
-              <ReminderRow
-                key={r.taskCode}
-                reminder={r}
-                task={byCode.get(r.taskCode)}
-                measure={vehicle.measure}
-                level={profile.data?.knowledgeLevel}
-                onClick={() => actions.openReminder(vehicle.id, r.taskCode)}
-              />
-            ))
-          )}
-        </Card>
+      <section className="flex flex-col gap-1.5">
+        <SectionLink title="Sugerencias" onClick={() => void navigate({ to: '/avisos' })} />
+        {attention.length === 0 ? (
+          <div className={cx('flex items-center gap-3 rounded-[1.35rem] px-3.5 py-3.5', TONE_CARD)}>
+            <ToneIcon icon={PartyPopper} />
+            <p className="text-[0.9rem] leading-snug opacity-80">
+              {unknown.length > 0
+                ? 'Cuéntanos cuándo hiciste los últimos Servicios para calcular los próximos.'
+                : 'Todo está al día. Te avisaremos cuando algo se acerque.'}
+            </p>
+          </div>
+        ) : (
+          <SuggestionList
+            reminders={attention}
+            measure={vehicle.measure}
+            level={profile.data?.knowledgeLevel}
+            tasks={byCode}
+            onOpen={(taskCode) => actions.openReminder(vehicle.id, taskCode)}
+          />
+        )}
       </section>
 
-      <UnknownTasks
-        vehicleId={vehicle.id}
-        reminders={vehicle.reminders.filter((r) => r.status === 'unknown')}
-        tasks={byCode}
-        level={profile.data?.knowledgeLevel}
-      />
+      {upcoming.length > 0 ? (
+        <section className="flex flex-col gap-1.5">
+          <SectionLink title="Al día" onClick={() => void navigate({ to: '/avisos' })} />
+          <OkGrid
+            reminders={upcoming}
+            level={profile.data?.knowledgeLevel}
+            tasks={byCode}
+            onOpen={(taskCode) => actions.openReminder(vehicle.id, taskCode)}
+          />
+        </section>
+      ) : null}
 
       {vehicle.upcomingAppointments.length > 0 || vehicle.openManualReminders.length > 0 ? (
-        <section className="flex flex-col gap-3">
-          <SectionHeader title="En tu calendario" />
-          <Card className="divide-y divide-line overflow-hidden">
+        <section className="flex flex-col gap-2">
+          <h2 className="px-0.5 text-[1.02rem] font-semibold">En tu calendario</h2>
+          <Card className="divide-y divide-line overflow-hidden rounded-[1.6rem]">
             {vehicle.upcomingAppointments.slice(0, 2).map((a) => (
               <div key={a.id} className="flex items-center gap-3 px-4 py-3.5">
                 <IconTile icon={CalendarClock} tone="radiant" />
@@ -316,62 +481,40 @@ function HomeBody({ vehicle }: { vehicle: VehicleView }) {
         </section>
       ) : null}
 
-      <section className="flex flex-col gap-3">
-        <SectionHeader
-          title="Últimos Servicios"
-          action={vehicle.services.length > 0 ? 'Historial' : undefined}
-          onAction={() =>
-            void navigate({ to: '/flota/$vehicleId', params: { vehicleId: vehicle.id }, search: { tab: 'historial' } })
+      <section className="flex flex-col gap-1.5">
+        <SectionLink
+          title="Último servicio"
+          onClick={() =>
+            void navigate({
+              to: '/flota/$vehicleId',
+              params: { vehicleId: vehicle.id },
+              search: { tab: 'historial' },
+            })
           }
         />
         {vehicle.services.length === 0 ? (
-          <Card className="flex items-center gap-3 p-4">
-            <IconTile icon={History} />
-            <p className="flex-1 text-[0.88rem] text-muted">
-              Registra lo que le hagas a tu Vehículo y tendrás su historial completo.
-            </p>
-          </Card>
+          <p className="px-0.5 text-[0.88rem] opacity-70">
+            Registra lo que le hagas a tu Vehículo y tendrás su historial completo.
+          </p>
         ) : (
-          <Card className="divide-y divide-line overflow-hidden">
-            {vehicle.services.slice(0, 3).map((s) => {
-              const first = s.items[0]
-              return (
-                <div key={s.id} className="flex items-center gap-3 px-4 py-3.5">
-                  <IconTile icon={first?.taskCode ? taskIcon(first.taskCode) : Wrench} size="sm" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[0.92rem] font-semibold">
-                      {s.items.map((i) => (i.taskCode ? taskLabel(byCode.get(i.taskCode), i.taskCode, k) : i.name)).join(', ')}
-                    </p>
-                    <p className="text-[0.8rem] text-muted">
-                      {formatDay(s.performedOn)}
-                      {s.reading != null ? ` · ${formatNumber(s.reading)} ${vehicle.measure}` : ''}
-                    </p>
-                  </div>
-                  {s.totalCost != null ? (
-                    <span className="text-[0.9rem] font-bold tabular">{formatUsd(s.totalCost)}</span>
-                  ) : null}
-                </div>
-              )
-            })}
-          </Card>
+          <RecentServices
+            services={vehicle.services.slice(0, 2)}
+            tasks={byCode}
+            level={profile.data?.knowledgeLevel}
+          />
         )}
-        <Button variant="secondary" icon={Plus} onClick={() => actions.logService({ vehicleId: vehicle.id })}>
+        <button
+          type="button"
+          onClick={() => actions.logService({ vehicleId: vehicle.id })}
+          className={cx(
+            'mx-auto inline-flex w-fit items-center justify-center gap-1.5 self-center rounded-2xl px-5 py-2.5 text-[0.95rem] font-semibold shadow-card active:bg-surface-2',
+            TONE_BAR,
+          )}
+        >
+          <Plus className="size-4" aria-hidden />
           Registrar Servicio
-        </Button>
+        </button>
       </section>
-
-      <Link
-        to="/estimados"
-        search={{ vehicle: vehicle.id }}
-        className="flex items-center gap-3 rounded-[1.25rem] bg-surface p-4 shadow-card"
-      >
-        <IconTile icon={Calculator} tone="radiant" />
-        <span className="min-w-0 flex-1">
-          <span className="block text-[0.95rem] font-bold">¿Cuánto cuesta un Servicio?</span>
-          <span className="block text-[0.82rem] text-muted">Rangos de precio para tu {vehicle.model} en tu ciudad</span>
-        </span>
-        <ChevronRight className="size-5 text-subtle" aria-hidden />
-      </Link>
     </>
   )
 }

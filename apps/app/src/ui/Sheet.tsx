@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { AnimatePresence, motion, useDragControls } from 'motion/react'
 import { X } from 'lucide-react'
 import { IconButton } from './Button'
+import { cx } from './cx'
 
 type SheetProps = {
   open: boolean
@@ -13,13 +14,15 @@ type SheetProps = {
   footer?: ReactNode
   /** Full-height sheet for long forms. */
   tall?: boolean
+  /** Panel surface. Defaults to the app background. */
+  panelClassName?: string
 }
 
 /**
  * Bottom sheet. Rendered into #root so it stays inside the phone frame on
  * desktop. Closes on backdrop tap, Escape, or dragging the handle down.
  */
-export function Sheet({ open, onClose, title, description, children, footer, tall }: SheetProps) {
+export function Sheet({ open, onClose, title, description, children, footer, tall, panelClassName }: SheetProps) {
   const titleId = useId()
   const panelRef = useRef<HTMLDivElement>(null)
   const drag = useDragControls()
@@ -60,9 +63,11 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
             aria-modal="true"
             aria-labelledby={titleId}
             tabIndex={-1}
-            className={`relative flex w-full flex-col rounded-t-[1.75rem] bg-bg shadow-float outline-none ${
-              tall ? 'h-[94%]' : 'max-h-[92%]'
-            }`}
+            className={cx(
+              'relative flex w-full flex-col rounded-t-[1.75rem] shadow-float outline-none',
+              panelClassName ?? 'bg-bg',
+              tall ? 'h-[94%]' : 'max-h-[92%]',
+            )}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
