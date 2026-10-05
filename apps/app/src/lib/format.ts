@@ -1,4 +1,5 @@
 import type { OdometerMeasure } from '@seibi/maintenance-engine/odometer'
+import { paintLabel } from './paint'
 
 const LOCALE = 'es-SV'
 
@@ -90,4 +91,33 @@ export function greeting(now = new Date()) {
 
 export function vehicleName(v: { brand: string; model: string }) {
   return `${v.brand} ${v.model}`
+}
+
+type ChoiceVehicle = {
+  id: string
+  model: string
+  year: number
+  plate: string | null
+  color: string | null
+  odometer: number | null
+}
+
+/** Short label for a vehicle picker. Adds plate, color, or mileage only when
+ * another Vehicle shares the model and year. */
+export function vehicleChoiceLabel(vehicle: ChoiceVehicle, vehicles: ChoiceVehicle[]) {
+  const twins = vehicles.filter(
+    (v) => v.id !== vehicle.id && v.model === vehicle.model && v.year === vehicle.year,
+  )
+  if (twins.length === 0) return vehicle.model
+  const group = [vehicle, ...twins]
+  const plates = group.map((v) => v.plate?.trim() || null)
+  if (plates.every(Boolean) && new Set(plates).size === group.length) {
+    return `${vehicle.model} · ${vehicle.plate}`
+  }
+  const colors = group.map((v) => paintLabel(v.color))
+  if (colors.every(Boolean) && new Set(colors).size === group.length) {
+    return `${vehicle.model} ${paintLabel(vehicle.color)}`
+  }
+  if (vehicle.odometer != null) return `${vehicle.model} ${formatNumber(vehicle.odometer)}`
+  return `${vehicle.model} ${vehicle.year}`
 }

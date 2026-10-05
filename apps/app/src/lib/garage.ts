@@ -22,6 +22,17 @@ import { todayIso } from './format'
 import { publicRenderUrl, supabase } from './supabase'
 import { useTasks, type MaintenanceTask } from './tasks'
 
+const WITHDRAWN_KEEP_MS = 30 * 86_400_000
+
+export function withdrawnStillRestorable(withdrawnAt: string) {
+  return Date.now() - Date.parse(withdrawnAt) < WITHDRAWN_KEEP_MS
+}
+
+export function withdrawnDaysLeft(withdrawnAt: string) {
+  const leftMs = WITHDRAWN_KEEP_MS - (Date.now() - Date.parse(withdrawnAt))
+  return Math.max(1, Math.ceil(leftMs / 86_400_000))
+}
+
 export type BodyType =
   | 'sedan'
   | 'hatchback'
@@ -392,7 +403,7 @@ export function useGarage() {
     const all = query.data.map((v) => deriveVehicle(v, tasks.data, today))
     return {
       vehicles: all.filter((v) => !v.withdrawnAt),
-      withdrawn: all.filter((v) => v.withdrawnAt),
+      withdrawn: all.filter((v) => v.withdrawnAt && withdrawnStillRestorable(v.withdrawnAt)),
     }
   }, [query.data, tasks.data, today])
 
