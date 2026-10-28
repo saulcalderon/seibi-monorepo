@@ -4,6 +4,9 @@ import { Intro } from '../screens/Intro'
 
 export const Route = createFileRoute('/intro')({
   beforeLoad: async () => {
+    const preview =
+      typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('preview')
+    if (preview) return
     const next = await pathAfterSplash()
     if (next !== '/intro' && next !== '/login') throw redirect({ to: next })
   },
