@@ -102,6 +102,55 @@
   --app-shadow-float: 0 16px 44px rgb(0 0 0 / 55%);
 }
 
+/* First-run screens stay on the day palette, even when the app is in night. */
+.intro-day {
+  color-scheme: light;
+  color: var(--app-ink);
+  --app-bg: #f2f4f7;
+  --app-surface: #ffffff;
+  --app-surface-2: #f7f8fa;
+  --app-surface-3: #eceef2;
+  --app-ink: #141517;
+  --app-muted: #5b606a;
+  --app-subtle: #8a909a;
+  --app-line: rgb(20 21 23 / 8%);
+  --app-inverse: #141517;
+  --app-on-inverse: #f2f4f7;
+  --app-radiant-soft: #fdeee8;
+  --app-ok: #178a55;
+  --app-ok-soft: #e3f5ec;
+  --app-soon: #b86e00;
+  --app-soon-soft: #fdf1dc;
+  --app-overdue: #d0342a;
+  --app-overdue-soft: #fde8e6;
+  --app-unknown: #5b606a;
+  --app-unknown-soft: #eceef2;
+  --app-shadow-card: 0 1px 2px rgb(20 21 23 / 4%), 0 10px 28px rgb(20 21 23 / 6%);
+  --app-shadow-float: 0 12px 40px rgb(20 21 23 / 16%), 0 2px 6px rgb(20 21 23 / 8%);
+}
+
+/* Intro: the Garage palette that stays. Red is only for Vencido. */
+.intro-v3 {
+  --app-bg: #f1f1f2;
+  --app-surface: #ffffff;
+  --app-surface-2: #f4f4f5;
+  --app-surface-3: #e4e4e6;
+  --app-ink: #0e0f11;
+  --app-muted: #6b6e74;
+  --app-subtle: #9a9ca1;
+  --app-line: rgb(14 15 17 / 8%);
+  --app-inverse: #0e0f11;
+  --app-on-inverse: #ffffff;
+  --app-overdue: #ad2831;
+  --app-overdue-soft: #f8e6e7;
+  --app-shadow-card: 0 1px 2px rgb(14 15 17 / 4%), 0 10px 28px rgb(14 15 17 / 6%);
+  --app-shadow-float: 0 12px 40px rgb(14 15 17 / 16%), 0 2px 6px rgb(14 15 17 / 8%);
+}
+
+[data-theme='night'] .intro-day .seibi-mark[data-variant='auto'] {
+  --seibi-mark-tick: #1f1f1f;
+}
+
 /* Element defaults live in the base layer so Tailwind utilities win. */
 @layer base {
   *,
