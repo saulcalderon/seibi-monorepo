@@ -42,6 +42,9 @@ declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router
   }
+  interface HistoryState {
+    fromSplash?: boolean
+  }
 }
 
 createRoot(document.getElementById('root')!).render(

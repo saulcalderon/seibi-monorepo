@@ -1,19 +1,17 @@
-import { useEffect, useState } from 'react'
-import { Link } from '@tanstack/react-router'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
+import { Link, useRouterState } from '@tanstack/react-router'
 import { LoaderCircle } from 'lucide-react'
-import { motion, useReducedMotion } from 'motion/react'
+import { useReducedMotion } from 'motion/react'
 import { Logo } from '../components/Logo'
+import { playLockupHandoff } from '../lib/lockupHandoff'
 import { signInWithProvider } from '../lib/supabase'
 
-const EASE = [0.2, 0.7, 0.2, 1] as const
 const display = 'font-sans font-light tracking-[-0.025em]'
 
-function rise(reduce: boolean | null, delay: number) {
-  return {
-    initial: reduce ? false : { opacity: 0, y: 8 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: reduce ? 0 : 0.5, delay: reduce ? 0 : delay, ease: EASE },
-  }
+/** Opacity + translate, held by the keyframes. Motion's transform cleanup was snapping the screen at the end. */
+function rise(reduce: boolean | null, delay: number): CSSProperties | undefined {
+  if (reduce) return undefined
+  return { animation: `login-rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) ${delay}s both` }
 }
 const pill =
   'inline-flex h-11 w-full select-none items-center justify-center gap-2 rounded-full text-[0.92rem] font-medium transition-transform duration-200 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50'
@@ -42,7 +40,15 @@ function GoogleMark() {
 
 export function Login() {
   const reduce = useReducedMotion()
+  const fromSplash = useRouterState({ select: (s) => s.location.state.fromSplash === true })
+  const handoff = fromSplash && !reduce
+  const lockupRef = useRef<HTMLDivElement>(null)
   const [pending, setPending] = useState<'apple' | 'google' | null>(null)
+
+  useLayoutEffect(() => {
+    if (!fromSplash) return
+    playLockupHandoff(lockupRef.current)
+  }, [fromSplash])
 
   useEffect(() => {
     const meta = document.querySelector('meta[name="theme-color"]')
@@ -65,9 +71,10 @@ export function Login() {
   }
 
   return (
-    <div className="intro-day intro-v3 relative flex h-full flex-col overflow-hidden bg-bg pt-safe pb-safe">
+    <div className="login-screen intro-day intro-v3 relative flex h-full flex-col overflow-hidden bg-bg pt-safe pb-safe">
       <div className="flex min-h-0 flex-1 flex-col justify-center">
-      <motion.div className="relative -top-8 flex flex-col items-center gap-1 px-5 pt-5" {...rise(reduce, 0)}>
+      <div className="relative -top-8 flex w-full flex-col items-center px-5 pt-5" style={handoff ? undefined : rise(reduce, 0)}>
+        <div ref={lockupRef} className="flex flex-col items-center gap-1" style={{ transformOrigin: 'center center' }}>
         <Logo className="text-[2.35rem]" />
         <p className="font-sans text-[1.35rem] font-bold leading-none tracking-[-0.035em] text-[var(--app-ink)] [font-stretch:125%]">
           <span className="sr-only">Seibi</span>
@@ -78,45 +85,44 @@ export function Login() {
             </span>
           </span>
         </p>
-      </motion.div>
+        </div>
+      </div>
       <div className="relative my-1 flex h-48 items-center justify-center px-5">
-        <motion.img
+        <img
           src="/assets/login-yaris.png"
           alt=""
           className="h-full w-full object-contain"
-          initial={reduce ? false : { opacity: 0, scale: 0.78, filter: 'blur(10px)' }}
-          animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-          transition={{ duration: reduce ? 0 : 0.9, delay: reduce ? 0 : 0.12, ease: EASE }}
+          style={reduce ? undefined : { animation: `login-car 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) ${handoff ? 0.78 : 0.08}s both` }}
         />
       </div>
       <div className="mt-1 flex flex-col px-6 pb-4 text-center">
-        <motion.div {...rise(reduce, 0.16)}>
+        <div style={rise(reduce, handoff ? 0.86 : 0.16)}>
           <h1 className={`${display} text-[1.7rem] leading-[1.12]`}>Mantenimiento con total claridad</h1>
           <p className="mt-2 text-pretty text-[0.9rem] leading-[1.45] text-muted">
             Entra para guardar tus Vehículos y recibir tus avisos.
           </p>
-        </motion.div>
+        </div>
         <div className="mt-4 flex flex-col gap-2">
-          <motion.button
+          <button
             type="button"
             className={`${pill} bg-[var(--app-inverse)] text-[var(--app-on-inverse)]`}
             disabled={pending !== null}
             onClick={() => void continueWith('apple')}
-            {...rise(reduce, 0.24)}
+            style={rise(reduce, handoff ? 0.94 : 0.24)}
           >
             {pending === 'apple' ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <AppleMark />}
             Continuar con Apple
-          </motion.button>
-          <motion.button
+          </button>
+          <button
             type="button"
             className={`${pill} bg-[var(--app-surface)] text-[var(--app-ink)] shadow-card`}
             disabled={pending !== null}
             onClick={() => void continueWith('google')}
-            {...rise(reduce, 0.3)}
+            style={rise(reduce, handoff ? 1 : 0.3)}
           >
             {pending === 'google' ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <GoogleMark />}
             Continuar con Google
-          </motion.button>
+          </button>
         </div>
         {error ? (
           <p role="alert" className="mt-3 text-center text-[0.85rem] font-medium text-overdue">
@@ -125,7 +131,7 @@ export function Login() {
         ) : null}
       </div>
       </div>
-      <motion.p className="px-6 pb-3 text-center text-[0.75rem] leading-[1.4] text-muted" {...rise(reduce, 0.42)}>
+      <p className="px-6 pb-3 text-center text-[0.75rem] leading-[1.4] text-muted" style={rise(reduce, handoff ? 1.12 : 0.42)}>
         Al continuar aceptas los{' '}
         <Link to="/legal/terminos" className="font-semibold text-[var(--app-ink)] underline">
           Términos
@@ -135,7 +141,7 @@ export function Login() {
           Política de privacidad
         </Link>
         .
-      </motion.p>
+      </p>
     </div>
   )
 }

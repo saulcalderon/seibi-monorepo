@@ -10,5 +10,11 @@ export const Route = createFileRoute('/')({
 function SplashRoute() {
   const { next } = Route.useLoaderData()
   const navigate = useNavigate()
-  return <Splash onDone={() => void navigate({ to: next, replace: true })} />
+  const handoff = next === '/login' || next === '/intro'
+  return (
+    <Splash
+      handoff={handoff}
+      onDone={() => void navigate({ to: next, replace: true, state: handoff ? { fromSplash: true } : {} })}
+    />
+  )
 }

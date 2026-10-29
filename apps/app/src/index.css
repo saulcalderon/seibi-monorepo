@@ -355,7 +355,10 @@
   --seibi-mark-tick: #ffffff;
 }
 
-/* Splash: the S sweeps in and the arc lights up tick by tick to the red zone. */
+/* Splash: the S lands, letters rise, a gloss crosses the S, then the lockup flies into the next logo. */
+.splash-lockup {
+  font-size: min(5.5rem, 28vw);
+}
 @keyframes splash-mark-in {
   from {
     transform: scale(0.97);
@@ -388,18 +391,27 @@
     transform: scale(1);
   }
 }
-@keyframes splash-redline {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.35;
-  }
-}
 .splash-logo {
-  font-size: min(8.94rem, 45.88vw);
+  font-size: 0.68em;
   animation: splash-mark-in 2.05s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.splash-word {
+  margin-top: 0.08em;
+  font-size: 0.38em;
+}
+.splash-letter {
+  display: inline-block;
+  animation: splash-letter-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) calc(0.95s + var(--i) * 0.07s) both;
+}
+@keyframes splash-letter-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.42em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 .splash-logo .seibi-mark-s,
 .splash-logo .seibi-mark-arc {
@@ -412,10 +424,36 @@
 .splash-logo .seibi-mark-arc {
   animation: splash-tick-in 0.42s var(--ease-spring) calc(0.5s + var(--i) * 0.06s) both;
 }
-.splash-logo .seibi-mark-arc.seibi-mark-accent {
-  animation:
-    splash-tick-in 0.42s var(--ease-spring) calc(0.5s + var(--i) * 0.06s) both,
-    splash-redline 0.36s ease-in-out 1.58s;
+.seibi-mark-shine {
+  opacity: 0;
+  pointer-events: none;
+}
+.seibi-mark-shine-band {
+  transform: translateX(-260px) skewX(-20deg);
+}
+.splash-logo .seibi-mark-shine {
+  animation: splash-s-shine 0.7s ease-in-out 1.86s both;
+}
+.splash-logo .seibi-mark-shine-band {
+  animation: splash-s-shine-move 0.7s ease-in-out 1.86s both;
+}
+@keyframes splash-s-shine {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  22%,
+  78% {
+    opacity: 1;
+  }
+}
+@keyframes splash-s-shine-move {
+  from {
+    transform: translateX(-260px) skewX(-20deg);
+  }
+  to {
+    transform: translateX(820px) skewX(-20deg);
+  }
 }
 
 /* Screen changes (TanStack Router view transitions): a short fade + lift. */
@@ -436,6 +474,35 @@
   from {
     opacity: 0;
     transform: translateY(8px);
+  }
+}
+
+/* Login paints its own entrance. The router snapshot would otherwise swap in
+   at the end of that move and read as a hitch. */
+html:has(.login-screen)::view-transition-old(root),
+html:has(.login-screen)::view-transition-new(root) {
+  animation: none;
+}
+
+@keyframes login-rise {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes login-car {
+  from {
+    opacity: 0;
+    scale: 0.96;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
   }
 }
 

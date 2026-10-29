@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import type { AnimationEventHandler, CSSProperties } from 'react'
 
 interface LogoProps {
@@ -28,6 +29,8 @@ const TICKS: { tone: 'tick' | 'accent'; d: string }[] = [
 // Isotipo: S + arco de velocímetro. Fuente: assets/seibi-logo.svg.
 // Las marcas neutras del arco siguen el tema (oscuras en fog, blancas en night).
 export function Logo({ className, variant = 'auto', onAnimationEnd }: LogoProps) {
+  const shineClipId = `seibi-s-${useId().replace(/:/g, '')}`
+
   return (
     <svg
       className={`seibi-mark ${className ?? ''}`}
@@ -37,6 +40,11 @@ export function Logo({ className, variant = 'auto', onAnimationEnd }: LogoProps)
       aria-label="Seibi"
       onAnimationEnd={onAnimationEnd}
     >
+      <defs>
+        <clipPath id={shineClipId}>
+          <path d={S_PATH} />
+        </clipPath>
+      </defs>
       <path className="seibi-mark-accent seibi-mark-s" d={S_PATH} />
       {TICKS.map(({ tone, d }, i) => (
         <path
@@ -46,6 +54,9 @@ export function Logo({ className, variant = 'auto', onAnimationEnd }: LogoProps)
           d={d}
         />
       ))}
+      <g className="seibi-mark-shine" clipPath={`url(#${shineClipId})`}>
+        <rect className="seibi-mark-shine-band" x="0" y="-40" width="150" height="520" fill="#fff" opacity="0.85" />
+      </g>
     </svg>
   )
 }

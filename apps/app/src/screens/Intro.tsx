@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, forwardRef, type ReactNode } from 'react'
 import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, type PanInfo, type Variants } from 'motion/react'
 import {
   ArrowRight,
@@ -17,6 +17,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { Logo } from '../components/Logo'
+import { playLockupSplit } from '../lib/lockupHandoff'
 import { cx } from '../ui/cx'
 
 const SLIDES = [
@@ -47,11 +48,11 @@ const screenCard = 'rounded-[1rem] border border-white/80 bg-surface shadow-card
 const CHARS = { at: 0.08, step: 0.028, duration: 0.56 }
 const WORDS = { at: 0.38, step: 0.055, duration: 0.64 }
 
-function Lockup() {
+const Lockup = forwardRef<HTMLSpanElement>(function Lockup(_props, ref) {
   return (
-    <span className="inline-flex items-center gap-[0.28em] text-[1.375rem] leading-none">
+    <span ref={ref} className="inline-flex items-center gap-[0.28em] text-[1.375rem] leading-none" style={{ transformOrigin: 'center center' }}>
       <Logo className="text-[0.95em]" />
-      <span className="inline-flex items-baseline font-bold tracking-[-0.035em] [font-stretch:125%]" aria-hidden>
+      <span data-lockup-word className="inline-flex items-baseline font-bold tracking-[-0.035em] [font-stretch:125%]" aria-hidden>
         seib
         <span className="relative inline-block after:absolute after:left-1/2 after:top-[-0.02em] after:size-[0.15em] after:-translate-x-1/2 after:-skew-x-14 after:rounded-[0.02em] after:bg-[#e0464f] after:content-['']">
           ı
@@ -59,7 +60,7 @@ function Lockup() {
       </span>
     </span>
   )
-}
+})
 
 /** Each place slides to its new character, units first. Places are keyed from the right so digits stay aligned. */
 function Ticker({ text, className }: { text: string; className?: string }) {
@@ -997,10 +998,16 @@ function Visual({ index }: { index: number }) {
   return <EstadoGrid />
 }
 
-export function Intro({ onFinish }: { onFinish: () => void }) {
+export function Intro({ fromSplash = false, onFinish }: { fromSplash?: boolean; onFinish: () => void }) {
   const [index, setIndex] = useState(0)
   const reduce = useReducedMotion()
+  const lockupRef = useRef<HTMLSpanElement>(null)
   const last = index === SLIDES.length - 1
+
+  useLayoutEffect(() => {
+    if (!fromSplash) return
+    playLockupSplit(lockupRef.current)
+  }, [fromSplash])
 
   const go = (next: number) => {
     if (next < 0 || next >= SLIDES.length) return
@@ -1016,8 +1023,8 @@ export function Intro({ onFinish }: { onFinish: () => void }) {
 
   return (
     <div className="intro-day intro-v3 relative isolate flex h-full flex-col bg-bg pt-safe pb-safe">
-      <div className="relative flex items-center justify-between px-4 pb-2 pt-4">
-        <Lockup />
+      <div className="relative z-20 flex items-center justify-between px-4 pb-2 pt-4">
+        <Lockup ref={lockupRef} />
         {!last ? (
           <button type="button" onClick={onFinish} className="min-h-11 text-[0.9375rem] font-medium text-muted">
             Saltar
