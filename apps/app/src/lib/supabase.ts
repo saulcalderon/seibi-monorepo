@@ -20,8 +20,8 @@ export const supabase = createClient<Database>(supabaseUrl ?? '', supabaseAnonKe
   },
 })
 
-/** Apple Sign-In is hidden until it is configured in the hosted project. */
-export type OAuthProvider = 'google'
+/** Apple still needs the provider enabled on the hosted project before the redirect succeeds. */
+export type OAuthProvider = 'apple' | 'google'
 
 export function signInWithProvider(provider: OAuthProvider) {
   return supabase.auth.signInWithOAuth({
