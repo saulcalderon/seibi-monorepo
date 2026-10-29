@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { LoaderCircle, Mail } from 'lucide-react'
+import { LoaderCircle } from 'lucide-react'
 import { motion, useReducedMotion } from 'motion/react'
 import { Logo } from '../components/Logo'
-import { signInWithProvider, supabase } from '../lib/supabase'
-import { Button } from '../ui/Button'
-import { TextField } from '../ui/fields'
+import { signInWithProvider } from '../lib/supabase'
 
 const EASE = [0.2, 0.7, 0.2, 1] as const
 const display = 'font-sans font-light tracking-[-0.025em]'
@@ -67,8 +65,9 @@ export function Login() {
   }
 
   return (
-    <div className="intro-day intro-v3 relative flex h-full flex-col justify-center overflow-hidden bg-bg pt-safe pb-safe">
-      <motion.div className="flex flex-col items-center gap-1 px-5 pt-5" {...rise(reduce, 0)}>
+    <div className="intro-day intro-v3 relative flex h-full flex-col overflow-hidden bg-bg pt-safe pb-safe">
+      <div className="flex min-h-0 flex-1 flex-col justify-center">
+      <motion.div className="relative -top-8 flex flex-col items-center gap-1 px-5 pt-5" {...rise(reduce, 0)}>
         <Logo className="text-[2.35rem]" />
         <p className="font-sans text-[1.35rem] font-bold leading-none tracking-[-0.035em] text-[var(--app-ink)] [font-stretch:125%]">
           <span className="sr-only">Seibi</span>
@@ -124,61 +123,19 @@ export function Login() {
             {error}
           </p>
         ) : null}
-        {import.meta.env.DEV ? (
-          <motion.div {...rise(reduce, 0.36)}>
-            <DevEmailLogin />
-          </motion.div>
-        ) : null}
-        <motion.p className="mt-3 text-center text-[0.75rem] leading-[1.4] text-muted" {...rise(reduce, 0.42)}>
-          Al continuar aceptas los{' '}
-          <Link to="/legal/terminos" className="font-semibold text-[var(--app-ink)] underline">
-            Términos
-          </Link>{' '}
-          y la{' '}
-          <Link to="/legal/privacidad" className="font-semibold text-[var(--app-ink)] underline">
-            Política de privacidad
-          </Link>
-          .
-        </motion.p>
       </div>
-    </div>
-  )
-}
-
-/** Local development only: email + password against local Supabase. */
-function DevEmailLogin() {
-  const [email, setEmail] = useState('demo@seibi.test')
-  const [password, setPassword] = useState('password123')
-  const [msg, setMsg] = useState<string | null>(null)
-  return (
-    <div className="mt-2">
-      <p className="py-1 text-center text-[0.75rem] text-muted">o continúa con</p>
-      <details className="mt-1">
-      <summary className={`${pill} cursor-pointer list-none bg-[var(--app-surface)] text-[var(--app-ink)] ring-1 ring-[var(--app-line)] [&::-webkit-details-marker]:hidden`}>
-        <Mail className="size-4" aria-hidden />
-        Entrar con correo (solo desarrollo)
-      </summary>
-      <form
-        className="mt-3 flex flex-col gap-3 text-left"
-        onSubmit={async (e) => {
-          e.preventDefault()
-          setMsg(null)
-          let { error } = await supabase.auth.signInWithPassword({ email, password })
-          if (error) {
-            ;({ error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: 'Demo Seibi' } } }))
-          }
-          if (error) setMsg(error.message)
-          else window.location.assign('/auth/callback')
-        }}
-      >
-        <TextField label="Correo" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <TextField label="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        <Button type="submit" variant="inverse">
-          Entrar
-        </Button>
-        {msg ? <p className="text-[0.8rem] text-overdue">{msg}</p> : null}
-      </form>
-      </details>
+      </div>
+      <motion.p className="px-6 pb-3 text-center text-[0.75rem] leading-[1.4] text-muted" {...rise(reduce, 0.42)}>
+        Al continuar aceptas los{' '}
+        <Link to="/legal/terminos" className="font-semibold text-[var(--app-ink)] underline">
+          Términos
+        </Link>{' '}
+        y la{' '}
+        <Link to="/legal/privacidad" className="font-semibold text-[var(--app-ink)] underline">
+          Política de privacidad
+        </Link>
+        .
+      </motion.p>
     </div>
   )
 }
