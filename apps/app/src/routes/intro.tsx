@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate, useRouterState } from '@tanstack/react-router'
 import { markIntroDone, pathAfterSplash } from '../lib/routing'
 import { Intro } from '../screens/Intro'
 
@@ -15,8 +15,10 @@ export const Route = createFileRoute('/intro')({
 
 function IntroRoute() {
   const navigate = useNavigate()
+  const fromSplash = useRouterState({ select: (s) => s.location.state.fromSplash === true })
   return (
     <Intro
+      fromSplash={fromSplash}
       onFinish={() => {
         markIntroDone()
         void navigate({ to: '/login', replace: true })
