@@ -1,6 +1,6 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { BellRing, Check, ChevronLeft, GraduationCap, Sparkles } from 'lucide-react'
+import { ArrowRight, BellRing, Check, ChevronLeft, GraduationCap, LoaderCircle } from 'lucide-react'
 import { Logo } from '../components/Logo'
 import { VehicleFormBody } from '../forms/VehicleForm'
 import { useAuthSession } from '../lib/authSession'
@@ -21,7 +21,6 @@ import { enablePush, pushSupported } from '../lib/push'
 import { taskIcon } from '../lib/tasks'
 import { useQueryClient } from '@tanstack/react-query'
 import { garageQueryKey } from '../lib/garage'
-import { Button, IconButton } from '../ui/Button'
 import { cx } from '../ui/cx'
 import { parseNumber, SelectField, TextField } from '../ui/fields'
 
@@ -49,6 +48,8 @@ const CATEGORY: Record<Step, string> = {
 }
 
 const ORDER: Step[] = ['name', 'level', 'check', 'result', 'location', 'vehicle', 'usage', 'history', 'notifications']
+
+const display = 'font-sans font-light tracking-[-0.025em]'
 
 export function Onboarding({ onFinish }: { onFinish: () => void }) {
   const { user } = useAuthSession()
@@ -100,32 +101,41 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
   const k = knowledgeProfile(level ?? selfLevel)
   const vehicle = garage.vehicles.find((v) => v.id === vehicleId) ?? null
 
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]')
+    const previous = meta?.getAttribute('content')
+    meta?.setAttribute('content', '#f1f1f2')
+    return () => {
+      if (previous) meta?.setAttribute('content', previous)
+    }
+  }, [])
+
   return (
-    <div className="flex h-full flex-col bg-bg pt-safe">
-      <header className="px-5 pb-2 pt-2">
-        <div className="flex items-center gap-2">
-          {position > 0 && step !== 'check' ? (
-            <IconButton icon={ChevronLeft} label="Atrás" onClick={() => go(steps[position - 1])} className="-ml-2" />
-          ) : (
-            <span className="inline-flex size-11 items-center">
-              <Logo className="text-[1.4rem]" />
+    <div className="intro-day intro-v3 relative isolate flex h-full flex-col bg-bg pt-safe pb-safe">
+      <header className="relative z-20 flex items-center justify-between px-4 pb-2 pt-4">
+        {position > 0 && step !== 'check' ? (
+          <button
+            type="button"
+            onClick={() => go(steps[position - 1])}
+            className="inline-flex min-h-11 min-w-11 items-center justify-center text-muted"
+            aria-label="Atrás"
+          >
+            <ChevronLeft className="size-6" strokeWidth={2.2} />
+          </button>
+        ) : (
+          <span className="inline-flex items-center gap-[0.28em] text-[1.375rem] leading-none">
+            <Logo className="text-[0.95em]" />
+            <span className="inline-flex items-baseline font-bold tracking-[-0.035em] [font-stretch:125%]" aria-hidden>
+              seib
+              <span className="relative inline-block after:absolute after:left-1/2 after:top-[-0.02em] after:size-[0.15em] after:-translate-x-1/2 after:-skew-x-14 after:rounded-[0.02em] after:bg-[#e0464f] after:content-['']">
+                ı
+              </span>
             </span>
-          )}
-          <div className="flex-1">
-            <p className="text-[0.75rem] font-bold uppercase tracking-[0.12em] text-radiant">{CATEGORY[step]}</p>
-            <div className="mt-1.5 flex gap-1" aria-hidden>
-              {steps.map((s, i) => (
-                <span
-                  key={s}
-                  className={cx('h-1 flex-1 rounded-full transition-colors', i <= position ? 'bg-radiant' : 'bg-ink/10')}
-                />
-              ))}
-            </div>
-          </div>
-          <span className="sr-only">
-            Paso {position + 1} de {steps.length}
           </span>
-        </div>
+        )}
+        <span className="sr-only">
+          Paso {position + 1} de {steps.length}
+        </span>
       </header>
 
       <div className="relative min-h-0 flex-1">
@@ -141,14 +151,13 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
           >
             {step === 'name' ? (
               <Panel
+                eyebrow={CATEGORY.name}
                 title="¡Bienvenido a Seibi!"
                 body="Te haremos unas preguntas rápidas para adaptar Seibi a ti. Toma unos 2 minutos."
               >
                 <TextField label="¿Cómo te llamamos?" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre" autoFocus />
                 <Footer>
-                  <Button
-                    size="lg"
-                    block
+                  <Pill
                     disabled={name.trim().length === 0}
                     onClick={() => {
                       update.mutate({ displayName: name })
@@ -156,13 +165,13 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
                     }}
                   >
                     Continuar
-                  </Button>
+                  </Pill>
                 </Footer>
               </Panel>
             ) : null}
 
             {step === 'level' ? (
-              <Panel title="¿Cuánto sabes de carros?" body="Sé honesto: así te explicamos las cosas a tu medida. Lo puedes cambiar después.">
+              <Panel eyebrow={CATEGORY.level} title="¿Cuánto sabes de carros?" body="Sé honesto: así te explicamos las cosas a tu medida. Lo puedes cambiar después.">
                 <div className="flex flex-col gap-2.5" role="radiogroup" aria-label="Nivel de conocimiento">
                   {KNOWLEDGE_LEVELS.map((l) => (
                     <Option
@@ -185,6 +194,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
 
             {step === 'check' ? (
               <Panel
+                eyebrow={CATEGORY.check}
                 title={CHECK_QUESTIONS[checkIndex].question}
                 body={`Pregunta ${checkIndex + 1} de ${CHECK_QUESTIONS.length}. Si no sabes, elige “No sé”: está perfecto.`}
               >
@@ -215,9 +225,9 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
             ) : null}
 
             {step === 'result' && level ? (
-              <Panel title={RESULT_COPY[level].title} body={RESULT_COPY[level].body}>
-                <div className="flex items-center gap-3 rounded-2xl bg-surface p-4 shadow-card">
-                  <span className="inline-flex size-11 items-center justify-center rounded-2xl bg-radiant-soft text-radiant">
+              <Panel eyebrow={CATEGORY.result} title={RESULT_COPY[level].title} body={RESULT_COPY[level].body}>
+                <div className="flex items-center gap-3 rounded-[1rem] border border-white/80 bg-surface p-4 shadow-card">
+                  <span className="inline-flex size-11 items-center justify-center rounded-[1rem] bg-surface-2 text-ink">
                     <GraduationCap className="size-5" aria-hidden />
                   </span>
                   <div>
@@ -225,7 +235,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
                     <p className="font-bold">{levelTitle(level)}</p>
                   </div>
                 </div>
-                <details className="rounded-2xl bg-surface p-4 ring-1 ring-line">
+                <details className="rounded-[1rem] border border-white/80 bg-surface p-4 shadow-card">
                   <summary className="cursor-pointer text-[0.88rem] font-semibold">Prefiero otro nivel</summary>
                   <div className="mt-3 flex flex-col gap-2">
                     {KNOWLEDGE_LEVELS.map((l) => (
@@ -242,15 +252,13 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
                   </div>
                 </details>
                 <Footer>
-                  <Button size="lg" block onClick={() => advance('result')}>
-                    Continuar
-                  </Button>
+                  <Pill onClick={() => advance('result')}>Continuar</Pill>
                 </Footer>
               </Panel>
             ) : null}
 
             {step === 'location' ? (
-              <Panel title="¿Dónde usas tu Vehículo?" body="Lo usamos para estimar precios de tu zona y ajustar el plan del fabricante a tu país.">
+              <Panel eyebrow={CATEGORY.location} title="¿Dónde usas tu Vehículo?" body="Lo usamos para estimar precios de tu zona y ajustar el plan del fabricante a tu país.">
                 <SelectField label="País" value={country} onChange={(e) => setCountry(e.target.value as Country)}>
                   {COUNTRIES.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -260,24 +268,22 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
                 </SelectField>
                 <TextField label="Ciudad" value={city} onChange={(e) => setCity(e.target.value)} placeholder={country === 'SV' ? 'San Salvador, Santa Ana…' : 'Houston, Los Ángeles…'} />
                 <Footer>
-                  <Button
-                    size="lg"
-                    block
+                  <Pill
                     loading={update.isPending}
                     disabled={city.trim().length < 2}
-                    onClick={async () => {
-                      await update.mutateAsync({ country, city })
-                      advance('location')
+                    onClick={() => {
+                      void update.mutateAsync({ country, city }).then(() => advance('location'))
                     }}
                   >
                     Continuar
-                  </Button>
+                  </Pill>
                 </Footer>
               </Panel>
             ) : null}
 
             {step === 'vehicle' ? (
               <Panel
+                eyebrow={CATEGORY.vehicle}
                 title="Agrega tu Vehículo"
                 body={
                   k.explain
@@ -302,13 +308,9 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
                 )}
                 <Footer>
                   {vehicleId ? (
-                    <Button size="lg" block onClick={() => advance('vehicle')}>
-                      Continuar
-                    </Button>
+                    <Pill onClick={() => advance('vehicle')}>Continuar</Pill>
                   ) : (
-                    <Button variant="ghost" block onClick={() => advance('vehicle')}>
-                      Lo agrego después
-                    </Button>
+                    <Quiet onClick={() => advance('vehicle')}>Lo agrego después</Quiet>
                   )}
                 </Footer>
               </Panel>
@@ -323,10 +325,10 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
             ) : null}
 
             {step === 'notifications' ? (
-              <Panel title="¿Te avisamos a tiempo?" body="Te mandamos una notificación cuando se acerque un mantenimiento o toque actualizar el kilometraje. Nada de publicidad.">
-                <div className="flex justify-center py-6">
+              <Panel eyebrow={CATEGORY.notifications} title="¿Te avisamos a tiempo?" body="Te mandamos una notificación cuando se acerque un mantenimiento o toque actualizar el kilometraje. Nada de publicidad.">
+                <div className="flex flex-1 items-center justify-center py-6">
                   <motion.span
-                    className="inline-flex size-24 items-center justify-center rounded-[2rem] bg-radiant-soft text-radiant"
+                    className="inline-flex size-24 items-center justify-center rounded-[2rem] bg-surface text-ink shadow-card"
                     animate={{ rotate: [0, -10, 10, -6, 0] }}
                     transition={{ repeat: Infinity, repeatDelay: 1.6, duration: 0.8 }}
                   >
@@ -334,25 +336,40 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
                   </motion.span>
                 </div>
                 <Footer>
-                  <Button
-                    size="lg"
-                    block
+                  <Pill
                     loading={finishing}
-                    onClick={async () => {
-                      if (user) await enablePush(user.id).catch(() => false)
-                      await finish()
+                    onClick={() => {
+                      void (async () => {
+                        if (user) await enablePush(user.id).catch(() => false)
+                        await finish()
+                      })()
                     }}
                   >
                     Activar avisos
-                  </Button>
-                  <Button variant="ghost" block disabled={finishing} onClick={() => void finish()}>
+                  </Pill>
+                  <Quiet disabled={finishing} onClick={() => void finish()}>
                     Ahora no
-                  </Button>
+                  </Quiet>
                 </Footer>
               </Panel>
             ) : null}
           </motion.div>
         </AnimatePresence>
+      </div>
+
+      <div className="flex items-center justify-center pb-3" aria-hidden>
+        <div className="flex items-center gap-0.5">
+          {steps.map((s, i) => (
+            <span key={s} className="flex h-8 items-center px-0.5">
+              <span
+                className={cx(
+                  'block h-1.5 rounded-full transition-[width,background-color] duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)]',
+                  i === position ? 'w-4 bg-ink' : 'w-1.5 bg-[#c9cacd]',
+                )}
+              />
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -377,20 +394,80 @@ const RESULT_COPY: Record<KnowledgeLevel, { title: string; body: string }> = {
   },
 }
 
-function Panel({ title, body, children }: { title: string; body?: string; children: React.ReactNode }) {
+function Panel({
+  eyebrow,
+  title,
+  body,
+  children,
+}: {
+  eyebrow?: string
+  title: string
+  body?: string
+  children: React.ReactNode
+}) {
+  const long = title.length > 42
   return (
-    <div className="flex min-h-full flex-col gap-5 pb-4">
-      <div>
-        <h1 className="text-[1.75rem] leading-[1.12]">{title}</h1>
-        {body ? <p className="mt-2 text-[0.95rem] text-muted">{body}</p> : null}
-      </div>
-      {children}
+    <div className="flex min-h-full flex-col pb-2">
+      <p className="text-[0.8125rem] font-medium text-muted">{eyebrow}</p>
+      <h1 className={cx(display, 'mt-2', long ? 'text-[1.35rem] leading-[1.22]' : 'text-[2rem] leading-[1.04]')}>{title}</h1>
+      {body ? (
+        <p className={cx('text-pretty text-muted', long ? 'mt-2 text-[0.875rem] leading-[1.45]' : 'mt-3 text-[0.9375rem] leading-[1.5]')}>
+          {body}
+        </p>
+      ) : null}
+      <div className={cx('flex flex-1 flex-col gap-2.5', long ? 'mt-4' : 'mt-6')}>{children}</div>
     </div>
   )
 }
 
 function Footer({ children }: { children: React.ReactNode }) {
-  return <div className="mt-auto flex flex-col gap-2 pt-4">{children}</div>
+  return <div className="mt-auto flex flex-col gap-2.5 pt-6">{children}</div>
+}
+
+function Pill({
+  children,
+  disabled,
+  loading,
+  onClick,
+}: {
+  children: React.ReactNode
+  disabled?: boolean
+  loading?: boolean
+  onClick?: () => void
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled || loading}
+      onClick={onClick}
+      className="inline-flex h-[3.25rem] w-full select-none items-center justify-center gap-2 rounded-full bg-inverse text-[1rem] font-medium text-on-inverse transition-transform duration-200 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40"
+    >
+      {loading ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : null}
+      <span>{children}</span>
+      {loading ? null : <ArrowRight className="size-[1.1em]" strokeWidth={2.2} aria-hidden />}
+    </button>
+  )
+}
+
+function Quiet({
+  children,
+  disabled,
+  onClick,
+}: {
+  children: React.ReactNode
+  disabled?: boolean
+  onClick?: () => void
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className="min-h-11 text-[0.9375rem] font-medium text-muted disabled:opacity-40"
+    >
+      {children}
+    </button>
+  )
 }
 
 function Option({
@@ -412,18 +489,18 @@ function Option({
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
       className={cx(
-        'flex min-h-14 items-center gap-3 rounded-2xl p-4 text-left ring-1 transition-colors',
-        selected ? 'bg-radiant-soft ring-2 ring-radiant' : 'bg-surface shadow-card ring-line',
+        'flex min-h-14 items-center gap-3 rounded-[1rem] border border-white/80 bg-surface p-4 text-left shadow-card transition-colors',
+        selected && 'ring-2 ring-ink',
       )}
     >
       <span className="min-w-0 flex-1">
-        <span className="block text-[0.98rem] font-bold">{title}</span>
+        <span className="block text-[0.98rem] font-medium">{title}</span>
         {body ? <span className="mt-0.5 block text-[0.84rem] text-muted">{body}</span> : null}
       </span>
       <span
         className={cx(
           'inline-flex size-6 shrink-0 items-center justify-center rounded-full ring-2',
-          selected ? 'bg-radiant text-white ring-radiant' : 'ring-line',
+          selected ? 'bg-inverse text-on-inverse ring-inverse' : 'ring-[#c9cacd]',
         )}
         aria-hidden
       >
@@ -458,6 +535,7 @@ function UsageStep({
 
   return (
     <Panel
+      eyebrow="Uso"
       title="¿Cómo usas tu Vehículo?"
       body="Con esto calculamos cuándo te toca cada mantenimiento, incluso antes de que actualices el kilometraje."
     >
@@ -478,32 +556,30 @@ function UsageStep({
         />
       ) : null}
       <Footer>
-        <Button
-          size="lg"
-          block
+        <Pill
           disabled={!chosen}
           loading={save.isPending}
-          onClick={async () => {
-            const d = parseNumber(distance)
-            if (!chosen || d == null || d <= 0) return setError('Escribe la distancia aproximada.')
-            try {
-              await save.mutateAsync({
-                vehicleId,
-                name: chosen.id === 'weekend' ? 'Fines de semana' : chosen.id === 'daily' ? 'Trabajo o estudio' : 'Recorridos frecuentes',
-                roundTripDistance: d,
-                daysPerWeek: chosen.days,
-              })
-              onNext()
-            } catch {
-              setError('No pudimos guardar. Intenta de nuevo.')
-            }
+          onClick={() => {
+            void (async () => {
+              const d = parseNumber(distance)
+              if (!chosen || d == null || d <= 0) return setError('Escribe la distancia aproximada.')
+              try {
+                await save.mutateAsync({
+                  vehicleId,
+                  name: chosen.id === 'weekend' ? 'Fines de semana' : chosen.id === 'daily' ? 'Trabajo o estudio' : 'Recorridos frecuentes',
+                  roundTripDistance: d,
+                  daysPerWeek: chosen.days,
+                })
+                onNext()
+              } catch {
+                setError('No pudimos guardar. Intenta de nuevo.')
+              }
+            })()
           }}
         >
           Continuar
-        </Button>
-        <Button variant="ghost" block onClick={onNext}>
-          Prefiero no decirlo
-        </Button>
+        </Pill>
+        <Quiet onClick={onNext}>Prefiero no decirlo</Quiet>
       </Footer>
     </Panel>
   )
@@ -538,6 +614,7 @@ function HistoryStep({ vehicleId, explain, onNext }: { vehicleId: string; explai
 
   return (
     <Panel
+      eyebrow="Mantenimiento"
       title="Tu último mantenimiento"
       body={
         explain
@@ -548,9 +625,9 @@ function HistoryStep({ vehicleId, explain, onNext }: { vehicleId: string; explai
       {HISTORY_TASKS.map((t) => {
         const Icon = taskIcon(t.code)
         return (
-          <div key={t.code} className="rounded-2xl bg-surface p-4 shadow-card">
-            <p className="flex items-center gap-2 text-[0.95rem] font-bold">
-              <Icon className="size-4.5 text-radiant" aria-hidden />
+          <div key={t.code} className="rounded-[1rem] border border-white/80 bg-surface p-4 shadow-card">
+            <p className="flex items-center gap-2 text-[0.95rem] font-medium">
+              <Icon className="size-4.5 text-ink" aria-hidden />
               {t.question}
             </p>
             <div className="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label={t.question}>
@@ -576,35 +653,34 @@ function HistoryStep({ vehicleId, explain, onNext }: { vehicleId: string; explai
         )
       })}
       <Footer>
-        <Button
-          size="lg"
-          block
+        <Pill
           loading={busy}
-          icon={Sparkles}
-          onClick={async () => {
-            setBusy(true)
-            try {
-              await rememberTasks(
-                vehicleId,
-                HISTORY_TASKS.filter((t) => answers[t.code] !== undefined).flatMap((t) =>
-                  // The oil filter is changed with the oil.
-                  (t.code === 'engine_oil' ? ['engine_oil', 'oil_filter'] : [t.code]).map((code) => ({
-                    taskCode: code,
-                    unknown: answers[t.code] === null,
-                    rememberedOn: answers[t.code] == null ? null : monthsAgo(answers[t.code]!),
-                    reading: null,
-                  })),
-                ),
-              )
-              if (user) void queryClient.invalidateQueries({ queryKey: garageQueryKey(user.id) })
-            } finally {
-              setBusy(false)
-              onNext()
-            }
+          onClick={() => {
+            void (async () => {
+              setBusy(true)
+              try {
+                await rememberTasks(
+                  vehicleId,
+                  HISTORY_TASKS.filter((t) => answers[t.code] !== undefined).flatMap((t) =>
+                    // The oil filter is changed with the oil.
+                    (t.code === 'engine_oil' ? ['engine_oil', 'oil_filter'] : [t.code]).map((code) => ({
+                      taskCode: code,
+                      unknown: answers[t.code] === null,
+                      rememberedOn: answers[t.code] == null ? null : monthsAgo(answers[t.code]!),
+                      reading: null,
+                    })),
+                  ),
+                )
+                if (user) void queryClient.invalidateQueries({ queryKey: garageQueryKey(user.id) })
+              } finally {
+                setBusy(false)
+                onNext()
+              }
+            })()
           }}
         >
           {answered > 0 ? 'Calcular mis avisos' : 'Continuar'}
-        </Button>
+        </Pill>
       </Footer>
     </Panel>
   )
