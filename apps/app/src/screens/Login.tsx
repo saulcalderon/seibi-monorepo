@@ -7,6 +7,15 @@ import { playLockupHandoff } from '../lib/lockupHandoff'
 import { signInWithProvider } from '../lib/supabase'
 
 const display = 'font-sans font-light tracking-[-0.025em]'
+const FLEET = [
+  '/assets/login-yaris.png',
+  '/assets/login-accent.png',
+  '/assets/login-colorado.png',
+  '/assets/login-camion.png',
+  '/assets/login-van.png',
+  '/assets/login-porsche.png',
+] as const
+const FLEET_HOLD_MS = 3400
 
 /** Opacity + translate, held by the keyframes. Motion's transform cleanup was snapping the screen at the end. */
 function rise(reduce: boolean | null, delay: number): CSSProperties | undefined {
@@ -15,6 +24,54 @@ function rise(reduce: boolean | null, delay: number): CSSProperties | undefined 
 }
 const pill =
   'inline-flex h-11 w-full select-none items-center justify-center gap-2 rounded-full text-[0.92rem] font-medium transition-transform duration-200 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50'
+
+function LoginFleet({ reduce, enterDelay }: { reduce: boolean | null; enterDelay: number }) {
+  const [index, setIndex] = useState(0)
+  const [from, setFrom] = useState<number | null>(null)
+  const indexRef = useRef(0)
+
+  useEffect(() => {
+    for (const src of FLEET) {
+      const img = new Image()
+      img.src = src
+    }
+  }, [])
+
+  useEffect(() => {
+    if (reduce) return
+    let interval = 0
+    const start = window.setTimeout(() => {
+      interval = window.setInterval(() => {
+        const current = indexRef.current
+        const next = (current + 1) % FLEET.length
+        indexRef.current = next
+        setFrom(current)
+        setIndex(next)
+      }, FLEET_HOLD_MS)
+    }, Math.round(enterDelay * 1000) + 900)
+    return () => {
+      window.clearTimeout(start)
+      window.clearInterval(interval)
+    }
+  }, [reduce, enterDelay])
+
+  return (
+    <div
+      className="login-fleet relative my-1 h-48"
+      style={reduce ? undefined : { animation: `login-car 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) ${enterDelay}s both` }}
+    >
+      {from !== null ? (
+        <img key={`out-${from}`} src={FLEET[from]} alt="" className="login-fleet-out absolute inset-0 h-full w-full object-contain px-5" />
+      ) : null}
+      <img
+        key={from === null ? 'rest' : `in-${index}`}
+        src={FLEET[index]}
+        alt=""
+        className={from === null ? 'absolute inset-0 h-full w-full object-contain px-5' : 'login-fleet-in absolute inset-0 h-full w-full object-contain px-5'}
+      />
+    </div>
+  )
+}
 
 function AppleMark() {
   return (
@@ -87,14 +144,7 @@ export function Login() {
         </p>
         </div>
       </div>
-      <div className="relative my-1 flex h-48 items-center justify-center px-5">
-        <img
-          src="/assets/login-yaris.png"
-          alt=""
-          className="h-full w-full object-contain"
-          style={reduce ? undefined : { animation: `login-car 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) ${handoff ? 0.78 : 0.08}s both` }}
-        />
-      </div>
+      <LoginFleet reduce={reduce} enterDelay={handoff ? 0.78 : 0.08} />
       <div className="mt-1 flex flex-col px-6 pb-4 text-center">
         <div style={rise(reduce, handoff ? 0.86 : 0.16)}>
           <h1 className={`${display} text-[1.7rem] leading-[1.12]`}>Mantenimiento con total claridad</h1>
