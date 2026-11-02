@@ -10,9 +10,9 @@ async function signUpWithoutVehicle(page: Page) {
   await page.waitForURL('**/onboarding')
   await page.getByLabel('¿Cómo te llamamos?').fill('Flujos')
   await page.getByRole('button', { name: 'Continuar' }).click()
-  await page.getByRole('radio', { name: /Sé bastante de mecánica/ }).click()
-  for (let i = 1; i <= 3; i++) {
-    await expect(page.getByText(`Pregunta ${i} de 3`)).toBeVisible()
+  await page.getByRole('radio', { name: /Tengo bastante conocimiento/ }).click()
+  for (const question of [/mantenimiento preventivo/, /buenas condiciones/, /esta luz en el tablero/]) {
+    await expect(page.getByRole('heading', { name: question })).toBeVisible()
     await page.getByRole('radio').first().click()
   }
   await expect(page.getByText('Modo experto')).toBeVisible()

@@ -9,23 +9,23 @@ export const KNOWLEDGE_LEVELS: Array<{
 }> = [
   {
     id: 'none',
-    title: 'No sé nada de carros',
-    description: 'Quiero que Seibi me guíe paso a paso, sin palabras técnicas.',
+    title: 'Estoy empezando',
+    description: 'No conozco mucho de mecánica. Necesito que me expliquen paso a paso.',
   },
   {
     id: 'basic',
-    title: 'Sé lo básico',
-    description: 'Sé cuándo toca el aceite o revisar las llantas.',
+    title: 'Conozco lo básico',
+    description: 'Sé cuándo cambiar el aceite, revisar llantas y hacer servicios básicos.',
   },
   {
     id: 'intermediate',
-    title: 'Me defiendo bien',
-    description: 'Conozco las piezas principales y hablo con el mecánico sin problema.',
+    title: 'Tengo experiencia',
+    description: 'Conozco los componentes del vehículo y entiendo las recomendaciones del mecánico.',
   },
   {
     id: 'advanced',
-    title: 'Sé bastante de mecánica',
-    description: 'Hago mantenimiento yo mismo o conozco especificaciones y repuestos.',
+    title: 'Tengo bastante conocimiento',
+    description: 'Realizo algunos mantenimientos y conozco especificaciones y repuestos.',
   },
 ]
 
@@ -61,42 +61,92 @@ export function taskLabel(task: MaintenanceTask | undefined, code: string, k: Kn
 }
 
 /**
- * Three short check questions that calibrate the self-assessment.
+ * Check questions that calibrate the self-assessment.
  * The correct answers are widely documented basics, not Seibi data.
  */
 export const CHECK_QUESTIONS: Array<{
   id: string
   question: string
-  options: Array<{ text: string; correct: boolean }>
+  mark?: 'coolant'
+  options: Array<{ text: string; detail?: string; correct: boolean }>
 }> = [
   {
-    id: 'oil_light',
-    question: 'Se enciende en el tablero una luz con forma de aceitera. ¿Qué significa?',
+    id: 'preventive',
+    question: '¿Cuál es el principal objetivo del mantenimiento preventivo de un vehículo?',
     options: [
-      { text: 'Baja presión o bajo nivel de aceite del motor', correct: true },
-      { text: 'Que la batería está descargada', correct: false },
-      { text: 'Que toca revisar los frenos', correct: false },
-      { text: 'No sé', correct: false },
+      {
+        text: 'Evitar fallas antes de que ocurran',
+        detail: 'Realizar revisiones y servicios periódicos para prevenir problemas y prolongar la vida útil del vehículo.',
+        correct: true,
+      },
+      {
+        text: 'Reparar el vehículo cuando deja de funcionar',
+        detail: 'Esperar a que aparezcan fallas para llevarlo al taller y solucionar los problemas.',
+        correct: false,
+      },
+      {
+        text: 'Mejorar la apariencia del vehículo',
+        detail: 'Mantener la pintura, carrocería e interiores en buenas condiciones.',
+        correct: false,
+      },
+      {
+        text: 'No sé',
+        detail: 'No tengo conocimientos suficientes sobre mantenimiento preventivo.',
+        correct: false,
+      },
     ],
   },
   {
-    id: 'viscosity',
-    question: 'En un aceite “5W-30”, ¿qué indican esos números?',
+    id: 'care_habits',
+    question: '¿Qué hábitos ayudan a mantener tu vehículo en buenas condiciones?',
     options: [
-      { text: 'La viscosidad del aceite en frío y en caliente', correct: true },
-      { text: 'Los litros que lleva el motor', correct: false },
-      { text: 'La marca y el lote del aceite', correct: false },
-      { text: 'No sé', correct: false },
+      {
+        text: 'Realizar revisiones y mantener buenos hábitos de conducción',
+        detail: 'Revisar llantas, fluidos, frenos y conducir evitando aceleraciones o frenadas bruscas.',
+        correct: true,
+      },
+      {
+        text: 'Utilizar el vehículo sin preocuparse por las revisiones',
+        detail: 'Conducir normalmente y llevarlo al taller únicamente cuando presente algún problema.',
+        correct: false,
+      },
+      {
+        text: 'Lavar y mantener limpia la carrocería',
+        detail: 'Cuidar principalmente la pintura, los interiores y la apariencia exterior del vehículo.',
+        correct: false,
+      },
+      {
+        text: 'No sé',
+        detail: 'No tengo suficientes conocimientos sobre el cuidado adecuado de un vehículo.',
+        correct: false,
+      },
     ],
   },
   {
-    id: 'timing_belt',
-    question: '¿Qué puede pasar si se rompe la banda de distribución en un motor de interferencia?',
+    id: 'coolant_light',
+    question: '¿Qué significa esta luz en el tablero?',
+    mark: 'coolant',
     options: [
-      { text: 'Las válvulas y pistones pueden chocar y dañar el motor', correct: true },
-      { text: 'Solo deja de funcionar el aire acondicionado', correct: false },
-      { text: 'Se descarga la batería más rápido', correct: false },
-      { text: 'No sé', correct: false },
+      {
+        text: 'Que el motor está sobrecalentándose',
+        detail: 'La temperatura del refrigerante es demasiado alta y debes detenerte de forma segura para evitar daños al motor.',
+        correct: true,
+      },
+      {
+        text: 'Que el nivel de combustible está bajo',
+        detail: 'Indica que queda poco combustible en el tanque y necesitas recargar.',
+        correct: false,
+      },
+      {
+        text: 'Que el aceite del motor necesita cambiarse',
+        detail: 'Advierte que el aceite ha llegado al intervalo recomendado para su reemplazo.',
+        correct: false,
+      },
+      {
+        text: 'No sé',
+        detail: 'No conozco el significado de esta señal del tablero.',
+        correct: false,
+      },
     ],
   },
 ]
@@ -104,12 +154,15 @@ export const CHECK_QUESTIONS: Array<{
 const ORDER: KnowledgeLevel[] = ['none', 'basic', 'intermediate', 'advanced']
 
 /**
- * Final level: the average of the self-assessment and the check score
- * (0–3 correct maps to none…advanced), rounded down so Seibi explains a
- * little more rather than a little less.
+ * Final level: the average of the self-assessment and the check score.
+ * Right answers scale onto none…advanced and round down, so Seibi explains
+ * a little more rather than a little less.
  */
 export function calibrateLevel(self: KnowledgeLevel, correct: number): KnowledgeLevel {
   const selfIndex = ORDER.indexOf(self)
-  const checkIndex = Math.max(0, Math.min(3, correct))
+  const span = ORDER.length - 1
+  const total = CHECK_QUESTIONS.length
+  const answered = Math.max(0, Math.min(total, correct))
+  const checkIndex = total === 0 ? 0 : Math.floor((answered / total) * span)
   return ORDER[Math.floor((selfIndex + checkIndex) / 2)]
 }
