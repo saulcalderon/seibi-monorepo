@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'motion/react'
-import { ArrowRight, BellRing, Check, ChevronLeft, GraduationCap, LoaderCircle } from 'lucide-react'
+import { AnimatePresence, motion, type PanInfo } from 'motion/react'
+import { ArrowRight, BellRing, Check, GraduationCap, LoaderCircle } from 'lucide-react'
+import coolantTemp from '../assets/coolant-temp.png'
 import { Logo } from '../components/Logo'
 import { VehicleFormBody } from '../forms/VehicleForm'
 import { useAuthSession } from '../lib/authSession'
@@ -63,7 +64,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
   const [name, setName] = useState(profile.data?.displayName ?? identity.fullName?.split(' ')[0] ?? '')
   const [selfLevel, setSelfLevel] = useState<KnowledgeLevel | null>(null)
   const [checkIndex, setCheckIndex] = useState(0)
-  const [correct, setCorrect] = useState(0)
+  const [picked, setPicked] = useState<boolean[]>([])
   // The outgoing question stays tappable while it animates out; answers
   // count only for the question on screen now.
   const currentCheck = useRef(0)
@@ -72,6 +73,8 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
   const [city, setCity] = useState(profile.data?.city ?? '')
   const [vehicleId, setVehicleId] = useState<string | null>(null)
   const [finishing, setFinishing] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const savedTimer = useRef<number | null>(null)
 
   const hasVehicle = Boolean(vehicleId)
   const steps = useMemo(
@@ -92,14 +95,48 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
     onFinish()
   }
 
+  const confirmSaved = () => {
+    if (savedTimer.current != null) return
+    setSaved(true)
+    savedTimer.current = window.setTimeout(() => void finish(), 2000)
+  }
+
   const advance = (from: Step) => {
     const next = nextOf(from)
     if (next) go(next)
     else void finish()
   }
 
+  const back = () => {
+    if (step === 'check' && checkIndex > 0) {
+      const prev = checkIndex - 1
+      currentCheck.current = prev
+      setDirection(-1)
+      setCheckIndex(prev)
+      return
+    }
+    if (position <= 0) return
+    const prev = steps[position - 1]
+    if (prev === 'check') {
+      const last = CHECK_QUESTIONS.length - 1
+      currentCheck.current = last
+      setCheckIndex(last)
+    }
+    go(prev)
+  }
+
+  const onDragEnd = (_: unknown, info: PanInfo) => {
+    if (info.offset.x > 60) back()
+  }
+
   const k = knowledgeProfile(level ?? selfLevel)
   const vehicle = garage.vehicles.find((v) => v.id === vehicleId) ?? null
+
+  useEffect(() => {
+    return () => {
+      if (savedTimer.current != null) window.clearTimeout(savedTimer.current)
+    }
+  }, [])
 
   useEffect(() => {
     const meta = document.querySelector('meta[name="theme-color"]')
@@ -112,33 +149,29 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
 
   return (
     <div className="intro-day intro-v3 relative isolate flex h-full flex-col bg-bg pt-safe pb-safe">
-      <header className="relative z-20 flex items-center justify-between px-4 pb-2 pt-4">
-        {position > 0 && step !== 'check' ? (
-          <button
-            type="button"
-            onClick={() => go(steps[position - 1])}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center text-muted"
-            aria-label="Atrás"
-          >
-            <ChevronLeft className="size-6" strokeWidth={2.2} />
-          </button>
-        ) : (
-          <span className="inline-flex items-center gap-[0.28em] text-[1.375rem] leading-none">
-            <Logo className="text-[0.95em]" />
-            <span className="inline-flex items-baseline font-bold tracking-[-0.035em] [font-stretch:125%]" aria-hidden>
-              seib
-              <span className="relative inline-block after:absolute after:left-1/2 after:top-[-0.02em] after:size-[0.15em] after:-translate-x-1/2 after:-skew-x-14 after:rounded-[0.02em] after:bg-[#e0464f] after:content-['']">
-                ı
-              </span>
+      <header className="relative z-20 flex items-center px-4 pb-2 pt-4">
+        <span className="inline-flex items-center gap-[0.28em] text-[1.375rem] leading-none">
+          <Logo className="text-[0.95em]" />
+          <span className="inline-flex items-baseline font-bold tracking-[-0.035em] [font-stretch:125%]" aria-hidden>
+            seib
+            <span className="relative inline-block after:absolute after:left-1/2 after:top-[-0.02em] after:size-[0.15em] after:-translate-x-1/2 after:-skew-x-14 after:rounded-[0.02em] after:bg-[#e0464f] after:content-['']">
+              ı
             </span>
           </span>
-        )}
+        </span>
         <span className="sr-only">
           Paso {position + 1} de {steps.length}
         </span>
       </header>
 
-      <div className="relative min-h-0 flex-1">
+      <motion.div
+        className="relative min-h-0 flex-1 touch-pan-y"
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.18}
+        dragDirectionLock
+        onDragEnd={onDragEnd}
+      >
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={step + (step === 'check' ? checkIndex : '')}
@@ -178,11 +211,10 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
                       key={l.id}
                       selected={selfLevel === l.id}
                       title={l.title}
-                      body={l.description}
                       onClick={() => {
                         setSelfLevel(l.id)
                         setCheckIndex(0)
-                        setCorrect(0)
+                        setPicked([])
                         currentCheck.current = 0
                         window.setTimeout(() => advance('level'), 180)
                       }}
@@ -196,7 +228,13 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
               <Panel
                 eyebrow={CATEGORY.check}
                 title={CHECK_QUESTIONS[checkIndex].question}
-                body={`Pregunta ${checkIndex + 1} de ${CHECK_QUESTIONS.length}. Si no sabes, elige “No sé”: está perfecto.`}
+                mark={
+                  CHECK_QUESTIONS[checkIndex].mark === 'coolant' ? (
+                    <span className="ml-1.5 inline-flex h-7 w-7 shrink-0 translate-y-[0.08em] items-center justify-center overflow-hidden align-[-0.15em]">
+                      <img src={coolantTemp} alt="" className="h-full w-full scale-[1.85] object-contain" />
+                    </span>
+                  ) : null
+                }
               >
                 <div className="flex flex-col gap-2.5" role="radiogroup">
                   {CHECK_QUESTIONS[checkIndex].options.map((o) => (
@@ -206,8 +244,10 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
                       onClick={() => {
                         if (currentCheck.current !== checkIndex) return
                         currentCheck.current = checkIndex + 1
-                        const total = correct + (o.correct ? 1 : 0)
-                        setCorrect(total)
+                        const nextPicked = picked.slice()
+                        nextPicked[checkIndex] = o.correct
+                        const total = nextPicked.filter(Boolean).length
+                        setPicked(nextPicked)
                         if (checkIndex < CHECK_QUESTIONS.length - 1) {
                           setDirection(1)
                           setCheckIndex(checkIndex + 1)
@@ -272,6 +312,10 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
                     loading={update.isPending}
                     disabled={city.trim().length < 2}
                     onClick={() => {
+                      if (!user) {
+                        advance('location')
+                        return
+                      }
                       void update.mutateAsync({ country, city }).then(() => advance('location'))
                     }}
                   >
@@ -299,19 +343,16 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
                 ) : (
                   <VehicleFormBody
                     vehicle={null}
+                    appearance="intro"
                     submitLabel="Agregar y continuar"
                     onCreated={(id) => {
                       setVehicleId(id)
                     }}
-                    onDone={() => undefined}
+                    onDone={confirmSaved}
                   />
                 )}
                 <Footer>
-                  {vehicleId ? (
-                    <Pill onClick={() => advance('vehicle')}>Continuar</Pill>
-                  ) : (
-                    <Quiet onClick={() => advance('vehicle')}>Lo agrego después</Quiet>
-                  )}
+                  {vehicleId ? null : <Quiet onClick={confirmSaved}>Lo agrego después</Quiet>}
                 </Footer>
               </Panel>
             ) : null}
@@ -355,7 +396,35 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
             ) : null}
           </motion.div>
         </AnimatePresence>
-      </div>
+      </motion.div>
+
+      {saved ? (
+        <motion.div
+          className="absolute inset-0 z-30 flex items-center justify-center bg-[#f1f1f2]/90 px-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          role="status"
+          aria-live="polite"
+        >
+          <motion.div
+            className="flex w-full flex-col items-center rounded-[1.25rem] border border-white/80 bg-surface px-6 py-10 text-center shadow-card"
+            initial={{ opacity: 0, y: 16, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.35, ease: [0.33, 1, 0.68, 1] }}
+          >
+            <motion.span
+              className="inline-flex size-16 items-center justify-center rounded-full bg-inverse text-on-inverse"
+              initial={{ scale: 0.6, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.12, type: 'spring', stiffness: 420, damping: 22 }}
+            >
+              <Check className="size-8" strokeWidth={2.6} aria-hidden />
+            </motion.span>
+            <h1 className={cx(display, 'mt-5 text-[1.625rem] leading-[1.12]')}>Se guardó tu información</h1>
+            <p className="mt-2 text-[0.9375rem] leading-[1.5] text-muted">Ya está todo listo.</p>
+          </motion.div>
+        </motion.div>
+      ) : null}
 
       <div className="flex items-center justify-center pb-3" aria-hidden>
         <div className="flex items-center gap-0.5">
@@ -398,24 +467,24 @@ function Panel({
   eyebrow,
   title,
   body,
+  mark,
   children,
 }: {
   eyebrow?: string
   title: string
   body?: string
+  mark?: React.ReactNode
   children: React.ReactNode
 }) {
-  const long = title.length > 42
   return (
     <div className="flex min-h-full flex-col pb-2">
       <p className="text-[0.8125rem] font-medium text-muted">{eyebrow}</p>
-      <h1 className={cx(display, 'mt-2', long ? 'text-[1.35rem] leading-[1.22]' : 'text-[2rem] leading-[1.04]')}>{title}</h1>
-      {body ? (
-        <p className={cx('text-pretty text-muted', long ? 'mt-2 text-[0.875rem] leading-[1.45]' : 'mt-3 text-[0.9375rem] leading-[1.5]')}>
-          {body}
-        </p>
-      ) : null}
-      <div className={cx('flex flex-1 flex-col gap-2.5', long ? 'mt-4' : 'mt-6')}>{children}</div>
+      <h1 className={cx(display, 'mt-2 text-[1.625rem] leading-[1.12]')}>
+        {title}
+        {mark}
+      </h1>
+      {body ? <p className="mt-3 text-pretty text-[0.9375rem] leading-[1.5] text-muted">{body}</p> : null}
+      <div className="mt-4 flex flex-1 flex-col gap-2.5">{children}</div>
     </div>
   )
 }
@@ -489,7 +558,8 @@ function Option({
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
       className={cx(
-        'flex min-h-14 items-center gap-3 rounded-[1rem] border border-white/80 bg-surface p-4 text-left shadow-card transition-colors',
+        'flex min-h-14 items-center gap-3 rounded-[1rem] border border-white/80 bg-surface text-left shadow-card transition-colors',
+        body ? 'px-4 py-3' : 'p-4',
         selected && 'ring-2 ring-ink',
       )}
     >

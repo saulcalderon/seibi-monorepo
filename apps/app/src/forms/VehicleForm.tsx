@@ -1,9 +1,8 @@
 import { useState } from 'react'
-import { Check } from 'lucide-react'
+import { ArrowRight, Check, LoaderCircle } from 'lucide-react'
 import type { OdometerMeasure } from '@seibi/maintenance-engine/odometer'
 import type { VehicleView } from '../lib/garage'
 import { errorMessage } from '../lib/functions'
-import { knowledgeProfile } from '../lib/knowledge'
 import { InputError, sanitizePlate, useCreateVehicle, useUpdateVehicle } from '../lib/mutations'
 import { PAINTS } from '../lib/paint'
 import { defaultMeasure, useProfile } from '../lib/profile'
@@ -50,14 +49,16 @@ export function VehicleFormBody({
   onDone,
   onCreated,
   submitLabel,
+  appearance = 'app',
 }: {
   vehicle: VehicleView | null
   onDone: () => void
   onCreated?: (vehicleId: string) => void
   submitLabel?: string
+  /** Onboarding uses the same white cards and black pill as the screens before it. */
+  appearance?: 'app' | 'intro'
 }) {
   const profile = useProfile()
-  const k = knowledgeProfile(profile.data?.knowledgeLevel)
   const toast = useToast()
   const create = useCreateVehicle()
   const update = useUpdateVehicle()
@@ -116,7 +117,11 @@ export function VehicleFormBody({
 
   return (
     <form
-      className="flex flex-col gap-5 pb-2"
+      className={cx(
+        'flex flex-col gap-5 pb-2',
+        appearance === 'intro' &&
+          '[&_input]:rounded-[1rem] [&_input]:border [&_input]:border-white/80 [&_input]:bg-surface [&_input]:shadow-card [&_input]:ring-0 [&_input]:focus:ring-2 [&_input]:focus:ring-ink [&_select]:rounded-[1rem] [&_select]:border [&_select]:border-white/80 [&_select]:bg-surface [&_select]:shadow-card [&_select]:ring-0 [&_select]:focus:ring-2 [&_select]:focus:ring-ink',
+      )}
       onSubmit={(e) => {
         e.preventDefault()
         void submit()
@@ -178,12 +183,6 @@ export function VehicleFormBody({
           maxLength={60}
         />
       </div>
-      {k.explain ? (
-        <p className="-mt-3 px-1 text-[0.8rem] text-subtle">
-          Si no sabes el motor o la versión, déjalos vacíos. Ayudan a que el plan sea más exacto;
-          suelen venir en la tarjeta de circulación o en la parte trasera del Vehículo.
-        </p>
-      ) : null}
 
       <Field label="Color" optional>
         <div className="flex flex-wrap gap-2.5" role="radiogroup" aria-label="Color">
@@ -198,7 +197,10 @@ export function VehicleFormBody({
               onClick={() => setColor(color === p.code ? null : p.code)}
               className={cx(
                 'relative size-10 rounded-full ring-1 ring-black/10 transition-transform active:scale-90',
-                color === p.code && 'ring-2 ring-radiant ring-offset-2 ring-offset-bg',
+                color === p.code &&
+                  (appearance === 'intro'
+                    ? 'ring-2 ring-ink ring-offset-2 ring-offset-bg'
+                    : 'ring-2 ring-radiant ring-offset-2 ring-offset-bg'),
               )}
               style={{ background: p.hex }}
             >
@@ -269,9 +271,21 @@ export function VehicleFormBody({
         </p>
       ) : null}
 
-      <Button type="submit" size="lg" block loading={busy}>
-        {submitLabel ?? (vehicle ? 'Guardar cambios' : 'Agregar Vehículo')}
-      </Button>
+      {appearance === 'intro' ? (
+        <button
+          type="submit"
+          disabled={busy}
+          className="inline-flex h-[3.25rem] w-full select-none items-center justify-center gap-2 rounded-full bg-inverse text-[1rem] font-medium text-on-inverse transition-transform duration-200 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40"
+        >
+          {busy ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : null}
+          <span>{submitLabel ?? (vehicle ? 'Guardar cambios' : 'Agregar Vehículo')}</span>
+          {busy ? null : <ArrowRight className="size-[1.1em]" strokeWidth={2.2} aria-hidden />}
+        </button>
+      ) : (
+        <Button type="submit" size="lg" block loading={busy}>
+          {submitLabel ?? (vehicle ? 'Guardar cambios' : 'Agregar Vehículo')}
+        </Button>
+      )}
     </form>
   )
 }

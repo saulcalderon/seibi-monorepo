@@ -19,11 +19,11 @@ test('a new user sets up a Vehicle and sees its Reminders', async ({ page }) => 
   await page.getByLabel('¿Cómo te llamamos?').fill('Prueba')
   await page.getByRole('button', { name: 'Continuar' }).click()
 
-  // Conocimiento: self-assessment + three checks
-  await page.getByRole('radio', { name: /No sé nada de carros/ }).click()
-  for (let i = 1; i <= 3; i++) {
-    await expect(page.getByText(`Pregunta ${i} de 3`)).toBeVisible()
-    await page.getByRole('radio', { name: 'No sé' }).click()
+  // Conocimiento: self-assessment + the check questions
+  await page.getByRole('radio', { name: /Estoy empezando/ }).click()
+  for (const question of [/mantenimiento preventivo/, /buenas condiciones/, /esta luz en el tablero/]) {
+    await expect(page.getByRole('heading', { name: question })).toBeVisible()
+    await page.getByRole('radio', { name: /^No sé/ }).click()
   }
   await expect(page.getByText('Te guiaremos paso a paso')).toBeVisible()
   await page.getByRole('button', { name: 'Continuar' }).click()
@@ -38,21 +38,11 @@ test('a new user sets up a Vehicle and sees its Reminders', async ({ page }) => 
   await page.getByRole('combobox', { name: 'Modelo' }).fill('Sentra')
   await page.getByLabel('Kilometraje actual').fill('62000')
   await page.getByRole('button', { name: 'Agregar y continuar' }).click()
-  await expect(page.getByText('Vehículo agregado').first()).toBeVisible()
-  await page.getByRole('button', { name: 'Continuar' }).click()
+  await expect(page.getByText('Se guardó tu información')).toBeVisible()
 
-  // Uso: skip; Mantenimiento: oil 3–6 months ago
-  await page.getByRole('button', { name: 'Prefiero no decirlo' }).click()
-  await page.getByRole('radiogroup').first().getByRole('radio', { name: '3–6 meses' }).click()
-  await page.getByRole('button', { name: 'Calcular mis avisos' }).click()
-  // The notifications step only shows where Web Push is available.
-  const notNow = page.getByRole('button', { name: 'Ahora no' })
-  await Promise.race([notNow.waitFor().then(() => notNow.click()), page.waitForURL('**/home')])
-
-  // Inicio shows the Vehicle and the oil Reminder, in plain words (level "none").
+  // Inicio shows the Vehicle, in plain words (level "none").
   await page.waitForURL('**/home')
   await expect(page.getByRole('heading', { name: 'Nissan Sentra' })).toBeVisible()
-  await expect(page.getByText('Cambio de aceite').first()).toBeVisible()
 
   // Record a Service for a tire rotation.
   await page.getByRole('button', { name: 'Acciones rápidas' }).click()
