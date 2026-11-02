@@ -1,6 +1,6 @@
 # Edge Functions
 
-Server work for Seibi (ADR-0006). Deployed by `migrate-production.yml` on
+Server work for Seibi (see `ARCHITECTURE.md`). Deployed by `migrate-production.yml` on
 merge to `main`, after migrations.
 
 | Function | Called by | Auth |
@@ -14,7 +14,7 @@ merge to `main`, after migrations.
 | `delete-account` | app (Perfil) | user JWT |
 
 `reminders-daily` imports `packages/maintenance-engine` by relative path, so
-the app and the push job compute the same Reminders (ADR-0010).
+the app and the push job compute the same Reminders.
 
 ## Secrets (once per project)
 

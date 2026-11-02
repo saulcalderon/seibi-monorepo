@@ -1,4 +1,4 @@
-// Starts or reuses the Model render for a Vehicle (ADR-0008). Renders are
+// Starts or reuses the Model render for a Vehicle. Renders are
 // shared per brand, model, year, and paint; generation is asynchronous and
 // normally finishes in vehicle-render-webhook. When a step has waited longer
 // than the webhook should take, this function asks fal directly and

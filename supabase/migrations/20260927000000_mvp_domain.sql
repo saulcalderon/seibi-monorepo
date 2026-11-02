@@ -1,7 +1,7 @@
 -- SEI-34: MVP domain.
 -- Profiles, Service items, Maintenance tasks and schedules, Appointments,
 -- Routines, hand-written Reminders, Estimates, chat, Model renders, push,
--- and AI usage. Glossary: CONTEXT.md. Decisions: ADR-0006 to ADR-0010.
+-- and AI usage. Glossary: CONTEXT.md. Architecture: ARCHITECTURE.md.
 
 -- ---------------------------------------------------------------------------
 -- Shared helpers
@@ -130,8 +130,8 @@ create table public.maintenance_tasks (
 );
 
 -- General intervals are conservative, commonly published starting points.
--- The UI labels them "Recomendación general, no específica de tu modelo"
--- (ADR-0007). Model-specific schedules replace them.
+-- The UI labels them "Recomendación general, no específica de tu modelo".
+-- Model-specific schedules replace them.
 insert into public.maintenance_tasks
   (code, name, plain_name, description, sort_order, general_distance_km, general_months)
 values
@@ -351,7 +351,7 @@ create trigger routines_set_updated_at
   before update on public.routines
   for each row execute function public.set_updated_at();
 
--- Hand-written Reminders only. Derived Reminders are computed (ADR-0010).
+-- Hand-written Reminders only. Derived Reminders are computed.
 create table public.reminders (
   id uuid primary key default gen_random_uuid(),
   vehicle_id uuid not null references public.vehicles (id) on delete cascade,

@@ -7,7 +7,7 @@ import { CacheFirst } from 'workbox-strategies'
 
 declare const self: ServiceWorkerGlobalScope
 
-// App shell precache (offline open, read-only; ADR-0001).
+// App shell precache (offline open, read-only).
 precacheAndRoute(self.__WB_MANIFEST)
 cleanupOutdatedCaches()
 registerRoute(

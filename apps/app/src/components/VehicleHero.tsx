@@ -9,7 +9,7 @@ const VehicleModel3D = lazy(() => import('./VehicleModel3D'))
 
 /**
  * The main Vehicle stage: live 3D when the GLB is ready, otherwise the
- * poster or silhouette. One live canvas per screen at most (ADR-0008).
+ * poster or silhouette. One live canvas per screen at most.
  */
 export function VehicleHero({
   vehicle,

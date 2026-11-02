@@ -25,7 +25,7 @@ Otras superficies (solo en rollout, cuando Denny las nombre): `Avisos.tsx`, `Ser
 
 ## Dominio (español canónico)
 
-Lee `CONTEXT.md` y ADR-0002 antes de nombrar conceptos. El copy de UI usa los nombres en español de ADR-0002: **Vehículo, Servicio, Tipo, Taller, Recordatorio, Kilometraje, Estimado**. Evita auto/carro, alerta/aviso, cotización/presupuesto.
+Lee `CONTEXT.md` (glosario y tabla de nombres en español) antes de nombrar conceptos. El copy de UI usa los nombres en español de esa tabla: **Vehículo, Servicio, Tipo, Taller, Recordatorio, Kilometraje, Estimado**. Evita auto/carro, alerta/aviso, cotización/presupuesto.
 
 ## Diseño — libertad y anclas
 
@@ -37,7 +37,7 @@ Anclas que no rompes sin pedirlo:
 - Tipo vigente: Clash Display Semibold (titulares), Archivo Regular (cuerpo). Cámbialo solo si Denny quiere y documenta la decisión abajo.
 - Fondo actual de la app: `bg-fog`. El shell `#root` ya enmarca a 390px en desktop.
 - `prefers-reduced-motion` y safe areas
-- Stack: TanStack Router + Vite SPA, Tailwind, Paraglide, PWA. Ver `docs/adr/0001-frontend-stack.md`
+- Stack: TanStack Router + Vite SPA, Tailwind, Paraglide, PWA (congelada; la app nativa Expo está en camino). Ver `ARCHITECTURE.md`
 
 ## Método
 

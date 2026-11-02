@@ -24,7 +24,7 @@ describe('days', () => {
   })
 })
 
-describe('currentOdometer (ADR-0005)', () => {
+describe('currentOdometer', () => {
   it('uses the latest date, then the highest number', () => {
     expect(
       currentOdometer([

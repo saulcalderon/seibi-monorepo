@@ -1,5 +1,5 @@
 // Maintenance schedule and body type for a Vehicle's brand, model, year,
-// engine, and market (ADR-0007). Cached in maintenance_schedules and shared
+// engine, and market. Cached in maintenance_schedules and shared
 // by every Vehicle that matches. Runs in the background; the client polls
 // the schedule row until it leaves `pending`.
 

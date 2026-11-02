@@ -25,7 +25,7 @@ Copy en español: `apps/app/messages/es.json` (Paraglide). No hardcodees strings
 
 ## Dominio (español canónico)
 
-Lee `CONTEXT.md` y ADR-0002 antes de nombrar conceptos. El copy de UI usa los nombres en español de ADR-0002: **Vehículo, Servicio, Tipo, Taller, Recordatorio, Kilometraje, Estimado**. Evita auto/carro, alerta/aviso, cotización/presupuesto.
+Lee `CONTEXT.md` (glosario y tabla de nombres en español) antes de nombrar conceptos. El copy de UI usa los nombres en español de esa tabla: **Vehículo, Servicio, Tipo, Taller, Recordatorio, Kilometraje, Estimado**. Evita auto/carro, alerta/aviso, cotización/presupuesto.
 
 ## Diseño
 
@@ -34,7 +34,7 @@ Lee `CONTEXT.md` y ADR-0002 antes de nombrar conceptos. El copy de UI usa los no
 - Fondo de first-run: `bg-splash`. El shell `#root` ya enmarca la app a 390px en desktop
 - Respetar `prefers-reduced-motion` y safe areas
 - Splash video: iOS/PWA autoplay (muted, playsInline, sin controles nativos). MP4 primero (Safari pierde alpha de VP9)
-- Stack: TanStack Router + Vite SPA, Tailwind, Paraglide, PWA. Ver `docs/adr/0001-frontend-stack.md`
+- Stack: TanStack Router + Vite SPA, Tailwind, Paraglide, PWA (congelada; la app nativa Expo está en camino). Ver `ARCHITECTURE.md`
 
 ## Método de pulido
 

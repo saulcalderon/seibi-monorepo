@@ -88,7 +88,7 @@ export function Silhouette({
 
 /**
  * 2D Vehicle image: the fal poster when it exists, else the silhouette.
- * Used in lists and cards; the live 3D model is only in the hero (ADR-0008).
+ * Used in lists and cards; the live 3D model is only in the hero.
  */
 export function VehicleVisual({
   render,

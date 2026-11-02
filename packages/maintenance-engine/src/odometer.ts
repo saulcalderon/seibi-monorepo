@@ -31,7 +31,7 @@ export function measureToKm(distance: number, measure: OdometerMeasure): number 
 
 /**
  * The reading for the latest calendar date; if several share that date, the
- * highest number (ADR-0005).
+ * highest number.
  */
 export function currentOdometer(readings: readonly MileageReading[]): MileageReading | null {
   let best: MileageReading | null = null

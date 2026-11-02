@@ -10,8 +10,8 @@ Default product project: **[App móvil Seibi](https://linear.app/seibi/project/a
 
 **All content written into Linear is Spanish.** That includes project names, summaries, descriptions, documents, issues, PRDs, comments, milestones, and status updates.
 
-- Use the Spanish names from ADR-0002 (Vehículo, Servicio, Tipo, Taller, Recordatorio, Kilometraje, Estimado). Do not use the English `CONTEXT.md` terms in Linear.
-- Keep proper nouns and technical identifiers as they appear in code or vendor docs (Supabase, TanStack, PWA, Capacitor, `SEI-123`, file paths).
+- Use the Spanish names from the mapping table in `CONTEXT.md` (Vehículo, Servicio, Tipo, Taller, Recordatorio, Kilometraje, Estimado). Do not use the English `CONTEXT.md` terms in Linear.
+- Keep proper nouns and technical identifiers as they appear in code or vendor docs (Supabase, Expo, TanStack, PWA, `SEI-123`, file paths).
 - This file (`docs/agents/issue-tracker.md`) stays in English so agents can follow the operations. The Linear payload they write must still be Spanish.
 
 ## Conventions
@@ -34,7 +34,7 @@ PRs stay on GitHub. Do not file or triage them as Linear issues unless the user 
 
 ## When a skill says "publish to the issue tracker"
 
-Create a Linear issue on team **Seibi** with `save_issue`. Put it on **App móvil Seibi** unless the user says otherwise. Write the title and body in Spanish, using the Spanish names from ADR-0002.
+Create a Linear issue on team **Seibi** with `save_issue`. Put it on **App móvil Seibi** unless the user says otherwise. Write the title and body in Spanish, using the Spanish names from the `CONTEXT.md` mapping table.
 
 ## When a skill says "fetch the relevant ticket"
 
