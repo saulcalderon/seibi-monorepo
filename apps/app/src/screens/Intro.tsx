@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, forwardRef, type ReactNode } from 'react'
 import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, type PanInfo, type Variants } from 'motion/react'
 import {
   ArrowRight,
@@ -16,9 +16,7 @@ import {
   Wifi,
   type LucideIcon,
 } from 'lucide-react'
-import { Lockup } from '../components/Lockup'
 import { Logo } from '../components/Logo'
-import { Ticker } from '../components/Ticker'
 import { playLockupSplit } from '../lib/lockupHandoff'
 import { cx } from '../ui/cx'
 
@@ -49,6 +47,61 @@ const screenCard = 'rounded-[1rem] border border-white/80 bg-surface shadow-card
 
 const CHARS = { at: 0.08, step: 0.028, duration: 0.56 }
 const WORDS = { at: 0.38, step: 0.055, duration: 0.64 }
+
+const Lockup = forwardRef<HTMLSpanElement>(function Lockup(_props, ref) {
+  return (
+    <span ref={ref} className="inline-flex items-center gap-[0.28em] text-[1.375rem] leading-none" style={{ transformOrigin: 'center center' }}>
+      <Logo className="text-[0.95em]" />
+      <span data-lockup-word className="inline-flex items-baseline font-bold tracking-[-0.035em] [font-stretch:125%]" aria-hidden>
+        seib
+        <span className="relative inline-block after:absolute after:left-1/2 after:top-[-0.02em] after:size-[0.15em] after:-translate-x-1/2 after:-skew-x-14 after:rounded-[0.02em] after:bg-[#e0464f] after:content-['']">
+          ı
+        </span>
+      </span>
+    </span>
+  )
+})
+
+/** Each place slides to its new character, units first. Places are keyed from the right so digits stay aligned. */
+function Ticker({ text, className }: { text: string; className?: string }) {
+  const reduce = useReducedMotion()
+  const chars = Array.from(text)
+  return (
+    <span className={cx('relative inline-flex', className)}>
+      <span className="sr-only">{text}</span>
+      <AnimatePresence initial={false} mode="popLayout">
+        {chars.map((char, i) => {
+          const place = chars.length - 1 - i
+          return (
+            <motion.span
+              key={place}
+              layout={reduce ? false : 'position'}
+              className="relative inline-block [clip-path:inset(0_-0.25em)]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3, ease: EASE }}
+              aria-hidden
+            >
+              <AnimatePresence initial={false} mode="popLayout">
+                <motion.span
+                  key={char}
+                  className="inline-block"
+                  initial={reduce ? { opacity: 0 } : { opacity: 0, y: '0.7em' }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={reduce ? { opacity: 0 } : { opacity: 0, y: '-0.7em' }}
+                  transition={{ duration: 0.55, delay: reduce ? 0 : place * 0.055, ease: EASE }}
+                >
+                  {char}
+                </motion.span>
+              </AnimatePresence>
+            </motion.span>
+          )
+        })}
+      </AnimatePresence>
+    </span>
+  )
+}
 
 function Overdue({ children, pulse, className }: { children: ReactNode; pulse?: number; className?: string }) {
   const reduce = useReducedMotion()

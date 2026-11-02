@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { CircleAlert, LoaderCircle } from 'lucide-react'
 import type { RoutineRecord, VehicleView } from '../lib/garage'
 import { errorMessage } from '../lib/functions'
@@ -126,6 +126,13 @@ function MileageBody({
   const unit = measureLabel(vehicle?.measure ?? 'km')
   const accent = paintAccent(paintHex(vehicle?.color))
   const error = err.field('reading') ?? err.form
+  const input = useRef<HTMLInputElement>(null)
+
+  // The sheet focuses its panel on open; take focus back for the field.
+  useEffect(() => {
+    const t = window.setTimeout(() => input.current?.focus(), 60)
+    return () => window.clearTimeout(t)
+  }, [])
 
   const change = (next: string) => {
     err.clear()
@@ -156,7 +163,7 @@ function MileageBody({
       }}
     >
       {vehicle ? (
-        <p className="-mt-2 font-mono text-[12px] leading-[16px] text-muted">{mileageContext(vehicle)}</p>
+        <p className="font-mono text-[12px] leading-[16px] text-muted">{mileageContext(vehicle)}</p>
       ) : null}
       {vehicles.length > 1 ? (
         <div className="mt-4">
@@ -179,12 +186,12 @@ function MileageBody({
         )}
       >
         <input
+          ref={input}
           aria-label="Kilometraje de hoy"
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? 'mileage-error' : undefined}
           inputMode="numeric"
           autoComplete="off"
-          autoFocus
           enterKeyHint="done"
           placeholder={vehicle?.odometer != null ? formatNumber(vehicle.odometer) : '0'}
           value={reading != null ? formatNumber(reading) : ''}
