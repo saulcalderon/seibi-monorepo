@@ -42,7 +42,7 @@ test('a new user sets up a Vehicle and sees its Reminders', async ({ page }) => 
 
   // Inicio shows the Vehicle, in plain words (level "none").
   await page.waitForURL('**/home')
-  await expect(page.getByRole('heading', { name: 'Nissan Sentra' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Sentra' })).toBeVisible()
 
   // Record a Service for a tire rotation.
   await page.getByRole('button', { name: 'Acciones rápidas' }).click()

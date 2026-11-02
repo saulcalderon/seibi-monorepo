@@ -31,8 +31,8 @@ test('manage a Vehicle end to end', async ({ page }) => {
   await signUpWithoutVehicle(page)
 
   // Empty Inicio → add a Vehicle (US defaults to miles).
-  await expect(page.getByText('Agrega tu primer Vehículo')).toBeVisible()
-  await page.getByRole('button', { name: 'Agregar Vehículo' }).first().click()
+  await expect(page.getByRole('heading', { name: 'Sin Vehículos todavía' })).toBeVisible()
+  await page.getByRole('button', { name: 'Agregar mi Vehículo' }).click()
   await page.getByRole('combobox', { name: 'Marca' }).fill('Honda')
   await page.getByLabel('Año').selectOption('2020')
   await page.getByRole('combobox', { name: 'Modelo' }).fill('Civic')
@@ -55,7 +55,7 @@ test('manage a Vehicle end to end', async ({ page }) => {
   await page.getByRole('button', { name: /actualizar/ }).first().click()
   await page.getByLabel('Kilometraje de hoy').fill('29000')
   await page.getByRole('dialog').getByRole('button', { name: 'Guardar' }).click()
-  await expect(page.getByText(/Debe ser mayor que el kilometraje actual/)).toBeVisible()
+  await expect(page.getByText(/Debe ser mayor que el último registro/)).toBeVisible()
   await page.getByLabel('Kilometraje de hoy').fill('30500')
   await page.getByRole('dialog').getByRole('button', { name: 'Guardar' }).click()
   await expect(page.getByText('Kilometraje actualizado')).toBeVisible()

@@ -1,42 +1,41 @@
-import { Link, useNavigate } from '@tanstack/react-router'
-import { motion } from 'motion/react'
-import {
-  Calculator,
-  CalendarClock,
-  CarFront,
-  ChevronLeft,
-  ChevronRight,
-  Gauge,
-  PartyPopper,
-  Plus,
-  Sparkles,
-  type LucideIcon,
-} from 'lucide-react'
+import { useState, type CSSProperties } from 'react'
+import { Link } from '@tanstack/react-router'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { ChevronLeft, ChevronRight, Gauge, Plus } from 'lucide-react'
+import type { Reminder } from '@seibi/maintenance-engine/reminders'
 import { useActions } from '../app/Actions'
 import { Screen } from '../app/Screen'
+import { Lockup } from '../components/Lockup'
+import { Ticker } from '../components/Ticker'
 import { UnknownTasks } from '../components/UnknownTasks'
-import { VehicleHero } from '../components/VehicleHero'
+import { Silhouette } from '../components/VehicleVisual'
 import { useActiveVehicle } from '../lib/activeVehicle'
 import { useAuthSession } from '../lib/authSession'
-import { formatDay, formatNumber, formatUsd, relativeDays, vehicleName } from '../lib/format'
-import { useGarage, type ServiceRecord, type VehicleView } from '../lib/garage'
+import { formatNumber, measureLabel, relativeDays, vehicleName } from '../lib/format'
+import { useGarage, type VehicleView } from '../lib/garage'
 import { identityFromUser, initials } from '../lib/identity'
-import { knowledgeProfile, taskLabel, type KnowledgeLevel } from '../lib/knowledge'
+import { knowledgeProfile, taskLabel } from '../lib/knowledge'
+import { paintAccent, paintHex, paintLabel } from '../lib/paint'
 import { useProfile } from '../lib/profile'
-import { reminderDueText } from '../lib/reminderText'
 import { taskIcon, taskMap } from '../lib/tasks'
-import { daysBetween } from '@seibi/maintenance-engine/days'
-import type { Reminder } from '@seibi/maintenance-engine/reminders'
-import { todayIso } from '../lib/format'
-import { Button } from '../ui/Button'
-import { Card, IconTile } from '../ui/Card'
 import { cx } from '../ui/cx'
-import { ErrorState, ScreenSkeleton, STATUS_META } from '../ui/feedback'
+import { ErrorState } from '../ui/feedback'
 
-const TONE_TEXT = 'text-ink'
-const TONE_SOFT = 'bg-surface-3'
-const TONE_CARD = 'bg-surface'
-const TONE_BAR = 'bg-surface'
+// Seibi v3 Garage: one stage card for the active Vehicle, the odometer as the
+// screen's single hero number, and a 2×2 of the most pressing Reminders.
+
+const EASE = [0.2, 0.7, 0.2, 1] as const
+const LABEL = 'text-[13px] font-medium leading-[17px] text-muted'
+const DISPLAY = 'font-sans text-[32px] font-light leading-[34px] tracking-[-0.025em]'
+const CIRCLE = 'inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-surface text-ink shadow-card'
+const PRESS = 'transition-transform duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] active:scale-[0.97]'
+const STATUS_WORD = { overdue: 'Vencido', soon: 'Pronto', ok: 'Al día' } as const
+const RANK = { overdue: 0, soon: 1, ok: 2, unknown: 3 } as const
+
+function paintVars(color: string | null): CSSProperties {
+  const paint = paintHex(color)
+  return { '--paint': paint, '--accent': paintAccent(paint) } as CSSProperties
+}
 
 export function Home() {
   const { user } = useAuthSession()
@@ -48,19 +47,9 @@ export function Home() {
   const name = profile.data?.displayName ?? identity.fullName?.split(' ')[0] ?? null
 
   const header = (
-    <header className="flex items-center gap-3 px-5 pb-3 pt-2">
-      <h1 className={cx('min-w-0 flex-1 truncate font-sans text-[1.7rem] font-semibold leading-none tracking-tight', TONE_TEXT)}>
-        Seibi
-      </h1>
-      <Link
-        to="/perfil"
-        aria-label="Perfil"
-        className={cx(
-          'inline-flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full text-[0.9rem] font-bold ring-1 ring-line',
-          TONE_BAR,
-          TONE_TEXT,
-        )}
-      >
+    <header className="flex items-center justify-between px-5 pt-0.5">
+      <HeaderLockup />
+      <Link to="/perfil" aria-label="Perfil" className={cx(CIRCLE, PRESS, 'overflow-hidden text-[13px] font-semibold')}>
         {identity.avatarUrl ? (
           <img src={identity.avatarUrl} alt="" className="size-full object-cover" referrerPolicy="no-referrer" />
         ) : (
@@ -72,15 +61,15 @@ export function Home() {
 
   if (garage.isLoading) {
     return (
-      <Screen>
+      <Screen className="garage v3 min-h-full" style={paintVars(null)}>
         {header}
-        <ScreenSkeleton />
+        <GarageSkeleton />
       </Screen>
     )
   }
   if (garage.isError) {
     return (
-      <Screen>
+      <Screen className="garage v3 min-h-full">
         {header}
         <ErrorState onRetry={garage.refetch} />
       </Screen>
@@ -88,177 +77,40 @@ export function Home() {
   }
   if (!active) {
     return (
-      <Screen>
+      <Screen className="garage v3 min-h-full" style={paintVars(null)}>
         {header}
-        <FirstVehicle onAdd={actions.addVehicle} />
+        <EmptyGarage onAdd={actions.addVehicle} />
       </Screen>
     )
   }
 
   return (
-    <Screen className="min-h-full bg-[#f7f2ee]">
+    <Screen className="garage v3 min-h-full text-ink" style={paintVars(active.color)}>
       {header}
-      <div className={cx('flex flex-col gap-5 px-5', TONE_TEXT)}>
-        <VehicleStage vehicle={active} vehicles={garage.vehicles} onSelect={select} />
-        <motion.div
-          key={active.id}
-          className="flex flex-col gap-3"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: EASE }}
-        >
-          <HomeBody vehicle={active} />
-        </motion.div>
-      </div>
+      <CarStage vehicle={active} vehicles={garage.vehicles} onSelect={select} />
+      <motion.div
+        key={active.id}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2, ease: EASE }}
+      >
+        <Odometer vehicle={active} />
+        <Status vehicle={active} />
+      </motion.div>
     </Screen>
   )
 }
 
-const EASE = [0.33, 1, 0.68, 1] as const
-
-function ToneIcon({ icon: Icon }: { icon: LucideIcon }) {
+/** Header lockup, 22 pt. */
+function HeaderLockup() {
   return (
-    <span className={cx('inline-flex size-12 shrink-0 items-center justify-center rounded-2xl', TONE_SOFT, TONE_TEXT)}>
-      <Icon className="size-6" strokeWidth={1.75} aria-hidden />
+    <span role="img" aria-label="Seibi" className="inline-flex">
+      <Lockup className="text-[22px]" />
     </span>
   )
 }
 
-function SectionLink({ title, onClick }: { title: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cx('inline-flex items-center gap-0.5 px-0.5 py-1 text-[1.02rem] font-semibold', TONE_TEXT)}
-    >
-      {title}
-      <ChevronRight className="size-4" aria-hidden />
-    </button>
-  )
-}
-
-function SuggestionList({
-  reminders,
-  measure,
-  level,
-  tasks,
-  onOpen,
-}: {
-  reminders: Reminder[]
-  measure: VehicleView['measure']
-  level: KnowledgeLevel | null | undefined
-  tasks: ReturnType<typeof taskMap>
-  onOpen: (taskCode: string) => void
-}) {
-  const k = knowledgeProfile(level)
-  return (
-    <div className={cx('overflow-hidden rounded-[1.35rem]', TONE_CARD)}>
-      {reminders.map((r, index) => {
-        const dueOn = r.dueOn ?? r.expectedOn
-        const description = reminderDueText(r, measure)
-        return (
-          <button
-            key={r.taskCode}
-            type="button"
-            onClick={() => onOpen(r.taskCode)}
-            className={cx(
-              'flex w-full items-center gap-3 px-3.5 py-3 text-left active:bg-surface-2',
-              index > 0 && 'border-t border-line',
-            )}
-          >
-            <ToneIcon icon={taskIcon(r.taskCode)} />
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-[0.98rem] font-semibold leading-tight">
-                {taskLabel(tasks.get(r.taskCode), r.taskCode, k)}
-              </span>
-              <span className="mt-0.5 block truncate text-[0.8rem] opacity-70">{description}</span>
-              {dueOn ? <span className="mt-0.5 block text-[0.8rem] opacity-70 tabular">{formatDay(dueOn)}</span> : null}
-            </span>
-            <span className="inline-flex h-8 shrink-0 items-center rounded-full bg-surface-2 px-3 text-[0.75rem] font-semibold">
-              {STATUS_META[r.status].label}
-            </span>
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-function OkGrid({
-  reminders,
-  level,
-  tasks,
-  onOpen,
-}: {
-  reminders: Reminder[]
-  level: KnowledgeLevel | null | undefined
-  tasks: ReturnType<typeof taskMap>
-  onOpen: (taskCode: string) => void
-}) {
-  const k = knowledgeProfile(level)
-  return (
-    <div className="grid grid-cols-2 gap-2.5">
-      {reminders.map((r) => {
-        const dueOn = r.dueOn ?? r.expectedOn
-        return (
-          <button
-            key={r.taskCode}
-            type="button"
-            onClick={() => onOpen(r.taskCode)}
-            className={cx('flex items-center gap-2.5 rounded-[1.25rem] px-3 py-3 text-left active:bg-surface-2', TONE_CARD)}
-          >
-            <ToneIcon icon={taskIcon(r.taskCode)} />
-            <span className="min-w-0">
-              <span className="block text-balance text-[0.86rem] font-semibold leading-tight">
-                {taskLabel(tasks.get(r.taskCode), r.taskCode, k)}
-              </span>
-              {dueOn ? <span className="mt-0.5 block text-[0.75rem] opacity-70 tabular">{formatDay(dueOn)}</span> : null}
-            </span>
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-function RecentServices({
-  services,
-  tasks,
-  level,
-}: {
-  services: ServiceRecord[]
-  tasks: ReturnType<typeof taskMap>
-  level: KnowledgeLevel | null | undefined
-}) {
-  const k = knowledgeProfile(level)
-  return (
-    <div className={cx('overflow-hidden rounded-[1.35rem]', TONE_CARD)}>
-      {services.map((s, index) => {
-        const name = s.items
-          .map((i) => (i.taskCode ? taskLabel(tasks.get(i.taskCode), i.taskCode, k) : i.name))
-          .join(', ')
-        const meta = [s.shop, formatDay(s.performedOn)].filter(Boolean).join(' · ')
-        return (
-          <div
-            key={s.id}
-            className={cx('flex items-center gap-3 px-3.5 py-3', index > 0 && 'border-t border-line')}
-          >
-            <ToneIcon icon={taskIcon(s.items.find((i) => i.taskCode)?.taskCode)} />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[0.98rem] font-semibold leading-tight">{name}</p>
-              {meta ? <p className="mt-0.5 truncate text-[0.8rem] opacity-70">{meta}</p> : null}
-            </div>
-            {s.totalCost != null ? (
-              <span className="shrink-0 text-[1.02rem] font-semibold tabular">{formatUsd(s.totalCost)}</span>
-            ) : null}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-function VehicleStage({
+function CarStage({
   vehicle,
   vehicles,
   onSelect,
@@ -267,295 +119,329 @@ function VehicleStage({
   vehicles: VehicleView[]
   onSelect: (id: string) => void
 }) {
-  const navigate = useNavigate()
-  const actions = useActions()
-  const openDetail = () => void navigate({ to: '/flota/$vehicleId', params: { vehicleId: vehicle.id } })
+  const reduce = useReducedMotion()
+  const [direction, setDirection] = useState(1)
   const index = Math.max(0, vehicles.findIndex((v) => v.id === vehicle.id))
   const step = (delta: number) => {
     const next = vehicles[(index + delta + vehicles.length) % vehicles.length]
-    if (next && next.id !== vehicle.id) onSelect(next.id)
+    if (!next || next.id === vehicle.id) return
+    setDirection(delta)
+    onSelect(next.id)
   }
+  const travel = reduce ? 0 : 70
+  const paint = paintLabel(vehicle.color)
 
   return (
-    <section className="flex flex-col gap-2.5" aria-label={vehicleName(vehicle)}>
-      <div className={cx('flex h-12 items-center rounded-2xl px-1', TONE_BAR)}>
-        {vehicles.length > 1 ? (
-          <button
-            type="button"
-            onClick={() => step(-1)}
-            aria-label="Vehículo anterior"
-            className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl active:bg-surface-2"
-          >
-            <ChevronLeft className="size-5" aria-hidden />
-          </button>
-        ) : (
-          <span className="size-10 shrink-0" aria-hidden />
-        )}
-        <button
-          type="button"
-          onClick={openDetail}
-          aria-label={`Ver ${vehicleName(vehicle)}`}
-          className="flex h-11 min-w-0 flex-1 items-center justify-center gap-2.5 px-2"
-        >
-          <span className="truncate text-[0.78rem] font-semibold tracking-[0.12em]">
-            {vehicle.brand.toUpperCase()}
-          </span>
-          <span className="h-4 w-px shrink-0 bg-ink/20" aria-hidden />
-          <span className="truncate text-[0.92rem] font-semibold">
-            {vehicle.model} {vehicle.year}
-            {vehicle.plate ? ` · ${vehicle.plate}` : ''}
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={vehicles.length > 1 ? () => step(1) : openDetail}
-          aria-label={vehicles.length > 1 ? 'Vehículo siguiente' : `Abrir ${vehicleName(vehicle)}`}
-          className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl active:bg-surface-2"
-        >
-          <ChevronRight className="size-5" aria-hidden />
-        </button>
-      </div>
+    <motion.section
+      className="garage-stage mx-3 mt-2.5 h-[316px] rounded-3xl"
+      style={{ touchAction: 'pan-y' }}
+      aria-roledescription="carrusel"
+      aria-label="Tus Vehículos"
+      onPanEnd={(_, info) => {
+        const dx = info.offset.x
+        if (vehicles.length > 1 && Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(info.offset.y)) step(dx < 0 ? 1 : -1)
+      }}
+    >
+      <Link
+        to="/flota/$vehicleId"
+        params={{ vehicleId: vehicle.id }}
+        aria-label={`Ver ${vehicleName(vehicle)}`}
+        className="absolute inset-x-5 top-[18px] z-[4] block"
+      >
+        <p className={cx(LABEL, 'truncate')}>{vehicle.brand}</p>
+        <h2 className={cx(DISPLAY, 'mt-1 truncate')}>{vehicle.model}</h2>
+        <p className={cx(LABEL, 'mt-1.5 truncate tabular')}>{[vehicle.year, paint].filter(Boolean).join(' · ')}</p>
+      </Link>
 
-      <div className={cx('overflow-hidden rounded-[1.35rem]', TONE_CARD)}>
-        <div className="relative h-36">
-          <motion.div
-            key={vehicle.id}
-            className="absolute inset-0"
-            initial={{ opacity: 0, x: 36 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.55, ease: EASE }}
-          >
-            <VehicleHero
-              vehicle={vehicle}
-              fitMargin={0.68}
-              cameraPosition={[-5.2, 0.22, 1.15]}
-              className="h-full [&>div.-z-10]:hidden [&>span]:bottom-2"
-            />
-          </motion.div>
-        </div>
-        <button
-          type="button"
-          onClick={() => actions.updateMileage(vehicle.id)}
-          aria-label={
-            vehicle.odometer != null
-              ? `Odómetro, ${formatNumber(vehicle.odometer)} ${vehicle.measure}`
-              : 'Odómetro, sin lectura'
-          }
-          className="flex w-full items-center justify-center gap-2 border-t border-line py-3.5 active:bg-surface-2"
+      <div className="garage-glow" aria-hidden />
+      {/* The poster carries its own ground shadow. */}
+      {vehicle.render?.posterUrl ? null : <div className="garage-contact" aria-hidden />}
+
+      <AnimatePresence initial={false} custom={direction}>
+        <motion.div
+          key={vehicle.id}
+          custom={direction}
+          className="absolute inset-0 z-[2]"
+          variants={{
+            enter: (d: number) => ({ x: `${travel * d}%`, opacity: 0 }),
+            center: { x: 0, opacity: 1 },
+            exit: (d: number) => ({ x: `${-travel * d}%`, opacity: 0 }),
+          }}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{ duration: 0.4, ease: EASE }}
         >
-          <Gauge className="size-5" strokeWidth={1.75} aria-hidden />
-          <span className="text-[1.2rem] font-semibold leading-tight tracking-tight tabular">
-            {vehicle.odometer != null ? `${formatNumber(vehicle.odometer)} ${vehicle.measure}` : 'Sin lectura'}
+          <StageCar vehicle={vehicle} />
+        </motion.div>
+      </AnimatePresence>
+
+      {vehicles.length > 1 ? (
+        <div className="absolute inset-x-2.5 bottom-2.5 z-[4] flex items-center justify-between">
+          <button type="button" onClick={() => step(-1)} aria-label="Vehículo anterior" className={cx(CIRCLE, PRESS)}>
+            <ChevronLeft className="size-[18px]" aria-hidden />
+          </button>
+          <span className="flex items-center gap-1.5" aria-label={`Vehículo ${index + 1} de ${vehicles.length}`}>
+            {vehicles.map((v) => (
+              <i
+                key={v.id}
+                className={cx(
+                  'block h-1.5 rounded-[3px] transition-[width,background-color] duration-200',
+                  v.id === vehicle.id ? 'w-[18px] bg-[var(--accent)]' : 'w-1.5 bg-[var(--g-dot)]',
+                )}
+              />
+            ))}
           </span>
-        </button>
-      </div>
-    </section>
+          <button type="button" onClick={() => step(1)} aria-label="Vehículo siguiente" className={cx(CIRCLE, PRESS)}>
+            <ChevronRight className="size-[18px]" aria-hidden />
+          </button>
+        </div>
+      ) : null}
+    </motion.section>
   )
 }
 
-function HomeBody({ vehicle }: { vehicle: VehicleView }) {
-  const actions = useActions()
-  const garage = useGarage()
-  const profile = useProfile()
-  const navigate = useNavigate()
-  const k = knowledgeProfile(profile.data?.knowledgeLevel)
-  const byCode = taskMap(garage.tasks)
-
-  const attention = vehicle.reminders.filter(
-    (r) => !r.snoozed && (r.status === 'overdue' || r.status === 'soon'),
-  )
-  const unknown = vehicle.reminders.filter((r) => r.status === 'unknown')
-  const upcoming = vehicle.reminders.filter((r) => !r.snoozed && r.status === 'ok').slice(0, 4)
-  const today = todayIso()
-
+/**
+ * The Vehicle in the stage. The design wants a transparent side-profile
+ * cut-out; until the render pipeline makes one, the fal poster sits in a
+ * larger feathered box, and without a poster the paint-coloured silhouette
+ * stands on the floor with its reflection. No 3D on Inicio.
+ */
+function StageCar({ vehicle }: { vehicle: VehicleView }) {
+  const [failed, setFailed] = useState(false)
+  const poster = failed ? null : (vehicle.render?.posterUrl ?? null)
+  if (poster) {
+    return (
+      <div className="garage-car is-poster">
+        <img
+          src={poster}
+          alt={`${vehicleName(vehicle)} ${vehicle.year} (ilustración)`}
+          decoding="async"
+          draggable={false}
+          onError={() => setFailed(true)}
+        />
+      </div>
+    )
+  }
   return (
     <>
-      <UnknownTasks
-        vehicleId={vehicle.id}
-        reminders={vehicle.reminders.filter((r) => r.status === 'unknown')}
-        tasks={byCode}
-        level={profile.data?.knowledgeLevel}
-      />
-
-      {vehicle.mileagePrompt.due ? (
-        <button
-          type="button"
-          onClick={() => actions.updateMileage(vehicle.id)}
-          className={cx('flex items-center gap-3 rounded-[1.35rem] p-3.5 text-left', TONE_CARD)}
-        >
-          <ToneIcon icon={Gauge} />
-          <span className="min-w-0 flex-1">
-            <span className="block text-[0.95rem] font-bold">¿Cuánto marca hoy el odómetro?</span>
-            <span className="block text-[0.82rem] opacity-70">
-              {vehicle.mileagePrompt.reason === 'no_readings'
-                ? 'Lo necesitamos para calcular tus próximos mantenimientos.'
-                : vehicle.mileagePrompt.reason === 'no_usage'
-                  ? 'Con otra lectura sabremos cuánto lo usas.'
-                  : `Tu último registro fue ${relativeDays(-(vehicle.mileagePrompt.daysSinceLast ?? 0))}.`}
-            </span>
-          </span>
-          <ChevronRight className="size-5 opacity-60" aria-hidden />
-        </button>
-      ) : null}
-
-      <section className="flex flex-col gap-1.5">
-        <SectionLink title="Sugerencias" onClick={() => void navigate({ to: '/avisos' })} />
-        {attention.length === 0 ? (
-          <div className={cx('flex items-center gap-3 rounded-[1.35rem] px-3.5 py-3.5', TONE_CARD)}>
-            <ToneIcon icon={PartyPopper} />
-            <p className="text-[0.9rem] leading-snug opacity-80">
-              {unknown.length > 0
-                ? 'Cuéntanos cuándo hiciste los últimos Servicios para calcular los próximos.'
-                : 'Todo está al día. Te avisaremos cuando algo se acerque.'}
-            </p>
-          </div>
-        ) : (
-          <SuggestionList
-            reminders={attention}
-            measure={vehicle.measure}
-            level={profile.data?.knowledgeLevel}
-            tasks={byCode}
-            onOpen={(taskCode) => actions.openReminder(vehicle.id, taskCode)}
-          />
-        )}
-      </section>
-
-      {upcoming.length > 0 ? (
-        <section className="flex flex-col gap-1.5">
-          <SectionLink title="Al día" onClick={() => void navigate({ to: '/avisos' })} />
-          <OkGrid
-            reminders={upcoming}
-            level={profile.data?.knowledgeLevel}
-            tasks={byCode}
-            onOpen={(taskCode) => actions.openReminder(vehicle.id, taskCode)}
-          />
-        </section>
-      ) : null}
-
-      {vehicle.upcomingAppointments.length > 0 || vehicle.openManualReminders.length > 0 ? (
-        <section className="flex flex-col gap-2">
-          <h2 className="px-0.5 text-[1.02rem] font-semibold">En tu calendario</h2>
-          <Card className="divide-y divide-line overflow-hidden rounded-[1.6rem]">
-            {vehicle.upcomingAppointments.slice(0, 2).map((a) => (
-              <div key={a.id} className="flex items-center gap-3 px-4 py-3.5">
-                <IconTile icon={CalendarClock} tone="radiant" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[0.95rem] font-semibold">
-                    {a.taskCodes.length > 0
-                      ? a.taskCodes.map((c) => taskLabel(byCode.get(c), c, k)).join(', ')
-                      : 'Cita en el taller'}
-                  </p>
-                  <p className="text-[0.82rem] text-muted">
-                    {formatDay(a.scheduledOn, 'long')} · {relativeDays(daysBetween(today, a.scheduledOn))}
-                    {a.shop ? ` · ${a.shop}` : ''}
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() =>
-                    actions.logService({
-                      vehicleId: vehicle.id,
-                      taskCodes: a.taskCodes,
-                      appointmentId: a.id,
-                      shop: a.shop,
-                    })
-                  }
-                >
-                  Hecho
-                </Button>
-              </div>
-            ))}
-            {vehicle.openManualReminders.slice(0, 2).map((m) => (
-              <div key={m.id} className="flex items-center gap-3 px-4 py-3.5">
-                <IconTile icon={CalendarClock} tone={m.dueOn < today ? 'overdue' : 'neutral'} />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[0.95rem] font-semibold">{m.title}</p>
-                  <p className="text-[0.82rem] text-muted">
-                    {formatDay(m.dueOn, 'long')} · {relativeDays(daysBetween(today, m.dueOn))}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </Card>
-        </section>
-      ) : null}
-
-      <section className="flex flex-col gap-1.5">
-        <SectionLink
-          title="Último servicio"
-          onClick={() =>
-            void navigate({
-              to: '/flota/$vehicleId',
-              params: { vehicleId: vehicle.id },
-              search: { tab: 'historial' },
-            })
-          }
-        />
-        {vehicle.services.length === 0 ? (
-          <p className="px-0.5 text-[0.88rem] opacity-70">
-            Registra lo que le hagas a tu Vehículo y tendrás su historial completo.
-          </p>
-        ) : (
-          <RecentServices
-            services={vehicle.services.slice(0, 2)}
-            tasks={byCode}
-            level={profile.data?.knowledgeLevel}
-          />
-        )}
-        <button
-          type="button"
-          onClick={() => actions.logService({ vehicleId: vehicle.id })}
-          className={cx(
-            'mx-auto inline-flex w-fit items-center justify-center gap-1.5 self-center rounded-2xl px-5 py-2.5 text-[0.95rem] font-semibold shadow-card active:bg-surface-2',
-            TONE_BAR,
-          )}
-        >
-          <Plus className="size-4" aria-hidden />
-          Registrar Servicio
-        </button>
-      </section>
+      <div className="garage-refl" aria-hidden>
+        <Silhouette bodyType={vehicle.bodyType} color={vehicle.color} className="h-full w-full" />
+      </div>
+      <div className="garage-car">
+        <Silhouette bodyType={vehicle.bodyType} color={vehicle.color} className="h-full w-full" />
+      </div>
     </>
   )
 }
 
-function FirstVehicle({ onAdd }: { onAdd: () => void }) {
-  const points = [
-    { icon: Sparkles, title: 'Tu plan de mantenimiento', body: 'Según la marca, el modelo y el año de tu Vehículo.' },
-    { icon: Gauge, title: 'Avisos a tiempo', body: 'Calculados con tu kilometraje y cuánto lo usas.' },
-    { icon: Calculator, title: 'Precios estimados', body: 'Rangos en tu ciudad antes de ir al taller.' },
-  ]
+function Odometer({ vehicle }: { vehicle: VehicleView }) {
+  const actions = useActions()
+  const prompt = vehicle.mileagePrompt
+  const hint = !prompt.due
+    ? null
+    : prompt.reason === 'no_readings'
+      ? 'Lo necesitamos para calcular tus próximos mantenimientos.'
+      : prompt.reason === 'no_usage'
+        ? 'Con otra lectura sabremos cuánto lo usas.'
+        : `Tu último registro fue ${relativeDays(-(prompt.daysSinceLast ?? 0))}.`
+
   return (
-    <div className="flex flex-col gap-5 px-5">
-      <Card className="overflow-hidden p-6 text-center">
-        <span className="mx-auto mb-4 inline-flex size-16 items-center justify-center rounded-[1.4rem] bg-radiant-soft text-radiant">
-          <CarFront className="size-8" aria-hidden />
+    <section className="px-5 pt-5">
+      <div className="flex items-end justify-between gap-3">
+        <div className="min-w-0">
+          <p className={LABEL}>Kilometraje</p>
+          {vehicle.odometer != null ? (
+            <p className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5">
+              <Ticker
+                text={formatNumber(vehicle.odometer)}
+                className="whitespace-nowrap text-[52px] font-light leading-[54px] tracking-[-0.03em] tabular"
+              />
+              <span className="text-[16px] text-muted">{measureLabel(vehicle.measure)}</span>
+            </p>
+          ) : (
+            <p className={cx(DISPLAY, 'mt-1')}>Sin lectura</p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => actions.updateMileage(vehicle.id)}
+          className={cx(
+            'mb-1 inline-flex h-11 shrink-0 items-center gap-2 rounded-xl bg-[var(--g-control)] px-4 text-[14px] font-medium active:bg-[var(--g-control-pressed)]',
+            PRESS,
+          )}
+        >
+          <Gauge className="size-[18px]" aria-hidden />
+          Actualizar
+        </button>
+      </div>
+      {hint ? <p className="mt-2 text-[13px] leading-[17px] text-muted">{hint}</p> : null}
+    </section>
+  )
+}
+
+function Status({ vehicle }: { vehicle: VehicleView }) {
+  const actions = useActions()
+  const garage = useGarage()
+  const profile = useProfile()
+  const k = knowledgeProfile(profile.data?.knowledgeLevel)
+  const byCode = taskMap(garage.tasks)
+
+  const known = vehicle.reminders
+    .filter((r) => r.status !== 'unknown' && !r.snoozed)
+    .sort((a, b) => RANK[a.status] - RANK[b.status] || b.used - a.used)
+  const attention = known.filter((r) => r.status !== 'ok')
+  const overdue = attention.some((r) => r.status === 'overdue')
+  const unknown = vehicle.reminders.filter((r) => r.status === 'unknown')
+
+  return (
+    <>
+      {known.length > 0 ? (
+        <section aria-labelledby="estado">
+          <div className="flex items-center justify-between px-5 pb-2.5 pt-[18px]">
+            <h2 id="estado" className="font-sans text-[15px] font-medium tracking-normal">
+              Estado
+            </h2>
+            <StatusSummary count={attention.length} overdue={overdue} />
+          </div>
+          <div className="grid grid-cols-2 gap-2.5 px-5">
+            {known.slice(0, 4).map((r) => (
+              <StatusCard
+                key={r.taskCode}
+                reminder={r}
+                label={taskLabel(byCode.get(r.taskCode), r.taskCode, k)}
+                onOpen={() => actions.openReminder(vehicle.id, r.taskCode)}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
+      {unknown.length > 0 ? (
+        <div className="px-5 pt-5">
+          <UnknownTasks
+            vehicleId={vehicle.id}
+            reminders={unknown}
+            tasks={byCode}
+            level={profile.data?.knowledgeLevel}
+          />
+        </div>
+      ) : null}
+    </>
+  )
+}
+
+function StatusSummary({ count, overdue }: { count: number; overdue: boolean }) {
+  if (count === 0) return <span className="text-[13px] font-medium text-muted">Todo al día</span>
+  return (
+    <span
+      className={cx(
+        'inline-flex items-center gap-1.5 text-[13px] font-medium',
+        overdue ? 'text-[var(--g-alert)]' : 'text-muted',
+      )}
+    >
+      {overdue ? <span className="size-1.5 rounded-full bg-[var(--g-alert)]" aria-hidden /> : null}
+      {count} por atender
+    </span>
+  )
+}
+
+function StatusCard({ reminder, label, onOpen }: { reminder: Reminder; label: string; onOpen: () => void }) {
+  const Icon = taskIcon(reminder.taskCode)
+  const over = reminder.status === 'overdue'
+  const word = STATUS_WORD[reminder.status as keyof typeof STATUS_WORD]
+  const used = over ? 100 : Math.round(Math.min(1, Math.max(0, reminder.used)) * 100)
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={`${label}, ${word}`}
+      className={cx('flex flex-col rounded-3xl bg-surface px-3.5 pb-4 pt-3.5 text-left shadow-card', PRESS)}
+    >
+      <span className="flex items-center justify-between gap-2">
+        <Icon className="size-[18px]" aria-hidden />
+        <span
+          className={cx(
+            'inline-flex items-center gap-1.5 whitespace-nowrap text-[12px] font-medium',
+            over ? 'text-[var(--g-alert)]' : 'text-muted',
+          )}
+        >
+          {over ? <span className="size-1.5 rounded-full bg-[var(--g-alert)]" aria-hidden /> : null}
+          {word}
         </span>
-        <h2 className="text-[1.35rem]">Agrega tu primer Vehículo</h2>
-        <p className="mx-auto mt-2 max-w-[17rem] text-[0.9rem] text-muted">
-          Solo necesitamos la marca, el modelo, el año y el kilometraje. Toma menos de un minuto.
-        </p>
-        <Button size="lg" icon={Plus} block className="mt-5" onClick={onAdd}>
-          Agregar Vehículo
-        </Button>
-      </Card>
-      <div className="flex flex-col gap-2.5">
-        {points.map(({ icon, title, body }, i) => (
-          <motion.div
-            key={title}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 + i * 0.08 }}
-            className="flex items-center gap-3 rounded-[1.25rem] bg-surface p-4 shadow-card"
-          >
-            <IconTile icon={icon} tone="radiant" />
-            <div>
-              <p className="text-[0.95rem] font-bold">{title}</p>
-              <p className="text-[0.82rem] text-muted">{body}</p>
-            </div>
-          </motion.div>
+      </span>
+      <span className="mt-3 line-clamp-2 text-[14px] font-medium leading-[18px]">{label}</span>
+      <span className="mt-auto block pt-3" aria-hidden>
+        <span className="block h-1 overflow-hidden rounded-sm bg-[var(--g-track)]">
+          <motion.span
+            className={cx('block h-full rounded-sm', over ? 'bg-[var(--g-alert)]' : 'bg-[var(--accent)]')}
+            initial={false}
+            animate={{ width: `${used}%` }}
+            transition={{ duration: 0.4, ease: EASE }}
+          />
+        </span>
+      </span>
+    </button>
+  )
+}
+
+function GarageSkeleton() {
+  return (
+    <div aria-busy="true" aria-label="Cargando">
+      <div className="garage-stage mx-3 mt-2.5 h-[316px] rounded-3xl">
+        <div className="absolute inset-x-5 top-[18px] z-[4]">
+          <span className="skeleton block h-3 w-16 rounded-md" />
+          <span className="skeleton mt-3 block h-7 w-40 rounded-md" />
+          <span className="skeleton mt-3 block h-3 w-28 rounded-md" />
+        </div>
+        <div className="garage-glow" aria-hidden />
+      </div>
+      <div className="px-5 pt-5">
+        <span className="skeleton block h-3 w-20 rounded-md" />
+        <span className="skeleton mt-2 block h-12 w-48 rounded-lg" />
+      </div>
+      <div className="grid grid-cols-2 gap-2.5 px-5 pt-[46px]">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="flex flex-col rounded-3xl bg-surface px-3.5 pb-4 pt-3.5 shadow-card">
+            <span className="flex items-center justify-between">
+              <span className="skeleton block size-[18px] rounded-md" />
+              <span className="skeleton block h-3 w-11 rounded-md" />
+            </span>
+            <span className="skeleton mt-3.5 block h-3 w-3/5 rounded-md" />
+            <span className="skeleton mt-3.5 block h-1 rounded-sm" />
+          </div>
         ))}
       </div>
     </div>
+  )
+}
+
+function EmptyGarage({ onAdd }: { onAdd: () => void }) {
+  return (
+    <>
+      <div className="garage-stage mx-3 mt-2.5 h-[316px] rounded-3xl">
+        <h2 className={cx(DISPLAY, 'absolute inset-x-5 top-[18px] z-[4]')}>Sin Vehículos todavía</h2>
+        <div className="garage-glow" aria-hidden />
+        <div className="garage-contact opacity-35" aria-hidden />
+      </div>
+      <p className="mx-5 mt-[22px] text-[15px] leading-[22px] text-muted">
+        Agrega tu Vehículo y te avisamos cuándo toca cada Servicio.
+      </p>
+      <div
+        className="absolute inset-x-5"
+        style={{ bottom: 'calc(var(--dock-height) + max(var(--safe-bottom), 0.6rem) + 1rem)' }}
+      >
+        <button
+          type="button"
+          onClick={onAdd}
+          className={cx(
+            'inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-ink px-[22px] text-[16px] font-medium text-bg',
+            PRESS,
+          )}
+        >
+          <Plus className="size-[18px]" aria-hidden />
+          Agregar mi Vehículo
+        </button>
+      </div>
+    </>
   )
 }
