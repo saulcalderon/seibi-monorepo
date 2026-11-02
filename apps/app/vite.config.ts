@@ -16,7 +16,7 @@ export default defineConfig({
       outdir: './src/paraglide',
     }),
     VitePWA({
-      // Our own service worker: precache + Web Push (ADR-0006).
+      // Our own service worker: precache + Web Push.
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.ts',

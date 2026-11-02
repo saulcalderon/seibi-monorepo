@@ -51,7 +51,7 @@ test('manage a Vehicle end to end', async ({ page }) => {
   await page.getByRole('button', { name: 'Guardar cambios' }).click()
   await expect(page.getByText('Vehículo actualizado')).toBeVisible()
 
-  // Update mileage: must be higher than the current odometer (ADR-0004).
+  // Update mileage: must be higher than the current odometer.
   await page.getByRole('button', { name: /actualizar/ }).first().click()
   await page.getByLabel('Kilometraje de hoy').fill('29000')
   await page.getByRole('dialog').getByRole('button', { name: 'Guardar' }).click()

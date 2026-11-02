@@ -78,7 +78,7 @@ Cuando te invoquen:
 - Tipo: Clash Display Semibold + Archivo Regular.
 - Look: **Seibi contorno** (Creación de diseño). Panel fog, relieve, semáforo en due. No mezclar con hexágono HUD ni “Nuevo auto” como si fueran el mismo sistema.
 - `prefers-reduced-motion` y safe areas.
-- Stack: TanStack Router + Vite SPA, Tailwind, Paraglide, PWA. Ver `docs/adr/0001-frontend-stack.md`.
+- Stack: TanStack Router + Vite SPA, Tailwind, Paraglide, PWA (congelada; la app nativa Expo está en camino). Ver `ARCHITECTURE.md`.
 - Dominio: lee `CONTEXT.md` antes de nombrar. Conceptos nuevos (Pendiente, Cita) se marcan como hueco hasta que Denny los canonicé.
 
 ## Restricciones

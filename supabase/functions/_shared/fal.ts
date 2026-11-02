@@ -1,4 +1,4 @@
-// fal queue API and the Model render pipeline (ADR-0008).
+// fal queue API and the Model render pipeline.
 
 import { hmac, normalizeKey } from './keys.ts'
 import { HttpError } from './http.ts'

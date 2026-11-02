@@ -87,7 +87,7 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
   const vehicleFor = (id: string) => vehicles.find((v) => v.id === id) ?? null
 
   // While a Model render is generating, nudge vehicle-render: it checks fal
-  // itself when the webhook is late or unreachable (ADR-0008).
+  // itself when the webhook is late or unreachable.
   const generatingIds = vehicles.filter((v) => v.render?.generating).map((v) => v.id).join(',')
   useEffect(() => {
     if (!generatingIds) return

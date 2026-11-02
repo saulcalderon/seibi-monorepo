@@ -3,7 +3,7 @@ import { Canvas } from '@react-three/fiber'
 import { Bounds, Center, ContactShadows, OrbitControls, useGLTF } from '@react-three/drei'
 
 // Live 3D Model render. Lazy-loaded chunk: three.js only ships to screens
-// with a hero (ADR-0008).
+// with a hero.
 
 function Model({ url, onReady, margin }: { url: string; onReady: () => void; margin: number }) {
   const { scene } = useGLTF(url)

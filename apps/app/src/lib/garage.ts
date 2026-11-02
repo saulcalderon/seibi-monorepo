@@ -1,7 +1,7 @@
 // The garage: every Vehicle the user owns with its readings, Services,
 // Routines, Reminders, Appointments, schedule, and render, fetched in one
-// request and turned into derived Reminders by the shared engine
-// (ADR-0010). Every screen reads from this one query so they never disagree.
+// request and turned into derived Reminders by the shared engine.
+// Every screen reads from this one query so they never disagree.
 
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -137,7 +137,7 @@ export type VehicleRecord = {
 }
 
 export type VehicleView = VehicleRecord & {
-  /** Current odometer (ADR-0005), not projected. */
+  /** Current odometer, not projected. */
   odometer: number | null
   odometerOn: string | null
   /** Odometer projected to today with the Usage rate. */

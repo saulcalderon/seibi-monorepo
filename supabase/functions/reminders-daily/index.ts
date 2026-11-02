@@ -1,6 +1,6 @@
 // Daily: compute each user's Reminders and send one Web Push when something
 // needs attention. Called by pg_cron with the cron secret (verify_jwt off).
-// Uses the same engine as the app (ADR-0010).
+// Uses the same engine as the app.
 
 import webpush from 'npm:web-push@3.6.7'
 import {
