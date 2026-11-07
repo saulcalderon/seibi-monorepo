@@ -7,3 +7,6 @@ dev-dist
 
 # Edge Function secrets for local serve
 supabase/functions/.env*
+
+# skill script caches
+.agents/skills/*/scripts/.cache/
