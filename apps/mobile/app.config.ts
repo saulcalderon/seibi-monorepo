@@ -89,8 +89,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           imageWidth: 160,
         },
       ],
-      // The kv-store keeps local preferences (theme, language), read synchronously at launch.
-      'expo-sqlite',
       [
         'expo-image-picker',
         {
