@@ -1,0 +1,13 @@
+{
+  "function": "estimates",
+  "request": {
+    "vehicleId": "13b4dd9a-fa28-4d63-9a42-5b265efb1164",
+    "taskCode": "oil_filter"
+  },
+  "status": 409,
+  "recordedAt": "2026-11-12T09:10:22.037Z",
+  "body": {
+    "error": "profile_location",
+    "message": "Dinos tu país y ciudad en Perfil para calcular precios de tu zona."
+  }
+}

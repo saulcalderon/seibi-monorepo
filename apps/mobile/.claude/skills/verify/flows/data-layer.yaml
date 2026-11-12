@@ -1,0 +1,103 @@
+# Feature: the data layer reads and writes seibi-dev (features/data-layer.md).
+# Run through scripts/verify.sh drive <ios|android> data-layer. It signs in
+# before the recording starts (a sign-in video can flash the test password),
+# then records a cold start, the data check screen listing the test
+# account's Vehicles, a refused and a saved standalone Mileage reading, and
+# the formatters as Hermes prints them. It leaves one new reading on
+# seibi-dev each run (and the test Vehicle on the first run).
+appId: ${APP_ID}
+name: The data layer lists Vehicles and saves a Mileage reading
+---
+- stopApp
+- openLink: ${DEV_URL}
+- runFlow: sign-in.yaml
+- startRecording: data-layer
+# A cold start, already signed in: the session comes back, no password.
+- stopApp
+- openLink: ${DEV_URL}
+- extendedWaitUntil:
+    visible:
+      id: start-title
+    timeout: 120000
+- tapOn:
+    id: open-data-check
+- extendedWaitUntil:
+    visible:
+      id: 'data-check-vehicle-0|data-check-empty'
+    timeout: 30000
+# A test account with no Vehicle yet: create the test Vehicle through the
+# data layer (useCreateVehicle), as the Vehicle form will.
+- runFlow:
+    when:
+      visible:
+        id: data-check-empty
+    commands:
+      - tapOn:
+          id: data-check-create-vehicle
+      - extendedWaitUntil:
+          visible:
+            id: data-check-vehicle-0
+          timeout: 30000
+- assertVisible:
+    id: data-check-odometer
+    text: 'Kilometraje actual: [0-9,]+ km'
+- takeScreenshot: vehicles-listed
+# The current odometer as the screen shows it, as digits.
+- copyTextFrom:
+    id: data-check-odometer
+- evalScript: ${output.current = maestro.copiedText.replace(/[^0-9]/g, '')}
+- evalScript: ${output.next = String(Number(output.current) + 500)}
+- evalScript: ${output.currentText = output.current.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+- evalScript: ${output.nextText = output.next.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+# A standalone reading equal to the current odometer is refused, in es.json's words.
+- tapOn:
+    id: data-check-reading-input
+- inputText: ${output.current}
+- tapOn:
+    id: data-check-reading-save
+- extendedWaitUntil:
+    visible:
+      id: data-check-reading-error
+      text: 'Debe ser mayor que el último registro \(${output.currentText} km\)\.'
+    timeout: 10000
+- takeScreenshot: reading-refused
+# One above it is saved, dated today, and the current odometer moves to it.
+- tapOn:
+    id: data-check-reading-input
+- eraseText: 12
+- inputText: ${output.next}
+- tapOn:
+    id: data-check-reading-save
+- extendedWaitUntil:
+    visible:
+      id: data-check-reading-saved
+      text: 'Kilometraje actualizado: ${output.nextText} km'
+    timeout: 20000
+- extendedWaitUntil:
+    visible:
+      id: data-check-odometer
+      text: 'Kilometraje actual: ${output.nextText} km'
+    timeout: 20000
+- takeScreenshot: reading-saved
+# The formatters as this phone's Hermes prints them: the PWA's strings.
+- scrollUntilVisible:
+    element:
+      id: format-month
+    direction: DOWN
+- assertVisible:
+    id: format-usd
+    text: '\$1,234'
+- assertVisible:
+    id: format-usd-negative
+    text: '-\$40'
+- assertVisible:
+    id: format-usd-cents
+    text: '\$1,234\.50'
+- assertVisible:
+    id: format-usd-range
+    text: '\$80 – \$120'
+- assertVisible:
+    id: format-distance
+    text: '30,500 km'
+- takeScreenshot: formats
+- stopRecording

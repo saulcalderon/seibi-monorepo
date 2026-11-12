@@ -53,6 +53,7 @@ export function DataCheckScreen() {
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior="automatic"
       keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
     >
       <Text style={styles.note}>{t('dataCheck.subtitle')}</Text>
 

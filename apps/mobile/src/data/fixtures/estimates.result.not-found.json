@@ -1,0 +1,37 @@
+{
+  "source": "seibi-dev public.estimates, read with a select",
+  "request": "select id, task_code, query, country, city, created_at, result from public.estimates where brand = 'Toyota' and model = 'Yaris' and year = 2015 and task_code = 'oil_filter'",
+  "recordedAt": "2026-11-12T09:12:00Z",
+  "row": {
+    "id": "12ae9a67-6c5c-48a9-97a3-32fe884f0735",
+    "task_code": "oil_filter",
+    "query": "Filtro de aceite",
+    "country": "SV",
+    "city": "San Salvador",
+    "created_at": "2026-09-30 02:01:12.396+00",
+    "result": {
+      "found": false,
+      "labor": null,
+      "title": "Filtro de aceite",
+      "factors": [
+        "La ficha de BUBU Auto Parts incluye compatibilidad con el Yaris 2015 de gasolina, motor 1.5 L, versiones L, LE y SE; conviene confirmar el motor y la referencia antes de comprar.",
+        "El proveedor anuncia envíos a todo El Salvador, pero no se verificó el costo de entrega a San Salvador.",
+        "El código identificado como referencia OEM en una publicación no basta para confirmar que el filtro vendido sea original Toyota.",
+        "No encontré tarifas verificables de instalación del filtro por separado ni un rango local de filtros originales."
+      ],
+      "sources": [
+        {
+          "url": "https://bubuautoparts.com/products/filtro-de-aceite-toyota-90915-yzzn1-r3",
+          "title": "BUBU Auto Parts — Filtro de aceite 90915-YZZN1 y compatibilidad con Yaris 2015"
+        }
+      ],
+      "summary": "Encontré una referencia de venta en El Salvador compatible con el Toyota Yaris 2015, pero no suficientes precios verificables para establecer un rango confiable en San Salvador. Falta confirmar el motor de tu vehículo y obtener otra cotización del filtro, además del costo de instalación si lo necesitas.",
+      "includes": ["Filtro de aceite del motor; alcance solicitado limitado al repuesto"],
+      "parts_oem": null,
+      "confidence": "low",
+      "parts_economy": null,
+      "total_dealership": null,
+      "total_independent": null
+    }
+  }
+}

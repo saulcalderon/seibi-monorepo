@@ -1,0 +1,11 @@
+{
+  "function": "vehicle-render",
+  "request": {
+    "vehicleId": "13b4dd9a-fa28-4d63-9a42-5b265efb1164"
+  },
+  "status": 202,
+  "recordedAt": "2026-11-12T09:10:20.891Z",
+  "body": {
+    "renderId": "a610b89b-c041-4315-abaa-f2f8c375dd07"
+  }
+}
