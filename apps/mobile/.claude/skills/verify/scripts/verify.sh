@@ -230,6 +230,28 @@ open(path, "wb").write(data)' "$file"
   done
 }
 
+# Builds Seibi Dev for the Simulator and installs it. Not `expo run:ios`: with
+# Sign in with Apple in the entitlements, Expo CLI 58 wants a signing
+# certificate even for a Simulator build (simulatorBuildRequiresCodeSigning)
+# and stops with "No code signing certificates are available to use" on a Mac
+# without one. The Simulator needs none: xcodebuild signs a Simulator build
+# ad hoc and still embeds the entitlements.
+build_ios() {
+  local udid="$1" ios="$APP_DIR/ios"
+  if [[ ! -d "$ios" ]]; then
+    # Generates ios/ for the development variant and installs the pods.
+    ( cd "$APP_DIR" && ./node_modules/.bin/expo prebuild -p ios ) || return 1
+  fi
+  if [[ ! -d "$ios/SeibiDev.xcworkspace" ]]; then
+    log "ios/ was not generated for Seibi Dev; regenerate it (SKILL.md → Launch → App)"
+    return 1
+  fi
+  [[ -d "$ios/Pods" ]] || ( cd "$ios" && pod install ) || return 1
+  xcodebuild -workspace "$ios/SeibiDev.xcworkspace" -scheme SeibiDev -configuration Debug \
+    -destination "id=$udid" -derivedDataPath "$ios/build" COMPILER_INDEX_STORE_ENABLE=NO build || return 1
+  xcrun simctl install "$udid" "$ios/build/Build/Products/Debug-iphonesimulator/SeibiDev.app"
+}
+
 # --- Commands ----------------------------------------------------------------
 
 cmd_launch() {
@@ -239,8 +261,7 @@ cmd_launch() {
     udid="$(ensure_sim)"
     if [[ -n "$rebuild" ]] || ! xcrun simctl get_app_container "$udid" "$APP_ID" >/dev/null 2>&1; then
       log "building and installing Seibi Dev on $udid (first build takes several minutes)"
-      ( cd "$APP_DIR" && ./node_modules/.bin/expo run:ios --device "$udid" --no-bundler ) > "$STATE_DIR/build-ios.log" 2>&1 \
-        || die "iOS build failed; see $STATE_DIR/build-ios.log"
+      build_ios "$udid" > "$STATE_DIR/build-ios.log" 2>&1 || die "iOS build failed; see $STATE_DIR/build-ios.log"
     fi
   else
     ensure_emulator

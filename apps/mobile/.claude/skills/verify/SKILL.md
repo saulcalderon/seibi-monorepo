@@ -54,8 +54,13 @@ What it does, in order:
    waits for `sys.boot_completed`, and maps the Metro port into the emulator
    with `adb reverse`.
 2. **App.** If Seibi Dev is not installed (or `--rebuild` is passed), it
-   runs `expo run:<platform> --no-bundler` with
-   `EXPO_PUBLIC_APP_VARIANT=development`: prebuild, native build, install.
+   builds and installs it with `EXPO_PUBLIC_APP_VARIANT=development`.
+   Android: `expo run:android --no-bundler` (prebuild, native build,
+   install). iOS: `expo prebuild -p ios` when `ios/` is missing, then
+   `xcodebuild` for the Simulator and `simctl install`, not
+   `expo run:ios`: with the Sign in with Apple entitlement, Expo CLI asks
+   for a signing certificate even for the Simulator, and the Simulator
+   needs none. Build log: `$TMPDIR/seibi-verify-<port>/build-<platform>.log`.
    The first build takes 10+ minutes (Android ~18 on a cold Gradle cache);
    later ones are incremental. After any change to native config
    (`app.config.ts`, a package with native code, an Expo SDK change), or if

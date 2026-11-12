@@ -211,7 +211,11 @@ The migration's order, scope and tickets are in
   slug (`seibi`) and one project id, set once in `EAS_PROJECT_ID` at the
   top of `app.config.ts`; while it is empty, builds are local only and
   EAS Update is off. `pnpm start` / `ios` / `android` in `apps/mobile`
-  run the `development` variant.
+  run the `development` variant. Since the Sign in with Apple
+  entitlement (SEI-44), `pnpm ios` (`expo run:ios`) asks for a signing
+  certificate even for the Simulator; on a Mac without one, build for the
+  Simulator with the `verify` skill's `launch ios`, which calls
+  `xcodebuild` directly (the Simulator needs no certificate).
 - **Builds:** `apps/mobile/eas.json`. Profiles `development` (dev client,
   Seibi Dev, internal), `development-simulator` (the same for the iOS
   Simulator, for Maestro in CI), `preview` (internal, builds Seibi) and
