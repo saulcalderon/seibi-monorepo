@@ -163,7 +163,7 @@ function MileageBody({
       }}
     >
       {vehicle ? (
-        <p className="font-mono text-[12px] leading-[16px] text-muted">{mileageContext(vehicle)}</p>
+        <p className="text-[13px] font-medium leading-[17px] text-muted">{mileageContext(vehicle)}</p>
       ) : null}
       {vehicles.length > 1 ? (
         <div className="mt-4">
@@ -198,7 +198,7 @@ function MileageBody({
           onChange={(e) => change(e.target.value)}
           className="min-w-0 flex-1 bg-transparent text-[30px] font-light leading-none tracking-[-0.03em] tabular outline-none placeholder:text-subtle focus-visible:outline-none"
         />
-        <span className="font-mono text-[14px] text-muted">{unit}</span>
+        <span className="text-[16px] text-muted">{unit}</span>
       </div>
       {error ? (
         <p id="mileage-error" role="alert" className="mt-2 flex items-start gap-1.5 text-[13px] font-medium leading-[17px] text-overdue">

@@ -28,12 +28,12 @@ export function SectionHeader({
 }) {
   return (
     <div className={cx('flex items-end justify-between px-1', className)}>
-      <h2 className="text-[1.05rem] text-ink">{title}</h2>
+      <h2 className="font-sans text-[15px] font-medium tracking-normal text-ink">{title}</h2>
       {action && onAction ? (
         <button
           type="button"
           onClick={onAction}
-          className="-mr-1 inline-flex min-h-11 items-center gap-0.5 px-1 text-[0.85rem] font-semibold text-radiant"
+          className="-mr-1 inline-flex min-h-11 items-center gap-0.5 px-1 text-[13px] font-medium text-muted"
         >
           {action}
           <ChevronRight className="size-4" aria-hidden />

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { motion } from 'motion/react'
 import {
@@ -68,29 +68,53 @@ const TABS: Array<{ id: DetailTab; label: string }> = [
   { id: 'datos', label: 'Datos' },
 ]
 
-export function VehicleDetail({ vehicleId, tab }: { vehicleId: string; tab: DetailTab }) {
+export function VehicleDetail({
+  vehicleId,
+  tab,
+  focus,
+}: {
+  vehicleId: string
+  tab: DetailTab
+  focus?: 'overdue' | 'soon'
+}) {
   const garage = useGarage()
   const actions = useActions()
   const navigate = useNavigate()
   const vehicle = garage.vehicles.find((v) => v.id === vehicleId)
+  const [focusStatus, setFocusStatus] = useState<VehicleView['health'] | null>(focus ?? null)
+  const [focusUsage, setFocusUsage] = useState(false)
+
+  useEffect(() => {
+    if (!focusStatus || tab !== 'mantenimiento' || garage.isLoading) return
+    const node = document.getElementById(`detalle-${focusStatus}`)
+    if (!node) return
+    node.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setFocusStatus(null)
+  }, [focusStatus, tab, garage.isLoading, garage.vehicles])
+
+  useEffect(() => {
+    if (!focusUsage || tab !== 'uso') return
+    document.getElementById('uso-rutinas')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setFocusUsage(false)
+  }, [focusUsage, tab])
 
   if (garage.isLoading) {
     return (
-      <Screen back className="min-h-full bg-[#f7f2ee]">
+      <Screen back className="garage v3 min-h-full">
         <ScreenSkeleton />
       </Screen>
     )
   }
   if (garage.isError) {
     return (
-      <Screen back className="min-h-full bg-[#f7f2ee]">
+      <Screen back className="garage v3 min-h-full">
         <ErrorState onRetry={garage.refetch} />
       </Screen>
     )
   }
   if (!vehicle) {
     return (
-      <Screen back className="min-h-full bg-[#f7f2ee]">
+      <Screen back className="garage v3 min-h-full">
         <EmptyState
           icon={CarFront}
           title="No encontramos este Vehículo"
@@ -111,7 +135,7 @@ export function VehicleDetail({ vehicleId, tab }: { vehicleId: string; tab: Deta
 
   return (
     <Screen
-      className="min-h-full bg-[#f7f2ee]"
+      className="garage v3 min-h-full"
       back
       title={vehicleName(vehicle)}
       subtitle={[vehicle.year, vehicle.trimLevel, vehicle.plate].filter(Boolean).join(' · ')}
@@ -119,35 +143,56 @@ export function VehicleDetail({ vehicleId, tab }: { vehicleId: string; tab: Deta
     >
       <VehicleHero vehicle={vehicle} className="-mt-2 h-56" />
 
-      <div className="mx-5 mt-2 grid grid-cols-3 gap-2">
+      <div className="mx-5 mt-2 grid grid-cols-3 gap-2.5">
         <button
           type="button"
           onClick={() => actions.updateMileage(vehicle.id)}
-          className="rounded-2xl bg-surface p-3 text-left shadow-card"
+          className="rounded-3xl bg-surface p-3.5 text-left shadow-card"
         >
-          <Gauge className="size-4 text-ink" aria-hidden />
-          <p className="mt-1.5 text-[0.95rem] font-bold tabular leading-tight">
+          <Gauge className="size-[18px] text-ink" aria-hidden />
+          <p className="mt-2 text-[22px] font-light tabular leading-none">
             {vehicle.odometer != null ? formatNumber(vehicle.odometer) : '—'}
           </p>
-          <p className="text-[0.72rem] text-muted">{vehicle.measure} · actualizar</p>
+          <p className="mt-1.5 text-[12px] font-medium text-muted">{vehicle.measure}</p>
         </button>
-        <div className="rounded-2xl bg-surface p-3 shadow-card">
-          <ShieldCheck className="size-4 text-ink" aria-hidden />
-          <p className="mt-1.5 text-[0.95rem] font-bold leading-tight">{STATUS_META[vehicle.health].label}</p>
-          <p className="text-[0.72rem] text-muted">
-            {vehicle.pending > 0 ? `${vehicle.pending} pendiente${vehicle.pending > 1 ? 's' : ''}` : 'estado'}
+        <button
+          type="button"
+          onClick={() => {
+            setFocusStatus(vehicle.health)
+            if (tab !== 'mantenimiento') setTab('mantenimiento')
+          }}
+          className="rounded-3xl bg-surface p-3.5 text-left shadow-card transition-transform duration-200 active:scale-[0.97]"
+        >
+          <ShieldCheck className="size-[18px] text-ink" aria-hidden />
+          <p
+            className={cx(
+              'mt-2 text-[15px] font-medium leading-tight',
+              vehicle.health === 'overdue' || vehicle.health === 'soon' ? 'text-[var(--g-alert)]' : 'text-ink',
+            )}
+          >
+            {STATUS_META[vehicle.health].label}
           </p>
-        </div>
-        <button type="button" onClick={() => setTab('uso')} className="rounded-2xl bg-surface p-3 text-left shadow-card">
-          <Route className="size-4 text-ink" aria-hidden />
-          <p className="mt-1.5 text-[0.95rem] font-bold tabular leading-tight">
+          <p className="mt-1.5 text-[12px] font-medium text-muted">
+            {vehicle.pending > 0 ? `${vehicle.pending} por atender` : 'Al día'}
+          </p>
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setFocusUsage(true)
+            if (tab !== 'uso') setTab('uso')
+          }}
+          className="rounded-3xl bg-surface p-3.5 text-left shadow-card transition-transform duration-200 active:scale-[0.97]"
+        >
+          <Route className="size-[18px] text-ink" aria-hidden />
+          <p className="mt-2 text-[22px] font-light tabular leading-none">
             {vehicle.usage ? formatNumber(vehicle.usage.perDay * 7) : '—'}
           </p>
-          <p className="text-[0.72rem] text-muted">{vehicle.measure} por semana</p>
+          <p className="mt-1.5 text-[12px] font-medium text-muted">por semana</p>
         </button>
       </div>
 
-      <div role="tablist" aria-label="Secciones" className="scroll-area mx-5 mt-5 flex gap-1 overflow-x-auto rounded-2xl bg-surface-3 p-1">
+      <div role="tablist" aria-label="Secciones" className="scroll-area mx-5 mt-5 flex gap-1 overflow-x-auto rounded-2xl bg-[var(--g-control)] p-1">
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -265,7 +310,7 @@ function MaintenanceTab({ vehicle }: { vehicle: VehicleView }) {
       />
 
       {groups.map((g) => (
-        <section key={g.status} className="flex flex-col gap-3">
+        <section key={g.status} id={`detalle-${g.status}`} className="flex scroll-mt-4 flex-col gap-3">
           <SectionHeader title={`${STATUS_META[g.status].label} (${g.items.length})`} />
           <Card className="divide-y divide-line overflow-hidden">
             {g.items.map((r) => (
@@ -643,7 +688,7 @@ function UsageTab({ vehicle }: { vehicle: VehicleView }) {
         </Button>
       </Card>
 
-      <section className="flex flex-col gap-3">
+      <section id="uso-rutinas" className="flex scroll-mt-4 flex-col gap-3">
         <SectionHeader title="Rutinas semanales" />
         {vehicle.routines.length === 0 ? (
           <p className="px-1 text-[0.88rem] text-muted">

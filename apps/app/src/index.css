@@ -696,3 +696,18 @@ html:has(.login-screen)::view-transition-new(root) {
 [data-theme='night'] .dock-v3 {
   --dock-accent: var(--app-ink);
 }
+
+/* Screens inside the app share the garage type. Home sets its own titles. */
+.garage.v3 > header h1 {
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 32px;
+  line-height: 34px;
+  letter-spacing: -0.025em;
+}
+.garage.v3 > header p {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 17px;
+  font-weight: 500;
+}

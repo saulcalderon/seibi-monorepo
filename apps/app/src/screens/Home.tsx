@@ -1,8 +1,9 @@
 import { useState, type CSSProperties } from 'react'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { ChevronLeft, ChevronRight, Gauge, Plus } from 'lucide-react'
+import { Bell, CalendarClock, ChevronLeft, ChevronRight, Gauge, Plus } from 'lucide-react'
 import type { Reminder } from '@seibi/maintenance-engine/reminders'
+import { daysBetween } from '@seibi/maintenance-engine/days'
 import { useActions } from '../app/Actions'
 import { Screen } from '../app/Screen'
 import { Lockup } from '../components/Lockup'
@@ -11,7 +12,7 @@ import { UnknownTasks } from '../components/UnknownTasks'
 import { Silhouette } from '../components/VehicleVisual'
 import { useActiveVehicle } from '../lib/activeVehicle'
 import { useAuthSession } from '../lib/authSession'
-import { formatNumber, measureLabel, relativeDays, vehicleName } from '../lib/format'
+import { formatDay, formatNumber, measureLabel, relativeDays, todayIso, vehicleName } from '../lib/format'
 import { useGarage, type VehicleView } from '../lib/garage'
 import { identityFromUser, initials } from '../lib/identity'
 import { knowledgeProfile, taskLabel } from '../lib/knowledge'
@@ -96,6 +97,7 @@ export function Home() {
       >
         <Odometer vehicle={active} />
         <Status vehicle={active} />
+        <Agenda vehicle={active} />
       </motion.div>
     </Screen>
   )
@@ -282,6 +284,7 @@ function Odometer({ vehicle }: { vehicle: VehicleView }) {
 
 function Status({ vehicle }: { vehicle: VehicleView }) {
   const actions = useActions()
+  const navigate = useNavigate()
   const garage = useGarage()
   const profile = useProfile()
   const k = knowledgeProfile(profile.data?.knowledgeLevel)
@@ -302,7 +305,20 @@ function Status({ vehicle }: { vehicle: VehicleView }) {
             <h2 id="estado" className="font-sans text-[15px] font-medium tracking-normal">
               Estado
             </h2>
-            <StatusSummary count={attention.length} overdue={overdue} />
+            <StatusSummary
+              count={attention.length}
+              overdue={overdue}
+              onOpen={
+                attention.length > 0
+                  ? () =>
+                      void navigate({
+                        to: '/flota/$vehicleId',
+                        params: { vehicleId: vehicle.id },
+                        search: { tab: 'mantenimiento', focus: overdue ? 'overdue' : 'soon' },
+                      })
+                  : undefined
+              }
+            />
           </div>
           <div className="grid grid-cols-2 gap-2.5 px-5">
             {known.slice(0, 4).map((r) => (
@@ -330,18 +346,81 @@ function Status({ vehicle }: { vehicle: VehicleView }) {
   )
 }
 
-function StatusSummary({ count, overdue }: { count: number; overdue: boolean }) {
-  if (count === 0) return <span className="text-[13px] font-medium text-muted">Todo al día</span>
+function Agenda({ vehicle }: { vehicle: VehicleView }) {
+  const navigate = useNavigate()
+  const today = todayIso()
+  const items = [
+    ...vehicle.upcomingAppointments.map((appointment) => ({
+      id: `cita-${appointment.id}`,
+      title: appointment.shop?.trim() || 'Cita en el taller',
+      when: appointment.scheduledOn,
+      icon: CalendarClock,
+    })),
+    ...vehicle.openManualReminders.map((reminder) => ({
+      id: `aviso-${reminder.id}`,
+      title: reminder.title,
+      when: reminder.dueOn,
+      icon: Bell,
+    })),
+  ].sort((a, b) => (a.when < b.when ? -1 : 1))
+
+  if (items.length === 0) return null
+
   return (
-    <span
-      className={cx(
-        'inline-flex items-center gap-1.5 text-[13px] font-medium',
-        overdue ? 'text-[var(--g-alert)]' : 'text-muted',
-      )}
-    >
+    <section className="px-5 pt-5" aria-label="Próximos">
+      <h2 className="pb-2.5 font-sans text-[15px] font-medium tracking-normal">Próximos</h2>
+      <div className="flex flex-col gap-2.5">
+        {items.map((item) => {
+          const Icon = item.icon
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => void navigate({ to: '/flota/$vehicleId', params: { vehicleId: vehicle.id } })}
+              className={cx('flex items-center gap-3 rounded-3xl bg-surface px-3.5 py-3 text-left shadow-card', PRESS)}
+            >
+              <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-[var(--g-control)] text-ink">
+                <Icon className="size-4" aria-hidden />
+              </span>
+              <span className="min-w-0 flex-1 truncate text-[14px] font-medium leading-[18px]">
+                {item.title} · {formatDay(item.when)}
+              </span>
+              <span className="shrink-0 text-[13px] font-medium text-muted">
+                {relativeDays(daysBetween(today, item.when))}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+function StatusSummary({
+  count,
+  overdue,
+  onOpen,
+}: {
+  count: number
+  overdue: boolean
+  onOpen?: () => void
+}) {
+  if (count === 0) return <span className="text-[13px] font-medium text-muted">Todo al día</span>
+  const className = cx(
+    'inline-flex min-h-11 items-center gap-1.5 text-[13px] font-medium',
+    overdue ? 'text-[var(--g-alert)]' : 'text-muted',
+  )
+  const content = (
+    <>
       {overdue ? <span className="size-1.5 rounded-full bg-[var(--g-alert)]" aria-hidden /> : null}
       {count} por atender
-    </span>
+    </>
+  )
+  if (!onOpen) return <span className={className}>{content}</span>
+  return (
+    <button type="button" onClick={onOpen} className={className}>
+      {content}
+    </button>
   )
 }
 
