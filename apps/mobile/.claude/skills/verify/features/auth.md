@@ -1,18 +1,24 @@
 # Sign-in, session and sign-out
 
-Without a session, Seibi opens only the sign-in screen: «Seibi», «Inicia
-sesión para continuar», the native Sign in with Apple button (iOS), Google's
-button (once the build has its OAuth client ids), and, in development and
-preview builds only, an email + password form for the seibi-dev test
-account. After signing in the person lands on the home (today the start
-screen, with their email), and the session survives killing and reopening
-the app. «Cerrar sesión» returns to sign-in and leaves nothing of the person
-on the device. «Eliminar cuenta» asks first, deletes the account and
+Without a session, Seibi opens only Login (the sign-in screen): the Seibi
+lockup, one still Vehicle, «Mantenimiento con total claridad», Apple's own
+«Continuar con Apple» button (iOS), «Continuar con Google» (once the build has
+its OAuth client ids), the legal line «Al continuar aceptas los Términos y la
+Política de privacidad» whose two links open seibiapp.com's pages in the
+in-app browser, and, in development and preview builds only, an email +
+password form for the seibi-dev test account. Login stays light in night (a
+first-run screen). After signing in the person lands on the home (today the
+start screen, with their email), and the session survives killing and
+reopening the app. «Cerrar sesión» returns to Login and leaves nothing of the
+person on the device. «Eliminar cuenta» asks first, deletes the account and
 everything in it, and shows «Cuenta eliminada»; the same screen shows on the
 next launch when the account was deleted somewhere else.
 
 ## Sub-features
 
+- `login` Login draws the lockup, the Vehicle, the headline, the provider buttons and the legal line, on its light palette in light and in night, at every text size.
+- `legal-links` «Términos» and «Política de privacidad» open seibiapp.com/legal/terminos and /legal/privacidad in the in-app browser; closing it returns to Login.
+- `provider-errors` a provider that fails (no Apple ID on the Simulator, a refused Google client) leaves Login with an inline red line «No pudimos abrir Apple/Google. Intenta de nuevo.»; a cancelled one leaves it as it was.
 - `gate-signed-out` without a session no `(app)` route opens, not even from a deep link (`seibi-dev://`).
 - `gate-signed-in` with a session the sign-in screen does not open (`seibi-dev://sign-in`).
 - `test-sign-in` email + password with the seibi-dev test account, in development and preview builds only.
@@ -38,6 +44,9 @@ Preconditions:
 - Seibi Dev is installed from the branch under test, built after this feature landed (it adds native modules: `launch <platform> --rebuild` on an older build).
 - The test account exists on seibi-dev (see Gotchas after a destructive flow).
 
+- **Login (the video for a PR).** Run `.claude/skills/verify/scripts/verify.sh drive ios login` (then `android`). From a signed-out cold start it records Login: asserts `id: sign-in-title` reads «Mantenimiento con total claridad» and `id: sign-in-lockup`, `id: sign-in-vehicle`, `id: sign-in-google` and (iOS) `id: sign-in-apple` show (screenshot `login`); taps «Términos» in `id: sign-in-legal`: the Terms page opens (`legal-terms`), Done (iOS) or Back (Android) returns. iOS: `id: sign-in-apple` opens the Apple Account sheet (`apple-sheet`), «Close» leaves `id: sign-in-error` (`apple-closed`). Google: iOS shows the system prompt to use google.com (`google-prompt`), Cancel returns; Android's picker refuses the placeholder client and `id: sign-in-error` shows (`google-after`). Recording stops, the flow fills the test form, hides the keyboard, then records again (`login-signed-in`): taps `id: test-sign-in-submit`, the home shows `id: signed-in-as` (`signed-in`), `${APP_URL}sign-in` keeps the home, «Cerrar sesión» returns to Login (`signed-out`).
+- **Login in night.** `drive <platform> login-night`: dark mode on, cold start: the splash is the night one (white ticks on `#0E0F11`), Login is still light (`night-login`, `night-login-bottom`); after `sign-in.yaml` the home is night (`id: theme-check` reads `theme: night…`, `night-signed-in`); it signs out and turns dark mode off.
+- **Login with large text or Reduce Motion.** `a11y <platform> large-text` (or `reduce-motion`), then `drive <platform> login-a11y` (signed out): screenshots `a11y-01-top` … `a11y-04-legal` scroll from the lockup to the legal line; nothing is cut, Apple's button keeps Google's height. Then `a11y <platform> reset`.
 - **Signed out, (app) closed.** Run `.claude/skills/verify/scripts/verify.sh drive ios auth` (then `android`). From a cold start the flow signs out first if a session is left over, then opens `${APP_URL}` (`seibi-dev://`): `id: sign-in-title` stays and `id: start-title` is not visible. Screenshot `signed-out`.
 - **Test sign-in.** `runFlow: sign-in.yaml` taps `id: test-sign-in-email` and types `TEST_EMAIL`, presses Return (focus moves to `id: test-sign-in-password`), types `TEST_PASSWORD` and presses Return to submit (the keyboard covers `id: test-sign-in-submit`), declines iOS's offer to save the password, then waits for `id: start-title` and asserts `id: signed-in-as` reads the test email. Screenshot `signed-in`.
 - **Session survives a relaunch.** `stopApp`, then `openLink: ${DEV_URL}` (a cold start): the home shows again with `id: signed-in-as`, with no sign-in in between. Screenshot `session-restored`. `${APP_URL}sign-in` keeps the home.
@@ -53,7 +62,9 @@ Preconditions:
 - The two destructive flows delete the test account. Recreate it on **seibi-dev only** before the next flow signs in, with the same email and password: the Supabase MCP `execute_sql` insert into `auth.users` and `auth.identities` used in SEI-44 (email provider, `email_confirmed_at = now()`, `encrypted_password` = the output of `htpasswd -bnBC 10 "" "$SEIBI_TEST_PASSWORD" | tr -d ':\n' | sed 's/^\$2y/$2a/'`, empty strings in the token columns). Never through the PWA's signup: seibi-dev sends a confirmation email.
 - A flow that waits on `id: start-title` from a cold start now passes through sign-in first; use `runFlow: sign-in.yaml`.
 - The email form only exists when Metro serves `EXPO_PUBLIC_TEST_SIGN_IN=1` (verify.sh and the pnpm scripts set it). A Metro started another way shows no form, and the flow times out on `id: test-sign-in-email`.
+- Google's button shows only when the bundle has `EXPO_PUBLIC_GOOGLE_*` ids, and on iOS the native build needs the iOS id too (its URL scheme). Until Saul's OAuth clients exist, put placeholders in your `.env.local` (`EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=000000000000-seibiverifyplaceholder.apps.googleusercontent.com`, the same for `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`) and rebuild: the button renders and opens Google's flow, which refuses the client. Never commit them.
+- The legal links are spans inside one sentence: Maestro taps them by text (`'.*Términos.*'`), not by `testID`.
 - Apple and Google cannot be driven here yet: Apple is disabled on seibi-dev and needs an Apple ID on the Simulator; Google needs Saul's OAuth client ids. Both are proven on a physical phone.
 - Token expiry in the background (an hour) is not covered by these flows; prove it on a physical phone.
-- Videos of a sign-in show the password field as dots, but iOS and Android flash each typed character for a moment. Treat sign-in recordings as holding the test password: share them where the test account may be known, and rotate the password (new hash, same insert) if one leaves that circle. A failed run can type the password into the email field in plain text; delete that run's screenshots and video.
+- Videos of a sign-in show the password field as dots, but iOS and Android flash each typed character for a moment. The `login` flow records nothing while it types; use its videos for Linear and PRs, and check their first frames. `login-night` signs in off camera too. Treat recordings that type on camera (`auth`, `app-launches` and every flow that runs `sign-in.yaml` while recording) as holding the test password: share them where the test account may be known, and rotate the password (new hash, same insert) if one leaves that circle. A failed run can type the password into the email field in plain text; delete that run's screenshots and video.
 - An Android `AlertDialog` may draw its buttons in capitals; the delete flow matches `Eliminar|ELIMINAR`.

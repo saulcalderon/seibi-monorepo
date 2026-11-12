@@ -104,6 +104,20 @@ export interface Art {
   /** The sheen gradient: light at the top, dark at the bottom. */
   carSheenLight: string;
   carSheenDark: string;
+  /** The wordmark's square dot over the «ı» (`bg-[#e0464f]` in the PWA's Lockup). */
+  wordmarkDot: string;
+  /**
+   * Google's sign-in button, light style, as Google's branding guidelines
+   * fix it: fill, 1 pt inside stroke, text, and the four colours of the «G».
+   * Not Seibi's roles: they never change with the theme.
+   */
+  googleFill: string;
+  googleStroke: string;
+  googleText: string;
+  googleBlue: string;
+  googleGreen: string;
+  googleYellow: string;
+  googleRed: string;
 }
 
 export const light: Palette = {
@@ -235,10 +249,20 @@ const CAR = {
   carSheenLight: '#ffffff',
   carSheenDark: '#000000',
 };
-const LOGO = { logoAccent: '#ec3a27', logoTickOnLight: '#1f1f1f', logoTickOnDark: '#ffffff' };
+const LOGO = { logoAccent: '#ec3a27', logoTickOnLight: '#1f1f1f', logoTickOnDark: '#ffffff', wordmarkDot: '#e0464f' };
+/** developers.google.com/identity/branding-guidelines: the light button and the standard «G». */
+const GOOGLE = {
+  googleFill: '#ffffff',
+  googleStroke: '#747775',
+  googleText: '#1f1f1f',
+  googleBlue: '#4285f4',
+  googleGreen: '#34a853',
+  googleYellow: '#fbbc05',
+  googleRed: '#ea4335',
+};
 
 export const art: Record<PaletteName, Art> = {
-  light: { ...LOGO, ...CAR, logoTick: LOGO.logoTickOnLight, carGround: 'rgba(20, 21, 23, 0.1)' },
-  night: { ...LOGO, ...CAR, logoTick: LOGO.logoTickOnDark, carGround: 'rgba(242, 244, 247, 0.1)' },
-  garage: { ...LOGO, ...CAR, logoTick: LOGO.logoTickOnLight, carGround: 'rgba(14, 15, 17, 0.1)' },
+  light: { ...LOGO, ...CAR, ...GOOGLE, logoTick: LOGO.logoTickOnLight, carGround: 'rgba(20, 21, 23, 0.1)' },
+  night: { ...LOGO, ...CAR, ...GOOGLE, logoTick: LOGO.logoTickOnDark, carGround: 'rgba(242, 244, 247, 0.1)' },
+  garage: { ...LOGO, ...CAR, ...GOOGLE, logoTick: LOGO.logoTickOnLight, carGround: 'rgba(14, 15, 17, 0.1)' },
 };

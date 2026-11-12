@@ -22,9 +22,13 @@ export type TextTone =
 export interface TextProps extends RNTextProps {
   /** A step of the type scale (docs/DESIGN.md → Type). */
   step?: TypeStep;
-  /** `display` for headings, `sans` for everything else, `mono` for numbers. */
-  family?: 'display' | 'sans' | 'mono';
-  /** Archivo's weight. Ignored by `display` (600) and `mono` (400). */
+  /**
+   * `display` for headings, `sans` for everything else, `mono` for numbers.
+   * `system` is the platform's own font at medium weight (SF Pro, Roboto),
+   * only where a third party's brand rules ask for it (Google's sign-in button).
+   */
+  family?: 'display' | 'sans' | 'mono' | 'system';
+  /** Archivo's weight. Ignored by `display` (600), `mono` (400) and `system` (500). */
   weight?: 300 | 400 | 500 | 600 | 700;
   tone?: TextTone;
   align?: 'left' | 'center' | 'right';
@@ -153,6 +157,7 @@ const styles = StyleSheet.create((theme) => ({
         display: { fontFamily: theme.fonts.display },
         sans: {},
         mono: { fontFamily: theme.fonts.mono, fontVariant: ['tabular-nums'] },
+        system: { fontWeight: '500' },
       },
       weight: {
         300: { fontFamily: theme.fonts.sans[300] },

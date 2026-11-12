@@ -66,6 +66,13 @@ export const fonts = {
 /** Headings track tighter: `-0.01em`, as in the PWA. Multiply by the font size. */
 export const displayTracking = -0.01;
 
+/**
+ * The first-run headline (the sign-in screen's «Mantenimiento con total
+ * claridad»): Archivo 300, `tracking-[-0.025em]`, `leading-[1.12]`. Multiply
+ * both by the font size.
+ */
+export const heroType = { tracking: -0.025, leading: 1.12 } as const;
+
 /** The PWA's body line height (15 px at 1.45). */
 const LEADING = 1.45;
 
@@ -124,6 +131,8 @@ export const size = {
   logo: { sm: 24, md: 44, lg: 72 },
   /** A body-type silhouette's width; its height follows its 240 × 96 proportions. */
   silhouette: { sm: 136, lg: 240 },
+  /** A still hero image's height: the Vehicle on the sign-in screen (`h-48`). */
+  hero: 192,
   /** Borders: the PWA's `ring-1` around fields and cards, `ring-2` on focus. */
   border: { thin: 1, focus: 2 },
   /**

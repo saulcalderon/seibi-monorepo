@@ -235,9 +235,13 @@ The migration's order, scope and tickets are in
   offers a restart in the native alert; a declined restart applies on the
   next cold launch. It does nothing in development builds or while EAS
   Update is off. It ships before the first store release.
-- **Splash and fonts:** the native splash (logo mark on `#F2F4F7`, light in
-  both themes like the PWA's) stays up until the root layout has loaded
-  the fonts with `expo-font`: Archivo 300–700 and Geist Mono 400 from
+- **Splash and fonts:** the native splash (`expo-splash-screen` in
+  `app.config.ts`, SEI-56) is the logo mark on the phone's screen
+  background: `#F2F4F7` with dark ticks (`splash-icon.png`), or in dark
+  mode `#0E0F11` with white ticks (`splash-icon-dark.png`). It follows the
+  phone, not Seibi's «Tema» (the OS draws it before JavaScript runs), and
+  changing it needs a new build. It stays up until the root layout has
+  loaded the fonts with `expo-font`: Archivo 300–700 and Geist Mono 400 from
   `@expo-google-fonts`. A font that fails to load does not keep the app on
   the splash. Headings use Archivo 600, the PWA's own fallback for Clash
   Display: Clash Display's licence (ITF Free Font License) allows embedding
@@ -337,7 +341,31 @@ The migration's order, scope and tickets are in
     `(auth)/account-deleted` are the only other screens. The root layout
     opens exactly one with `Stack.Protected` guards on `useAuth()`
     (`src/auth/session.ts`, fed only by `onAuthStateChange`); nothing
-    redirects by hand. The splash stays up until the saved session is read.
+    redirects by hand. The splash stays up until the saved session is read,
+    so a signed-in launch never shows Login. Where `(app)` lands first
+    (Inicio or the first-run questions, from `useProfile().onboardedAt`) is
+    `(app)`'s own routing (S3, SEI-58).
+  - **Login** (`(auth)/sign-in.tsx`, S1, SEI-56): the PWA's Login on the
+    `garage` theme in a `ScopedTheme`, light whatever the theme (a
+    first-run screen), with a dark status bar. The lockup (`Logo` and the
+    `Wordmark`), one still Vehicle (`assets/images/sign-in-vehicle.png`,
+    the PWA's `login-yaris.png`, where its carousel rests), the headline,
+    the provider buttons (`src/auth/provider-buttons.tsx`), the test form
+    when compiled in, and the legal line. Apple's is
+    `AppleAuthenticationButton` (Apple draws it; black, pill), shown when
+    `isAvailableAsync()` (iOS); it can't grow with the text size, so it
+    takes the height of Google's. Google's is built to Google's branding
+    guidelines (light style, the standard «G», Google's padding, a pill;
+    the platform font, since Google Sans can't be embedded). A failed
+    provider shows an inline error and is announced; a cancelled one
+    changes nothing. In a scroll view that keeps the focused field above
+    the keyboard (`react-native-keyboard-controller`).
+  - **Legal pages:** `src/lib/legal.ts` holds the URLs of the PWA's public
+    pages, `https://seibiapp.com/legal/terminos` and
+    `https://seibiapp.com/legal/privacidad` (one copy of the text), and
+    `openLegal()` opens them with `expo-web-browser`
+    (SFSafariViewController, Custom Tabs). Login links them; Perfil (S11)
+    will too.
   - **Apple** (iOS): `expo-apple-authentication` →
     `signInWithIdToken({ provider: 'apple', nonce })`, the SHA-256 of a
     random nonce signed into Apple's token. Apple sends the name on the

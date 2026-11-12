@@ -1,0 +1,39 @@
+# Feature: sign-in (features/auth.md) → Login with the phone's accessibility
+# settings. Run `scripts/verify.sh a11y <ios|android> large-text` (or
+# `reduce-motion`) first, then scripts/verify.sh drive <ios|android>
+# login-a11y, and `verify.sh a11y <ios|android> reset` after. Signed out
+# (run `login` first). Large text: every word grows, nothing is cut, the
+# screen scrolls to the legal line. Reduce Motion: Login is still and a
+# button press doesn't scale.
+appId: ${APP_ID}
+name: Login at the largest text size or with Reduce Motion
+---
+- setDarkMode: disabled
+- startRecording: login-a11y
+- stopApp
+- openLink: ${DEV_URL}
+- extendedWaitUntil:
+    visible:
+      id: sign-in-title
+    timeout: 120000
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: a11y-01-top
+- scrollUntilVisible:
+    element:
+      id: sign-in-google
+    direction: DOWN
+    centerElement: true
+- takeScreenshot: a11y-02-buttons
+- scrollUntilVisible:
+    element:
+      id: test-sign-in-submit
+    direction: DOWN
+    centerElement: true
+- takeScreenshot: a11y-03-form
+- scrollUntilVisible:
+    element:
+      id: sign-in-legal
+    direction: DOWN
+- takeScreenshot: a11y-04-legal
+- stopRecording

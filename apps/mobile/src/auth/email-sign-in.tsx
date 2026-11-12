@@ -1,10 +1,12 @@
-import { Button, Host } from '@expo/ui';
 import { type ComponentRef, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TextInput, View } from 'react-native';
-import { StyleSheet, useUnistyles } from 'react-native-unistyles';
+import { type TextInput, View } from 'react-native';
+import { StyleSheet } from 'react-native-unistyles';
 
 import { supabase } from '@/lib/supabase';
+import { Button } from '@/ui/button';
+import { TextField } from '@/ui/fields';
+import { Text } from '@/ui/text';
 
 /**
  * Email + password sign-in for the seibi-dev test account (the `verify`
@@ -16,7 +18,6 @@ import { supabase } from '@/lib/supabase';
  */
 export function EmailSignIn() {
   const { t } = useTranslation();
-  const { theme } = useUnistyles();
   const passwordInput = useRef<ComponentRef<typeof TextInput>>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,23 +25,25 @@ export function EmailSignIn() {
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
+    if (busy || !email || !password) return;
     setBusy(true);
     setError(null);
     const result = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setBusy(false);
+    // A test tool: the server's own words are the most useful here.
     if (result.error) setError(result.error.message);
   }
 
   return (
     <View testID="test-sign-in" style={styles.form}>
-      <Text style={styles.label}>{t('testSignIn.title')}</Text>
-      <TextInput
+      <Text step="footnote" weight={600} tone="muted" align="center">
+        {t('testSignIn.title')}
+      </Text>
+      <TextField
         testID="test-sign-in-email"
-        style={styles.input}
+        label={t('testSignIn.email')}
         value={email}
         onChangeText={setEmail}
-        placeholder={t('testSignIn.email')}
-        placeholderTextColor={theme.colors.subtle}
         autoCapitalize="none"
         autoCorrect={false}
         autoComplete="off"
@@ -51,14 +54,12 @@ export function EmailSignIn() {
         submitBehavior="submit"
         onSubmitEditing={() => passwordInput.current?.focus()}
       />
-      <TextInput
+      <TextField
         testID="test-sign-in-password"
         ref={passwordInput}
-        style={styles.input}
+        label={t('testSignIn.password')}
         value={password}
         onChangeText={setPassword}
-        placeholder={t('testSignIn.password')}
-        placeholderTextColor={theme.colors.subtle}
         secureTextEntry
         autoCapitalize="none"
         autoComplete="off"
@@ -66,17 +67,25 @@ export function EmailSignIn() {
         returnKeyType="go"
         onSubmitEditing={() => void submit()}
       />
-      <Host matchContents>
-        <Button
-          testID="test-sign-in-submit"
-          label={busy ? t('testSignIn.submitting') : t('testSignIn.submit')}
-          variant="outlined"
-          disabled={busy || !email || !password}
-          onPress={() => void submit()}
-        />
-      </Host>
+      <Button
+        testID="test-sign-in-submit"
+        variant="secondary"
+        block
+        label={t('testSignIn.submit')}
+        loading={busy}
+        disabled={!email || !password}
+        onPress={() => void submit()}
+      />
       {error ? (
-        <Text testID="test-sign-in-error" accessibilityRole="alert" style={styles.error}>
+        <Text
+          testID="test-sign-in-error"
+          step="footnote"
+          weight={500}
+          tone="overdue"
+          align="center"
+          accessibilityRole="alert"
+          accessibilityLiveRegion="polite"
+        >
           {error}
         </Text>
       ) : null}
@@ -87,28 +96,9 @@ export function EmailSignIn() {
 const styles = StyleSheet.create((theme) => ({
   form: {
     alignSelf: 'stretch',
-    gap: theme.space[2.5],
-  },
-  label: {
-    ...theme.type.footnote,
-    fontFamily: theme.fonts.sans[500],
-    color: theme.colors.muted,
-  },
-  input: {
-    ...theme.type.callout,
-    fontFamily: theme.fonts.sans[400],
-    color: theme.colors.ink,
-    backgroundColor: theme.colors.surface,
-    borderColor: theme.colors.line,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: theme.radius.lg,
-    borderCurve: 'continuous',
-    paddingHorizontal: theme.space[3.5],
-    paddingVertical: theme.space[3],
-  },
-  error: {
-    ...theme.type.footnote,
-    fontFamily: theme.fonts.sans[400],
-    color: theme.colors.overdueText,
+    gap: theme.space[3],
+    paddingTop: theme.space[4],
+    borderTopWidth: theme.size.border.thin,
+    borderTopColor: theme.colors.line,
   },
 }));

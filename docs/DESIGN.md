@@ -51,7 +51,11 @@ the theme; don't write it in the screen.
 Three palette rules the PWA already has, and the port keeps:
 
 - **First-run screens stay on the light palette**, even when the app is in
-  night (`.intro-day` in the PWA).
+  night (`.intro-day` in the PWA). Login (S1) is one: like the PWA's
+  `.intro-day .intro-v3` it draws on `garage` in a `ScopedTheme`, with a
+  dark status bar. The native splash is not a screen: it follows the
+  phone's appearance (the isotype on `bg`, light or night), because most
+  launches open a signed-in app that follows the phone.
 - **Garage (Inicio, v3) has its own light palette**, used on Inicio and the
   intro (`.v3`, `.intro-v3`): `bg #f1f1f2`, `surface #ffffff`, `surface2
   #f4f4f5`, `surface3 #e4e4e6`, `ink #0e0f11`, `muted #62656b` (was
@@ -76,7 +80,10 @@ These and the body-type silhouettes' colors (silver paint `#c3c7cd`,
 outline, glass, tyres, rims, hubs, ground shadow, sheen) are the theme's
 `art` group (`palettes.ts` → `art`): drawing colors, never text, so the
 contrast check skips them. `logoTickOnLight` and `logoTickOnDark` draw the
-mark on a fixed light or dark surface whatever the theme.
+mark on a fixed light or dark surface whatever the theme. The `art` group
+also holds the wordmark's dot (`wordmarkDot #e0464f`) and Google's sign-in
+button colours (`google*`: fill `#ffffff`, stroke `#747775`, text `#1f1f1f`
+and the four colours of the «G»), which Google's branding guidelines fix.
 
 ### Shadows
 
@@ -96,7 +103,7 @@ Put a shadow on the rounded surface itself, not on a square container
 | --- | --- | --- |
 | Clash Display | 600 | Headings (`h1`–`h3` in the PWA), letter-spacing `-0.01em` |
 | Archivo | 300, 400, 500, 600, 700 | Everything else. Body is 15 pt, line height 1.45 |
-| Archivo, width 125 | 700 | The «seibı» wordmark only. React Native can't set a width axis: ship a static instance or the SVG |
+| Archivo, width 125 | 700 | The «seibı» wordmark only. React Native can't set a width axis, so `Wordmark` draws it as outlines (SVG) taken from Archivo's variable font at wght 700, wdth 125 |
 | Geist Mono | 400 | Numbers: Mileage, costs, intervals |
 
 Fonts ship in the binary through `expo-font`. Archivo and Geist Mono come
@@ -126,6 +133,10 @@ nearest step. Ticket B checks the mapping screen by screen.
 
 Text grows with the system text size: no fixed heights on text, and rows
 stack instead of truncating at accessibility sizes.
+
+Login's headline («Mantenimiento con total claridad») keeps the PWA's
+first-run style: `title1` in Archivo 300, tracked `-0.025em` with a 1.12
+line height (`heroType` in `tokens.ts`).
 
 **Text that fits.** On Android, React Native 0.88 measures a text that has
 a `lineHeight` (every step does) at its exact width, then lays it out for
@@ -181,6 +192,7 @@ lines fit its box (`text-fit.ts`).
 | `readable` | 288 | The widest centred body text (`max-w-[18rem]`) |
 | `logo.sm` / `md` / `lg` | 24 / 44 / 72 | The isotype's height |
 | `silhouette.sm` / `lg` | 136 / 240 | A silhouette's width |
+| `hero` | 192 | A still hero image's height: the Vehicle on Login (`h-48`) |
 | `border.thin` / `focus` | 1 / 2 | Field and card borders; the focus ring |
 | `hangingSpace` | 6 | The font size of the thin space `Text` hangs after its words on Android (Type → Text that fits) |
 
@@ -211,7 +223,7 @@ it natively without a re-render.
 
 | Component | File | Variants and behaviour | From the PWA |
 | --- | --- | --- | --- |
-| `Text` | `text.tsx` | `step` (the type scale), `family` (`display`, `sans`, `mono`), `weight` (300–700, as a font file), `tone` (`ink`, `muted`, `subtle`, `radiant`, `ok`, `soon`, `overdue`, `unknown`, `onInverse`, `onRadiant`; each status tone uses its `*Text` role), `align`, `heading` (`accessibilityRole="header"`). On Android it hangs a thin space after its words so no line is cut (Type → Text that fits) | — |
+| `Text` | `text.tsx` | `step` (the type scale), `family` (`display`, `sans`, `mono`; `system`, the platform font at 500, only where a third party's brand rules ask for it), `weight` (300–700, as a font file), `tone` (`ink`, `muted`, `subtle`, `radiant`, `ok`, `soon`, `overdue`, `unknown`, `onInverse`, `onRadiant`; each status tone uses its `*Text` role), `align`, `heading` (`accessibilityRole="header"`). On Android it hangs a thin space after its words so no line is cut (Type → Text that fits) | — |
 | `Icon` | `icon.tsx` | `size` `xs`–`xl`, `tone` or `color`, `label` (only when the icon means something alone), `fixed`. See Icons | lucide-react |
 | `Button` | `button.tsx` | `variant`: `primary` (`radiantStrong`, glow), `secondary`, `ghost`, `danger`, `inverse`; `size`: `sm` 36, `md` 44, `lg` 56 (`minHeight`; `sm` gets `hitSlop` to 44); `icon`, `trailingIcon`, `loading` (the platform's spinner in place of the icon, keeps its label and colors, ignores presses, `busy`; the PWA also dims it, which left Android's thin arc almost invisible on the orange), `disabled` (dims to `opacity.disabled`), `block` | `ui/Button.tsx` |
 | `IconButton` | `button.tsx` | `ghost`, `secondary`, `inverse`; 44 × 44; `label` is required | `ui/Button.tsx` |
@@ -221,11 +233,13 @@ it natively without a re-render.
 | `SelectField`, `Toggle`, `MenuButton`, `DateField` | `controls.tsx`, `native-controls*.tsx` | The platform's own controls from `@expo/ui` (results below). `Toggle` is a settings row whose switch carries the row's text as its label; from `largeTextScale` the switch goes under the text | `ui/fields.tsx` |
 | `FormLayout` | `form.tsx` | A form's scroll view plus an action bar that rides on the keyboard (`react-native-keyboard-controller`): «Guardar» never sits under it. Dragging the form puts the keyboard away on iOS (the number pad has no return key). On Android a downward drag on a form sheet moves the sheet and closes it, typed values and all; Back puts the keyboard away there. Real forms must ask before closing with unsaved input (`usePreventRemove`); the sample form doesn't. The content of an Expo Router `formSheet` route, which replaces the PWA's Sheet | `ui/Sheet.tsx` |
 | `SkeletonGroup`, `Skeleton`, `TextSkeleton`, `ListRowSkeleton` | `feedback.tsx` | Placeholders shaped like the content they replace, at its height (a `ListRowSkeleton` is a `ListRow`'s size); the group is announced once as «Cargando» | `ui/feedback.tsx` |
-| `EmptyState`, `ErrorState` | `feedback.tsx` | Icon tile, title, body, one action; `ErrorState` has default copy and «Reintentar», and is announced | `ui/feedback.tsx` |
+| `EmptyState`, `ErrorState` | `feedback.tsx` | Icon tile, title (`<testID>-title`), body, one action; `ErrorState` has default copy and «Reintentar», and is announced | `ui/feedback.tsx` |
 | `StatusBadge`, `ProgressBar` | `feedback.tsx` | One per Reminder status, always with its text («Al día», «Pronto», «Vencido», «Revisar»); the bar fills to its value on mount and is a `progressbar` with its percentage | `ui/feedback.tsx` |
 | `Toaster`, `notify`, `confirm` | `toast.tsx` | `sonner-native`, mounted once in `UIProvider`, at the top. `notify.success` is `inverse` with `onInverse` text, `notify.error` is `overdue` with `onInverse` text, both announced to VoiceOver and TalkBack with `announceForAccessibility` (on Android the toast itself never reaches the accessibility tree, so TalkBack hears it once but can't move to it). `confirm()` is the native alert and resolves to `true` or `false` | `ToastProvider` |
 | `Logo` | `logo.tsx` | The isotype, `size` `sm`/`md`/`lg`, `surface` `auto`/`light`/`dark`; labelled «Seibi» | `components/Logo.tsx` |
+| `Wordmark` | `wordmark.tsx` | «seibı» in `ink` with its red square dot, sized by a type `step` (its font size); drawing, silent for VoiceOver and TalkBack, so its container names the brand. Login stacks `Logo` `md` over `Wordmark` `title2` as one image labelled «Seibi» | `components/Lockup.tsx` |
 | `Silhouette` | `silhouette.tsx` | One per `BodyType` (`sedan`, `hatchback`, `suv`, `pickup`, `van`, `minivan`, `coupe`, `wagon`), `paint` (silver when unset), `width`; labelled «Silueta del Vehículo» | `components/VehicleVisual.tsx` |
+| `AppleSignInButton`, `GoogleSignInButton` | `src/auth/provider-buttons.tsx` (not in the kit: they belong to sign-in) | Apple's: Apple's own `AppleAuthenticationButton`, «Continuar con Apple», black, a pill, as tall as Google's (Apple's HIG: the system button, equal prominence). Google's: built to Google's branding guidelines: light style (white fill, 1 pt `#747775` stroke, `#1f1f1f` text), the standard four-colour «G» at 20 pt, Google's padding (iOS 16 · 12 · 16, Android 12 · 10 · 12), a pill, «Continuar con Google» in the platform font at 500, 14/20 (`Text` `family="system"`: Google asks for Google Sans, which apps can't embed); `minHeight` 44, grows with the text; a spinner replaces the «G» while Google opens | Login's pills |
 | `UIProvider` | `provider.tsx` | Wraps the root layout: gesture handler, keyboard controller, toaster | — |
 | Combobox (makes and models) | — | Not in the kit yet: it comes with the Vehicle form | `ui/Combobox.tsx` |
 | Floating [+] | — | Glass on iOS (`expo-glass-effect`), Material-style on Android; ticket C | The Dock's centre [+] |
@@ -299,7 +313,9 @@ are Reanimated CSS transitions and animations. Sheets, menus, pickers,
 alerts and screen transitions are the system's own.
 
 The three first-run animations are simplified in the port: a native
-splash, one still image on Login, still slides in the Intro. With Reduce
+splash, one still image on Login, still slides in the Intro. Login has no
+entrance animation of its own: the splash's 250 ms fade is the transition,
+and its buttons give the kit's press feedback. With Reduce
 Motion on, nothing animates; the content just appears: no press scale, a
 still skeleton, bars drawn at their value, toasts that appear in place
 (`sonner-native` reads the setting).
@@ -318,7 +334,11 @@ redesign.
 Rules:
 
 - Every touch target is at least 44 pt, even when it looks smaller
-  (`hitSlop`). `Button` `sm` is 36 pt tall, so it gets `hitSlop`.
+  (`hitSlop`). `Button` `sm` is 36 pt tall, so it gets `hitSlop`. The one
+  exception is a link inside a sentence (Login's «Términos» and «Política
+  de privacidad»), which WCAG 2.2's target-size rule (2.5.8) exempts: they
+  are spans of the sentence with `accessibilityRole="link"`, so VoiceOver
+  and TalkBack list them as links.
 - Buttons and chips grow with their text: `minHeight`, never `height`.
 - Color is never the only signal: each Reminder status shows its text.
 - Text contrast is 4.5:1, large text 3:1, checked on all three palettes

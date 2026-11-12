@@ -93,7 +93,7 @@ export function EmptyState({ icon, title, body, action, testID }: { icon: IconNa
       <View style={[styles.stateTile, styles.emptyTile]}>
         <Icon name={icon} size="xl" tone="radiant" fixed />
       </View>
-      <Text step="headline" family="display" align="center" heading>
+      <Text testID={testID ? `${testID}-title` : undefined} step="headline" family="display" align="center" heading>
         {title}
       </Text>
       <Text step="subhead" tone="muted" align="center" style={styles.stateBody}>

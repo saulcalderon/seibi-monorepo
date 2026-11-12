@@ -127,10 +127,18 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       [
         'expo-splash-screen',
         {
-          // The PWA's splash is light in both themes (first-run screens stay light).
-          backgroundColor: '#F2F4F7',
+          // The isotype on the theme's screen background, light or night as
+          // the phone is: most launches open a signed-in app that follows the
+          // phone, so a light splash would flash before a night Inicio.
+          // Changing any of this is native: it needs a new build.
+          backgroundColor: '#F2F4F7', // palettes.ts → light.bg
           image: './assets/images/splash-icon.png',
           imageWidth: 160,
+          dark: {
+            backgroundColor: '#0E0F11', // palettes.ts → night.bg
+            // The same mark with white ticks (logoTickOnDark).
+            image: './assets/images/splash-icon-dark.png',
+          },
         },
       ],
       [
