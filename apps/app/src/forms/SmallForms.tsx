@@ -1,8 +1,8 @@
-import { useState } from 'react'
-import { Gauge } from 'lucide-react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { CircleAlert, LoaderCircle } from 'lucide-react'
 import type { RoutineRecord, VehicleView } from '../lib/garage'
 import { errorMessage } from '../lib/functions'
-import { formatDay, formatNumber, todayIso, vehicleName } from '../lib/format'
+import { formatNumber, measureLabel, relativeDays, todayIso, vehicleName } from '../lib/format'
 import { knowledgeProfile, taskLabel } from '../lib/knowledge'
 import {
   InputError,
@@ -13,6 +13,7 @@ import {
   useSaveManualReminder,
   useSaveRoutine,
 } from '../lib/mutations'
+import { paintAccent, paintHex } from '../lib/paint'
 import { useProfile } from '../lib/profile'
 import { orderedTaskCodes, taskIcon, taskMap, useTasks } from '../lib/tasks'
 import { Button } from '../ui/Button'
@@ -85,18 +86,26 @@ export function MileageForm({
   vehicleId: string | null
 }) {
   return (
-    <Sheet
-      open={open}
-      onClose={onClose}
-      title="Actualizar kilometraje"
-      description="Anota el número que ves hoy en el odómetro."
-    >
+    <Sheet open={open} onClose={onClose} look="v3" title="Actualizar kilometraje">
       {open && vehicleId ? (
         <MileageBody vehicles={vehicles} initialId={vehicleId} onDone={onClose} />
       ) : null}
     </Sheet>
   )
 }
+
+/** "Yaris 2017 · último: 31,870 km · hace 12 días" */
+function mileageContext(vehicle: VehicleView) {
+  const name = `${vehicle.model} ${vehicle.year}`
+  if (vehicle.odometer == null) return `${name} · sin registros todavía`
+  const last = `último: ${formatNumber(vehicle.odometer)} ${measureLabel(vehicle.measure)}`
+  if (!vehicle.odometerOn) return `${name} · ${last}`
+  const days = Math.round((Date.parse(todayIso()) - Date.parse(vehicle.odometerOn)) / 86_400_000)
+  return `${name} · ${last} · ${relativeDays(-Math.max(0, days))}`
+}
+
+const BUMPS = [100, 500, 1000]
+const MAX_DIGITS = 7
 
 function MileageBody({
   vehicles,
@@ -109,16 +118,31 @@ function MileageBody({
 }) {
   const [vehicleId, setVehicleId] = useState(initialId)
   const vehicle = vehicles.find((v) => v.id === vehicleId)
-  const [value, setValue] = useState('')
+  const [digits, setDigits] = useState('')
   const add = useAddReading()
   const toast = useToast()
   const err = useFormError()
+  const reading = digits ? Number(digits) : null
+  const unit = measureLabel(vehicle?.measure ?? 'km')
+  const accent = paintAccent(paintHex(vehicle?.color))
+  const error = err.field('reading') ?? err.form
+  const input = useRef<HTMLInputElement>(null)
+
+  // The sheet focuses its panel on open; take focus back for the field.
+  useEffect(() => {
+    const t = window.setTimeout(() => input.current?.focus(), 60)
+    return () => window.clearTimeout(t)
+  }, [])
+
+  const change = (next: string) => {
+    err.clear()
+    setDigits(next.replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, MAX_DIGITS))
+  }
 
   async function submit() {
     err.clear()
     if (!vehicle) return
     try {
-      const reading = parseNumber(value)
       if (reading == null) throw new InputError('reading', 'Escribe el número del odómetro.')
       await add.mutateAsync({ vehicle, reading })
       toast('Kilometraje actualizado')
@@ -130,38 +154,92 @@ function MileageBody({
 
   return (
     <form
-      className="flex flex-col gap-5 pb-2"
+      className="flex flex-col pb-2"
+      style={{ '--accent': accent } as CSSProperties}
+      noValidate
       onSubmit={(e) => {
         e.preventDefault()
         void submit()
       }}
     >
-      <VehiclePicker vehicles={vehicles} value={vehicleId} onChange={setVehicleId} />
-      {vehicle?.odometer != null ? (
-        <div className="flex items-center gap-3 rounded-2xl bg-surface px-4 py-3 ring-1 ring-line">
-          <Gauge className="size-5 text-muted" aria-hidden />
-          <div className="text-[0.88rem] text-muted">
-            Último registro:{' '}
-            <strong className="tabular text-ink">
-              {formatNumber(vehicle.odometer)} {vehicle.measure}
-            </strong>
-            {vehicle.odometerOn ? ` · ${formatDay(vehicle.odometerOn)}` : null}
-          </div>
+      {vehicle ? (
+        <p className="font-mono text-[12px] leading-[16px] text-muted">{mileageContext(vehicle)}</p>
+      ) : null}
+      {vehicles.length > 1 ? (
+        <div className="mt-4">
+          <VehiclePicker
+            vehicles={vehicles}
+            value={vehicleId}
+            onChange={(id) => {
+              setVehicleId(id)
+              err.clear()
+            }}
+          />
         </div>
       ) : null}
-      <TextField
-        label="Kilometraje de hoy"
-        inputMode="numeric"
-        autoFocus
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        suffix={vehicle?.measure ?? 'km'}
-        error={err.field('reading')}
-      />
-      <FormError message={err.form} />
-      <Button type="submit" size="lg" block loading={add.isPending}>
-        Guardar
-      </Button>
+      <div
+        className={cx(
+          'mt-[18px] flex h-16 items-center gap-2.5 rounded-xl px-4 transition-[background-color,box-shadow] duration-200',
+          error
+            ? 'bg-surface shadow-[0_0_0_2px_var(--app-overdue)]'
+            : 'bg-surface-2 focus-within:bg-surface focus-within:shadow-[0_0_0_2px_var(--accent)]',
+        )}
+      >
+        <input
+          ref={input}
+          aria-label="Kilometraje de hoy"
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? 'mileage-error' : undefined}
+          inputMode="numeric"
+          autoComplete="off"
+          enterKeyHint="done"
+          placeholder={vehicle?.odometer != null ? formatNumber(vehicle.odometer) : '0'}
+          value={reading != null ? formatNumber(reading) : ''}
+          onChange={(e) => change(e.target.value)}
+          className="min-w-0 flex-1 bg-transparent text-[30px] font-light leading-none tracking-[-0.03em] tabular outline-none placeholder:text-subtle focus-visible:outline-none"
+        />
+        <span className="font-mono text-[14px] text-muted">{unit}</span>
+      </div>
+      {error ? (
+        <p id="mileage-error" role="alert" className="mt-2 flex items-start gap-1.5 text-[13px] font-medium leading-[17px] text-overdue">
+          <CircleAlert className="mt-px size-3.5 shrink-0" aria-hidden />
+          {error}
+        </p>
+      ) : null}
+      <div className="mt-3 flex gap-2">
+        {BUMPS.map((n) => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => change(String((reading ?? vehicle?.odometer ?? 0) + n))}
+            className="relative inline-flex h-9 items-center rounded-full bg-surface-3 px-3.5 text-[14px] font-medium tabular transition-transform duration-200 before:absolute before:inset-x-0 before:-inset-y-1 before:content-[''] active:scale-[0.97]"
+          >
+            +{formatNumber(n)}
+          </button>
+        ))}
+      </div>
+      <p className="mb-5 mt-4 text-[14px] leading-[21px] text-muted">
+        Recalculamos tus próximos mantenimientos con este dato.
+      </p>
+      <button
+        type="submit"
+        disabled={reading == null || add.isPending}
+        aria-busy={add.isPending || undefined}
+        className="inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-inverse px-[22px] text-[16px] font-medium text-on-inverse transition-transform duration-200 active:scale-[0.97] disabled:bg-surface-3 disabled:text-[#a3a5aa] aria-busy:bg-inverse aria-busy:text-on-inverse"
+      >
+        {add.isPending ? (
+          <>
+            <LoaderCircle className="size-4 animate-spin" aria-hidden />
+            Guardando
+          </>
+        ) : reading != null ? (
+          <span className="tabular">
+            Guardar {formatNumber(reading)} {unit}
+          </span>
+        ) : (
+          'Guardar'
+        )}
+      </button>
     </form>
   )
 }

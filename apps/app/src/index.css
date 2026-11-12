@@ -36,6 +36,7 @@
 
   --font-sans: 'Archivo', system-ui, sans-serif;
   --font-display: 'Clash Display', 'Archivo', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
 
   --shadow-card: var(--app-shadow-card);
   --shadow-float: var(--app-shadow-float);
@@ -143,8 +144,10 @@
   --shadow-float: var(--app-shadow-float);
 }
 
-/* Intro: the Garage palette that stays. Red is only for Vencido. */
-.intro-v3 {
+/* Intro, and the v3 Garage surfaces in the day theme: the Garage palette
+   that stays. Red is only for Vencido. Night is not art-directed for v3 yet. */
+.intro-v3,
+:root:not([data-theme='night']) .v3 {
   --app-bg: #f1f1f2;
   --app-surface: #ffffff;
   --app-surface-2: #f4f4f5;
@@ -554,4 +557,142 @@ html:has(.login-screen)::view-transition-new(root) {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/*
+ * Garage (Home, Seibi v3). Monochrome canvas; the active Vehicle's paint is
+ * the only accent. --paint drives the spotlight, --accent the pager dot and
+ * interval bars. Both crossfade when the Vehicle changes.
+ */
+@property --paint {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #c3c7cd;
+}
+@property --accent {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #3a3d42;
+}
+
+.garage {
+  --g-bg: #f1f1f2;
+  --g-control: #e4e4e6;
+  --g-control-pressed: #d9d9dc;
+  --g-track: #e6e6e8;
+  --g-alert: #ad2831;
+  --g-dot: #c9cacd;
+  --g-floor: linear-gradient(180deg, #f7f7f8 0%, #ededef 58%, #e3e3e6 66%, #efeff1 100%);
+  --g-overhead: #ffffff;
+  --g-vignette: rgb(14 15 17 / 9%);
+  --g-contact: 10 11 13;
+  background: var(--g-bg);
+  transition:
+    --paint 0.4s cubic-bezier(0.2, 0.7, 0.2, 1),
+    --accent 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+[data-theme='night'] .garage {
+  --g-bg: var(--app-bg);
+  --g-control: var(--app-surface-3);
+  --g-control-pressed: #30333a;
+  --g-track: var(--app-surface-3);
+  --g-alert: #ff6b5e;
+  --g-dot: #4a4d55;
+  --g-floor: linear-gradient(180deg, #1d1f23 0%, #17181b 58%, #121316 66%, #17181b 100%);
+  --g-overhead: rgb(255 255 255 / 7%);
+  --g-vignette: rgb(0 0 0 / 30%);
+  --g-contact: 0 0 0;
+}
+
+.garage-stage {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(44% 36% at 50% 62%, color-mix(in oklab, var(--paint) 22%, transparent) 0%, transparent 72%),
+    radial-gradient(64% 58% at 50% -4%, var(--g-overhead) 0%, transparent 72%),
+    var(--g-floor);
+}
+.garage-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: radial-gradient(115% 95% at 50% 38%, transparent 55%, var(--g-vignette) 100%);
+}
+.garage-glow {
+  position: absolute;
+  left: 50%;
+  bottom: 15%;
+  width: 86%;
+  height: 22%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--paint) 34%, transparent), transparent);
+  filter: blur(6px);
+}
+.garage-contact {
+  position: absolute;
+  left: 50%;
+  bottom: 23.5%;
+  width: 70%;
+  height: 7%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(var(--g-contact) / 48%), rgb(var(--g-contact) / 0%));
+  filter: blur(3px);
+}
+
+/* The car in the stage: a fit box anchored on the floor, and its reflection
+   mirrored from the tyre line. */
+.garage-car,
+.garage-refl {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  bottom: 25%;
+  height: 40%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.garage-car > *,
+.garage-refl > * {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+.garage-refl {
+  transform: scaleY(-1);
+  transform-origin: 50% 100%;
+  opacity: 0.1;
+  -webkit-mask-image: linear-gradient(to top, #000, transparent 50%);
+  mask-image: linear-gradient(to top, #000, transparent 50%);
+}
+/* The fal poster is a studio photo, not a cut-out: a larger box, its grey
+   sweep multiplied into the floor and its edges feathered. */
+.garage-car.is-poster {
+  left: 2%;
+  right: 2%;
+  bottom: 9%;
+  height: 62%;
+  align-items: center;
+}
+.garage-car.is-poster > img {
+  mix-blend-mode: multiply;
+  -webkit-mask-image: radial-gradient(closest-side, #000 72%, transparent);
+  mask-image: radial-gradient(closest-side, #000 72%, transparent);
+}
+[data-theme='night'] .garage-car.is-poster > img {
+  mix-blend-mode: normal;
+}
+
+/* Dock (v3): the active item takes the active Vehicle's paint accent. */
+.dock-v3 {
+  --dock-accent: var(--accent);
+  transition: --accent 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+[data-theme='night'] .dock-v3 {
+  --dock-accent: var(--app-ink);
 }

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { useNavigate, useRouter } from '@tanstack/react-router'
 import { ChevronLeft } from 'lucide-react'
 import { IconButton } from '../ui/Button'
@@ -12,6 +12,7 @@ export function Screen({
   back,
   children,
   className,
+  style,
 }: {
   title?: ReactNode
   subtitle?: ReactNode
@@ -19,12 +20,13 @@ export function Screen({
   back?: boolean
   children: ReactNode
   className?: string
+  style?: CSSProperties
 }) {
   const router = useRouter()
   const navigate = useNavigate()
   return (
     <main className="scroll-area relative flex-1">
-      <div className={cx('pb-dock pt-safe', className)}>
+      <div className={cx('pb-dock pt-safe', className)} style={style}>
         {title || back || actions ? (
           <header className="flex items-start gap-2 px-5 pb-4 pt-2">
             {back ? (

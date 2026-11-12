@@ -7,7 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { OdometerMeasure } from '@seibi/maintenance-engine/odometer'
 import { useAuthSession } from './authSession'
 import { invokeFunction } from './functions'
-import { todayIso } from './format'
+import { formatDistance, todayIso } from './format'
 import { garageQueryKey, type VehicleView } from './garage'
 import { supabase } from './supabase'
 
@@ -200,7 +200,7 @@ export function useAddReading() {
       if (vehicle.odometer != null && value <= vehicle.odometer) {
         throw new InputError(
           'reading',
-          `Debe ser mayor que el kilometraje actual (${vehicle.odometer.toLocaleString('es-SV')}). Si el actual está mal, corrígelo en el historial.`,
+          `Debe ser mayor que el último registro (${formatDistance(vehicle.odometer, vehicle.measure)}).`,
         )
       }
       const { error } = await supabase

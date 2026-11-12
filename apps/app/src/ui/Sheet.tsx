@@ -16,13 +16,16 @@ type SheetProps = {
   tall?: boolean
   /** Panel surface. Defaults to the app background. */
   panelClassName?: string
+  /** Seibi v3 sheet: white panel, v3 palette, light title, softer scrim. */
+  look?: 'v3'
 }
 
 /**
  * Bottom sheet. Rendered into #root so it stays inside the phone frame on
  * desktop. Closes on backdrop tap, Escape, or dragging the handle down.
  */
-export function Sheet({ open, onClose, title, description, children, footer, tall, panelClassName }: SheetProps) {
+export function Sheet({ open, onClose, title, description, children, footer, tall, panelClassName, look }: SheetProps) {
+  const v3 = look === 'v3'
   const titleId = useId()
   const panelRef = useRef<HTMLDivElement>(null)
   const drag = useDragControls()
@@ -50,7 +53,7 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
       {open ? (
         <div className="fixed inset-0 z-50 flex flex-col justify-end" role="presentation">
           <motion.div
-            className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+            className={cx('absolute inset-0', v3 ? 'bg-[rgb(14_15_17/32%)]' : 'bg-black/45 backdrop-blur-[2px]')}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -65,7 +68,7 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
             tabIndex={-1}
             className={cx(
               'relative flex w-full flex-col rounded-t-[1.75rem] shadow-float outline-none',
-              panelClassName ?? 'bg-bg',
+              panelClassName ?? (v3 ? 'v3 bg-surface' : 'bg-bg'),
               tall ? 'h-[94%]' : 'max-h-[92%]',
             )}
             initial={{ y: '100%' }}
@@ -85,11 +88,21 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
               className="flex cursor-grab touch-none justify-center pb-1 pt-2.5"
               onPointerDown={(e) => drag.start(e)}
             >
-              <span className="h-1.5 w-10 rounded-full bg-surface-3" aria-hidden />
+              <span
+                className={cx('rounded-full', v3 ? 'h-[5px] w-9 bg-[#d4d4d7]' : 'h-1.5 w-10 bg-surface-3')}
+                aria-hidden
+              />
             </div>
             <header className="flex items-start gap-3 px-5 pb-3 pt-1">
               <div className="min-w-0 flex-1">
-                <h2 id={titleId} className="text-[1.3rem] leading-tight">
+                <h2
+                  id={titleId}
+                  className={
+                    v3
+                      ? 'pt-2 font-sans text-[26px] font-light leading-[28px] tracking-[-0.025em]'
+                      : 'text-[1.3rem] leading-tight'
+                  }
+                >
                   {title}
                 </h2>
                 {description ? (
