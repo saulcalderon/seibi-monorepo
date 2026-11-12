@@ -12,9 +12,12 @@ only to fix a bug or an accessibility failure.
 
 ## Tokens
 
-Unistyles 3 themes `light` and `night`, typed. Components use the role
-names, never hex. If a value you need doesn't exist, add a token with a
-role name here and in the theme; don't write it in the screen.
+Unistyles 3 themes, typed, built from plain-data palettes in
+`apps/mobile/src/theme/palettes.ts`: `light` and `night` (registered with
+Unistyles as `light` and `dark`, the names it reserves for following the
+system), plus `garage` below. Components use the role names, never hex. If
+a value you need doesn't exist, add a token with a role name here and in
+the theme; don't write it in the screen.
 
 ### Color
 
@@ -35,6 +38,7 @@ role name here and in the theme; don't write it in the screen.
 | `line` | `rgb(20 21 23 / 8%)` | `rgb(242 244 247 / 9%)` | Hairlines, card borders |
 | `inverse` | `#141517` | `#f2f4f7` | Inverse surfaces |
 | `onInverse` | `#f2f4f7` | `#141517` | Text on `inverse` |
+| `onRadiant` | `#ffffff` | `#ffffff` | Text on `radiantStrong` and `radiantPressed` (the primary button) |
 | `ok` / `okSoft` | `#178a55` / `#e3f5ec` | `#3ccf8a` / `rgb(60 207 138 / 14%)` | Reminder status «Al día»: dots, bars, icons |
 | `okText` | `#157c4c` | `#3ccf8a` | «Al día» text, on surfaces and on `okSoft` badges |
 | `soon` / `soonSoft` | `#b86e00` / `#fdf1dc` | `#f2b544` / `rgb(242 181 68 / 14%)` | Reminder status «Por vencer»: dots, bars, icons |
@@ -42,6 +46,7 @@ role name here and in the theme; don't write it in the screen.
 | `overdue` / `overdueSoft` | `#d0342a` / `#fde8e6` | `#ff6b5e` / `rgb(255 107 94 / 15%)` | Reminder status «Vencido»: dots, bars, icons |
 | `overdueText` | `#c63128` | `#ff6b5e` | «Vencido» text, on surfaces and on `overdueSoft` badges |
 | `unknown` / `unknownSoft` | `#5b606a` / `#eceef2` | `#a3a8b1` / `rgb(163 168 177 / 14%)` | Reminder status unknown |
+| `unknownText` | `#5b606a` | `#a3a8b1` | Unknown-status text; equals `unknown`, which already passes AA |
 
 Three palette rules the PWA already has, and the port keeps:
 
@@ -51,9 +56,11 @@ Three palette rules the PWA already has, and the port keeps:
   intro (`.v3`, `.intro-v3`): `bg #f1f1f2`, `surface #ffffff`, `surface2
   #f4f4f5`, `surface3 #e4e4e6`, `ink #0e0f11`, `muted #6b6e74`, `subtle
   #6a6c72` (was `#9a9ca1`, see Accessibility), `line rgb(14 15 17 / 8%)`, `inverse #0e0f11`, `onInverse
-  #ffffff`, `overdue #ad2831`, `overdueSoft #f8e6e7`. Red is only for
-  «Vencido». Night is not art-directed for v3; Garage in night uses the
-  base night palette.
+  #ffffff`, `overdue #ad2831`, `overdueSoft #f8e6e7`, `overdueText
+  #ad2831` (the red already passes AA as text). Every other role is the
+  light palette's. Red is only for «Vencido». Night is not art-directed
+  for v3; Garage in night uses the base night palette. In the app it is
+  the `garage` theme, applied to a subtree with Unistyles' `ScopedTheme`.
 - **On Garage, the active Vehicle's paint is the only accent** (pager dot,
   interval bars). The 13 paint presets and the paint → accent rule live in
   `apps/app/src/lib/paint.ts`; port them as they are.
@@ -86,8 +93,11 @@ Put a shadow on the rounded surface itself, not on a square container
 | Geist Mono | 400 | Numbers: Mileage, costs, intervals |
 
 Fonts ship in the binary through `expo-font`. Archivo and Geist Mono come
-from `@expo-google-fonts`; Clash Display is a bundled file from Fontshare
-(its licence is an open question in `PLAN.md`).
+from `@expo-google-fonts`. Clash Display is not bundled yet: its licence
+allows embedding it in an app but not sharing the file through a public
+repository (see `PLAN.md` → Open questions), so headings use Archivo 600,
+the PWA's own fallback (`--font-display: 'Clash Display', 'Archivo'`). The
+theme's `fonts.display` names the heading font, so switching is one line.
 
 The PWA sizes text ad hoc (`text-[0.72rem]` to `text-[2.35rem]`, 1 rem =
 16 px). The native app uses a named scale; each PWA size maps to the
@@ -196,7 +206,10 @@ Rules:
 **Light-palette fixes** (decided 2026-11-11). The PWA's light palette
 failed AA in these pairs; the port changes only the text roles, so fills,
 dots, bars and icons keep their colors (non-text needs 3:1, which they
-meet). Night already passes, so its text roles equal the base colors.
+meet). Night keeps the PWA's values, and its text roles equal the base
+colors. Measured in SEI-42, three night pairs are below 4.5:1: `subtle` on
+`surface2` (4.27), `radiantText` on `surface2` (4.47) and on `radiantSoft`
+(4.42). Their fix is open; the contrast check (SEI-46) will flag them.
 
 | Pair | PWA | Port | Worst ratio after |
 | --- | --- | --- | --- |

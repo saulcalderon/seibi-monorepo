@@ -1,0 +1,93 @@
+# Feature: the theme follows the phone and the saved preference
+# (features/theme.md). Run through scripts/verify.sh drive <ios|android> theme,
+# which passes APP_ID and DEV_URL and sends recordings and screenshots to the
+# run's evidence folder. The flow switches the device's dark mode itself and
+# leaves it in light, with the preference back on Auto.
+appId: ${APP_ID}
+name: The theme follows the phone and the saved preference
+---
+- startRecording: theme
+# The phone starts in light mode.
+- setDarkMode: disabled
+- stopApp
+- openLink: ${DEV_URL}
+- extendedWaitUntil:
+    visible:
+      id: start-title
+    timeout: 120000
+# Start from Auto, in case an earlier run stopped with a saved preference.
+- tapOn:
+    id: theme-system
+- extendedWaitUntil:
+    visible:
+      id: theme-check
+      text: 'theme: light \(system\)'
+    timeout: 10000
+# Let the system's crossfade (or the splash fade) finish before the picture.
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: system-light
+# The phone switches to dark mode while Seibi is open: the screen turns night
+# in place. The heading never leaves the screen, so nothing reloads.
+- setDarkMode: enabled
+- extendedWaitUntil:
+    visible:
+      id: theme-check
+      text: 'theme: night \(system\)'
+    timeout: 10000
+- assertVisible:
+    id: start-title
+    text: Seibi
+- assertVisible:
+    id: engine-check
+    text: 'maintenance-engine: 12500 km'
+# Let the system's crossfade (or the splash fade) finish before the picture.
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: system-night
+# And back to light.
+- setDarkMode: disabled
+- extendedWaitUntil:
+    visible:
+      id: theme-check
+      text: 'theme: light \(system\)'
+    timeout: 10000
+# The person picks Oscuro: night while the phone stays light.
+- tapOn:
+    id: theme-night
+- extendedWaitUntil:
+    visible:
+      id: theme-check
+      text: 'theme: night \(preference\)'
+    timeout: 10000
+# Let the system's crossfade (or the splash fade) finish before the picture.
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: preference-night
+# A cold start: the saved preference applies before the first render.
+- stopApp
+- openLink: ${DEV_URL}
+- extendedWaitUntil:
+    visible:
+      id: start-title
+    timeout: 120000
+- assertVisible:
+    id: theme-check
+    text: 'theme: night \(preference\)'
+# Let the system's crossfade (or the splash fade) finish before the picture.
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: preference-night-cold-start
+# Back to Auto: the app follows the phone (light) again.
+- tapOn:
+    id: theme-system
+- extendedWaitUntil:
+    visible:
+      id: theme-check
+      text: 'theme: light \(system\)'
+    timeout: 10000
+# Let the system's crossfade (or the splash fade) finish before the picture.
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: system-light-restored
+- stopRecording

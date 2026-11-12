@@ -47,7 +47,9 @@ files).
 
 pnpm uses its default isolated installs (no `nodeLinker: hoisted`); Expo
 SDK 58 supports them, and Metro needs no monorepo config, so `apps/mobile`
-has no `metro.config.js`. Apps depend on shared packages with
+has no `metro.config.js`. It has a `babel.config.js` only for Unistyles'
+Babel plugin; isolated installs don't hoist `babel-preset-expo`, so it is a
+direct dev dependency of `apps/mobile`. Apps depend on shared packages with
 `workspace:*`. pnpm 11 holds back releases younger than a day
 (`minimumReleaseAge`); when an install needs a fresher one (Expo patches
 often are), pnpm adds that exact version to `minimumReleaseAgeExclude` in
@@ -216,18 +218,49 @@ The migration's order, scope and tickets are in
 - **Splash and fonts:** the native splash (logo mark on `#F2F4F7`, light in
   both themes like the PWA's) stays up until the root layout has loaded
   the fonts with `expo-font`: Archivo 300–700 and Geist Mono 400 from
-  `@expo-google-fonts`. Clash Display joins once its licence is confirmed
-  (SEI-42). A font that fails to load does not keep the app on the splash.
+  `@expo-google-fonts`. A font that fails to load does not keep the app on
+  the splash. Headings use Archivo 600, the PWA's own fallback for Clash
+  Display: Clash Display's licence (ITF Free Font License) allows embedding
+  it in an app but forbids sharing the font file through a public
+  repository, and this repo is public, so the file is not in git. How it
+  joins is an open question in [`docs/PLAN.md`](./docs/PLAN.md).
 - **Navigation:** four `NativeTabs` (Inicio · Mi flota · Avisos ·
   Estimados; Estimados joins after launch with S10), each with its own
   stack holding its detail screens. A
   floating [+] above the tab bar (glass on iOS, Material on Android) opens
   the quick actions in a `formSheet`. Perfil opens from the header avatar.
-- **Styling:** Unistyles 3, typed `light` and `night` themes with role
-  names (`surface`, `ink`, `line`…), values from `docs/DESIGN.md`. SEI-42
-  starts with a spike on SDK 58; if Unistyles fails it, the fallback is
-  plain `StyleSheet` + tokens with the same role names. Components use
-  role names, never raw values.
+- **Styling:** Unistyles 3 (`react-native-unistyles` on
+  `react-native-nitro-modules`; SEI-42's spike proved it on SDK 58 on both
+  platforms). The theme lives in `src/theme/`, values from
+  `docs/DESIGN.md`:
+  - `palettes.ts`: every colour and shadow as plain data, with no imports,
+    so the contrast check reads it with Node. Palettes `light`, `night`
+    and `garage` (Inicio v3's light palette).
+  - `tokens.ts`: spacing (`space[n]` is `n × 4`), radius, the type scale
+    and the font families.
+  - `unistyles.ts`: builds the themes and calls `StyleSheet.configure`. The
+    app entry `index.ts` imports it right after Expo Router's entry, so it
+    runs before any `StyleSheet.create`; `babel.config.js` adds Unistyles'
+    plugin for `src/`.
+
+  Themes are `light`, `dark` (the night palette: Unistyles reserves those
+  two names for following the system) and `garage`, for a subtree in a
+  `ScopedTheme`. A theme change updates styles natively without
+  re-rendering React; only components that call `useUnistyles()`
+  re-render. For that, Expo Router's `adaptiveColors` is off
+  (`app.config.ts`): by default it re-renders every screen on a
+  colour-scheme change, for its own `Color` API, which Seibi doesn't use.
+  Components style with `StyleSheet.create((theme) => …)` and
+  role names (`theme.colors.surface`, `theme.space[4]`), never raw colours
+  or sizes, and express visual states as variants (`styles.useVariants`).
+- **Theme preference:** `system` (default), `light` or `night` (the PWA's
+  Auto · Claro · Oscuro), under `theme.v1` in the expo-sqlite kv-store
+  (`src/theme/preference.ts`). `unistyles.ts` reads it synchronously before
+  configuring, so a cold start draws the chosen theme first. `system` turns
+  Unistyles' adaptive themes on; a fixed choice turns them off and also
+  overrides React Native's colour scheme, so native views (alerts, the
+  status bar, `@expo/ui`) match. Perfil (S11) gets the control; until then
+  the placeholder start screen carries the PWA's «Tema» segmented control.
 - **Auth:** Supabase with native Apple (`expo-apple-authentication`) and
   native Google (`@react-native-google-signin/google-signin`), both via
   `signInWithIdToken`. The session is encrypted at rest: the key in

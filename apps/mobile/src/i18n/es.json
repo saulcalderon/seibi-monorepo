@@ -3,7 +3,14 @@
     "title": "Seibi",
     "tagline": "Mantenimiento con total claridad",
     "engineCheck": "maintenance-engine: {{reading}} km",
-    "noReading": "sin lectura"
+    "noReading": "sin lectura",
+    "themeCheck": "theme: {{theme}} ({{source}})"
+  },
+  "theme": {
+    "label": "Tema",
+    "system": "Auto",
+    "light": "Claro",
+    "night": "Oscuro"
   },
   "update": {
     "title": "Hay una versión nueva de Seibi",

@@ -12,7 +12,7 @@ its text comes from `es.json` ([`i18n.md`](./i18n.md)). The app shell
 - `launch-ios` cold-starts Seibi Dev on the iOS Simulator to the start screen.
 - `launch-android` cold-starts Seibi Dev on the Android emulator to the start screen.
 - `splash-gate` keeps the native splash up until the fonts load; no frame of fallback text shows.
-- `start-screen` shows the heading «Seibi» in Archivo Bold.
+- `start-screen` shows the heading «Seibi» in the heading font (Archivo SemiBold until Clash Display joins), in the theme's colours ([`theme.md`](./theme.md)).
 - `engine-check` shows `maintenance-engine: 12500 km`, computed by `@seibi/maintenance-engine` at runtime.
 
 ## How to get to it (user POV)
@@ -41,5 +41,5 @@ Preconditions:
 - The dev client's server list means the link did not open a Metro: run `doctor`; on Android check the `adb reverse` line.
 - After a native change (`app.config.ts`, a package with native code), the installed build is stale: `launch <platform> --rebuild`.
 - The first bundle after starting Metro is slow; `launch` warms it. A flow that times out on `start-title` right after a Metro restart is usually a cold cache, not a failure: rerun `launch`.
-- The splash is light even when the simulator is in dark mode (the PWA's look). The start screen follows the system theme.
+- The splash is light even when the simulator is in dark mode (the PWA's look). The start screen follows the system theme, or the saved preference ([`theme.md`](./theme.md)).
 - Development builds add their own screens to the video, and they are not Seibi's: on iOS the dev client's server list flashes and a "Downloading" bar shows before the splash returns (about 3 s from link to start screen); on Android a blank loading view follows the splash for about 15 s while the emulator starts the process and evaluates the unminified bundle (logcat: `Running "main"`). A `preview` build should keep the splash up until the fonts load; prove that when the first one exists.

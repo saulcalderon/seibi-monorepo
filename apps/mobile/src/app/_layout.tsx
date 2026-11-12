@@ -22,8 +22,8 @@ SplashScreen.setOptions({ fade: true, duration: 250 });
 export default function RootLayout() {
   useOTAUpdate();
 
-  // The fonts docs/DESIGN.md names. Clash Display (headings) joins in SEI-42
-  // once its licence is confirmed.
+  // The fonts docs/DESIGN.md names. Headings use Archivo 600 until Clash
+  // Display can ship without its file in this public repo (docs/PLAN.md).
   const [loaded, error] = useFonts({
     Archivo_300Light,
     Archivo_400Regular,

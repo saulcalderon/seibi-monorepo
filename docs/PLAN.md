@@ -218,13 +218,21 @@ From the Paradero and Zagged reviews and the planning session:
 - **SEI-48 keeps `glb_path`.** The frozen PWA selects it; dropping it
   breaks production on the next merge.
 - **Untried anywhere:** native Google sign-in with Supabase (Zagged used
-  browser OAuth), Unistyles 3, `expo-notifications`, Sentry, Expo in a pnpm
-  monorepo. Each starts with a spike.
+  browser OAuth), `expo-notifications`, Sentry, Expo in a pnpm monorepo.
+  Each starts with a spike. (Unistyles 3 passed its spike in SEI-42.)
 
 ## Open questions
 
-- **Clash Display licence.** It comes from Fontshare (ITF Free Font
-  License). Confirm it allows bundling in a distributed app before SEI-42.
+- **Clash Display: how to ship it.** Read in SEI-42 (ITF Free Font
+  License 2.0, 17 Aug 2026, the `License/FFL.txt` in Fontshare's zip):
+  §01 allows embedding the font in mobile apps, commercial use included,
+  with no credit required. §02 forbids modifying the files (no subsetting
+  or format conversion) and making them available to anyone else,
+  "through another … repository … publicly accessible servers". This repo
+  is public, so committing the font file would break §02. Options:
+  make the repo private, or download the official file from Fontshare
+  during the EAS build (and for local builds) so it never sits in git.
+  Until one is chosen, headings use Archivo 600, the PWA's own fallback.
   Archivo and Geist Mono are under the SIL Open Font License.
 - **Google sign-in setup.** Native Google sign-in needs the iOS and
   Android client ids added to Supabase's Google provider. Confirm in
