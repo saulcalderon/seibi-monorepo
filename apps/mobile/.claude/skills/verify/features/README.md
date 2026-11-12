@@ -60,3 +60,6 @@ handles, required state, commands and observable proof.
 - [The start screen speaks Spanish from es.json](./i18n.md): every word
   from `src/i18n/es.json`, no keys on screen, Spanish also on a device set
   to English. Flow: `i18n-start-screen`.
+- [The theme follows the phone and the saved preference](./theme.md):
+  light and night palettes, a live switch with no reload, the «Tema»
+  choice kept across a cold start. Flow: `theme`.

@@ -45,7 +45,9 @@ cd apps/mobile
 What it does, in order:
 
 1. **Device.** iOS: finds the simulator named `Seibi Verify` (creates it as
-   an iPhone 17 on the newest iOS runtime if it is missing), boots it and
+   an iPhone 17 on the newest iOS runtime if it is missing, and restarts it
+   once: a new iOS 27 simulator ignores dark-mode changes until its first
+   reboot), boots it and
    opens Simulator.app. It pre-approves the dev client's `exp+seibi` scheme
    so no "Open in Seibi Dev?" prompt appears. Android: boots the AVD
    `seibi-pixel` as `emulator-5560` if that serial is not already running,
