@@ -14,7 +14,7 @@ schema are English; Linear and UI use the Spanish names in ADR-0002. See
 
 Installed from `expo/skills`, `emilkowalski/skills` and `Appllama/appllama-skills` (see `skills-lock.json`). Each source has one job:
 
-- **Appllama, quality bar:** `appllama-app-design-skill` sets the bar a mobile screen must meet before it ships: HIG fidelity, navigation semantics, motion, simulator check. Design direction comes from the Paper redesign, not from Appllama.
+- **Appllama, quality bar:** `appllama-app-design-skill` sets the bar a mobile screen must meet before it ships: HIG fidelity, navigation semantics, motion, simulator check. Design direction comes from `docs/DESIGN.md`, not from Appllama: the port keeps the PWA's look, and the Paper redesign starts after the port.
 - **Expo, best practices:** start every Expo/EAS task with `expo-overview`. It routes to `expo-router`, `expo-native-ui`, `expo-ui`, `expo-design-system`, `expo-data-fetching`, `expo-web-to-native` and the `eas-*` skills.
 - **Emil Kowalski, animation and craft:** `expo-animation` builds motion. It is Emil's `animate-expo`, maintained by Expo. `choreograph`, `find-animation-opportunities`, `improve-animations`, `remove-animations`, `apple-design` and `break-ui` review and refine.
 
