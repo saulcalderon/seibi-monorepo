@@ -1,4 +1,4 @@
-// Paint codes stored on vehicles.color (English, per ADR-0002) with the
+// Paint codes stored on vehicles.color (English, per CONTEXT.md) with the
 // Spanish label and a swatch for the UI. The render function uses the same
 // codes.
 export const PAINTS: Array<{ code: string; label: string; hex: string }> = [

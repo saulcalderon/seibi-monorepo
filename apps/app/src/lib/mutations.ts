@@ -1,5 +1,5 @@
 // Every write the app makes. Each one invalidates the garage query so all
-// screens see the change. Mileage rules follow ADR-0004: a standalone
+// screens see the change. Mileage rules follow ARCHITECTURE.md: a standalone
 // reading is dated today and must beat the current odometer; a reading
 // written with a Service may be any number (backfill).
 

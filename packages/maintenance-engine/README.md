@@ -1,7 +1,7 @@
 # @seibi/maintenance-engine
 
 Pure TypeScript that turns a Vehicle's Maintenance schedule, Service items,
-Mileage readings, and Routines into derived Reminders (ADR-0010). No I/O,
+Mileage readings, and Routines into derived Reminders. No I/O,
 no dependencies. Imported by the app and by the `reminders-daily` Edge
 Function, so it uses explicit `.ts` imports that Deno understands.
 

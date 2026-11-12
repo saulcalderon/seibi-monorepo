@@ -7,3 +7,6 @@ dev-dist
 
 # Edge Function secrets for local serve
 supabase/functions/.env*
+
+# Local MCP config (may hold secrets)
+.mcp.json

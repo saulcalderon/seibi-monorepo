@@ -1,6 +1,6 @@
 # Seibi
 
-Mobile-first app for tracking vehicle maintenance: log work done on a vehicle, get reminders when the next service is due, and estimate costs. Domain glossary is English — see [`CONTEXT.md`](./CONTEXT.md). Linear and UI use Spanish names from [ADR-0002](./docs/adr/0002-english-tech-spanish-people.md).
+Mobile-first app for tracking vehicle maintenance: log work done on a vehicle, get reminders when the next service is due, and estimate costs. Domain glossary is English — see [`CONTEXT.md`](./CONTEXT.md), whose mapping table gives the Spanish names used in Linear and the Spanish UI. How the system works now: [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
 ## Prerequisites
 
@@ -41,6 +41,10 @@ secrets (OpenAI, fal, VAPID private key) live in Supabase, not here — see
 
 ### Local Supabase
 
+> Being retired: the hosted **seibi-dev** project is the dev environment and
+> agents must not run Supabase locally (see [`ARCHITECTURE.md`](./ARCHITECTURE.md),
+> SEI-50 / SEI-52). The commands below remain until E2E moves to seibi-dev.
+
 Docker must be running.
 
 ```bash
@@ -70,15 +74,15 @@ Run from the repo root:
 ## Structure
 
 ```
-apps/app/                     # TanStack Router + Vite SPA (PWA)
+apps/app/                     # TanStack Router + Vite SPA (PWA, frozen)
 packages/maintenance-engine/  # Reminder math shared by the app and Edge Functions
 supabase/migrations/          # Schema + RLS
 supabase/functions/           # Edge Functions (OpenAI, fal, push, account deletion)
-docs/adr/          # Architecture decision records
-CONTEXT.md         # Domain language
+CONTEXT.md                    # Domain language + Spanish names
+ARCHITECTURE.md               # How Seibi works now
 ```
 
-Stack overview: client-rendered SPA, Supabase backend, TanStack Query, Tailwind, Paraglide i18n. Details in [`docs/adr/0001-frontend-stack.md`](./docs/adr/0001-frontend-stack.md).
+Stack overview: the live PWA is a client-rendered SPA (TanStack Router, TanStack Query, Tailwind, Paraglide) on Supabase; it is frozen while the native Expo app (`apps/mobile`) is built. Details in [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
 ## Docker (optional)
 

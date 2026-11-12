@@ -2,54 +2,57 @@
 
 How the engineering skills should consume this repo's domain documentation when exploring the codebase.
 
+## This repo does not use `docs/adr/`
+
+This repo does not use ADRs or `docs/adr/`. When a skill (e.g.
+`domain-modeling`, `grill-with-docs`, `improve-codebase-architecture`) says
+to read, write, or offer an ADR, instead:
+
+- Update **`ARCHITECTURE.md`** in place to describe the new current state,
+  in the same PR that changes the behaviour. No history, no "superseded".
+- Record the reasons — options considered, trade-offs — in the Linear
+  document **«Historial de decisiones»** in project **«App móvil Seibi»**
+  (Spanish, newest entry on top).
+- **`CONTEXT.md` stays a glossary only.** Update it when a term is added
+  or sharpened, never with implementation decisions.
+
+This override wins over the defaults in `.agents/skills/**` (vendored; do
+not edit them).
+
 ## Before exploring, read these
 
-- **`CONTEXT.md`** at the repo root, or
-- **`CONTEXT-MAP.md`** at the repo root if it exists — it points at one `CONTEXT.md` per context. Read each one relevant to the topic.
-- **`docs/adr/`** — read ADRs that touch the area you're about to work in. In multi-context repos, also check `src/<context>/docs/adr/` for context-scoped decisions.
+- **`CONTEXT.md`** at the repo root — the glossary and the English ↔ schema ↔ Spanish mapping table.
+- **`ARCHITECTURE.md`** at the repo root — stack, backend, domain rules that live in code, native app standards, working rules, and open items.
 
-If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The `/domain-modeling` skill (reached via `/grill-with-docs` and `/improve-codebase-architecture`) creates them lazily when terms or decisions actually get resolved.
+If a `CONTEXT-MAP.md` ever appears at the root, it points at one `CONTEXT.md` per context; read each one relevant to the topic.
 
 ## File structure
 
-Single-context repo (most repos):
-
 ```
 /
+├── AGENTS.md
 ├── CONTEXT.md
-├── docs/adr/
-│   ├── 0001-event-sourced-orders.md
-│   └── 0002-postgres-for-write-model.md
-└── src/
-```
-
-Multi-context repo (presence of `CONTEXT-MAP.md` at the root):
-
-```
-/
-├── CONTEXT-MAP.md
-├── docs/adr/                          ← system-wide decisions
-└── src/
-    ├── ordering/
-    │   ├── CONTEXT.md
-    │   └── docs/adr/                  ← context-specific decisions
-    └── billing/
-        ├── CONTEXT.md
-        └── docs/adr/
+├── ARCHITECTURE.md
+├── apps/
+├── packages/
+└── supabase/
 ```
 
 ## Use the glossary's vocabulary
 
-`CONTEXT.md` is English. People-facing writing (Linear, UI, product copy)
-uses the Spanish name from ADR-0002 (Vehículo, not Vehicle). Technology
+`CONTEXT.md` is English. People-facing writing (Linear, Spanish UI, product
+copy) uses the Spanish column of the mapping table in `CONTEXT.md`
+(Vehículo, not Vehicle); the English UI uses the English terms. Technology
 (tables, columns, enums, commits, tests) uses the English identifier
 (`maintenance`, not `mantenimiento`). Free text is stored as entered.
 Don't drift to glossary synonyms.
 
-If the concept you need isn't in the glossary yet, that's a signal — either you're inventing language the project doesn't use (reconsider) or there's a real gap (note it for `/domain-modeling`).
+If the concept you need isn't in the glossary yet, that's a signal — either you're inventing language the project doesn't use (reconsider) or there's a real gap (note it for `/domain-modeling`, which updates `CONTEXT.md` here, not an ADR).
 
-## Flag ADR conflicts
+## Flag conflicts with ARCHITECTURE.md
 
-If your output contradicts an existing ADR, surface it explicitly rather than silently overriding:
+If your output contradicts `ARCHITECTURE.md` or `CONTEXT.md`, surface it explicitly rather than silently overriding:
 
-> _Contradicts ADR-0007 (event-sourced orders) — but worth reopening because…_
+> _Contradicts ARCHITECTURE.md (Model renders are an image only) — but worth reopening because…_
+
+If the change is agreed, update `ARCHITECTURE.md` in the same PR and add the why to «Historial de decisiones» in Linear (newest entry on top).

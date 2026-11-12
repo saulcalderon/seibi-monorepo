@@ -18,7 +18,7 @@ export type TaskInterval = {
   months: number | null
   severeDistanceKm?: number | null
   severeMonths?: number | null
-  /** `model` when a cited Maintenance schedule sets it, `general` otherwise (ADR-0007). */
+  /** `model` when a cited Maintenance schedule sets it, `general` otherwise. */
   source?: 'model' | 'general'
 }
 
@@ -112,7 +112,7 @@ function lastEvent(events: readonly TaskEvent[], taskCode: string): TaskEvent | 
   return best
 }
 
-/** Derived Reminders for one Vehicle, most urgent first (ADR-0010). */
+/** Derived Reminders for one Vehicle, most urgent first. */
 export function computeReminders(input: ComputeInput): ComputeResult {
   const { measure, schedule, readings, events, routines, today } = input
   const states = new Map((input.states ?? []).map((s) => [s.taskCode, s]))

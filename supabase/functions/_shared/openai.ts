@@ -1,4 +1,4 @@
-// OpenAI Responses API with web search and structured output (ADR-0006).
+// OpenAI Responses API with web search and structured output.
 
 import { HttpError } from './http.ts'
 

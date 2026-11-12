@@ -144,7 +144,35 @@ never changes the data Seibi records or the Reminders it computes.
 _Avoid_: expertise, skill, experience
 
 **Model render**:
-The 3D model and 2D poster that show a Vehicle's brand, model, year, and
+The generated image that shows a Vehicle's brand, model, year, and
 color. Generated once per combination and shared by every Vehicle that
 matches. It is an illustration, not a photo of the user's Vehicle.
 _Avoid_: avatar, photo, picture
+
+## Names across code, Linear, and UI
+
+Code, schema, and this file use the English term. Linear and the Spanish
+UI use the Spanish column; the English UI uses the English term. Persisted
+enums store the English code; free text (Shop, notes) is stored as typed.
+
+| CONTEXT.md | Schema | Linear / Spanish UI |
+| --- | --- | --- |
+| Vehicle | `vehicles` | Vehículo |
+| Plate | `plate` | Placa |
+| Service | `services` | Servicio |
+| Type | `type` — enum `maintenance` \| `repair` | Tipo — mantenimiento \| reparación |
+| Shop | `shop` (free-text column, not a table) | Taller |
+| Reminder | `reminders` (hand-written only) | Recordatorio (tab: **Avisos**) |
+| Mileage | `mileage_readings` | Kilometraje |
+| Odometer measure | `odometer_measure` — enum `km` \| `mi` | Medida del odómetro — km \| millas |
+| Service item | `service_items` | Pieza o trabajo |
+| Maintenance task | catalog `maintenance_tasks`, referenced as `task_code` | Tarea de mantenimiento |
+| Maintenance schedule | `maintenance_schedules` | Plan de mantenimiento |
+| Appointment | `appointments` | Cita |
+| Routine | `routines` | Rutina |
+| Usage rate | (derived, no column) | Uso estimado |
+| Knowledge level | `knowledge_level` — enum `none` \| `basic` \| `intermediate` \| `advanced` | Nivel de conocimiento |
+| Model render | `model_renders` | Imagen del modelo |
+| Estimate | `estimates` | Estimado |
+| Intro | (no table — first-visit demo) | Introducción |
+| Onboarding | (no table — first run after sign-in) | Onboarding |

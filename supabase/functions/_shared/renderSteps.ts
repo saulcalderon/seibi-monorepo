@@ -1,4 +1,4 @@
-// Finishing a Model render step (ADR-0008). Two paths reach here: fal's
+// Finishing a Model render step. Two paths reach here: fal's
 // webhook, and vehicle-render polling fal when the webhook never arrives
 // (a local stack fal cannot reach, or a lost delivery). Each step advances
 // with a status check-and-set, so the two paths never both submit the 3D job.
