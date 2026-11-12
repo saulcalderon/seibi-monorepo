@@ -126,7 +126,7 @@ export const night: Palette = {
   surface3: '#26282d',
   ink: '#f2f4f7',
   muted: '#a3a8b1',
-  subtle: '#7c828c',
+  subtle: '#828891',
   line: 'rgba(242, 244, 247, 0.09)',
   inverse: '#f2f4f7',
   onInverse: '#141517',
