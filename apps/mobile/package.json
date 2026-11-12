@@ -8,7 +8,8 @@
     "ios": "EXPO_PUBLIC_APP_VARIANT=development expo run:ios",
     "android": "EXPO_PUBLIC_APP_VARIANT=development expo run:android",
     "lint": "expo lint --max-warnings 0",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check": "s=0; node --no-warnings scripts/check-tokens.mjs || s=1; node --no-warnings scripts/check-contrast.ts || s=1; node scripts/check-strings.mjs || s=1; exit $s"
   },
   "dependencies": {
     "@expo-google-fonts/archivo": "^0.4.2",

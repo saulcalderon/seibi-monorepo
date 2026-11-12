@@ -2,22 +2,30 @@
 # The pnpm scripts below run through Turborepo (turbo.json), the same commands
 # developers run locally. Turbo's strict env mode only passes the variables
 # declared in turbo.json (VITE_*, EXPO_PUBLIC_*) to the build.
+#
+# It also runs on pushes to main, so main always has a fresh Turbo cache: a
+# PR's runs can restore caches saved on main or on that PR, never another PR's.
 name: App PR
 
 on:
   pull_request:
+  push:
+    branches: [main]
 
 permissions:
   contents: read
 
 concurrency:
-  group: app-pr-${{ github.event.pull_request.number }}
+  group: app-pr-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   test:
     name: Lint, typecheck, and build
     runs-on: ubuntu-latest
+    env:
+      # Turbo's local cache, carried between runs by the "Turbo cache" step.
+      TURBO_CACHE_DIR: .turbo/cache
     steps:
       - uses: actions/checkout@v7
 
@@ -33,11 +41,29 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # One cache per commit; a new commit starts from the newest one. Turbo
+      # replays every task whose inputs haven't changed ("cache hit, replaying
+      # logs"; "FULL TURBO" when all of them hit), so a re-run costs seconds.
+      - name: Turbo cache
+        uses: actions/cache@v6
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            turbo-${{ runner.os }}-
+
       - name: Lint
         run: pnpm lint
 
       - name: Typecheck
         run: pnpm typecheck
+
+      # The native app's gate (apps/mobile/turbo.json): its typecheck and lint,
+      # replayed from the steps above, then the check scripts in
+      # apps/mobile/scripts/ (check-tokens, check-contrast, check-strings).
+      - name: Native app checks
+        run: pnpm check
 
       - name: Unit tests
         run: pnpm test

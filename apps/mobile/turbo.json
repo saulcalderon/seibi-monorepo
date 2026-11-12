@@ -1,0 +1,15 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    // The native app's gate, run with `pnpm check` at the repo root:
+    // typecheck and lint first, then the scripts in scripts/ (check-tokens,
+    // check-contrast, check-strings; all three run, and any failure fails it).
+    // It lives here, not in the root turbo.json, so its typecheck and lint
+    // run for this package only.
+    "check": {
+      "dependsOn": ["typecheck", "lint"],
+      "outputs": []
+    }
+  }
+}
