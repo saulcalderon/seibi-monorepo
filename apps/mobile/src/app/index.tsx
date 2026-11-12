@@ -113,7 +113,7 @@ const styles = StyleSheet.create((theme) => ({
     ...theme.type.largeTitle,
     fontFamily: theme.fonts.display,
     letterSpacing: theme.type.largeTitle.fontSize * theme.displayTracking,
-    color: '#e85322',
+    color: theme.colors.ink,
   },
   tagline: {
     ...theme.type.body,
