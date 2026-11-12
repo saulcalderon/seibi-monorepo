@@ -296,6 +296,14 @@ The migration's order, scope and tickets are in
     data. A session passes SecureStore's ~2 KB per value (the bare test
     account's is ~1.9 KB). A value that cannot open (lost key, tampered) is
     deleted and the person signs in again. Never AsyncStorage.
+  - **No HTTP disk cache.** iOS's URL cache would write Supabase's answers
+    (the sign-in and refresh answers with both tokens, the account) to
+    `Library/Caches/<bundle id>/Cache.db` in plain text, and a request's
+    `Cache-Control: no-store` doesn't stop it. A config plugin in
+    `app.config.ts` (`withoutHttpDiskCache`) gives the app an in-memory
+    URL cache only, cleared at launch. Every Supabase request also sends
+    `Cache-Control: no-store` (`src/lib/supabase.ts`), which Android's
+    OkHttp honours.
   - **Routes.** `src/app/(app)/` needs a session; `(auth)/sign-in` and
     `(auth)/account-deleted` are the only other screens. The root layout
     opens exactly one with `Stack.Protected` guards on `useAuth()`

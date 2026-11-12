@@ -1,4 +1,5 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
+import { type ConfigPlugin, withAppDelegate } from 'expo/config-plugins';
 
 // Text iOS draws for the app (permission prompts), outside i18next. One file
 // per language, listed in `locales` below.
@@ -55,11 +56,37 @@ function googleSignInPlugin(): [string, { iosUrlScheme: string }][] {
   return [['@react-native-google-signin/google-signin', { iosUrlScheme }]];
 }
 
+/**
+ * iOS keeps HTTP answers in a disk cache (Library/Caches/<bundle id>/Cache.db)
+ * in plain text, Supabase's included: the sign-in and refresh answers with
+ * their access and refresh tokens, and the account. That would undo the
+ * sealed session (src/auth/device.ts) and outlive sign-out, and a request's
+ * `Cache-Control: no-store` does not stop it. So the app starts with an
+ * in-memory cache only, after clearing whatever an earlier build stored.
+ * Android's HTTP client honours the request header (src/lib/supabase.ts).
+ */
+const withoutHttpDiskCache: ConfigPlugin = (config) =>
+  withAppDelegate(config, (mod) => {
+    const marker = '// Seibi: no HTTP disk cache';
+    if (mod.modResults.contents.includes(marker)) return mod;
+    const launch = /(didFinishLaunchingWithOptions[^{]*\{\n)/;
+    if (mod.modResults.language !== 'swift' || !launch.test(mod.modResults.contents)) {
+      throw new Error('withoutHttpDiskCache: AppDelegate.swift has no didFinishLaunchingWithOptions to extend.');
+    }
+    mod.modResults.contents = mod.modResults.contents.replace(
+      launch,
+      `$1    ${marker} (app.config.ts, withoutHttpDiskCache).\n` +
+        '    URLCache.shared.removeAllCachedResponses()\n' +
+        '    URLCache.shared = URLCache(memoryCapacity: 4 * 1024 * 1024, diskCapacity: 0, directory: nil)\n',
+    );
+    return mod;
+  });
+
 export default ({ config }: ConfigContext): ExpoConfig => {
   const variantName = appVariant();
   const variant = VARIANTS[variantName];
 
-  return {
+  return withoutHttpDiskCache({
     ...config,
     name: variant.name,
     slug: 'seibi',
@@ -137,5 +164,5 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       : {
           updates: { enabled: false },
         }),
-  };
+  });
 };

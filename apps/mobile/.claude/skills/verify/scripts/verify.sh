@@ -242,11 +242,12 @@ build_ios() {
     # Generates ios/ for the development variant and installs the pods.
     ( cd "$APP_DIR" && ./node_modules/.bin/expo prebuild -p ios ) || return 1
   fi
-  if [[ ! -d "$ios/SeibiDev.xcworkspace" ]]; then
+  if [[ ! -d "$ios/SeibiDev.xcodeproj" ]]; then
     log "ios/ was not generated for Seibi Dev; regenerate it (SKILL.md → Launch → App)"
     return 1
   fi
-  [[ -d "$ios/Pods" ]] || ( cd "$ios" && pod install ) || return 1
+  # `expo prebuild --no-install` leaves no pods and no workspace.
+  [[ -d "$ios/Pods" && -d "$ios/SeibiDev.xcworkspace" ]] || ( cd "$ios" && pod install ) || return 1
   xcodebuild -workspace "$ios/SeibiDev.xcworkspace" -scheme SeibiDev -configuration Debug \
     -destination "id=$udid" -derivedDataPath "$ios/build" COMPILER_INDEX_STORE_ENABLE=NO build || return 1
   xcrun simctl install "$udid" "$ios/build/Build/Products/Debug-iphonesimulator/SeibiDev.app"

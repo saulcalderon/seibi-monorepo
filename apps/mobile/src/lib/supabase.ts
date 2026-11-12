@@ -23,6 +23,14 @@ export const supabase = createClient(url, publishableKey, {
     autoRefreshToken: true,
     detectSessionInUrl: false,
   },
+  global: {
+    // Keeps Supabase's answers out of the system HTTP cache. Without it, iOS
+    // writes them to Library/Caches/<bundle id>/Cache.db in plain text:
+    // the sign-in answer with its access and refresh tokens, the account,
+    // later the person's Vehicles. That would undo the sealed session and
+    // outlive sign-out.
+    headers: { 'Cache-Control': 'no-store' },
+  },
 });
 
 // The access token refreshes only while the app is in front. Coming back
