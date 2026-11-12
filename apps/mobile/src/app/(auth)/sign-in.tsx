@@ -22,9 +22,11 @@ type Provider = 'apple' | 'google';
 // The plain sign-in screen. Its design is S1 (SEI-56).
 export default function SignInScreen() {
   const { t } = useTranslation();
-  // The providers' own buttons take a light or dark style, not theme colours.
+  // The providers' own buttons come in a light or a dark style, not in theme
+  // colours: the one that stands out on the theme's background.
   const { rt, theme } = useUnistyles();
   const night = rt.themeName === 'dark';
+  const googleButtonStyle = night ? GoogleSigninButton.Color.Light : GoogleSigninButton.Color.Dark;
   const [appleAvailable, setAppleAvailable] = useState(false);
   const [busy, setBusy] = useState<Provider | null>(null);
 
@@ -72,7 +74,7 @@ export default function SignInScreen() {
           <GoogleSigninButton
             testID="sign-in-google"
             size={GoogleSigninButton.Size.Wide}
-            color={night ? 'light' : 'dark'}
+            color={googleButtonStyle}
             disabled={busy !== null}
             style={styles.providerButton}
             onPress={() => void signIn('google')}

@@ -23,6 +23,13 @@
     "failedTitle": "No pudimos iniciar sesión",
     "failedMessage": "Intenta de nuevo."
   },
+  "testSignIn": {
+    "title": "Entrar con la cuenta de prueba",
+    "email": "Correo",
+    "password": "Contraseña",
+    "submit": "Entrar con correo",
+    "submitting": "Entrando…"
+  },
   "account": {
     "signOut": {
       "action": "Cerrar sesión",
