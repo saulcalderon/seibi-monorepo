@@ -256,8 +256,9 @@ The migration's order, scope and tickets are in
   - `palettes.ts`: every colour and shadow as plain data, with no imports,
     so the contrast check reads it with Node. Palettes `light`, `night`
     and `garage` (Inicio v3's light palette).
-  - `tokens.ts`: spacing (`space[n]` is `n × 4`), radius, the type scale
-    and the font families.
+  - `tokens.ts`: spacing (`space[n]` is `n × 4`), radius, the type scale,
+    the font families, and the UI kit's sizes, opacities, motion timings,
+    `largeTextScale` and `maxIconScale`.
   - `unistyles.ts`: builds the themes and calls `StyleSheet.configure`. The
     app entry `index.ts` imports it right after Expo Router's entry, so it
     runs before any `StyleSheet.create`; `babel.config.js` adds Unistyles'
@@ -273,6 +274,23 @@ The migration's order, scope and tickets are in
   Components style with `StyleSheet.create((theme) => …)` and
   role names (`theme.colors.surface`, `theme.space[4]`), never raw colours
   or sizes, and express visual states as variants (`styles.useVariants`).
+- **UI kit** (`src/ui/`, SEI-54): the components every screen uses (list
+  and rules in `docs/DESIGN.md` → Components). Screens compose them and
+  write no styles the kit already has. `UIProvider` wraps the root layout:
+  `GestureHandlerRootView`, `react-native-keyboard-controller`'s
+  `KeyboardProvider`, and the `sonner-native` toaster. Selects, switches,
+  menus and date pickers are `@expo/ui` controls; what differs per
+  platform lives in `native-controls.ios.tsx` and `native-controls.tsx`
+  (`@expo/ui/swift-ui` can't load on Android). Forms use `FormLayout`
+  inside an Expo Router `formSheet` route. Helpers for numbers and dates
+  in es-SV are in `src/lib/number.ts` and `src/lib/date.ts`.
+- **UI kit sample screen:** `src/app/ui-kit/` shows every component and a
+  sample form sheet, at `seibi-dev://ui-kit`. Its layout redirects home
+  unless `EXPO_PUBLIC_APP_VARIANT` is `development`, so Seibi, preview
+  builds and updates published without the variant never mount it. The
+  root stack lists it outside the `Stack.Protected` groups: it opens
+  signed in or signed out. The `verify` skill drives it
+  (`features/ui-kit.md`).
 - **Theme preference:** `system` (default), `light` or `night` (the PWA's
   Auto · Claro · Oscuro), under `theme.v1` in the expo-sqlite kv-store
   (`src/theme/preference.ts`). `unistyles.ts` reads it synchronously before
@@ -581,7 +599,7 @@ versions match the SDK.
 | Icons | `lucide-react` | `expo-symbols` (SF Symbols / Material Symbols) |
 | Vector art | Inline SVG | `react-native-svg` |
 | Sheets | Custom `Sheet` | Expo Router `formSheet` |
-| Pickers, toggles, menus, date picker | Custom fields, `Combobox` | `@expo/ui` |
+| Pickers, toggles, menus, date picker | Custom fields, `Combobox` | `@expo/ui` (universal `Picker` and `Switch`; `community/menu` and `community/datetime-picker`; SwiftUI `DatePicker` on iOS) |
 | Toasts | `ToastProvider` | `sonner-native` |
 | Confirmations | Custom dialogs | The native alert |
 | Local preferences | `localStorage` | `expo-sqlite` kv-store (never AsyncStorage) |

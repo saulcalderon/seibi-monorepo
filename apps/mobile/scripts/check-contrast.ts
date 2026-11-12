@@ -85,7 +85,7 @@ const TEXT: { fg: Role; on: readonly Role[]; soft?: Role; why: string }[] = [
   { fg: 'soonText', on: SURFACES, soft: 'soonSoft', why: '«Por vencer» text' },
   { fg: 'overdueText', on: SURFACES, soft: 'overdueSoft', why: '«Vencido» text' },
   { fg: 'unknownText', on: SURFACES, soft: 'unknownSoft', why: 'unknown-status text' },
-  { fg: 'onInverse', on: ['inverse'], why: 'text on inverse surfaces' },
+  { fg: 'onInverse', on: ['inverse', 'overdue'], why: 'text on inverse surfaces and the error toast' },
   { fg: 'onRadiant', on: ['radiantStrong', 'radiantPressed'], why: 'the primary button label' },
 ];
 

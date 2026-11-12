@@ -136,6 +136,12 @@ export interface IconProps {
   color?: ColorValue;
   /** Only for an icon that means something on its own; most sit beside a label and stay silent. */
   label?: string;
+  /**
+   * Keeps the icon at its size whatever the system text size: for an icon in
+   * a fixed box (a tile, an icon button). Other icons grow with the text
+   * beside them, up to `maxIconScale`.
+   */
+  fixed?: boolean;
   testID?: string;
 }
 
@@ -143,9 +149,9 @@ export interface IconProps {
  * One icon from the map, at a size from the theme. Silent for VoiceOver and
  * TalkBack unless it has a `label`: the control around it carries the name.
  */
-export function Icon({ name, size: side = 'md', tone = 'ink', color, label, testID }: IconProps) {
-  const { theme } = useUnistyles();
-  const points = theme.size.icon[side];
+export function Icon({ name, size: side = 'md', tone = 'ink', color, label, fixed = false, testID }: IconProps) {
+  const { theme, rt } = useUnistyles();
+  const points = theme.size.icon[side] * (fixed ? 1 : Math.min(rt.fontScale, theme.maxIconScale));
   const tint = color ?? theme.colors[tone];
   const entry: { ios: SFSymbol; android?: AndroidSymbol; androidPath?: string } = icons[name];
   const a11y = label
@@ -162,7 +168,10 @@ export function Icon({ name, size: side = 'md', tone = 'ink', color, label, test
   return (
     <SymbolView
       name={{ ios: entry.ios, android: entry.android }}
-      size={points}
+      // Android draws the symbol as a font glyph, which the system text size
+      // scales again inside a box of `size`: undo that so the glyph is `points`.
+      size={process.env.EXPO_OS === 'android' ? points / rt.fontScale : points}
+      style={{ width: points, height: points }}
       tintColor={tint}
       weight="medium"
       resizeMode="scaleAspectFit"

@@ -1,0 +1,106 @@
+# Feature: the UI kit's sample form in a sheet (features/ui-kit.md): the
+# native sheet, field errors, the keyboard and a save button that stays
+# above it, the toast after saving. Run through scripts/verify.sh drive
+# <ios|android> ui-kit-form. Nothing is saved anywhere: the sample form only
+# checks the Mileage and closes.
+appId: ${APP_ID}
+name: The UI kit's form sheet keeps Guardar above the keyboard
+---
+- setDarkMode: disabled
+- startRecording: ui-kit-form
+- runFlow: ui-kit-open.yaml
+- scrollUntilVisible:
+    element:
+      id: kit-open-form
+    timeout: 60000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    id: kit-open-form
+- extendedWaitUntil:
+    visible:
+      id: kit-form-save
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: form-01-sheet
+# The close button dismisses the sheet; open it again.
+- tapOn:
+    id: kit-form-close
+- extendedWaitUntil:
+    notVisible:
+      id: kit-form
+    timeout: 5000
+- tapOn:
+    id: kit-open-form
+- extendedWaitUntil:
+    visible:
+      id: kit-form-save
+    timeout: 10000
+# Guardar with no Mileage: the field says what is missing, the sheet stays.
+- tapOn:
+    id: kit-form-save
+- assertVisible: 'Escribe el kilometraje de este servicio.'
+- takeScreenshot: form-02-mileage-required
+# Typing: the save button rides on top of the keyboard.
+- tapOn:
+    id: kit-form-shop
+- inputText: Taller Central
+- assertVisible:
+    id: kit-form-save
+- takeScreenshot: form-03-keyboard-text
+- tapOn:
+    id: kit-form-mileage
+- inputText: '61500'
+- assertVisible:
+    id: kit-form-mileage
+    text: '61,500'
+- assertNotVisible: 'Escribe el kilometraje de este servicio.'
+- assertVisible:
+    id: kit-form-save
+- takeScreenshot: form-04-keyboard-number
+# Put the keyboard away; then the notes at the bottom. On iOS a drag on the
+# form does it (the number pad has no return key). On Android the same drag
+# moves the sheet itself and closes it, so Back puts the keyboard away there.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 50%, 30%
+          end: 50%, 45%
+          duration: 800
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: kit-form-notes
+    timeout: 20000
+- tapOn:
+    id: kit-form-notes
+- inputText: Aceite sintetico y filtro
+- assertVisible:
+    id: kit-form-save
+- takeScreenshot: form-05-keyboard-notes
+# Guardar: a toast, and the sheet closes.
+- tapOn:
+    id: kit-form-save
+    # The toast lasts 3.2 s: don't wait for the screen to settle first.
+    waitToSettleTimeoutMs: 500
+# Android leaves sonner-native's toast out of the accessibility tree, where
+# Maestro looks: there the screenshot is the proof.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: 'Servicio de muestra guardado'
+          timeout: 5000
+- assertNotVisible:
+    id: kit-form
+- takeScreenshot: form-06-saved
+- stopRecording

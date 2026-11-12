@@ -7,3 +7,12 @@ export interface DateControlProps {
   maximumDate?: Date;
   testID?: string;
 }
+
+export interface SelectControlProps<T extends string | number> {
+  /** Spoken with the chosen option. The Field shows it on screen. */
+  label: string;
+  value: T;
+  onChange: (value: T) => void;
+  options: { value: T; label: string }[];
+  testID?: string;
+}

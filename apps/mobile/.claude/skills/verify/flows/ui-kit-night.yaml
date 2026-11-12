@@ -1,0 +1,146 @@
+# Feature: the UI kit's sample screen (features/ui-kit.md), in night: the
+# phone switches to dark mode and every section is photographed in the
+# night palette. Run through scripts/verify.sh drive <ios|android>
+# ui-kit-night. Run ui-kit first: it leaves the kit's «Tema» on Auto. The
+# flow leaves the device back in light mode.
+appId: ${APP_ID}
+name: The UI kit draws in night
+---
+- setDarkMode: enabled
+- startRecording: ui-kit-night
+- runFlow: ui-kit-open.yaml
+- extendedWaitUntil:
+    visible:
+      id: kit-theme-check
+      text: 'theme: night \(system\)'
+    timeout: 10000
+# Let the system's crossfade (or the splash fade) finish before the picture.
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: night-01-type
+- scrollUntilVisible:
+    element:
+      id: kit-section-buttons
+    timeout: 60000
+- swipe:
+    start: 50%, 80%
+    end: 50%, 25%
+    duration: 2000
+- takeScreenshot: night-02-buttons
+- scrollUntilVisible:
+    element:
+      id: kit-row-oil
+    timeout: 60000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: night-03-cards
+- scrollUntilVisible:
+    element:
+      id: kit-field-mileage
+    timeout: 60000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: night-04-fields
+- scrollUntilVisible:
+    element:
+      id: kit-section-native
+    timeout: 60000
+- swipe:
+    start: 50%, 80%
+    end: 50%, 30%
+    duration: 2000
+- takeScreenshot: night-05-native
+- tapOn:
+    id: kit-menu
+- extendedWaitUntil:
+    visible: 'Archivar'
+    timeout: 5000
+- takeScreenshot: night-06-menu-open
+- tapOn: 'Archivar'
+- scrollUntilVisible:
+    element:
+      id: kit-error-retry
+    timeout: 60000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: night-07-states
+- scrollUntilVisible:
+    element:
+      id: kit-loading-toggle
+    timeout: 60000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    id: kit-loading-toggle
+- assertVisible:
+    id: kit-skeleton
+- takeScreenshot: night-08-skeleton
+- tapOn:
+    id: kit-loading-toggle
+- scrollUntilVisible:
+    element:
+      id: kit-toast-success
+    timeout: 60000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    id: kit-toast-error
+    # The toast lasts 3.2 s: don't wait for the screen to settle first.
+    waitToSettleTimeoutMs: 500
+# Android leaves sonner-native's toast out of the accessibility tree, where
+# Maestro looks: there the screenshot is the proof.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: 'No pudimos guardar el servicio'
+          timeout: 5000
+- takeScreenshot: night-09-toast-error
+- tapOn:
+    id: kit-toast-success
+    # The toast lasts 3.2 s: don't wait for the screen to settle first.
+    waitToSettleTimeoutMs: 500
+# Android leaves sonner-native's toast out of the accessibility tree, where
+# Maestro looks: there the screenshot is the proof.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: 'Servicio guardado'
+          timeout: 5000
+- takeScreenshot: night-10-toast-success
+- scrollUntilVisible:
+    element:
+      id: kit-silhouette-wagon
+    timeout: 60000
+- takeScreenshot: night-11-brand
+- scrollUntilVisible:
+    element:
+      id: kit-section-icons
+    timeout: 60000
+- swipe:
+    start: 50%, 80%
+    end: 50%, 20%
+    duration: 2000
+- takeScreenshot: night-12-icons
+# Back to light: the open screen recolours in place.
+- setDarkMode: disabled
+# From the icons at the bottom, the way up takes over a minute on Android.
+- scrollUntilVisible:
+    element:
+      id: kit-theme-check
+    direction: UP
+    timeout: 180000
+- extendedWaitUntil:
+    visible:
+      id: kit-theme-check
+      text: 'theme: light \(system\)'
+    timeout: 10000
+- stopRecording

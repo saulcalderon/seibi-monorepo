@@ -75,3 +75,9 @@ handles, required state, commands and observable proof.
   development-only «Revisión de datos» screen lists the test account's
   Vehicles, refuses and saves a standalone Mileage reading, and prints the
   formatters as Hermes renders them. Flow: `data-layer`.
+- [The UI kit's sample screen shows every component and works](./ui-kit.md):
+  every component of `src/ui/` in light and night, each control used once,
+  the form sheet with the keyboard, the largest text size and Reduce
+  Motion (Seibi Dev only, `seibi-dev://ui-kit`). Flows: `ui-kit`,
+  `ui-kit-night`, `ui-kit-form`, `ui-kit-large-text`,
+  `ui-kit-reduce-motion`; subflow `ui-kit-open.yaml`.

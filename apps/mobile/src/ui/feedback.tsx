@@ -91,7 +91,7 @@ export function EmptyState({ icon, title, body, action, testID }: { icon: IconNa
   return (
     <View style={styles.state} testID={testID}>
       <View style={[styles.stateTile, styles.emptyTile]}>
-        <Icon name={icon} size="xl" tone="radiant" />
+        <Icon name={icon} size="xl" tone="radiant" fixed />
       </View>
       <Text step="headline" family="display" align="center" heading>
         {title}
@@ -110,7 +110,7 @@ export function ErrorState({ title, body, onRetry, testID }: { title?: string; b
   return (
     <View style={styles.state} testID={testID} accessibilityRole="alert" accessibilityLiveRegion="polite">
       <View style={[styles.stateTile, styles.errorTile]}>
-        <Icon name="warning" size="xl" tone="overdue" />
+        <Icon name="warning" size="xl" tone="overdue" fixed />
       </View>
       <Text step="headline" family="display" align="center" heading>
         {title ?? t('feedback.errorTitle')}
@@ -120,7 +120,7 @@ export function ErrorState({ title, body, onRetry, testID }: { title?: string; b
       </Text>
       {onRetry ? (
         <View style={styles.stateAction}>
-          <Button variant="secondary" icon="refresh" label={t('feedback.retry')} onPress={onRetry} />
+          <Button testID={testID ? `${testID}-retry` : undefined} variant="secondary" icon="refresh" label={t('feedback.retry')} onPress={onRetry} />
         </View>
       ) : null}
     </View>

@@ -18,6 +18,7 @@ Everything goes through one helper, run from `apps/mobile`:
 .claude/skills/verify/scripts/verify.sh doctor  ios|android
 .claude/skills/verify/scripts/verify.sh drive   ios|android <flow>
 .claude/skills/verify/scripts/verify.sh cleanup [ios|android|all]
+.claude/skills/verify/scripts/verify.sh a11y    ios|android large-text|reduce-motion|reset
 .claude/skills/verify/scripts/verify.sh where
 ```
 
@@ -226,10 +227,26 @@ for the other platform. It never kills by process name and never deletes
 `build-<platform>.log`) stay for debugging and are overwritten by the next
 run. Run cleanup after every failed attempt too.
 
+## Accessibility settings
+
+```bash
+.claude/skills/verify/scripts/verify.sh a11y ios large-text      # or: reduce-motion | reset
+```
+
+Maestro can switch dark mode (`setDarkMode`) but not the text size or
+Reduce Motion, so `a11y` sets them on the device before a flow that needs
+them: `large-text` is iOS's largest accessibility size
+(`accessibility-extra-extra-extra-large`) or Android's font scale 2.0;
+`reduce-motion` is iOS's Reduce Motion or Android's «Remove animations»
+(the three animation scales at 0). The text size applies while the app
+runs; Reduce Motion is read at launch, so the flow's cold start picks it
+up. `reset` puts back the defaults and prints the result. The device is
+shared: run `reset` after every such run, failed ones too.
+
 ## Helpers
 
-- `scripts/verify.sh`: the launch, doctor, drive and cleanup commands
-  above. Run it with no arguments for usage. Settings, all optional:
+- `scripts/verify.sh`: the launch, doctor, drive, cleanup and a11y
+  commands above. Run it with no arguments for usage. Settings, all optional:
   `SEIBI_VERIFY_PORT` (Metro port, default 8081; use another to run beside
   a Metro you don't own), `SEIBI_VERIFY_EVIDENCE` (evidence root),
   `SEIBI_VERIFY_AVD` (default `seibi-pixel`), `SEIBI_VERIFY_EMU_PORT`
@@ -237,7 +254,8 @@ run. Run cleanup after every failed attempt too.
   `MAESTRO_BIN`, and the test account (`SEIBI_TEST_EMAIL`,
   `SEIBI_TEST_PASSWORD`, `SEIBI_TEST_ACCOUNT_FILE`; see Sign-in).
 - `flows/*.yaml`: one Maestro flow per feature journey, named in the
-  feature's file. `flows/sign-in.yaml` is a subflow, not driven alone.
+  feature's file. `flows/sign-in.yaml` and `flows/ui-kit-open.yaml` are
+  subflows, not driven alone.
   `flows/scripts/` holds the JavaScript that flows run with `runScript`.
 
 ## Isolation

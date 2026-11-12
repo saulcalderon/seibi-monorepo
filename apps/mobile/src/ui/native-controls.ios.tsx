@@ -1,12 +1,44 @@
 // iOS half of the native controls: SwiftUI through @expo/ui. Android's half
 // is native-controls.tsx; both export the same names and props.
 import { Host, type SwitchProps } from '@expo/ui';
+import { MenuView } from '@expo/ui/community/menu';
 import { DatePicker } from '@expo/ui/swift-ui';
 import { accessibilityLabel, datePickerStyle, environment, labelsHidden, tint } from '@expo/ui/swift-ui/modifiers';
 import { useTranslation } from 'react-i18next';
-import { useUnistyles } from 'react-native-unistyles';
+import { View } from 'react-native';
+import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
-import type { DateControlProps } from './native-controls.types';
+import { Icon } from './icon';
+import type { DateControlProps, SelectControlProps } from './native-controls.types';
+import { Text } from './text';
+
+/**
+ * A field box showing the chosen option; a tap anywhere on it opens the
+ * system menu, with a checkmark on the current option. Not SwiftUI's menu
+ * Picker: that one opens only from its label and, at the largest text
+ * sizes, draws its label past the box. Here the value is Seibi's text, so
+ * it wraps like every other field.
+ */
+export function SelectControl<T extends string | number>({ label, value, onChange, options, testID }: SelectControlProps<T>) {
+  const chosen = options.find((option) => option.value === value);
+  return (
+    <MenuView
+      testID={testID}
+      actions={options.map((option) => ({ id: String(option.value), title: option.label, state: option.value === value ? 'on' : 'off' }))}
+      onPressAction={({ nativeEvent }) => {
+        const next = options.find((option) => String(option.value) === nativeEvent.event);
+        if (next) onChange(next.value);
+      }}
+    >
+      <View accessible accessibilityRole="button" accessibilityLabel={chosen ? `${label}, ${chosen.label}` : label} style={styles.select}>
+        <Text step="callout" style={styles.value}>
+          {chosen?.label}
+        </Text>
+        <Icon name="expand" size="sm" tone="muted" />
+      </View>
+    </MenuView>
+  );
+}
 
 /** The switch draws no label (the row's text is the label); VoiceOver still reads it. */
 export function switchModifiers(label: string): NonNullable<SwitchProps['modifiers']> {
@@ -39,3 +71,22 @@ export function DateControl({ label, value, onChange, minimumDate, maximumDate, 
     </Host>
   );
 }
+
+const styles = StyleSheet.create((theme) => ({
+  select: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space[2],
+    minHeight: theme.size.field,
+    paddingHorizontal: theme.space[4],
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.xl,
+    borderCurve: 'continuous',
+    borderWidth: theme.size.border.thin,
+    borderColor: theme.colors.line,
+  },
+  value: {
+    flex: 1,
+    paddingVertical: theme.space[3],
+  },
+}));

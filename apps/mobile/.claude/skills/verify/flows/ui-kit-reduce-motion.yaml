@@ -1,0 +1,68 @@
+# Feature: the UI kit with Reduce Motion on (features/ui-kit.md): no press
+# scale, no skeleton pulse, no progress fill, toasts that appear without
+# sliding. Run `scripts/verify.sh a11y <ios|android> reduce-motion` first
+# (the setting is read at launch, and this flow cold-starts the app), then
+# scripts/verify.sh drive <ios|android> ui-kit-reduce-motion, and
+# `verify.sh a11y <ios|android> reset` after. The video is the proof.
+appId: ${APP_ID}
+name: The UI kit with Reduce Motion on
+---
+- setDarkMode: disabled
+- startRecording: ui-kit-reduce-motion
+- runFlow: ui-kit-open.yaml
+- assertVisible:
+    id: kit-motion-check
+    text: 'motion: reduced'
+- takeScreenshot: motion-01-reduced
+# Progress bars are drawn at their value, with no fill animation.
+- scrollUntilVisible:
+    element:
+      id: kit-badge-unknown
+    timeout: 60000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: motion-02-progress
+# The skeleton holds still: two pictures a moment apart show the same frame
+# (with motion on, its pulse dims it between them).
+# Scroll until the line under the skeleton shows, without centring: the
+# centring swipe can carry the toggle under the header, where a tap scrolls
+# the page back to the top.
+- scrollUntilVisible:
+    element:
+      id: kit-loading-check
+    timeout: 60000
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    id: kit-loading-toggle
+- assertVisible:
+    id: kit-skeleton
+- takeScreenshot: motion-03-skeleton-a
+- assertVisible:
+    id: kit-skeleton
+- takeScreenshot: motion-04-skeleton-b
+- tapOn:
+    id: kit-loading-toggle
+# A toast appears in place.
+- scrollUntilVisible:
+    element:
+      id: kit-confirm-check
+    timeout: 60000
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    id: kit-toast-success
+    # The toast lasts 3.2 s: don't wait for the screen to settle first.
+    waitToSettleTimeoutMs: 500
+# Android leaves sonner-native's toast out of the accessibility tree, where
+# Maestro looks: there the screenshot is the proof.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: 'Servicio guardado'
+          timeout: 5000
+- takeScreenshot: motion-05-toast
+- stopRecording

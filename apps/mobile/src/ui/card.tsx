@@ -110,7 +110,7 @@ export function IconTile({ icon, tone = 'neutral', size = 'md' }: { icon: IconNa
   styles.useVariants({ tileTone: tone, tileSize: size });
   return (
     <View style={styles.tile}>
-      <Icon name={icon} size={size === 'md' ? 'md' : 'sm'} tone={TILE_ICON[tone]} />
+      <Icon name={icon} size={size === 'md' ? 'md' : 'sm'} tone={TILE_ICON[tone]} fixed />
     </View>
   );
 }

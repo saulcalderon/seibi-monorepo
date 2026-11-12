@@ -1,0 +1,36 @@
+# Subflow, not driven alone: the ui-kit flows run it first. A cold start of
+# Seibi Dev, then the UI kit's sample screen by deep link. The kit needs no
+# session, so it opens from sign-in or from the home alike, and the flows
+# never sign in. Feature: features/ui-kit.md.
+appId: ${APP_ID}
+name: Open the UI kit's sample screen
+---
+- stopApp
+- openLink: ${DEV_URL}
+# The first screen after the splash: sign-in when signed out, home when signed in.
+- extendedWaitUntil:
+    visible:
+      id: 'sign-in-title|start-title'
+    timeout: 120000
+- openLink: ${APP_URL}ui-kit
+# verify.sh launch pre-approves the scheme, but a simulator that was already
+# running when it did can still ask once.
+- runFlow:
+    when:
+      platform: iOS
+      visible: 'Open|Abrir'
+    commands:
+      - tapOn: 'Open|Abrir'
+- extendedWaitUntil:
+    visible:
+      id: kit-screen
+    timeout: 20000
+# Opened by a link with no touch yet, Android can give focus to a button
+# far down and scroll the page to it. Start from the top: at font scale 2.0
+# the way up takes minutes at the default speed, so fling.
+- scrollUntilVisible:
+    element:
+      id: kit-theme-check
+    direction: UP
+    speed: 100
+    timeout: 240000

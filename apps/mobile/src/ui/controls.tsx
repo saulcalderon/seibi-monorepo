@@ -1,11 +1,11 @@
-import { Host, Picker, Switch } from '@expo/ui';
+import { Host, Switch } from '@expo/ui';
 import { MenuView } from '@expo/ui/community/menu';
 import { View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import { Field, type FieldShellProps } from './fields';
 import { Icon, icons, type IconName } from './icon';
-import { DateControl, switchModifiers } from './native-controls';
+import { DateControl, SelectControl, switchModifiers } from './native-controls';
 import type { DateControlProps } from './native-controls.types';
 import { Text } from './text';
 
@@ -23,24 +23,13 @@ export interface SelectFieldProps<T extends string | number> extends FieldShellP
 }
 
 /**
- * One choice from a short list: SwiftUI's menu picker on iOS (inside a field
- * box), Material's exposed dropdown on Android (which draws its own box).
+ * One choice from a short list, in a field: the system menu over Seibi's
+ * field box on iOS, Material's exposed dropdown on Android.
  */
 export function SelectField<T extends string | number>({ label, hint, error, optional, value, onChange, options, testID }: SelectFieldProps<T>) {
-  const { theme } = useUnistyles();
   return (
     <Field label={label} hint={hint} error={error} optional={optional}>
-      {/* The testID goes where a tap opens the menu: iOS's picker is its label; Android's
-          dropdown ignores testID but fills the box. */}
-      <View style={styles.select} testID={process.env.EXPO_OS === 'android' ? testID : undefined}>
-        <Host matchContents seedColor={theme.colors.radiant}>
-          <Picker selectedValue={value} onValueChange={onChange} accessibilityLabel={label} testID={process.env.EXPO_OS === 'ios' ? testID : undefined}>
-            {options.map((option) => (
-              <Picker.Item key={String(option.value)} label={option.label} value={option.value} />
-            ))}
-          </Picker>
-        </Host>
-      </View>
+      <SelectControl label={label} value={value} onChange={onChange} options={options} testID={testID} />
     </Field>
   );
 }
@@ -120,7 +109,7 @@ export function MenuButton({
       onPressAction={({ nativeEvent }) => onAction(nativeEvent.event)}
     >
       <View accessible accessibilityRole="button" accessibilityLabel={label} style={styles.menuTrigger}>
-        <Icon name={icon} size="md" />
+        <Icon name={icon} size="md" fixed />
       </View>
     </MenuView>
   );
@@ -137,33 +126,19 @@ export function DateField({ hint, error, optional, ...control }: DateControlProp
   );
 }
 
-const styles = StyleSheet.create((theme) => ({
-  select: {
-    // iOS's picker is a bare menu button, so it sits in a field box; Android's dropdown draws its own.
-    ...(process.env.EXPO_OS === 'ios'
-      ? {
-          minHeight: theme.size.field,
-          justifyContent: 'center',
-          alignItems: 'flex-start',
-          paddingHorizontal: theme.space[2],
-          backgroundColor: theme.colors.surface,
-          borderRadius: theme.radius.xl,
-          borderCurve: 'continuous',
-          borderWidth: theme.size.border.thin,
-          borderColor: theme.colors.line,
-        }
-      : {}),
-  },
+const styles = StyleSheet.create((theme, rt) => ({
   toggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    // At accessibility text sizes the switch goes under its text, as in iOS Settings.
+    flexDirection: rt.fontScale >= theme.largeTextScale ? 'column' : 'row',
+    alignItems: rt.fontScale >= theme.largeTextScale ? 'flex-start' : 'center',
     gap: theme.space[3],
     minHeight: theme.size.row,
     paddingHorizontal: theme.space[4],
     paddingVertical: theme.space[3],
   },
   toggleText: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
     gap: theme.space[0.5],
   },
   menuTrigger: {

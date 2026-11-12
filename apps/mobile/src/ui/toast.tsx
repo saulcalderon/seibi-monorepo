@@ -45,8 +45,9 @@ export function Toaster() {
 
 /**
  * Short confirmations of something that just happened. The message is read
- * out too: sonner-native doesn't announce its toasts to VoiceOver or TalkBack.
- * Pass text from `t()`.
+ * out too: sonner-native doesn't announce its toasts to VoiceOver, and on
+ * Android its toast never reaches the accessibility tree, so TalkBack can't
+ * find it on screen. Pass text from `t()`.
  */
 export const notify = {
   success(message: string) {

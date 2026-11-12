@@ -1,18 +1,38 @@
 // Android half of the native controls: Jetpack Compose through @expo/ui.
 // iOS's half is native-controls.ios.tsx; both export the same names and props.
-import type { SwitchProps } from '@expo/ui';
+import { Host, Picker, type SwitchProps } from '@expo/ui';
 import { DateTimePicker } from '@expo/ui/community/datetime-picker';
 import { semantics } from '@expo/ui/jetpack-compose/modifiers';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import { formatDate } from '@/lib/date';
 
 import { Icon } from './icon';
-import type { DateControlProps } from './native-controls.types';
+import type { DateControlProps, SelectControlProps } from './native-controls.types';
 import { Text } from './text';
+
+/**
+ * Material's exposed dropdown through @expo/ui's Picker: it draws its own
+ * box and grows with the text size. It ignores `testID`, so the wrapping
+ * view carries it; a tap anywhere on the box opens it.
+ */
+export function SelectControl<T extends string | number>({ label, value, onChange, options, testID }: SelectControlProps<T>) {
+  const { theme } = useUnistyles();
+  return (
+    <View testID={testID}>
+      <Host matchContents={{ vertical: true }} seedColor={theme.colors.radiant}>
+        <Picker selectedValue={value} onValueChange={onChange} accessibilityLabel={label}>
+          {options.map((option) => (
+            <Picker.Item key={String(option.value)} label={option.label} value={option.value} />
+          ))}
+        </Picker>
+      </Host>
+    </View>
+  );
+}
 
 /** The switch draws no label (the row's text is the label); TalkBack still reads it. */
 export function switchModifiers(label: string): NonNullable<SwitchProps['modifiers']> {

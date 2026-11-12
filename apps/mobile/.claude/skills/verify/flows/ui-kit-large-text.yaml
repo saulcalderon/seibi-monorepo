@@ -1,0 +1,126 @@
+# Feature: the UI kit at the largest text size (features/ui-kit.md): text
+# grows, nothing is cut off or overlaps, rows stack instead of squeezing,
+# and the form's Guardar stays reachable. Run
+# `scripts/verify.sh a11y <ios|android> large-text` first, then
+# scripts/verify.sh drive <ios|android> ui-kit-large-text, and
+# `verify.sh a11y <ios|android> reset` after.
+appId: ${APP_ID}
+name: The UI kit at the largest text size
+---
+- setDarkMode: disabled
+- startRecording: ui-kit-large-text
+- runFlow: ui-kit-open.yaml
+# The device's text size reached the app: anything but 1.00×.
+- assertVisible:
+    id: kit-text-check
+    text: 'text: (?!1\.00).*×'
+- takeScreenshot: large-01-top
+- scrollUntilVisible:
+    element:
+      id: kit-section-buttons
+    timeout: 90000
+- swipe:
+    start: 50%, 80%
+    end: 50%, 25%
+    duration: 2000
+- takeScreenshot: large-02-buttons
+- scrollUntilVisible:
+    element:
+      id: kit-chip-check
+    timeout: 90000
+- takeScreenshot: large-03-chips
+- scrollUntilVisible:
+    element:
+      id: kit-row-oil
+    timeout: 90000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: large-04-rows
+- scrollUntilVisible:
+    element:
+      id: kit-field-mileage
+    timeout: 90000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: large-05-fields
+# Centre the select, not a swipe: a slow swipe that starts on the notes
+# field reads as a long press there and brings up the keyboard.
+- scrollUntilVisible:
+    element:
+      id: kit-select
+    timeout: 90000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: large-06-native
+- scrollUntilVisible:
+    element:
+      id: kit-badge-overdue
+    timeout: 90000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: large-07-badges
+- scrollUntilVisible:
+    element:
+      id: kit-error-retry
+    timeout: 90000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: large-08-error
+- scrollUntilVisible:
+    element:
+      id: kit-toast-error
+    timeout: 90000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: large-09-alerts
+- tapOn:
+    id: kit-toast-error
+    # The toast lasts 3.2 s: don't wait for the screen to settle first.
+    waitToSettleTimeoutMs: 500
+# Android leaves sonner-native's toast out of the accessibility tree, where
+# Maestro looks: there the screenshot is the proof.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: 'No pudimos guardar el servicio'
+          timeout: 5000
+- takeScreenshot: large-10-toast
+# The form: with the keyboard up, Guardar is still on screen.
+- scrollUntilVisible:
+    element:
+      id: kit-open-form
+    direction: UP
+    timeout: 90000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    id: kit-open-form
+- extendedWaitUntil:
+    visible:
+      id: kit-form-save
+    timeout: 10000
+- takeScreenshot: large-11-form
+# The sheet's heading fills it at this size: scroll to the first field, as a person would.
+- scrollUntilVisible:
+    element:
+      id: kit-form-shop
+    timeout: 30000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    id: kit-form-shop
+- inputText: Taller Central
+- assertVisible:
+    id: kit-form-save
+- takeScreenshot: large-12-form-keyboard
+- stopRecording

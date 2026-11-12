@@ -167,3 +167,10 @@ export const motion = {
  * settings reach 2×.
  */
 export const largeTextScale = 1.35;
+
+/**
+ * How far an icon grows with the system text size. Icons beside text grow
+ * with it (as SF Symbols do in Apple's apps) up to twice their size; icons
+ * in a fixed box (tiles, icon buttons) keep their size.
+ */
+export const maxIconScale = 2;

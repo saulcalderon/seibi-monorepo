@@ -110,7 +110,7 @@ export function IconButton({ icon, label, variant = 'ghost', disabled = false, o
     >
       <PressScale pressed={pressed && !disabled}>
         <View style={styles.iconButton}>
-          <Icon name={icon} size="md" tone={variant === 'inverse' ? 'onInverse' : 'ink'} />
+          <Icon name={icon} size="md" tone={variant === 'inverse' ? 'onInverse' : 'ink'} fixed />
         </View>
       </PressScale>
     </Pressable>
