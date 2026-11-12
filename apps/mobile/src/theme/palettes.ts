@@ -74,6 +74,36 @@ export interface Shadows {
   card: string;
   /** Floating controls and sheets. */
   float: string;
+  /** The primary button's radiant glow (`shadow-[0_8px_20px_rgb(232_83_34/28%)]`). */
+  primary: string;
+}
+
+/**
+ * Colours of the vector art (the isotype, the body-type silhouettes), which
+ * keep the PWA's own values: they are drawings, not UI roles, and none of
+ * them carries text.
+ */
+export interface Art {
+  /** The isotype's S and its four accent ticks (`--seibi-mark-accent`). */
+  logoAccent: string;
+  /** Its neutral ticks, which follow the theme (`--seibi-mark-tick`). */
+  logoTick: string;
+  /** The neutral ticks when the isotype sits on a light or a dark surface whatever the theme. */
+  logoTickOnLight: string;
+  logoTickOnDark: string;
+  /** A silhouette's paint when the Vehicle has none (the PWA's `paintHex(null)`, silver). */
+  carPaint: string;
+  /** Its outline, windows, tyres, rims and hubs. */
+  carOutline: string;
+  carGlass: string;
+  carTire: string;
+  carRim: string;
+  carHub: string;
+  /** The ground shadow under it (`fill-ink/10`). */
+  carGround: string;
+  /** The sheen gradient: light at the top, dark at the bottom. */
+  carSheenLight: string;
+  carSheenDark: string;
 }
 
 export const light: Palette = {
@@ -173,17 +203,42 @@ export const palettes = { light, night, garage } as const;
 
 export type PaletteName = keyof typeof palettes;
 
+/** The PWA draws the primary button's glow the same in every theme. */
+const PRIMARY_GLOW = '0 8px 20px rgba(232, 83, 34, 0.28)';
+
 export const shadows: Record<PaletteName, Shadows> = {
   light: {
     card: '0 1px 2px rgba(20, 21, 23, 0.04), 0 10px 28px rgba(20, 21, 23, 0.06)',
     float: '0 12px 40px rgba(20, 21, 23, 0.16), 0 2px 6px rgba(20, 21, 23, 0.08)',
+    primary: PRIMARY_GLOW,
   },
   night: {
     card: 'inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 10px 28px rgba(0, 0, 0, 0.35)',
     float: '0 16px 44px rgba(0, 0, 0, 0.55)',
+    primary: PRIMARY_GLOW,
   },
   garage: {
     card: '0 1px 2px rgba(14, 15, 17, 0.04), 0 10px 28px rgba(14, 15, 17, 0.06)',
     float: '0 12px 40px rgba(14, 15, 17, 0.16), 0 2px 6px rgba(14, 15, 17, 0.08)',
+    primary: PRIMARY_GLOW,
   },
+};
+
+/** The art's colours that don't change with the theme (apps/app/src/components). */
+const CAR = {
+  carPaint: '#c3c7cd',
+  carOutline: 'rgba(0, 0, 0, 0.18)',
+  carGlass: '#1d2430',
+  carTire: '#15161a',
+  carRim: '#b9bec6',
+  carHub: '#3a3d44',
+  carSheenLight: '#ffffff',
+  carSheenDark: '#000000',
+};
+const LOGO = { logoAccent: '#ec3a27', logoTickOnLight: '#1f1f1f', logoTickOnDark: '#ffffff' };
+
+export const art: Record<PaletteName, Art> = {
+  light: { ...LOGO, ...CAR, logoTick: LOGO.logoTickOnLight, carGround: 'rgba(20, 21, 23, 0.1)' },
+  night: { ...LOGO, ...CAR, logoTick: LOGO.logoTickOnDark, carGround: 'rgba(242, 244, 247, 0.1)' },
+  garage: { ...LOGO, ...CAR, logoTick: LOGO.logoTickOnLight, carGround: 'rgba(14, 15, 17, 0.1)' },
 };

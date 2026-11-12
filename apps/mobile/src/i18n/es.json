@@ -246,5 +246,195 @@
     "distance": "Distancia",
     "day": "Fecha",
     "month": "Mes"
+  },
+  "brand": {
+    "name": "Seibi"
+  },
+  "field": {
+    "optional": "opcional",
+    "optionalSuffix": " · opcional"
+  },
+  "units": {
+    "km": "km",
+    "mi": "mi"
+  },
+  "dateField": {
+    "confirm": "Aceptar",
+    "cancel": "Cancelar"
+  },
+  "feedback": {
+    "loading": "Cargando",
+    "errorTitle": "No pudimos cargar tus datos",
+    "errorBody": "Revisa tu conexión a internet e intenta de nuevo.",
+    "retry": "Reintentar",
+    "intervalUsed": "Intervalo usado",
+    "percent": "{{pct}} %"
+  },
+  "status": {
+    "ok": "Al día",
+    "soon": "Pronto",
+    "overdue": "Vencido",
+    "unknown": "Revisar"
+  },
+  "vehicle": {
+    "silhouette": "Silueta del Vehículo",
+    "bodyTypes": {
+      "sedan": "Sedán",
+      "hatchback": "Hatchback",
+      "suv": "SUV",
+      "pickup": "Pickup",
+      "van": "Van",
+      "minivan": "Minivan",
+      "coupe": "Coupé",
+      "wagon": "Familiar"
+    }
+  },
+  "uiKit": {
+    "title": "Kit de UI",
+    "intro": "Cada componente del kit, en el tema actual. Solo existe en Seibi Dev.",
+    "checks": {
+      "theme": "theme: {{theme}} ({{source}})",
+      "motion": "motion: {{motion}}",
+      "text": "text: {{scale}}×"
+    },
+    "sections": {
+      "type": "Texto",
+      "icons": "Íconos",
+      "buttons": "Botones",
+      "chips": "Chips",
+      "cards": "Tarjetas y filas",
+      "fields": "Campos",
+      "native": "Controles nativos",
+      "states": "Estados",
+      "loading": "Carga",
+      "alerts": "Avisos y confirmaciones",
+      "brand": "Marca y siluetas"
+    },
+    "type": {
+      "step": "{{step}}: Mantenimiento con total claridad",
+      "display": "Inicio",
+      "mono": "45,000 km · $120.50",
+      "tone": "Tono {{tone}}"
+    },
+    "icons": {
+      "count": "{{count}} íconos"
+    },
+    "buttons": {
+      "primary": "Guardar",
+      "secondary": "Cancelar",
+      "ghost": "Ver detalle",
+      "danger": "Eliminar",
+      "inverse": "Continuar",
+      "small": "Pequeño",
+      "medium": "Mediano",
+      "large": "Grande",
+      "withIcon": "Agregar servicio",
+      "trailing": "Siguiente",
+      "loading": "Guardando",
+      "disabled": "No disponible",
+      "block": "Registrar servicio",
+      "close": "Cerrar",
+      "edit": "Editar",
+      "add": "Agregar",
+      "presses": "Toques: {{count}}"
+    },
+    "chips": {
+      "label": "Filtrar avisos",
+      "all": "Todos",
+      "soon": "Por vencer",
+      "overdue": "Vencidos",
+      "ok": "Al día",
+      "selected": "Filtro: {{filter}}"
+    },
+    "cards": {
+      "upcoming": "Próximos",
+      "seeAll": "Ver todo",
+      "oil": "Cambio de aceite",
+      "oilDue": "Vence en 300 km",
+      "brakes": "Pastillas de freno",
+      "brakesDue": "Venció hace 2 semanas",
+      "battery": "Batería",
+      "batteryDue": "Próxima revisión en marzo",
+      "alignment": "Alineación",
+      "alignmentDue": "Sin historial",
+      "odometer": "Kilometraje actual",
+      "odometerValue": "45,000 km",
+      "tiles": "Tonos de IconTile",
+      "rowPressed": "Fila tocada: {{row}}",
+      "rowNone": "ninguna"
+    },
+    "fields": {
+      "plate": "Placa",
+      "platePlaceholder": "P123-456",
+      "plateHint": "Como aparece en la tarjeta de circulación.",
+      "shop": "Taller",
+      "shopError": "Escribe el nombre del taller.",
+      "cost": "Costo",
+      "costPlaceholder": "0.00",
+      "costSuffix": "USD",
+      "mileage": "Kilometraje actual",
+      "mileagePlaceholder": "Ej. 45,000",
+      "mileageHint": "Es el número del odómetro hoy. Con él calculamos tus próximos mantenimientos.",
+      "notes": "Notas",
+      "notesPlaceholder": "Lo que quieras recordar de este servicio",
+      "openForm": "Abrir formulario en hoja"
+    },
+    "native": {
+      "type": "Tipo",
+      "maintenance": "Mantenimiento",
+      "repair": "Reparación",
+      "notifications": "Recordatorios",
+      "notificationsHint": "Te avisamos cuando algo esté por vencer.",
+      "menu": "Más opciones",
+      "menuEdit": "Editar",
+      "menuArchive": "Archivar",
+      "menuDelete": "Eliminar",
+      "menuChosen": "Menú: {{action}}",
+      "menuNone": "Menú: sin elegir",
+      "date": "Fecha del servicio",
+      "values": "Tipo: {{type}} · Recordatorios: {{toggle}} · Fecha: {{date}}",
+      "on": "sí",
+      "off": "no"
+    },
+    "states": {
+      "emptyTitle": "Aún no tienes vehículos",
+      "emptyBody": "Agrega tu primer vehículo para ver sus mantenimientos.",
+      "emptyAction": "Agregar vehículo",
+      "emptyPressed": "Aquí se abriría el formulario del Vehículo",
+      "retries": "Reintentos: {{count}}"
+    },
+    "loading": {
+      "toggleOn": "Simular carga",
+      "toggleOff": "Mostrar contenido",
+      "heights": "Alto con contenido: {{content}} · cargando: {{loading}}",
+      "points": "{{value}} pt",
+      "unmeasured": "sin medir"
+    },
+    "alerts": {
+      "success": "Mostrar aviso",
+      "successToast": "Servicio guardado",
+      "error": "Mostrar error",
+      "errorToast": "No pudimos guardar el servicio",
+      "confirm": "Pedir confirmación",
+      "confirmTitle": "¿Eliminar este servicio?",
+      "confirmMessage": "Se borra con sus piezas y no se puede deshacer.",
+      "confirmAction": "Eliminar",
+      "cancel": "Cancelar",
+      "confirmed": "Confirmación: eliminado",
+      "cancelled": "Confirmación: cancelado",
+      "none": "Confirmación: sin respuesta"
+    },
+    "brand": {
+      "onLight": "Sobre claro",
+      "onDark": "Sobre oscuro"
+    },
+    "form": {
+      "title": "Registrar servicio",
+      "description": "Un formulario de muestra: el botón Guardar sigue al teclado.",
+      "save": "Guardar",
+      "close": "Cerrar",
+      "mileageRequired": "Escribe el kilometraje de este servicio.",
+      "saved": "Servicio de muestra guardado"
+    }
   }
 }

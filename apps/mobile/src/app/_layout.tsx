@@ -16,6 +16,7 @@ import { queryClient } from '@/data/query-client';
 import { useOTAUpdate } from '@/hooks/use-ota-update';
 // Initialises i18next synchronously, before the first render.
 import '@/i18n';
+import { UIProvider } from '@/ui/provider';
 
 // The native splash stays up until the fonts are ready and the saved
 // session has been read, so no screen renders in a fallback font and a
@@ -52,18 +53,22 @@ export default function RootLayout() {
   // share this one query cache.
   return (
     <QueryClientProvider client={queryClient}>
-      <StatusBar style="auto" />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Protected guard={auth.status === 'signed-in'}>
-          <Stack.Screen name="(app)" />
-        </Stack.Protected>
-        <Stack.Protected guard={auth.status === 'signed-out'}>
-          <Stack.Screen name="(auth)/sign-in" />
-        </Stack.Protected>
-        <Stack.Protected guard={auth.status === 'account-deleted'}>
-          <Stack.Screen name="(auth)/account-deleted" />
-        </Stack.Protected>
-      </Stack>
+      <UIProvider>
+        <StatusBar style="auto" />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Protected guard={auth.status === 'signed-in'}>
+            <Stack.Screen name="(app)" />
+          </Stack.Protected>
+          <Stack.Protected guard={auth.status === 'signed-out'}>
+            <Stack.Screen name="(auth)/sign-in" />
+          </Stack.Protected>
+          <Stack.Protected guard={auth.status === 'account-deleted'}>
+            <Stack.Screen name="(auth)/account-deleted" />
+          </Stack.Protected>
+          {/* The UI kit's samples (development builds only) open whatever the session. */}
+          <Stack.Screen name="ui-kit" />
+        </Stack>
+      </UIProvider>
     </QueryClientProvider>
   );
 }

@@ -16,6 +16,8 @@ export const space = {
   3: 12,
   3.5: 14,
   4: 16,
+  /** Tailwind's `px-4.5`: the medium Button's side padding. */
+  4.5: 18,
   5: 20,
   6: 24,
   7: 28,
@@ -91,3 +93,77 @@ export const typeScale = {
 } as const;
 
 export type TypeStep = keyof typeof typeScale;
+
+/**
+ * Fixed sizes (pt) of the UI kit's controls and art, from the PWA's
+ * components (docs/DESIGN.md → Components). Heights are `minHeight`, never
+ * `height`: a control grows with its text.
+ */
+export const size = {
+  /** The minimum touch target. Anything smaller gets `hitSlop` up to it. */
+  target: 44,
+  /** Button heights: `h-9`, `h-11`, `h-14`. */
+  control: { sm: 36, md: 44, lg: 56 },
+  /** Text, number and select fields: `h-13`. */
+  field: 52,
+  /** Chips: `min-h-10`. */
+  chip: 40,
+  /** Status badges: `h-7`. */
+  badge: 28,
+  /** A tappable list row: `min-h-14`. */
+  row: 56,
+  /** Icon tiles: `size-9`, `size-11`, and the empty state's `size-16`. */
+  tile: { sm: 36, md: 44, lg: 64 },
+  /** Icon sides: `size-3.5` (badges), `size-4`, `size-5`, `size-6`, `size-7` (empty states). */
+  icon: { xs: 14, sm: 16, md: 20, lg: 24, xl: 28 },
+  /** A progress bar's track: `h-2`. */
+  track: 8,
+  /** The longest comfortable line for centred body text: `max-w-[18rem]`. */
+  readable: 288,
+  /** The isotype's height. Its width follows its 658 × 444 proportions. */
+  logo: { sm: 24, md: 44, lg: 72 },
+  /** A body-type silhouette's width; its height follows its 240 × 96 proportions. */
+  silhouette: { sm: 136, lg: 240 },
+  /** Borders: the PWA's `ring-1` around fields and cards, `ring-2` on focus. */
+  border: { thin: 1, focus: 2 },
+} as const;
+
+/** Opacities for states. Colours never change opacity for any other reason. */
+export const opacity = {
+  disabled: 0.5,
+  /** Danger and inverse buttons, which have no pressed colour of their own. */
+  pressed: 0.85,
+  /** The low point of a skeleton's pulse. */
+  skeleton: 0.55,
+} as const;
+
+/**
+ * Motion, for Reanimated (docs/DESIGN.md → Motion). With Reduce Motion on,
+ * none of it runs: components check `useReducedMotion()` first.
+ */
+export const motion = {
+  /** Press feedback on buttons and chips: lands on press-in. */
+  press: { duration: 120, scale: 0.97 },
+  /** The skeleton's pulse, one way (it then reverses). */
+  skeleton: { duration: 900 },
+  /** A progress bar filling to its value on mount (the PWA's 0.7 s). */
+  progress: { duration: 700 },
+  /** Cubic-bézier control points: `cubicBezier(...motion.curve.out)`. */
+  curve: {
+    /** Strong ease-out, for press feedback. */
+    out: [0.23, 1, 0.32, 1],
+    /** The PWA's `--ease-smooth`: screen transitions and the progress fill. */
+    smooth: [0.33, 1, 0.68, 1],
+    /** The PWA's `--ease-spring`: small overshoots. */
+    spring: [0.34, 1.4, 0.64, 1],
+    /** Garage paint and accent crossfade. */
+    paint: [0.2, 0.7, 0.2, 1],
+  },
+} as const;
+
+/**
+ * The system text scale from which rows stack instead of squeezing side by
+ * side: iOS's accessibility sizes start near 1.35×, Android's largest
+ * settings reach 2×.
+ */
+export const largeTextScale = 1.35;
