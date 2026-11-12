@@ -107,31 +107,31 @@ ticket and keep its behaviour.
 
 | Id | Title | In | Out | Depends on | MVP | Linear |
 | --- | --- | --- | --- | --- | --- | --- |
-| A | Data layer | Copy queries, mutations and types from `apps/app/src/lib/`; one folder per domain; query key factories; error code → i18n message map (no router import); Zod at the Edge Function and vPIC boundaries; generated Supabase types; kv-store for theme, active Vehicle and intro-done | Screens | SEI-43, SEI-44 | yes | — |
-| B | UI kit | The components in `docs/DESIGN.md` on Unistyles variants; `Icon` with the `expo-symbols` map; `sonner-native` toasts; `@expo/ui` pickers, toggles, menus and date picker, each tested on both platforms | Screens | SEI-42 | yes | — |
-| C | App shell | 4 `NativeTabs` (Inicio · Mi flota · Avisos · Estimados), a stack per tab; floating [+] opening the actions `formSheet`; header avatar → Perfil | Screen contents; the Appointment action until S13 | SEI-41, B | yes | — |
-| S1 | Splash and Login | Native splash; Apple and Google buttons; one still Vehicle image; legal line | Lockup fly animation; Vehicle carousel | SEI-44, B | yes | — |
-| S2 | Intro | Still slides | The phone animation | B, C | no | — |
-| S3 | First-run questions | Every question, the push permission ask, the optional first Vehicle (S5's form) | — | A, B, S5 | yes | — |
-| S4 | Inicio | Garage: Vehicle carousel, Mileage, status, greeting, paint accent | Changes to car art or paint presets; «Deshacer» | A, B, C | yes | — |
-| S5 | Mi flota and the Vehicle form | List, search, add and edit with vPIC, paint presets, km/mi, withdraw and restore | — | A, B, C | yes | — |
-| S6 | Vehicle detail | Service history, «Gastado este año», usage, readings and corrections, plan sources or the general label, Routines, render image with silhouette | 3D | A, B, C | yes | — |
-| S7 | Record a Service | Form with line items, shop, date, Mileage, notes; the Mileage write rules | Invoice photo (S12) | A, B, C | yes | — |
-| S8 | Update Mileage | A standalone reading dated today, strictly above the current odometer | — | A, B, C | yes | — |
-| S9 | Avisos | Statuses, detail with source, snooze, «Completa tu historial», hand-written Reminders, push opt-in | — | A, B, C, SEI-47 | yes | — |
-| S10 | Estimados | Estimate form, results, what drives the price, sources, past queries | Chat | A, B, C | no | — |
-| S11 | Perfil | Name, knowledge level, location, theme, notifications, contact email, privacy policy and terms, delete account | «Planes» card | A, B, C | yes | — |
-| S12 | Invoice photo | `expo-image-picker` camera + library → Supabase Storage, on the Service form | — | S7 | no | — |
-| S13 | Schedule an Appointment | The form, the [+] action, Appointments in Avisos and Vehicle detail | — | A, B, C | no | — |
+| A | Data layer | Copy queries, mutations and types from `apps/app/src/lib/`; one folder per domain; query key factories; error code → i18n message map (no router import); Zod at the Edge Function and vPIC boundaries; generated Supabase types; kv-store for theme, active Vehicle and intro-done | Screens | SEI-43, SEI-44 | yes | SEI-53 |
+| B | UI kit | The components in `docs/DESIGN.md` on Unistyles variants; `Icon` with the `expo-symbols` map; `sonner-native` toasts; `@expo/ui` pickers, toggles, menus and date picker, each tested on both platforms | Screens | SEI-42 | yes | SEI-54 |
+| C | App shell | 4 `NativeTabs` (Inicio · Mi flota · Avisos · Estimados), a stack per tab; floating [+] opening the actions `formSheet`; header avatar → Perfil | Screen contents; the Appointment action until S13 | SEI-41, B | yes | SEI-55 |
+| S1 | Splash and Login | Native splash; Apple and Google buttons; one still Vehicle image; legal line | Lockup fly animation; Vehicle carousel | SEI-44, B | yes | SEI-56 |
+| S2 | Intro | Still slides | The phone animation | B, C | no | SEI-57 |
+| S3 | First-run questions | Every question, the push permission ask, the optional first Vehicle (S5's form) | — | A, B, S5 | yes | SEI-58 |
+| S4 | Inicio | Garage: Vehicle carousel, Mileage, status, greeting, paint accent | Changes to car art or paint presets; «Deshacer» | A, B, C | yes | SEI-59 |
+| S5 | Mi flota and the Vehicle form | List, search, add and edit with vPIC, paint presets, km/mi, withdraw and restore | — | A, B, C | yes | SEI-60 |
+| S6 | Vehicle detail | Service history, «Gastado este año», usage, readings and corrections, plan sources or the general label, Routines, render image with silhouette | 3D | A, B, C | yes | SEI-61 |
+| S7 | Record a Service | Form with line items, shop, date, Mileage, notes; the Mileage write rules | Invoice photo (S12) | A, B, C | yes | SEI-62 |
+| S8 | Update Mileage | A standalone reading dated today, strictly above the current odometer | — | A, B, C | yes | SEI-63 |
+| S9 | Avisos | Statuses, detail with source, snooze, «Completa tu historial», hand-written Reminders, push opt-in | — | A, B, C, SEI-47 | yes | SEI-64 |
+| S10 | Estimados | Estimate form, results, what drives the price, sources, past queries | Chat | A, B, C | no | SEI-65 |
+| S11 | Perfil | Name, knowledge level, location, theme, notifications, contact email, privacy policy and terms, delete account | «Planes» card | A, B, C | yes | SEI-66 |
+| S12 | Invoice photo | `expo-image-picker` camera + library → Supabase Storage, on the Service form | — | S7 | no | SEI-67 |
+| S13 | Schedule an Appointment | The form, the [+] action, Appointments in Avisos and Vehicle detail | — | A, B, C | no | SEI-68 |
 | SEI-48 | Remove the 3D step from `vehicle-render` | Remove the image-to-3D step and its code | Dropping the `glb_path` column | — | no | SEI-48 |
 
 ### Outside the port
 
 | Id | Title | Milestone | Linear |
 | --- | --- | --- | --- |
-| — | Recruit 12 testers for Play's closed test | 3 · Prueba en dispositivos (no blockers) | — |
-| — | Chat with Seibi | 4 · Después | — |
-| — | High-contrast palettes | 4 · Después | — |
+| SEI-71 | Recruit 12 testers for Play's closed test | 3 · Prueba en dispositivos (no blockers) | SEI-71 |
+| SEI-69 | Chat with Seibi | 4 · Después | SEI-69 |
+| SEI-70 | High-contrast palettes | 4 · Después | SEI-70 |
 | SEI-52 | Maestro E2E against seibi-dev, with the test sign-in | 4 · Después | SEI-52 |
 | SEI-11 | Bring 3D back? (idea) | Backlog | SEI-11 |
 | SEI-49 | Shut down the PWA and remove Web Push | 4 · Después, after both stores | SEI-49 |
@@ -168,10 +168,11 @@ The MVP ships whole. If it isn't ready, the date moves; the scope doesn't.
 | ~Dec 8 | Submitted to App Review, with a week of slack for a rejection |
 | **Dec 15** | **Live on the App Store, at the latest** |
 
-- **Android:** Play's closed test needs 12 testers enrolled for 14 days
-  before production. It starts with the first store build, not with the
-  finished MVP, so Android can launch close to iOS. Confirm Play's current
-  rule in the store ticket.
+- **Android:** Play's closed test needs 12 testers enrolled for 14
+  consecutive days, then a production-access review of about 7 days
+  (checked in Play Console help, 2026-11-11). It starts with the first
+  store build, not with the finished MVP, so Android can launch close to
+  iOS. Recruiting the testers is SEI-71.
 - **After launch:** EAS Update can add JavaScript screens without a new
   review, but not native modules. A native module an after-launch ticket
   needs ships in the first binary (`expo-image-picker` for S12).
@@ -223,9 +224,11 @@ From the Paradero and Zagged reviews and the planning session:
 - **Google sign-in setup.** Native Google sign-in needs the iOS and
   Android client ids added to Supabase's Google provider. Confirm in
   SEI-44.
-- **Play's store rules.** The closed-test rule and the "App access"
-  credentials (a dedicated test Google account). Confirm in the store
-  ticket.
+- **Play's "App access" credentials.** A dedicated test Google account
+  for reviewers. Confirm the current form in the store ticket.
+- **The Estimados tab at launch.** Estimados (S10) ships after launch, so
+  its tab is either hidden until then (added back by OTA, since tabs are
+  JavaScript) or shown in a "pronto" state. Decide in SEI-55.
 - **Night for Garage.** The PWA's v3 Garage is art-directed for day only;
   night uses the base night palette. The port keeps that.
 - **[+] position.** Bottom right by default; centred, as in the PWA, if
