@@ -10,10 +10,8 @@ name: The start screen shows its copy from es.json
 # Cold start: i18next initialises before the first render.
 - stopApp
 - openLink: ${DEV_URL}
-- extendedWaitUntil:
-    visible:
-      id: start-title
-    timeout: 120000
+# The start screen is the signed-in home (SEI-44): sign in first when signed out.
+- runFlow: sign-in.yaml
 # start.title
 - assertVisible:
     id: start-title
