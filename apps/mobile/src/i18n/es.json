@@ -19,16 +19,18 @@
     "restart": "Reiniciar"
   },
   "signIn": {
-    "subtitle": "Inicia sesión para continuar",
-    "failedTitle": "No pudimos iniciar sesión",
-    "failedMessage": "Intenta de nuevo."
+    "title": "Mantenimiento con total claridad",
+    "subtitle": "Entra para guardar tus Vehículos y recibir tus avisos.",
+    "google": "Continuar con Google",
+    "appleFailed": "No pudimos abrir Apple. Intenta de nuevo.",
+    "googleFailed": "No pudimos abrir Google. Intenta de nuevo.",
+    "legal": "Al continuar aceptas los <terms>Términos</terms> y la <privacy>Política de privacidad</privacy>."
   },
   "testSignIn": {
     "title": "Entrar con la cuenta de prueba",
     "email": "Correo",
     "password": "Contraseña",
-    "submit": "Entrar con correo",
-    "submitting": "Entrando…"
+    "submit": "Entrar con correo"
   },
   "account": {
     "signOut": {

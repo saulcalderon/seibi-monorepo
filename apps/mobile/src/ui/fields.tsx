@@ -1,5 +1,5 @@
 import type { OdometerMeasure } from '@seibi/maintenance-engine/odometer';
-import { useState, type ReactNode } from 'react';
+import { useState, type ComponentRef, type ReactNode, type Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, TextInput, View, type TextInputProps } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
@@ -61,6 +61,8 @@ export interface TextFieldProps extends FieldShellProps, Omit<TextInputProps, 's
   suffix?: string;
   /** Geist Mono with tabular figures, for numbers. */
   mono?: boolean;
+  /** The input itself, to move focus to it (Return on the field before). */
+  ref?: Ref<ComponentRef<typeof TextInput>>;
 }
 
 /** A single-line text input: the PWA's TextField. */

@@ -1,0 +1,61 @@
+# Feature: sign-in (features/auth.md) → Login in night. The phone switches
+# to dark mode: the native splash is the night one (white ticks on the night
+# background), Login stays on its light palette (first-run screens stay
+# light), and once signed in the app is night. Run through
+# scripts/verify.sh drive <ios|android> login-night. The video ends before the test form is
+# filled; the flow signs out at the end and puts the phone back in light mode.
+appId: ${APP_ID}
+name: Login in night (night splash, light Login, night app after sign-in)
+---
+- setDarkMode: enabled
+# Start signed out: a failed run may have left the test account signed in.
+- stopApp
+- openLink: ${DEV_URL}
+- extendedWaitUntil:
+    visible:
+      id: 'sign-in-title|start-title'
+    timeout: 120000
+- runFlow:
+    when:
+      visible:
+        id: start-title
+    commands:
+      - tapOn:
+          id: sign-out
+      - extendedWaitUntil:
+          visible:
+            id: sign-in-title
+          timeout: 30000
+# Recorded from a cold start: the night splash, then Login.
+- startRecording: login-night
+- stopApp
+- openLink: ${DEV_URL}
+- extendedWaitUntil:
+    visible:
+      id: sign-in-title
+    timeout: 120000
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: night-login
+- scrollUntilVisible:
+    element:
+      id: sign-in-legal
+    direction: DOWN
+- takeScreenshot: night-login-bottom
+- stopRecording
+# Sign in off camera, then the signed-in app in night.
+- runFlow: sign-in.yaml
+- waitForAnimationToEnd:
+    timeout: 3000
+- assertVisible:
+    id: theme-check
+    text: 'theme: night.*'
+- takeScreenshot: night-signed-in
+- tapOn:
+    id: sign-out
+- extendedWaitUntil:
+    visible:
+      id: sign-in-title
+    timeout: 30000
+- takeScreenshot: night-signed-out
+- setDarkMode: disabled

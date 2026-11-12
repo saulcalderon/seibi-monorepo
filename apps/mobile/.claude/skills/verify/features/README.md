@@ -66,9 +66,12 @@ handles, required state, commands and observable proof.
 - [The theme follows the phone and the saved preference](./theme.md):
   light and night palettes, a live switch with no reload, the «Tema»
   choice kept across a cold start. Flow: `theme`.
-- [Sign-in, session and sign-out](./auth.md): the protected routes, the
-  test sign-in, the session surviving a relaunch, sign-out, account
-  deletion and «Cuenta eliminada». Flows: `auth`; destructive:
+- [Sign-in, session and sign-out](./auth.md): Login (lockup, Vehicle,
+  Apple and Google, the legal links) in light, night, large text and Reduce
+  Motion, the protected routes, the test sign-in, the session surviving a
+  relaunch, sign-out, account deletion and «Cuenta eliminada». Flows:
+  `login` (the password-free video), `login-night`, `login-a11y`, `auth`;
+  destructive:
   `delete-account`, `account-deleted-elsewhere`. Subflow for every flow
   that needs a session: `sign-in.yaml`.
 - [The data layer reads and writes seibi-dev](./data-layer.md): the

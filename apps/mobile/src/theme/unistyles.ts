@@ -2,7 +2,7 @@ import { StyleSheet } from 'react-native-unistyles';
 
 import { art, palettes, shadows, type PaletteName } from './palettes';
 import { applyNativeScheme, getThemePreference, unistylesThemeFor } from './preference';
-import { displayTracking, fonts, largeTextScale, maxIconScale, opacity, radius, size, space, typeScale } from './tokens';
+import { displayTracking, fonts, heroType, largeTextScale, maxIconScale, opacity, radius, size, space, typeScale } from './tokens';
 
 /**
  * Seibi's Unistyles themes. Imported once, from the app entry (`index.ts`),
@@ -25,6 +25,7 @@ function themeFrom(palette: PaletteName) {
     type: typeScale,
     fonts,
     displayTracking,
+    heroType,
     largeTextScale,
     maxIconScale,
   };

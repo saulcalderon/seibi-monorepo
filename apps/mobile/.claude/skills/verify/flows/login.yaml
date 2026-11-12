@@ -1,0 +1,256 @@
+# Feature: sign-in, session and sign-out (features/auth.md) → the Login screen.
+# Run through scripts/verify.sh drive <ios|android> login, which passes
+# APP_ID, DEV_URL, APP_URL and the test account (TEST_EMAIL, TEST_PASSWORD).
+#
+# The video never holds the test password: it records the signed-out Login
+# (lockup, Vehicle, headline, the provider buttons, the legal links), stops
+# while the flow types into the test form, and starts again with the form
+# filled, the keyboard down and every character masked, for the tap on
+# «Entrar con correo», the signed-in home and the sign-out back to Login.
+appId: ${APP_ID}
+name: Login renders, its links and buttons answer, the test sign-in opens the app and sign-out returns to Login
+---
+# Cold start, signed out: an earlier run may have left the test account signed in.
+- stopApp
+- openLink: ${DEV_URL}
+# An emulator's Play services may still be stalled from an earlier Google attempt.
+- tapOn:
+    text: Wait
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: 'sign-in-title|start-title'
+    timeout: 120000
+- runFlow:
+    when:
+      visible:
+        id: start-title
+    commands:
+      - tapOn:
+          id: sign-out
+      - extendedWaitUntil:
+          visible:
+            id: sign-in-title
+          timeout: 30000
+# Again from a cold start, now recorded: the native splash, then Login.
+- startRecording: login
+- stopApp
+- openLink: ${DEV_URL}
+- extendedWaitUntil:
+    visible:
+      id: sign-in-title
+    timeout: 120000
+- assertVisible:
+    id: sign-in-title
+    text: Mantenimiento con total claridad
+- assertVisible:
+    id: sign-in-lockup
+- assertVisible:
+    id: sign-in-vehicle
+- assertVisible:
+    id: sign-in-google
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - assertVisible:
+          id: sign-in-apple
+- assertNotVisible:
+    id: start-title
+- takeScreenshot: login
+# The legal line: «Términos» opens the Terms in the in-app browser; closing it returns to Login.
+- scrollUntilVisible:
+    element:
+      id: sign-in-legal
+    direction: DOWN
+# iOS lists each link as its own element; Android's hierarchy has only the
+# sentence, so the flow taps «Términos» where the scrolled-to-the-end Login draws
+# it on seibi-pixel (left half of the legal line's first row).
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: '.*Términos.*'
+          index: 0
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          point: 55%,93%
+      # A fresh emulator's Chrome shows its first-run screens before the Custom Tab.
+      - extendedWaitUntil:
+          visible:
+            text: '.*Términos de uso.*|Use without an account|No thanks'
+          timeout: 30000
+      - tapOn:
+          text: Use without an account
+          optional: true
+      - tapOn:
+          text: No thanks
+          optional: true
+- extendedWaitUntil:
+    visible:
+      text: '.*Términos de uso.*'
+    timeout: 30000
+- takeScreenshot: legal-terms
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: 'Done|OK|Listo|Aceptar|Cerrar'
+# Android: the Custom Tab's close button (Back would go back inside the page first).
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          id: '.*close_button'
+- extendedWaitUntil:
+    visible:
+      id: sign-in-title
+    timeout: 15000
+# Apple (iOS): the system's Apple Account sheet opens. The Simulator has no Apple ID,
+# so it asks to sign in in Settings; «Close» returns to Login with the inline error.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: sign-in-apple
+          direction: UP
+      - tapOn:
+          id: sign-in-apple
+      - extendedWaitUntil:
+          visible:
+            text: 'Close|Cerrar|Cancel|Cancelar'
+          timeout: 15000
+      - takeScreenshot: apple-sheet
+      - tapOn:
+          text: 'Close|Cerrar|Cancel|Cancelar'
+      - extendedWaitUntil:
+          visible:
+            id: sign-in-error
+          timeout: 15000
+      - takeScreenshot: apple-closed
+# Google: its sheet opens (iOS: the system's web sign-in prompt; Android: the account
+# picker). These builds carry placeholder client ids (features/auth.md → Gotchas), so
+# Google refuses them; the screen shows its inline error or returns to Login.
+- scrollUntilVisible:
+    element:
+      id: sign-in-google
+    direction: UP
+- tapOn:
+    id: sign-in-google
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible:
+            text: '.*google.com.*'
+          timeout: 15000
+      - takeScreenshot: google-prompt
+      - tapOn:
+          text: 'Cancel|Cancelar'
+# Android: Play services' sign-in opens over Login (on an emulator with no Google
+# account, its «Sign in with ease» setup). Back, as many times as it takes, returns.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - extendedWaitUntil:
+          notVisible:
+            id: sign-in-google
+          timeout: 30000
+      - waitForAnimationToEnd:
+          timeout: 5000
+      - takeScreenshot: google-prompt
+      - repeat:
+          while:
+            notVisible:
+              id: sign-in-title
+          times: 5
+          commands:
+            # The emulator's Play services can stall under load; let it.
+            - tapOn:
+                text: Wait
+                optional: true
+            - back
+            - waitForAnimationToEnd:
+                timeout: 3000
+- extendedWaitUntil:
+    visible:
+      id: sign-in-title
+    timeout: 30000
+- takeScreenshot: google-after
+- stopRecording
+# Fill the test form off camera (development and preview builds only).
+- scrollUntilVisible:
+    element:
+      id: test-sign-in-email
+    direction: DOWN
+- tapOn:
+    id: test-sign-in-email
+- inputText: ${TEST_EMAIL}
+- pressKey: Enter
+- inputText:
+    text: ${TEST_PASSWORD}
+    label: Type the test account's password
+# Put the keyboard away and show the button: a tap on the form's title (not a
+# control) ends editing and dismisses the keyboard, so the password field masks
+# every character. (Maestro's hideKeyboard fails on iOS here, and on Android it
+# presses Back, which leaves the app once the keyboard is gone.) Check the
+# recording's first frames anyway.
+- tapOn:
+    text: Entrar con la cuenta de prueba
+- scrollUntilVisible:
+    element:
+      id: test-sign-in-submit
+    direction: DOWN
+- startRecording: login-signed-in
+- takeScreenshot: form-filled
+- tapOn:
+    id: test-sign-in-submit
+# iOS offers to save the password over the home; decline it.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible:
+            text: 'Not Now|Ahora no'
+          timeout: 10000
+          optional: true
+      - tapOn:
+          text: 'Not Now|Ahora no'
+          optional: true
+- extendedWaitUntil:
+    visible:
+      id: start-title
+    timeout: 30000
+- assertVisible:
+    id: signed-in-as
+    text: ${TEST_EMAIL}
+- takeScreenshot: signed-in
+# Back can't re-enter Login: the (auth) group is closed while signed in (Android's Back leaves the app).
+- openLink: ${APP_URL}sign-in
+- waitForAnimationToEnd
+- assertVisible:
+    id: start-title
+- assertNotVisible:
+    id: sign-in-title
+# Sign out: Login again.
+- tapOn:
+    id: sign-out
+- extendedWaitUntil:
+    visible:
+      id: sign-in-title
+    timeout: 30000
+- assertNotVisible:
+    id: start-title
+- takeScreenshot: signed-out
+- stopRecording
