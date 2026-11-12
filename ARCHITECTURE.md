@@ -22,8 +22,9 @@ Seibi is moving from a PWA to a native app:
 - **Target:** a native iOS and Android app built with **Expo + React
   Native** in `apps/mobile` (`@seibi/mobile`). Its base exists (SEI-41:
   config, builds, updates, one placeholder start screen; SEI-43: i18n;
-  SEI-44: native auth; SEI-53: the data layer); the rest of the Linear
-  milestone «1 · Base nativa» and the port's screens are being built.
+  SEI-44: native auth), and so does its data layer (SEI-53); the rest of
+  the Linear milestone «1 · Base nativa» and the port's screens are being
+  built.
 
 The backend does not change in the move: Supabase, the Edge Functions,
 and `packages/maintenance-engine` serve both apps.
@@ -473,7 +474,11 @@ The migration's order, scope and tickets are in
     so sign-out deletes them.
   - **Formatters** (`src/lib/format.ts`): `es-SV` numbers, money and days
     as the PWA prints them in a browser; words come from `es.json` through
-    a `t` argument, so they run outside React. HERMES_RESULT
+    a `t` argument, so they run outside React. Money uses
+    `Intl.NumberFormat` with `style: 'currency'` and no
+    `currencyDisplay`; on Hermes it prints what a browser prints (`$1,234`,
+    `-$40`, `$1,234.50`), checked with the dev-only screen below on the
+    iOS simulator, so it needs no workaround.
   - **Dev-only check.** In Seibi Dev only, the start screen opens
     «Revisión de datos» (`src/app/(app)/data-check.tsx`, the screen in
     `src/data/dev/`): it lists the person's Vehicles, saves a standalone
