@@ -72,11 +72,20 @@ local cache in `.turbo/`.
 | `pnpm lint` | Lint all packages |
 | `pnpm test` | Unit tests (maintenance engine) |
 | `pnpm --filter @seibi/app test:e2e` | Playwright smoke test (needs local Supabase) |
+| `pnpm --filter @seibi/mobile ios` | Build Seibi Dev, install it on the iOS Simulator, start Metro (needs Xcode) |
+| `pnpm --filter @seibi/mobile android` | The same on a running Android emulator (needs the Android SDK and Java 17) |
+| `pnpm --filter @seibi/mobile start` | Metro only, for a Seibi Dev build that is already installed |
+
+The native app uses development builds, not Expo Go. Its variants, EAS
+profiles and update flow are in [`ARCHITECTURE.md`](./ARCHITECTURE.md) →
+"Native app standards"; proving a change in it uses the `verify` skill in
+`apps/mobile/.claude/skills/verify/`.
 
 ## Structure
 
 ```
 apps/app/                     # TanStack Router + Vite SPA (PWA, frozen)
+apps/mobile/                  # Expo + React Native app (native, being built)
 packages/maintenance-engine/  # Reminder math shared by the app and Edge Functions
 supabase/migrations/          # Schema + RLS
 supabase/functions/           # Edge Functions (OpenAI, fal, push, account deletion)

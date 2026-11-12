@@ -20,8 +20,10 @@ Seibi is moving from a PWA to a native app:
   lands there except exceptions the owner approves (e.g. SEI-51, Inicio
   v3). It is shut down once the native app is in both stores (SEI-49).
 - **Target:** a native iOS and Android app built with **Expo + React
-  Native** in `apps/mobile` (`@seibi/mobile`). It does not exist yet; it
-  is built in the Linear milestone «1 · Base nativa» (SEI-40…SEI-47).
+  Native** in `apps/mobile` (`@seibi/mobile`). Its base exists (SEI-41:
+  config, builds, updates, one placeholder start screen); the rest of the
+  Linear milestone «1 · Base nativa» (SEI-42…SEI-47) and the port's
+  screens are being built.
 
 The backend does not change in the move: Supabase, the Edge Functions,
 and `packages/maintenance-engine` serve both apps.
@@ -33,7 +35,7 @@ pnpm workspaces (`apps/*`, `packages/*`).
 | Path | Status | What it is |
 | --- | --- | --- |
 | `apps/app` (`@seibi/app`) | exists, frozen | PWA: Vite + TanStack Router SPA |
-| `apps/mobile` (`@seibi/mobile`) | target (SEI-41) | Expo + React Native app |
+| `apps/mobile` (`@seibi/mobile`) | exists (base only) | Expo + React Native app; screens arrive with the port's tickets |
 | `packages/maintenance-engine` | exists | Reminder math shared by the apps and Edge Functions |
 | `supabase/migrations/` | exists | Schema, RLS, storage buckets, cron |
 | `supabase/functions/` | exists | Edge Functions (Deno) |
@@ -42,6 +44,14 @@ pnpm workspaces (`apps/*`, `packages/*`).
 
 Shared code goes in `packages/*`, imported by direct path (no barrel
 files).
+
+pnpm uses its default isolated installs (no `nodeLinker: hoisted`); Expo
+SDK 58 supports them, and Metro needs no monorepo config, so `apps/mobile`
+has no `metro.config.js`. Apps depend on shared packages with
+`workspace:*`. pnpm 11 holds back releases younger than a day
+(`minimumReleaseAge`); when an install needs a fresher one (Expo patches
+often are), pnpm adds that exact version to `minimumReleaseAgeExclude` in
+`pnpm-workspace.yaml`.
 
 ## Stack
 
@@ -99,8 +109,9 @@ optional public keys (Sentry DSN, VAPID public key).
 
 On merge to `main`, `.github/workflows/migrate-production.yml` applies
 pending migrations to production and deploys the Edge Functions.
-`.github/workflows/app-pr.yml` runs lint, typecheck, unit tests, `deno
-check` on Edge Functions, and the PWA build on every PR.
+`.github/workflows/app-pr.yml` runs lint, typecheck (PWA, native app,
+shared packages), unit tests, `deno check` on Edge Functions, and the PWA
+build on every PR.
 
 ## Domain rules that live in code
 
@@ -166,18 +177,47 @@ The migration's order, scope and tickets are in
 - **Default:** as native as possible: system sheets, haptics and native
   controls over hand-built web-style equivalents.
 - **Expo:** SDK 58, Continuous Native Generation (no `ios/` or `android/`
-  in git), Expo Router, React Compiler, New Architecture, typed routes.
+  in git), Expo Router with routes in `src/app/`, React Compiler, New
+  Architecture (the only architecture since SDK 55), typed routes.
   Development builds (no Expo Go). Add packages with `npx expo install`.
+  The first binary already carries the native modules that after-launch
+  tickets need (`expo-image-picker` for S12, `react-native-svg`,
+  Reanimated), so those tickets can ship by OTA.
 - **Variants:** one dynamic `app.config.ts`, selected by
-  `EXPO_PUBLIC_APP_VARIANT`; installable side by side:
-  `com.seibiapp.app.dev` (Seibi Dev) and `com.seibiapp.app` (Seibi). One
-  EAS slug. URL scheme `seibi`.
-- **Builds:** EAS Build profiles `development` (Seibi Dev), `preview` and
-  `production` (both build Seibi). Remote app versions with
-  `autoIncrement`.
-- **Updates:** EAS Update with the `fingerprint` runtime policy. An OTA
-  hook checks on launch and on return to foreground and offers a restart.
-  It ships before the first store release.
+  `EXPO_PUBLIC_APP_VARIANT` (`development` | `production`; unset means
+  `production`, so an update published without it can't ship development
+  behaviour; any other value fails the config). Installable side by side:
+
+  | Variant | Name | Bundle id / package | URL scheme |
+  | --- | --- | --- | --- |
+  | `development` | Seibi Dev | `com.seibiapp.app.dev` | `seibi-dev` |
+  | `production` | Seibi | `com.seibiapp.app` | `seibi` |
+
+  Each variant has its own scheme so deep links open the right install.
+  Only Seibi Dev registers the dev client's `exp+seibi` scheme. One EAS
+  slug (`seibi`) and one project id, set once in `EAS_PROJECT_ID` at the
+  top of `app.config.ts`; while it is empty, builds are local only and
+  EAS Update is off. `pnpm start` / `ios` / `android` in `apps/mobile`
+  run the `development` variant.
+- **Builds:** `apps/mobile/eas.json`. Profiles `development` (dev client,
+  Seibi Dev, internal), `development-simulator` (the same for the iOS
+  Simulator, for Maestro in CI), `preview` (internal, builds Seibi) and
+  `production` (store, Seibi, `autoIncrement`). Each profile has the EAS
+  Update channel and EAS environment of its name. Remote app versions
+  (`appVersionSource: remote`). Only `com.seibiapp.app` gets an App Store
+  Connect record; `.dev` is for the dev client. `ITSAppUsesNonExemptEncryption`
+  is `false` (`ios.config.usesNonExemptEncryption`).
+- **Updates:** EAS Update with the `fingerprint` runtime policy.
+  `useOTAUpdate` (`src/hooks/use-ota-update.ts`, called by the root
+  layout) checks on launch and on return to foreground, downloads, then
+  offers a restart in the native alert; a declined restart applies on the
+  next cold launch. It does nothing in development builds or while EAS
+  Update is off. It ships before the first store release.
+- **Splash and fonts:** the native splash (logo mark on `#F2F4F7`, light in
+  both themes like the PWA's) stays up until the root layout has loaded
+  the fonts with `expo-font`: Archivo 300–700 and Geist Mono 400 from
+  `@expo-google-fonts`. Clash Display joins once its licence is confirmed
+  (SEI-42). A font that fails to load does not keep the app on the splash.
 - **Navigation:** four `NativeTabs` (Inicio · Mi flota · Avisos ·
   Estimados; Estimados joins after launch with S10), each with its own
   stack holding its detail screens. A
@@ -207,15 +247,23 @@ The migration's order, scope and tickets are in
   generated Supabase types; Zod validates Edge Function responses, NHTSA
   vPIC and forms.
 - **Accessibility:** WCAG 2.2 AA (rules in `docs/DESIGN.md`).
-- **CI:** typecheck, lint and three check scripts (no raw values,
-  contrast, no untranslated text) on every PR (SEI-46). Maestro runs the
-  `verify` skill's journeys in CI once the first iOS build exists (SEI-52).
+- **CI:** `@seibi/mobile` has `typecheck` (`tsc --noEmit`) and `lint`
+  (`expo lint --max-warnings 0`: ESLint with `eslint-config-expo`), which
+  `app-pr.yml` runs through Turbo on every PR. It has no `build` script:
+  native builds run on EAS. Typed-route declarations are generated by
+  `expo start`, so CI's typecheck does not check route hrefs. Three check
+  scripts (no raw values, contrast, no untranslated text) join in SEI-46.
+  Maestro runs the `verify` skill's journeys in CI once the first iOS build
+  exists (SEI-52).
 - **Verification:** `apps/mobile/.claude/skills/verify/` (generated in
-  SEI-41 with `create-verification-skill`) drives the app on the
-  simulator the way a user does and captures a video, screenshots and the
-  saved data. Every PR that changes what a user sees or does is proven
-  with it before merge; `maintain-verification-skill` keeps its feature
-  map current.
+  SEI-41 with `create-verification-skill`) drives Seibi Dev on the iOS
+  Simulator and the Android emulator (`seibi-pixel`) with Maestro, the way
+  a user does: `scripts/verify.sh` launches, checks (`doctor`), drives a
+  flow from `flows/` and cleans up. Each run keeps its video, screenshots
+  and report in `~/seibi-verify/`, outside git. Every PR that changes what
+  a user sees or does is proven with it before merge, with the saved data
+  read from seibi-dev; `maintain-verification-skill` keeps its feature map
+  (`features/`) current. The test sign-in it will need arrives with SEI-44.
 - **Paid features** (RevenueCat, Superwall) start after the launch.
 
 ### Libraries
