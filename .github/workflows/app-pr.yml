@@ -76,6 +76,10 @@ jobs:
         working-directory: supabase/functions
         run: for f in */index.ts; do deno check "$f"; done
 
+      - name: Test Edge Functions
+        working-directory: supabase/functions
+        run: deno test --allow-env
+
       - name: Build
         run: pnpm build
         env:

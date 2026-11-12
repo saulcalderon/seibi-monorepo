@@ -1,14 +1,12 @@
-// fal queue API and the Model render pipeline.
+// fal queue API for Model renders: one studio image (the poster) per
+// brand, model, year, and paint. There is no 3D step (SEI-48).
 
 import { hmac, normalizeKey } from './keys.ts'
 import { HttpError } from './http.ts'
 
 export const FAL_IMAGE_MODEL = Deno.env.get('FAL_IMAGE_MODEL') ?? 'fal-ai/flux-pro/v1.1-ultra'
-export const FAL_3D_MODEL = Deno.env.get('FAL_3D_MODEL') ?? 'fal-ai/trellis'
 export const RENDER_BUCKET = 'vehicle-renders'
 export const MAX_RENDER_ATTEMPTS = 3
-/** GLBs above this are too heavy for a phone; we keep the poster only. */
-export const MAX_GLB_BYTES = 40 * 1024 * 1024
 
 /** Paint codes the app offers; stored on vehicles.color. */
 export const PAINT_WORDS: Record<string, string> = {
@@ -40,22 +38,27 @@ function webhookSecret() {
   return Deno.env.get('RENDER_WEBHOOK_SECRET') ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 }
 
-export type RenderStep = 'poster' | 'glb'
-
-export async function webhookToken(renderId: string, step: RenderStep) {
-  return await hmac(webhookSecret(), `${renderId}:${step}`)
+/**
+ * Signs the webhook URL for a render. The message keeps the `:poster` suffix
+ * of the old two-step pipeline, so a poster job submitted before SEI-48
+ * still verifies; a leftover 3D job's token (`:glb`) does not.
+ */
+export async function webhookToken(renderId: string) {
+  return await hmac(webhookSecret(), `${renderId}:poster`)
 }
 
-async function webhookUrl(renderId: string, step: RenderStep) {
+async function webhookUrl(renderId: string) {
   const base = Deno.env.get('PUBLIC_FUNCTIONS_URL') ??
     `${Deno.env.get('SUPABASE_URL')}/functions/v1`
-  const token = await webhookToken(renderId, step)
-  return `${base}/vehicle-render-webhook?render=${renderId}&step=${step}&token=${token}`
+  const token = await webhookToken(renderId)
+  return `${base}/vehicle-render-webhook?render=${renderId}&token=${token}`
 }
 
 async function submit(model: string, input: Record<string, unknown>, webhook: string) {
   const key = Deno.env.get('FAL_KEY')
-  if (!key) throw new HttpError(503, 'render_unavailable', 'Los modelos 3D no están disponibles todavía.')
+  if (!key) {
+    throw new HttpError(503, 'render_unavailable', 'Las imágenes de los modelos no están disponibles todavía.')
+  }
   const res = await fetch(
     `https://queue.fal.run/${model}?fal_webhook=${encodeURIComponent(webhook)}`,
     {
@@ -93,15 +96,8 @@ export async function submitPoster(
       num_images: 1,
       safety_tolerance: '2',
     },
-    await webhookUrl(renderId, 'poster'),
+    await webhookUrl(renderId),
   )
-}
-
-export async function submitGlb(renderId: string, imageUrl: string) {
-  const input: Record<string, unknown> = FAL_3D_MODEL.includes('hunyuan')
-    ? { input_image_url: imageUrl }
-    : { image_url: imageUrl, texture_size: 1024, mesh_simplify: 0.95 }
-  return await submit(FAL_3D_MODEL, input, await webhookUrl(renderId, 'glb'))
 }
 
 type FalFile = { url?: string; content_type?: string }
@@ -109,9 +105,4 @@ type FalFile = { url?: string; content_type?: string }
 export function posterUrlFrom(payload: Record<string, unknown>): string | null {
   const images = payload.images as FalFile[] | undefined
   return images?.[0]?.url ?? null
-}
-
-export function glbUrlFrom(payload: Record<string, unknown>): string | null {
-  const file = (payload.model_glb ?? payload.model_mesh ?? payload.glb) as FalFile | undefined
-  return file?.url ?? null
 }

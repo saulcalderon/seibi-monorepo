@@ -1,9 +1,10 @@
-// Starts or reuses the Model render for a Vehicle. Renders are
-// shared per brand, model, year, and paint; generation is asynchronous and
-// normally finishes in vehicle-render-webhook. When a step has waited longer
-// than the webhook should take, this function asks fal directly and
-// finishes it, so a lost or unreachable webhook never leaves a render
-// "generating" forever. The app calls it again while a render is pending.
+// Starts or reuses the Model render for a Vehicle: one studio image (the
+// poster) per brand, model, year, and paint, with no 3D step (SEI-48).
+// Generation is asynchronous and normally finishes in vehicle-render-webhook.
+// When the poster has waited longer than the webhook should take, this
+// function asks fal directly and finishes it, so a lost or unreachable
+// webhook never leaves a render "generating" forever. The app calls it again
+// while a render is pending.
 
 import { handler, json, readJson } from '../_shared/http.ts'
 import {
@@ -12,12 +13,12 @@ import {
   renderKey,
   submitPoster,
 } from '../_shared/fal.ts'
-import { completeStep, failStep, pollFal } from '../_shared/renderSteps.ts'
+import { completePoster, failPoster, pollPoster } from '../_shared/renderPoster.ts'
 import { adminClient, ownedVehicle, requireUser } from '../_shared/supabase.ts'
 
 /** Give the webhook this long before polling fal ourselves. */
 const POLL_AFTER_MS = 20_000
-/** A step still unfinished after this is abandoned. */
+/** A poster still unfinished after this is abandoned. */
 const GIVE_UP_AFTER_MS = 20 * 60_000
 
 Deno.serve(handler(async (req) => {
@@ -35,7 +36,7 @@ Deno.serve(handler(async (req) => {
 
   const { data: existing, error: findError } = await db
     .from('model_renders')
-    .select('id, render_key, status, attempts, fal_request_id, error, updated_at')
+    .select('id, render_key, status, attempts, fal_request_id, updated_at')
     .eq('render_key', key)
     .maybeSingle()
   if (findError) throw findError
@@ -66,25 +67,30 @@ Deno.serve(handler(async (req) => {
     }
   } else if (existing.status === 'failed' && existing.attempts < MAX_RENDER_ATTEMPTS) {
     start = true
-  } else if (
-    (existing.status === 'pending' || (existing.status === 'poster_ready' && !existing.error)) &&
-    existing.fal_request_id
-  ) {
+  } else if (existing.status === 'poster_ready') {
+    // Left by the two-step pipeline before SEI-48, waiting on a 3D model that
+    // is never made now. Its poster is the whole render.
+    const { error } = await db
+      .from('model_renders')
+      .update({ status: 'ready', error: null })
+      .eq('id', existing.id)
+      .eq('status', 'poster_ready')
+    if (error) throw error
+  } else if (existing.status === 'pending' && existing.fal_request_id) {
     const waited = Date.now() - Date.parse(existing.updated_at)
     if (waited > POLL_AFTER_MS) {
-      const step = existing.status === 'pending' ? 'poster' : 'glb'
       try {
-        const poll = await pollFal(step, existing.fal_request_id)
+        const poll = await pollPoster(existing.fal_request_id)
         if (poll.state === 'done') {
-          await completeStep(db, existing, step, poll.payload)
+          await completePoster(db, existing, poll.payload)
         } else if (poll.state === 'failed') {
-          await failStep(db, existing.id, step, poll.error)
+          await failPoster(db, existing.id, poll.error)
         } else if (waited > GIVE_UP_AFTER_MS) {
-          await failStep(db, existing.id, step, `fal ${step} still unfinished after 20 minutes`)
+          await failPoster(db, existing.id, 'fal poster still unfinished after 20 minutes')
         }
       } catch (error) {
         console.error('vehicle-render poll failed', error)
-        await failStep(db, existing.id, step, error instanceof Error ? error.message : 'poll failed')
+        await failPoster(db, existing.id, error instanceof Error ? error.message : 'poll failed')
       }
     }
   }

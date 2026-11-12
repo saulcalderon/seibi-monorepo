@@ -80,7 +80,7 @@ third-party call, or a schedule runs in an Edge Function, never in an app.
 | --- | --- | --- |
 | `vehicle-lookup` | Maintenance schedule + body type for brand/model/year/engine | app (user JWT) |
 | `vehicle-render` | Starts or reuses a Model render; polling fallback | app (user JWT) |
-| `vehicle-render-webhook` | Receives fal results | fal (HMAC token in URL) |
+| `vehicle-render-webhook` | Receives fal's finished poster | fal (HMAC token in URL) |
 | `estimates` | Estimate lookup | app (user JWT) |
 | `chat` | Follow-up questions scoped to the user's Vehicles | app (user JWT) |
 | `reminders-daily` | Computes due Reminders and sends push | `pg_cron`, 14:00 UTC (`x-cron-secret`) |
@@ -112,8 +112,8 @@ optional public keys (Sentry DSN, VAPID public key).
 On merge to `main`, `.github/workflows/migrate-production.yml` applies
 pending migrations to production and deploys the Edge Functions.
 `.github/workflows/app-pr.yml` runs lint, typecheck (PWA, native app,
-shared packages), the native app's `check`, unit tests, `deno check` on
-Edge Functions, and the PWA build on every PR, and again on each push to
+shared packages), the native app's `check`, unit tests, `deno check` and
+`deno test` on Edge Functions, and the PWA build on every PR, and again on each push to
 `main` to refresh the Turbo cache. `.github/workflows/eas-preview.yml`
 starts an EAS `preview` build, only by hand (see CI under "Native app
 standards").
@@ -157,17 +157,24 @@ standards").
   With no citable source, Seibi shows a general schedule labeled
   "Recomendación general, no específica de tu modelo" — never a guess
   presented as the manufacturer's.
-- **Model renders are an image only.** `vehicle-render` generates a fal
+- **Model renders are an image only.** `vehicle-render` generates one fal
   studio image (the poster) per brand/model/year/color, stored in the
   public `vehicle-renders` bucket and `model_renders`; each combination
-  is generated once. Until the poster exists the Vehicle shows a
-  body-type silhouette. The webhook is the fast path; while generating,
-  the app calls `vehicle-render` every 20 s, which after 20 s asks fal's
-  queue itself and after 20 min marks the render failed. A render is an
-  illustration, never called a photo. Car art and paint presets stay as
-  they are. (The image-to-3D/GLB step still in code is being removed:
-  SEI-48. The `model_renders.glb_path` column stays until SEI-49: the
-  frozen PWA still selects it.)
+  is generated once. A render goes `pending` → `ready` when its poster is
+  stored, or `failed` (started again on the next call, up to 3 attempts).
+  There is no 3D step: nothing is sent to fal after the poster. Until the
+  poster exists the Vehicle shows a body-type silhouette. The webhook is
+  the fast path; while generating, the app calls `vehicle-render` every
+  20 s, which after 20 s asks fal's queue itself and after 20 min marks
+  the render failed. A render is an illustration, never called a photo.
+  Car art and paint presets stay as they are.
+  - **Left from the 3D pipeline** (removed in SEI-48), kept until the PWA
+    is shut down (SEI-49) because the frozen PWA still reads them: the
+    `model_renders.glb_path` column, which nothing writes now; the
+    `poster_ready` value of `render_status`, which nothing writes now (a
+    render still there is moved to `ready` the next time `vehicle-render`
+    sees it); and the GLBs already in the bucket, which the PWA still
+    shows in 3D.
 - **Navigation.** The floating dock is **Inicio · Mi flota · [+] · Avisos
   · Estimados**. [+] opens quick actions (record a Service, update
   Mileage, plan an Appointment). Service history lives in each Vehicle's
