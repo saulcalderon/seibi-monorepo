@@ -1,6 +1,8 @@
 /**
  * The tokens both themes share: spacing, radius, the type scale and the font
- * families. Values from docs/DESIGN.md. Plain data, like `palettes.ts`.
+ * families. Values from docs/DESIGN.md. Plain data with no imports, like
+ * `palettes.ts`: scripts/check-tokens.mjs reads it with Node to name the
+ * token for a raw value.
  */
 
 /** The 4 pt grid (Tailwind's unit in the PWA): `space[n]` is `n × 4`. */

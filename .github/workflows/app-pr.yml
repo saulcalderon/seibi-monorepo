@@ -62,7 +62,7 @@ jobs:
 
       # The native app's gate (apps/mobile/turbo.json): its typecheck and lint,
       # replayed from the steps above, then the check scripts in
-      # apps/mobile/scripts/ (check-strings).
+      # apps/mobile/scripts/ (check-tokens, check-contrast, check-strings).
       - name: Native app checks
         run: pnpm check
 
