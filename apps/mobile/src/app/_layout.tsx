@@ -11,6 +11,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
 import { useOTAUpdate } from '@/hooks/use-ota-update';
+// Initialises i18next synchronously, before the first render.
+import '@/i18n';
 
 // The native splash stays up until the fonts are ready, so no screen ever
 // renders in a fallback font.

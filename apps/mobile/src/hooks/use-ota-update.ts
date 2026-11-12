@@ -1,5 +1,6 @@
 import * as Updates from 'expo-updates';
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert, AppState } from 'react-native';
 
 // Development builds load JavaScript from Metro, and builds without an EAS
@@ -12,6 +13,7 @@ const enabled = !__DEV__ && Updates.isEnabled;
  * applied on the next cold launch anyway.
  */
 export function useOTAUpdate() {
+  const { t } = useTranslation();
   const { isUpdatePending, downloadedUpdate } = Updates.useUpdates();
   const checking = useRef(false);
   const promptedFor = useRef<string | null>(null);
@@ -44,10 +46,9 @@ export function useOTAUpdate() {
   useEffect(() => {
     if (!enabled || pendingId === null || promptedFor.current === pendingId) return;
     promptedFor.current = pendingId;
-    // Copy moves to i18n in SEI-43.
-    Alert.alert('Hay una versión nueva de Seibi', 'Reinicia la app para usarla.', [
-      { text: 'Ahora no', style: 'cancel' },
-      { text: 'Reiniciar', onPress: () => void Updates.reloadAsync() },
+    Alert.alert(t('update.title'), t('update.message'), [
+      { text: t('update.later'), style: 'cancel' },
+      { text: t('update.restart'), onPress: () => void Updates.reloadAsync() },
     ]);
-  }, [pendingId]);
+  }, [pendingId, t]);
 }

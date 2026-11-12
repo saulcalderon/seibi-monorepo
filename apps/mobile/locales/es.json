@@ -1,0 +1,6 @@
+{
+  "ios": {
+    "NSPhotoLibraryUsageDescription": "Seibi usa tus fotos para adjuntar la factura o el recibo de un Servicio.",
+    "NSCameraUsageDescription": "Seibi usa la cámara para fotografiar la factura o el recibo de un Servicio."
+  }
+}

@@ -57,3 +57,6 @@ handles, required state, commands and observable proof.
 
 - [The app launches to the start screen](./app-launches.md): cold start,
   native splash, start screen, on iOS and Android. Flow: `app-launches`.
+- [The start screen speaks Spanish from es.json](./i18n.md): every word
+  from `src/i18n/es.json`, no keys on screen, Spanish also on a device set
+  to English. Flow: `i18n-start-screen`.
