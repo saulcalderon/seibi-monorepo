@@ -1,13 +1,13 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
-// iOS shows these in its own dialogs (permission prompts), outside the app's
-// i18next text. One file per language, listed in `locales` below.
+// Text iOS draws for the app (permission prompts), outside i18next. One file
+// per language, listed in `locales` below.
 import nativeEs from './locales/es.json';
 
 /**
- * The languages Seibi ships (src/i18n/languages.ts lists the same ones).
- * iOS and Android show the app's own system text (pickers, permission
- * prompts) in one of these, and offer them in the per-app language setting.
+ * The languages Seibi ships (src/i18n/languages.ts lists the same ones). The
+ * OS draws its own text inside the app (permission prompts, system pickers)
+ * in one of these, and offers only these in the per-app language setting.
  */
 const LANGUAGES = ['es'];
 
