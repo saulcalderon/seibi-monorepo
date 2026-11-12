@@ -59,12 +59,14 @@ Google OAuth locally.
 
 ## Scripts
 
-Run from the repo root:
+Run from the repo root. Every command except `pnpm preview` runs through
+Turborepo (`turbo.json`): a second run with no changes comes from the
+local cache in `.turbo/`.
 
 | Command | Description |
 | --- | --- |
 | `pnpm dev` | Start the Vite dev server (`@seibi/app`) |
-| `pnpm build` | Production build |
+| `pnpm build` | Production build of every package that has one |
 | `pnpm preview` | Preview the production build |
 | `pnpm typecheck` | Typecheck all packages |
 | `pnpm lint` | Lint all packages |

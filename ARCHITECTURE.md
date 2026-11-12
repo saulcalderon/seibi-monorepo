@@ -38,7 +38,7 @@ pnpm workspaces (`apps/*`, `packages/*`).
 | `supabase/migrations/` | exists | Schema, RLS, storage buckets, cron |
 | `supabase/functions/` | exists | Edge Functions (Deno) |
 | `CONTEXT.md` | exists | Domain glossary + English ↔ schema ↔ Spanish map |
-| Turborepo (`turbo.json`) | target (SEI-40) | Task running and caching |
+| Turborepo (`turbo.json`) | exists | Runs `build`, `typecheck`, `lint`, `test` and `dev` across packages, with a local cache |
 
 Shared code goes in `packages/*`, imported by direct path (no barrel
 files).
