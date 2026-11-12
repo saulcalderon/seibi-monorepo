@@ -478,7 +478,7 @@ The migration's order, scope and tickets are in
     `Intl.NumberFormat` with `style: 'currency'` and no
     `currencyDisplay`; on Hermes it prints what a browser prints (`$1,234`,
     `-$40`, `$1,234.50`), checked with the dev-only screen below on the
-    iOS simulator, so it needs no workaround.
+    iOS simulator and the Android emulator, so it needs no workaround.
   - **Dev-only check.** In Seibi Dev only, the start screen opens
     «Revisión de datos» (`src/app/(app)/data-check.tsx`, the screen in
     `src/data/dev/`): it lists the person's Vehicles, saves a standalone

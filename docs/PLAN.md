@@ -202,8 +202,8 @@ From the Paradero and Zagged reviews and the planning session:
 - **Currency on Hermes.** Hermes ignores some `Intl.NumberFormat` options
   (Paradero: `currencyDisplay: 'narrowSymbol'`). Checked in SEI-53: the
   native `formatUsd` (`style: 'currency'`, no `currencyDisplay`) prints the
-  same as the PWA in a browser on the iOS simulator. Keep
-  `currencyDisplay` out of the formatters.
+  same as the PWA in a browser on the iOS simulator and the Android
+  emulator. Keep `currencyDisplay` out of the formatters.
 - **Android icons.** Material Symbols has no filled variants; filled
   icons on Android are SVG.
 - **App Store.** Set `ITSAppUsesNonExemptEncryption` in `app.config.ts`
