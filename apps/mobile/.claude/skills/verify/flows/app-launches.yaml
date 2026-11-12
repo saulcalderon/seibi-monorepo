@@ -1,0 +1,25 @@
+# Feature: the app launches to the start screen (features/app-launches.md).
+# Run through scripts/verify.sh drive <ios|android> app-launches, which
+# passes APP_ID and DEV_URL and sends recordings and screenshots to the
+# run's evidence folder.
+appId: ${APP_ID}
+name: The app launches to the start screen
+---
+- startRecording: app-launches
+# Cold start: nothing of Seibi Dev is running before the link opens it.
+- stopApp
+- openLink: ${DEV_URL}
+# The native splash stays until the fonts load, then the start screen shows.
+- extendedWaitUntil:
+    visible:
+      id: start-title
+    timeout: 120000
+- assertVisible:
+    id: start-title
+    text: Seibi
+# A value computed by @seibi/maintenance-engine: the shared package resolved and ran.
+- assertVisible:
+    id: engine-check
+    text: 'maintenance-engine: 12500 km'
+- takeScreenshot: start-screen
+- stopRecording
