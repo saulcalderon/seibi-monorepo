@@ -72,7 +72,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     locales: { es: './locales/es.json' },
     plugins: [
-      'expo-router',
+      // Colours come from the Unistyles theme, which updates natively; Expo
+      // Router's own re-render of every screen on a colour-scheme change
+      // (for its `Color` API) is not needed (SEI-42).
+      ['expo-router', { adaptiveColors: false }],
       ['expo-localization', { supportedLocales: LANGUAGES }],
       // The dev client opens through `exp+seibi://`. Only Seibi Dev claims it,
       // so `expo start` never opens the store app by mistake.
@@ -86,6 +89,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           imageWidth: 160,
         },
       ],
+      // The kv-store keeps local preferences (theme, language), read synchronously at launch.
+      'expo-sqlite',
       [
         'expo-image-picker',
         {

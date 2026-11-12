@@ -86,6 +86,11 @@ print(ios[-1]["identifier"] if ios else "")')"
     [[ -n "$runtime" ]] || die "no iOS Simulator runtime installed. Run: xcodebuild -downloadPlatform iOS"
     log "creating simulator \"$SIM_NAME\" ($SIM_TYPE, $runtime)"
     udid="$(xcrun simctl create "$SIM_NAME" "$SIM_TYPE" "$runtime")"
+    # A new iOS 27 simulator ignores dark-mode changes until it has rebooted once.
+    log "first boot of the new simulator, then a restart"
+    xcrun simctl boot "$udid" >&2
+    xcrun simctl bootstatus "$udid" -b >/dev/null
+    xcrun simctl shutdown "$udid" >&2
   fi
   if [[ "$(sim_state "$udid")" != "Booted" ]]; then
     log "booting simulator $udid"
