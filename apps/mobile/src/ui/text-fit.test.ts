@@ -21,6 +21,11 @@ describe('textFits', () => {
     expect(textFits({ width: 30, height: 20.2 }, [line('Ver todo', 32)])).toBe(false);
     expect(textFits({ width: 30, height: 20.2 }, [line('Ver todo', 30.9)])).toBe(true);
   });
+
+  it('leaves widths alone for text the platform shrinks to fit', () => {
+    expect(textFits({ width: 30, height: 20.2 }, [line('brakeInspection', 48)], { widths: false })).toBe(true);
+    expect(textFits({ width: 30, height: 20.2 }, [line('brake', 20), line('Pads', 20)], { widths: false })).toBe(false);
+  });
 });
 
 describe('createTextFitStore', () => {

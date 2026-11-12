@@ -13,10 +13,19 @@ export interface DrawnLine {
   height: number;
 }
 
-/** True when the drawn lines fit the box, give or take `tolerance` points of rounding. */
-export function textFits(box: { width: number; height: number }, lines: readonly DrawnLine[], tolerance = 1): boolean {
+/**
+ * True when the drawn lines fit the box, give or take `tolerance` points of
+ * rounding. `widths: false` skips the width test, for text the platform
+ * shrinks to fit (`adjustsFontSizeToFit`), whose lines report their width
+ * before the shrink.
+ */
+export function textFits(
+  box: { width: number; height: number },
+  lines: readonly DrawnLine[],
+  { widths = true, tolerance = 1 }: { widths?: boolean; tolerance?: number } = {},
+): boolean {
   const drawn = lines.reduce((sum, line) => sum + line.height, 0);
-  return drawn <= box.height + tolerance && lines.every((line) => line.width <= box.width + tolerance);
+  return drawn <= box.height + tolerance && (!widths || lines.every((line) => line.width <= box.width + tolerance));
 }
 
 export interface TextFitStore {

@@ -69,7 +69,7 @@ export function Text({
   styles.useVariants({ step, family, weight: family === 'sans' ? weight : undefined, tone, align });
   const nested = useContext(InText);
   const store = useContext(TextFitContext);
-  const fit = useFitCheck(nested ? null : store);
+  const fit = useFitCheck(nested ? null : store, !rest.adjustsFontSizeToFit);
   const words = plainText(children);
   const hang = HANG && !nested && words !== '';
 
@@ -104,8 +104,8 @@ function plainText(children: ReactNode): string | undefined {
 type LayoutHandler = TextProps['onLayout'];
 type TextLayoutHandler = TextProps['onTextLayout'];
 
-/** With a store, reports after each layout whether the drawn lines fit the box. */
-function useFitCheck(store: TextFitStore | null) {
+/** With a store, reports after each layout whether the drawn lines fit the box (and its width, unless the text shrinks to fit). */
+function useFitCheck(store: TextFitStore | null, widths: boolean) {
   const id = useId();
   const box = useRef<{ width: number; height: number } | null>(null);
   const lines = useRef<readonly DrawnLine[] | null>(null);
@@ -114,7 +114,7 @@ function useFitCheck(store: TextFitStore | null) {
   const check = () => {
     if (!box.current || !lines.current) return;
     const words = lines.current.map((line) => line.text).join('').trim();
-    store.report(id, words, textFits(box.current, lines.current));
+    store.report(id, words, textFits(box.current, lines.current, { widths }));
   };
   return {
     onLayout: (handler: LayoutHandler): LayoutHandler => (event) => {
