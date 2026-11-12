@@ -359,7 +359,8 @@ The migration's order, scope and tickets are in
     the platform font, since Google Sans can't be embedded). A failed
     provider shows an inline error and is announced; a cancelled one
     changes nothing. In a scroll view that keeps the focused field above
-    the keyboard (`react-native-keyboard-controller`).
+    the keyboard (`react-native-keyboard-controller`); on Android a strip
+    of `bg` under the status bar keeps scrolled content out from under it.
   - **Legal pages:** `src/lib/legal.ts` holds the URLs of the PWA's public
     pages, `https://seibiapp.com/legal/terminos` and
     `https://seibiapp.com/legal/privacidad` (one copy of the text), and

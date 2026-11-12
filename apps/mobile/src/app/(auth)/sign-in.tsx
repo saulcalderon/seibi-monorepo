@@ -153,6 +153,8 @@ function SignIn() {
           />
         </Text>
       </KeyboardAwareScrollView>
+      {/* Android draws content under its see-through status bar; iOS fades it under its own scroll edge. */}
+      {process.env.EXPO_OS === 'android' ? <View style={styles.statusBarScrim} /> : null}
     </>
   );
 }
@@ -167,6 +169,14 @@ const styles = StyleSheet.create((theme, rt) => ({
     paddingTop: rt.insets.top,
     paddingBottom: rt.insets.bottom + theme.space[3],
     paddingHorizontal: theme.space[6],
+  },
+  statusBarScrim: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: rt.insets.top,
+    backgroundColor: theme.colors.bg,
   },
   // Centred in the space above the legal line, which sits at the bottom.
   main: {

@@ -101,11 +101,13 @@ name: Login renders, its links and buttons answer, the test sign-in opens the ap
     commands:
       - tapOn:
           text: 'Done|OK|Listo|Aceptar|Cerrar'
+# Android: the Custom Tab's close button (Back would go back inside the page first).
 - runFlow:
     when:
       platform: Android
     commands:
-      - back
+      - tapOn:
+          id: '.*close_button'
 - extendedWaitUntil:
     visible:
       id: sign-in-title
@@ -161,9 +163,11 @@ name: Login renders, its links and buttons answer, the test sign-in opens the ap
       platform: Android
     commands:
       - extendedWaitUntil:
-          visible:
-            text: '.*(Google|Sign in|account).*'
+          notVisible:
+            id: sign-in-google
           timeout: 30000
+      - waitForAnimationToEnd:
+          timeout: 5000
       - takeScreenshot: google-prompt
       - repeat:
           while:
@@ -197,15 +201,12 @@ name: Login renders, its links and buttons answer, the test sign-in opens the ap
     text: ${TEST_PASSWORD}
     label: Type the test account's password
 # Put the keyboard away and show the button: a tap on the form's title (not a
-# control) ends editing, so the password field masks every character. Check the
+# control) ends editing and dismisses the keyboard, so the password field masks
+# every character. (Maestro's hideKeyboard fails on iOS here, and on Android it
+# presses Back, which leaves the app once the keyboard is gone.) Check the
 # recording's first frames anyway.
 - tapOn:
     text: Entrar con la cuenta de prueba
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      - hideKeyboard
 - scrollUntilVisible:
     element:
       id: test-sign-in-submit
