@@ -18,8 +18,9 @@ name: Sign in with the test account when signed out
       - tapOn:
           id: test-sign-in-email
       - inputText: ${TEST_EMAIL}
-      - tapOn:
-          id: test-sign-in-password
+      # Return moves to the password field (returnKeyType "next"), so the
+      # flow never taps a field the keyboard might cover.
+      - pressKey: Enter
       - inputText:
           text: ${TEST_PASSWORD}
           label: Type the test account's password

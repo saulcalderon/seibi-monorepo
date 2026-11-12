@@ -2,7 +2,7 @@ import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { type ComponentType, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Platform, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import { signInWithApple } from '@/auth/apple';
@@ -47,8 +47,14 @@ export default function SignInScreen() {
     }
   }
 
+  // The keyboard pushes the content up instead of covering the test form's
+  // password field (iOS; Android resizes the window on its own).
   return (
-    <View testID="sign-in-screen" style={styles.screen}>
+    <KeyboardAvoidingView
+      testID="sign-in-screen"
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.screen}
+    >
       <View style={styles.heading}>
         <Text testID="sign-in-title" accessibilityRole="header" style={styles.title}>
           {t('start.title')}
@@ -83,7 +89,7 @@ export default function SignInScreen() {
         {busy ? <ActivityIndicator testID="sign-in-busy" /> : null}
       </View>
       {EmailSignIn ? <EmailSignIn /> : null}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

@@ -1,5 +1,5 @@
 import { Button, Host } from '@expo/ui';
-import { useState } from 'react';
+import { type ComponentRef, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TextInput, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
@@ -17,6 +17,7 @@ import { supabase } from '@/lib/supabase';
 export function EmailSignIn() {
   const { t } = useTranslation();
   const { theme } = useUnistyles();
+  const passwordInput = useRef<ComponentRef<typeof TextInput>>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -45,9 +46,14 @@ export function EmailSignIn() {
         autoComplete="off"
         keyboardType="email-address"
         textContentType="none"
+        // Return moves on to the password, keeping the keyboard up.
+        returnKeyType="next"
+        submitBehavior="submit"
+        onSubmitEditing={() => passwordInput.current?.focus()}
       />
       <TextInput
         testID="test-sign-in-password"
+        ref={passwordInput}
         style={styles.input}
         value={password}
         onChangeText={setPassword}
@@ -57,6 +63,7 @@ export function EmailSignIn() {
         autoCapitalize="none"
         autoComplete="off"
         textContentType="none"
+        returnKeyType="go"
         onSubmitEditing={() => void submit()}
       />
       <Host matchContents>
