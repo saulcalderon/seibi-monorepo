@@ -1,10 +1,11 @@
 /**
  * Every colour and shadow in Seibi, as plain data. Values come from
- * docs/DESIGN.md (the PWA's apps/app/src/index.css, with the light-palette
- * contrast fixes decided on 2026-11-11). Night is the PWA's night, unchanged.
+ * docs/DESIGN.md (the PWA's apps/app/src/index.css, with the contrast fixes
+ * to text roles decided on 2026-11-11 for light and 2026-11-12 for night).
  *
- * This file has no imports on purpose: the contrast check (SEI-46) reads it
- * directly with Node. Components never import it; they read the same roles
+ * This file has no imports on purpose: the contrast check
+ * (scripts/check-contrast.ts) reads it directly with Node, and fails on a
+ * text pair below WCAG 2.2 AA. Components never import it; they read the same roles
  * from the Unistyles theme (`theme.colors.ink`), so no hex is written outside
  * `src/theme/`.
  *
@@ -106,12 +107,18 @@ export const light: Palette = {
   unknownText: '#5b606a',
 };
 
-/** Night already passes AA, so its text roles equal its base colours. */
+/**
+ * The PWA's night, with two text roles lightened (same hue and saturation)
+ * until they reach 4.6:1 on every background they sit on: `subtle` (was
+ * #7c828c, 4.27 on `surface2`) and `radiantText` (was the `radiant` base,
+ * 3.74 on `radiantSoft` over `surface2`). Every other text role equals its
+ * base colour, which already passes.
+ */
 export const night: Palette = {
   radiant: '#e85322',
   radiantStrong: '#c9431a',
   radiantPressed: '#b83d18',
-  radiantText: '#e85322',
+  radiantText: '#ec7148',
   radiantSoft: 'rgba(232, 83, 34, 0.16)',
   bg: '#0e0f11',
   surface: '#17181b',
@@ -119,7 +126,7 @@ export const night: Palette = {
   surface3: '#26282d',
   ink: '#f2f4f7',
   muted: '#a3a8b1',
-  subtle: '#7c828c',
+  subtle: '#828891',
   line: 'rgba(242, 244, 247, 0.09)',
   inverse: '#f2f4f7',
   onInverse: '#141517',
@@ -141,8 +148,9 @@ export const night: Palette = {
 /**
  * Garage (Inicio v3 and the Intro): its own light palette (`.v3`,
  * `.intro-v3` in the PWA). Red is only for «Vencido», and its red passes AA
- * as text, so `overdueText` equals `overdue`. Night is not art-directed for
- * Garage: in night, Garage uses `night`.
+ * as text, so `overdueText` equals `overdue`. `muted` is darkened (same hue
+ * and saturation) from the PWA's #6b6e74, 4.03 on `surface3`, to reach 4.6:1
+ * there. Night is not art-directed for Garage: in night, Garage uses `night`.
  */
 export const garage: Palette = {
   ...light,
@@ -151,7 +159,7 @@ export const garage: Palette = {
   surface2: '#f4f4f5',
   surface3: '#e4e4e6',
   ink: '#0e0f11',
-  muted: '#6b6e74',
+  muted: '#62656b',
   subtle: '#6a6c72',
   line: 'rgba(14, 15, 17, 0.08)',
   inverse: '#0e0f11',

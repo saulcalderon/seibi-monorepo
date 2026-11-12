@@ -2,8 +2,8 @@
 
 Seibi's native app has one design system. Every color, size, radius and
 font comes from the theme in `apps/mobile` (built in SEI-42), and the check
-scripts (SEI-46) fail a PR that writes a raw number, color or string in a
-screen or component. Read this before any UI work.
+scripts (see Checks) fail a PR that writes a raw number, color or string in
+a screen or component. Read this before any UI work.
 
 **The port keeps the PWA's look.** Values below are taken from
 `apps/app/src/index.css` and the PWA's components. The Paper redesign comes
@@ -26,7 +26,7 @@ the theme; don't write it in the screen.
 | `radiant` | `#e85322` | `#e85322` | Brand accent for non-text: focus rings, active indicators, icons |
 | `radiantStrong` | `#c9431a` | `#c9431a` | Primary button fill (white text 4.88:1) |
 | `radiantPressed` | `#b83d18` | `#b83d18` | Pressed primary button (white text 5.65:1) |
-| `radiantText` | `#c14019` | `#e85322` | Radiant-coloured text and links |
+| `radiantText` | `#c14019` | `#ec7148` | Radiant-coloured text and links |
 | `radiantSoft` | `#fdeee8` | `rgb(232 83 34 / 16%)` | Brand-tinted backgrounds |
 | `bg` | `#f2f4f7` | `#0e0f11` | Screen background |
 | `surface` | `#ffffff` | `#17181b` | Cards, sheets |
@@ -34,7 +34,7 @@ the theme; don't write it in the screen.
 | `surface3` | `#eceef2` | `#26282d` | Controls, tracks, skeletons |
 | `ink` | `#141517` | `#f2f4f7` | Primary text |
 | `muted` | `#5b606a` | `#a3a8b1` | Secondary text |
-| `subtle` | `#686e79` | `#7c828c` | Tertiary text, chevrons |
+| `subtle` | `#686e79` | `#828891` | Tertiary text, chevrons |
 | `line` | `rgb(20 21 23 / 8%)` | `rgb(242 244 247 / 9%)` | Hairlines, card borders |
 | `inverse` | `#141517` | `#f2f4f7` | Inverse surfaces |
 | `onInverse` | `#f2f4f7` | `#141517` | Text on `inverse` |
@@ -54,8 +54,9 @@ Three palette rules the PWA already has, and the port keeps:
   night (`.intro-day` in the PWA).
 - **Garage (Inicio, v3) has its own light palette**, used on Inicio and the
   intro (`.v3`, `.intro-v3`): `bg #f1f1f2`, `surface #ffffff`, `surface2
-  #f4f4f5`, `surface3 #e4e4e6`, `ink #0e0f11`, `muted #6b6e74`, `subtle
-  #6a6c72` (was `#9a9ca1`, see Accessibility), `line rgb(14 15 17 / 8%)`, `inverse #0e0f11`, `onInverse
+  #f4f4f5`, `surface3 #e4e4e6`, `ink #0e0f11`, `muted #62656b` (was
+  `#6b6e74`), `subtle #6a6c72` (was `#9a9ca1`; both see Accessibility),
+  `line rgb(14 15 17 / 8%)`, `inverse #0e0f11`, `onInverse
   #ffffff`, `overdue #ad2831`, `overdueSoft #f8e6e7`, `overdueText
   #ad2831` (the red already passes AA as text). Every other role is the
   light palette's. Red is only for «Vencido». Night is not art-directed
@@ -201,36 +202,55 @@ Rules:
   (`hitSlop`). `Button` `sm` is 36 pt tall, so it gets `hitSlop`.
 - Buttons and chips grow with their text: `minHeight`, never `height`.
 - Color is never the only signal: each Reminder status shows its text.
-- Text contrast is 4.5:1, large text 3:1, checked on both palettes.
+- Text contrast is 4.5:1, large text 3:1, checked on all three palettes
+  (`light`, `night`, `garage`). Non-text status and brand colors (dots,
+  bars, icons, focus rings) need 3:1.
 
-**Light-palette fixes** (decided 2026-11-11). The PWA's light palette
-failed AA in these pairs; the port changes only the text roles, so fills,
-dots, bars and icons keep their colors (non-text needs 3:1, which they
-meet). Night keeps the PWA's values, and its text roles equal the base
-colors. Measured in SEI-42, three night pairs are below 4.5:1: `subtle` on
-`surface2` (4.27), `radiantText` on `surface2` (4.47) and on `radiantSoft`
-(4.42). Their fix is open; the contrast check (SEI-46) will flag them.
+**Contrast fixes** (light decided 2026-11-11; night and Garage
+2026-11-12). The PWA's palettes failed AA in these pairs; the port changes
+only the text roles, so fills, dots, bars and icons keep their colors
+(non-text needs 3:1, which they meet). Text roles not in the table equal
+their base colors, which already pass.
 
-| Pair | PWA | Port | Worst ratio after |
-| --- | --- | --- | --- |
-| White on the primary button | `radiant` 3.69 | fill `radiantStrong` | 4.88 |
-| Radiant text on surfaces and `radiantSoft` | `radiant` 3.69 | `radiantText #c14019` | 4.63 |
-| `subtle` on `bg`, `surface`, `surface2` | `#8a909a` 2.92 | `#686e79` | 4.65 |
-| Garage `subtle` on Garage `bg` | `#9a9ca1` 2.43 | `#6a6c72` | 4.65 |
-| «Al día» text, incl. on `okSoft` | `ok` 3.86 | `okText #157c4c` | 4.61 |
-| «Por vencer» text, incl. on `soonSoft` | `soon` 3.57 | `soonText #9d5e00` | 4.66 |
-| «Vencido» text, incl. on `bg` and `overdueSoft` | `overdue` 4.25 | `overdueText #c63128` | 4.61 |
+Which background each text role sits on:
 
-Each new shade is the same hue, darkened until it reaches 4.6:1 against
-every background it sits on. The contrast check (SEI-46) tests these pairs.
+- `ink` and `muted`: `bg`, `surface`, `surface2`, and `surface3`
+  (controls: segmented controls, neutral badges and tiles).
+- `subtle`: `bg`, `surface`, `surface2`.
+- `radiantText`, `okText`, `soonText`, `overdueText`, `unknownText`: `bg`,
+  `surface`, `surface2`, and their soft fill (`radiantSoft`, `okSoft`…). A
+  badge sits on any of the three surfaces, so a translucent fill (night's)
+  is measured over each of them.
+- `onInverse` on `inverse`; `onRadiant` on `radiantStrong` and
+  `radiantPressed`.
 
-## Checks (SEI-46)
+| Palette | Pair | PWA | Port | Worst ratio after |
+| --- | --- | --- | --- | --- |
+| light | White on the primary button | `radiant` 3.69 | fill `radiantStrong` | 4.88 |
+| light | Radiant text on surfaces and `radiantSoft` | `radiant` 3.69 | `radiantText #c14019` | 4.63 |
+| light | `subtle` on `bg`, `surface`, `surface2` | `#8a909a` 2.92 | `#686e79` | 4.65 |
+| light | «Al día» text, incl. on `okSoft` | `ok` 3.86 | `okText #157c4c` | 4.61 |
+| light | «Por vencer» text, incl. on `soonSoft` | `soon` 3.57 | `soonText #9d5e00` | 4.66 |
+| light | «Vencido» text, incl. on `bg` and `overdueSoft` | `overdue` 4.25 | `overdueText #c63128` | 4.61 |
+| night | `subtle` on `surface2` | `#7c828c` 4.27 | `#828891` | 4.62 |
+| night | Radiant text on surfaces and `radiantSoft` | `radiant` 3.74 (on `radiantSoft` over `surface2`) | `radiantText #ec7148` | 4.62 |
+| garage | `subtle` on Garage `bg` | `#9a9ca1` 2.43 | `#6a6c72` | 4.65 |
+| garage | `muted` on Garage `surface3` | `#6b6e74` 4.03 | `#62656b` | 4.60 |
 
-Adapted from Paradero (MIT; keep its licence notice in each script). They
-run with typecheck and lint in one `check` script, in CI on every PR.
+Each new shade keeps the role's hue and saturation and moves only its
+lightness (darker on the light palettes, lighter on night) until it
+reaches 4.6:1 against every background in its list. The contrast check
+tests these pairs.
+
+## Checks
+
+Three scripts in `apps/mobile/scripts/`, adapted from Paradero (MIT; its
+licence notice is in each). `pnpm check` at the repo root runs them after
+the app's typecheck and lint, and CI runs it on every PR. Each failure
+prints `file:line:column` (or the palette pair) and the fix.
 
 | Script | Fails on |
 | --- | --- |
-| `check-tokens` | Raw layout numbers and hex or rgba colors in screens and components |
-| `check-contrast` | A text pair in the `light` or `night` theme below 4.5:1 (3:1 for large text) |
-| `check-strings` | Text in JSX or in spoken props (`accessibilityLabel`, `title`, `placeholder`, …) that doesn't come from i18n |
+| `check-tokens.mjs` | A raw color (hex, `rgb()`, `hsl()`, or a named color in a color prop) or a raw layout or type number (padding, gap, width, `borderRadius`, `fontSize`…; 0 is fine) in any file under `src/` except `src/theme/`. It reads `StyleSheet.create((theme) => …)`, its variants and inline styles, and names the token to use (`padding: 24` → `theme.space[6]`) |
+| `check-contrast.ts` | A text pair from Accessibility's list below 4.5:1, or a status or brand color below 3:1 on `bg`, `surface` or `surface2`, in `light`, `night` or `garage` (`src/theme/palettes.ts`) |
+| `check-strings.mjs` | Text in JSX, in shown or spoken props (`accessibilityLabel`, `title`, `placeholder`, …) or in `Alert.alert` that doesn't come from `es.json` |
