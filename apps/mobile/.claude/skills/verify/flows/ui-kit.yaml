@@ -85,20 +85,18 @@ name: The UI kit draws and works in light
           cropOn:
             id: kit-chip-all-count
 
-# Cards and rows: a row is one button.
-- scrollUntilVisible:
-    element:
-      id: kit-row-oil
-    timeout: 60000
-    centerElement: true
-- waitForAnimationToEnd:
-    timeout: 2000
-- tapOn:
-    id: kit-row-oil
+# Cards and rows: a row is one button. Scroll down to the line under the
+# card first: the card then sits mid-screen. Scrolling to the row itself can
+# stop with it under the iOS header, which Maestro counts as visible, and the
+# tap lands on the header.
 - scrollUntilVisible:
     element:
       id: kit-row-check
     timeout: 60000
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    id: kit-row-oil
 - assertVisible:
     id: kit-row-check
     text: 'Fila tocada: Cambio de aceite'
