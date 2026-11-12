@@ -10,8 +10,7 @@ name: App PR
 on:
   pull_request:
   push:
-    # TEMP (SEI-46): run on this branch before its PR exists. Revert before the PR.
-    branches: [main, saulcalderon1408/sei-46-ci-de-la-app-nativa-en-cada-pr]
+    branches: [main]
 
 permissions:
   contents: read
