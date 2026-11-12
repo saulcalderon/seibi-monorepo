@@ -1,0 +1,12 @@
+{
+  "source": "NHTSA vPIC",
+  "request": "https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/nomake/modelyear/2015?format=json",
+  "status": 200,
+  "recordedAt": "2026-11-12T08:40:00Z",
+  "body": {
+    "Count": 0,
+    "Message": "Results returned successfully",
+    "SearchCriteria": "Make:nomake | ModelYear:2015",
+    "Results": []
+  }
+}

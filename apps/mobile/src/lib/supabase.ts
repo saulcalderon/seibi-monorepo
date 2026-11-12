@@ -3,6 +3,8 @@ import { AppState } from 'react-native';
 
 import { sessionStorage } from '@/auth/device';
 
+import type { Database } from './database.types';
+
 // Inlined at build time from the EAS environment of the build profile, or
 // from apps/mobile/.env.local on a developer's machine (see .env.example).
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
@@ -15,8 +17,12 @@ if (!url || !publishableKey) {
   );
 }
 
-/** The one Supabase client. The same project and users as the PWA. */
-export const supabase = createClient(url, publishableKey, {
+/**
+ * The one Supabase client. The same project and users as the PWA. Tables are
+ * typed by `database.types.ts`, generated from seibi-dev's schema
+ * (ARCHITECTURE.md → Data).
+ */
+export const supabase = createClient<Database>(url, publishableKey, {
   auth: {
     storage: sessionStorage,
     persistSession: true,

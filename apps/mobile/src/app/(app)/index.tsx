@@ -1,5 +1,6 @@
 import { Button, Host } from '@expo/ui';
 import { currentOdometer } from '@seibi/maintenance-engine/odometer';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
@@ -38,7 +39,19 @@ export default function StartScreen() {
       <ThemeCheck />
       <ThemePicker />
       <Account />
+      {process.env.EXPO_PUBLIC_APP_VARIANT === 'development' ? <OpenDataCheck /> : null}
     </View>
+  );
+}
+
+/** Seibi Dev only: opens the data check screen (SEI-53) until real screens use the data layer. */
+function OpenDataCheck() {
+  const { t } = useTranslation();
+  const router = useRouter();
+  return (
+    <Host matchContents>
+      <Button testID="open-data-check" label={t('dataCheck.open')} variant="text" onPress={() => router.push('/data-check')} />
+    </Host>
   );
 }
 

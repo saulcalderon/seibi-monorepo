@@ -2,6 +2,9 @@ import type { Session } from '@supabase/supabase-js';
 import { useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
+import { deleteAccountResponse } from '@/data/account/schemas';
+import { invokeFunction } from '@/data/functions';
+import { queryClient } from '@/data/query-client';
 import { supabase } from '@/lib/supabase';
 
 import { kvStore, sessionStorage } from './device';
@@ -42,7 +45,8 @@ function publish() {
   listeners.forEach((listener) => listener());
 }
 
-const device = { session: sessionStorage, data: kvStore, providers: [signOutOfGoogle] };
+// The query cache holds the person's Vehicles and profile in memory; it goes with the rest.
+const device = { session: sessionStorage, data: kvStore, providers: [signOutOfGoogle], caches: [queryClient] };
 const wipeDevice = createDeviceWipe(device);
 
 /** Signs out and leaves nothing of the person on this device. */
@@ -56,11 +60,11 @@ async function showAccountDeleted() {
 
 /**
  * Deletes the account and everything in it (`delete-account` Edge
- * Function), then signs out. Throws when the server did not delete it.
+ * Function), then signs out. Throws when the server did not answer
+ * `{ deleted: true }`.
  */
 export async function deleteAccount(): Promise<void> {
-  const { error } = await supabase.functions.invoke('delete-account', { body: {} });
-  if (error) throw error;
+  await invokeFunction('delete-account', {}, deleteAccountResponse);
   await showAccountDeleted();
 }
 

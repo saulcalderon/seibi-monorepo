@@ -17,16 +17,19 @@ type DeviceDeps = {
   data: Pick<DataStore, 'getAllKeys' | 'removeItem'>;
   /** Each provider's own sign-out (Google remembers the last account). Failures are ignored. */
   providers: (() => Promise<unknown>)[];
+  /** In-memory caches that hold the person's data (the query cache). Cleared first. */
+  caches?: { clear(): void }[];
 };
 
 /**
- * Deletes everything of the person on the device: the session entries and
- * their key, every `user.` key, the providers' remembered accounts. Safe to
- * run twice; it also runs when Supabase signs out on its own (a revoked
- * refresh token).
+ * Deletes everything of the person on the device: the in-memory caches, the
+ * session entries and their key, every `user.` key, the providers'
+ * remembered accounts. Safe to run twice; it also runs when Supabase signs
+ * out on its own (a revoked refresh token).
  */
 export function createDeviceWipe(deps: DeviceDeps): () => Promise<void> {
   return async function wipeDevice() {
+    deps.caches?.forEach((cache) => cache.clear());
     const names = await deps.data.getAllKeys();
     await Promise.all([
       deps.session.clear(),

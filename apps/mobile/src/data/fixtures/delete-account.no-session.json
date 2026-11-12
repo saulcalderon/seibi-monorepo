@@ -1,0 +1,10 @@
+{
+  "function": "delete-account",
+  "request": {},
+  "status": 401,
+  "recordedAt": "2026-11-12T08:47:57.145Z",
+  "body": {
+    "error": "unauthorized",
+    "message": "Inicia sesión para continuar."
+  }
+}
