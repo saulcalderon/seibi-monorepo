@@ -215,7 +215,9 @@ From the Paradero and Zagged reviews and the planning session:
 - **OTA before the first release.** Zagged added EAS Update late and
   couldn't update its early builds.
 - **Detail screens inside each tab.** In Paradero the tab bar vanished on
-  detail screens that were top-level routes.
+  detail screens that were top-level routes. SEI-55 puts them in each
+  tab's own stack (`ARCHITECTURE.md` → Navigation); keep new detail
+  screens there.
 - **SEI-48 keeps `glb_path`.** The frozen PWA selects it; dropping it
   breaks production on the next merge.
 - **Untried anywhere:** native Google sign-in with Supabase (Zagged used

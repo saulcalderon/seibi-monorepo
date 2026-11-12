@@ -133,6 +133,17 @@ export const size = {
   silhouette: { sm: 136, lg: 240 },
   /** A still hero image's height: the Vehicle on the sign-in screen (`h-48`). */
   hero: 192,
+  /** The header's avatar, which opens Perfil: `size-9`, with `hitSlop` up to `target`. */
+  avatar: 36,
+  /** The floating [+] that opens the actions sheet: Material's 56 pt FAB (the PWA's dock button is 52). */
+  fab: 56,
+  /**
+   * The tab bar's own height above the bottom safe area, which the floating
+   * [+] sits on: NativeTabs can't be measured from JavaScript. iOS 26's
+   * floating glass bar and Material 3's navigation bar; checked on both
+   * platforms' screenshots (SEI-55).
+   */
+  tabBar: { ios: 49, android: 80 },
   /** Borders: the PWA's `ring-1` around fields and cards, `ring-2` on focus. */
   border: { thin: 1, focus: 2 },
   /**

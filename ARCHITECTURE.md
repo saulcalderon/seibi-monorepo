@@ -21,8 +21,9 @@ Seibi is moving from a PWA to a native app:
   v3). It is shut down once the native app is in both stores (SEI-49).
 - **Target:** a native iOS and Android app built with **Expo + React
   Native** in `apps/mobile` (`@seibi/mobile`). Its base exists (SEI-41:
-  config, builds, updates, one placeholder start screen; SEI-43: i18n;
-  SEI-44: native auth), and so does its data layer (SEI-53); the rest of
+  config, builds, updates; SEI-43: i18n; SEI-44: native auth), and so do
+  its data layer (SEI-53), UI kit (SEI-54) and app shell of tabs, [+] and
+  placeholder screens (SEI-55); the rest of
   the Linear milestone «1 · Base nativa» and the port's screens are being
   built.
 
@@ -248,11 +249,73 @@ The migration's order, scope and tickets are in
   it in an app but forbids sharing the font file through a public
   repository, and this repo is public, so the file is not in git. How it
   joins is an open question in [`docs/PLAN.md`](./docs/PLAN.md).
-- **Navigation:** four `NativeTabs` (Inicio · Mi flota · Avisos ·
-  Estimados; Estimados joins after launch with S10), each with its own
-  stack holding its detail screens. A
-  floating [+] above the tab bar (glass on iOS, Material on Android) opens
-  the quick actions in a `formSheet`. Perfil opens from the header avatar.
+- **Navigation** (SEI-55): the app shell lives in `src/app/(app)/` and
+  `src/shell/`.
+
+  ```
+  src/app/
+    _layout.tsx                  root Stack: Stack.Protected (app) · (auth)/… · ui-kit
+    +native-intent.tsx           seibi-dev://vehicle/<id> → Mi flota (src/shell/links.ts)
+    (app)/_layout.tsx            Stack, anchor (tabs): (tabs) · actions · record-service · update-mileage · data-check
+    (app)/(tabs)/_layout.tsx     NativeTabs + the floating [+] drawn over them
+    (app)/(tabs)/(home)/index.tsx            Inicio  (/)
+    (app)/(tabs)/(fleet)/fleet.tsx           Mi flota (/fleet)
+    (app)/(tabs)/(reminders)/reminders.tsx   Avisos (/reminders)
+    (app)/(tabs)/(home,fleet,reminders)/     one Stack per tab: _layout · vehicle/[id] · profile
+  ```
+
+  - **Tabs.** Three `NativeTabs` (`expo-router/native-tabs`): Inicio ·
+    Mi flota · Avisos. Liquid Glass on iOS 26 (the system draws it),
+    Material 3 on Android (`surface` bar, `radiantSoft` indicator). The
+    selected label and icon use `radiantText` (text contrast), the rest
+    `muted`. Estimados has no tab until S10 adds one by OTA (decided
+    2026-11-11: no «pronto» screen). Tabs are static; adding one is a code
+    change, never a runtime toggle (it would remount the navigator). The
+    bar never minimizes on scroll (`minimizeBehavior="never"`), so the [+]
+    always sits right above it.
+  - **A stack per tab.** The array group `(home,fleet,reminders)/` gives
+    each tab its own copy of the same stack (`TabStack`,
+    `src/shell/tab-stack.tsx`, after Paradero): the root under a large
+    title with the avatar on the right, then `vehicle/[id]` and `profile`.
+    A detail screen opens inside the tab you are in, under its bar, and
+    each tab keeps its place while you visit another. Detail screens are
+    never top-level routes (in Paradero that hid the tab bar).
+    `unstable_settings` anchors each group to its root, so a link to a
+    detail still has its list under it. Screens inside the tabs scroll in
+    `TabScroll`, whose end leaves room for the [+].
+  - **The [+]** (`FloatingAction`, `src/ui/floating-action*.tsx`;
+    `ActionsButton` places it). NativeTabs has no slot for a button and
+    doesn't let a tab's press be intercepted, so the tabs layout draws it
+    over the tabs, outside them, bottom right, `size.tabBar` above the
+    bottom safe area (NativeTabs can't be measured; a token per platform,
+    checked on screenshots). iOS: an interactive `GlassView`
+    (`expo-glass-effect`) tinted `radiant` with an `onRadiant` [+]; a solid
+    `inverse` circle where Liquid Glass isn't available. Android: Material
+    3's own `FloatingActionButton` from `@expo/ui/jetpack-compose`
+    (`radiantStrong` with an `onRadiant` glyph, the XML drawable
+    `assets/icons/add.xml`). Spoken label «Acciones rápidas». It pushes
+    `/actions`.
+  - **Actions sheet** (`(app)/actions.tsx`): a `formSheet` sized to its
+    content, «¿Qué quieres hacer?» with «Registrar un Servicio» and
+    «Actualizar Kilometraje». No Appointment action until S13 ships it.
+    An action replaces the sheet with its own (`router.replace`):
+    `record-service` and `update-mileage`, placeholder sheets until S7 and
+    S8 put their forms on those routes.
+  - **Perfil** opens from the header avatar (`ProfileButton`: Google's
+    picture, else initials; on iOS 26 the header seats it on its own glass
+    circle) inside the current tab. Until S11 it is a placeholder with
+    who is signed in, «Tema», «Cerrar sesión», «Eliminar cuenta» and, in
+    Seibi Dev, links to «Revisión de datos» and the UI kit.
+  - **Deep links.** Everything in `(app)` is behind `Stack.Protected`:
+    signed out, a link lands on sign-in (and is not replayed after
+    sign-in). `vehicle/[id]` exists in all three tabs, so
+    `+native-intent.tsx` sends `seibi-dev://vehicle/<id>` (or `seibi://`)
+    to Mi flota, where a person would find it; other links pass through.
+  - **Placeholders.** The tab roots, the Vehicle detail and Perfil are
+    placeholders built from kit components over the data layer (Inicio:
+    greeting and active Vehicle; Mi flota: the Vehicles; Avisos: each
+    Vehicle's Reminders). The S-tickets replace their content, not the
+    routes.
 - **Styling:** Unistyles 3 (`react-native-unistyles` on
   `react-native-nitro-modules`; SEI-42's spike proved it on SDK 58 on both
   platforms). The theme lives in `src/theme/`, values from
@@ -295,7 +358,7 @@ The migration's order, scope and tickets are in
   view from mount). Both are in `docs/DESIGN.md`
   (Type → Text that fits; Spacing and radius → Corners on Android).
 - **UI kit sample screen:** every component and a sample form sheet, at
-  `seibi-dev://ui-kit`. The screens live in `src/ui/dev/`; the routes in
+  `seibi-dev://ui-kit` (Perfil links to it in Seibi Dev). The screens live in `src/ui/dev/`; the routes in
   `src/app/ui-kit/` `require` them only when `EXPO_PUBLIC_APP_VARIANT` is
   `development`, the same bundle-time fold as the data check, so Metro
   leaves them out of every other bundle. The layout also redirects home
@@ -309,8 +372,8 @@ The migration's order, scope and tickets are in
   configuring, so a cold start draws the chosen theme first. `system` turns
   Unistyles' adaptive themes on; a fixed choice turns them off and also
   overrides React Native's colour scheme, so native views (alerts, the
-  status bar, `@expo/ui`) match. Perfil (S11) gets the control; until then
-  the placeholder start screen carries the PWA's «Tema» segmented control.
+  status bar, `@expo/ui`) match. The control is the PWA's «Tema»
+  segmented control, in the placeholder Perfil until S11 ports the screen.
 - **Auth** (`src/auth/`, `src/lib/supabase.ts`): the same Supabase users
   as the PWA.
   - **Client.** One `supabase` client (`src/lib/supabase.ts`) built from
@@ -534,7 +597,7 @@ The migration's order, scope and tickets are in
     `currencyDisplay`; on Hermes it prints what a browser prints (`$1,234`,
     `-$40`, `$1,234.50`), checked with the dev-only screen below on the
     iOS simulator and the Android emulator, so it needs no workaround.
-  - **Dev-only check.** In Seibi Dev only, the start screen opens
+  - **Dev-only check.** In Seibi Dev only, Perfil opens
     «Revisión de datos» (`src/app/(app)/data-check.tsx`, the screen in
     `src/data/dev/`): it lists the person's Vehicles, saves a standalone
     reading and prints the formatters on the phone. Other bundles don't

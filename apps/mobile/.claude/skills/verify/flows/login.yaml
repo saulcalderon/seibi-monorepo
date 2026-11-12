@@ -6,7 +6,7 @@
 # (lockup, Vehicle, headline, the provider buttons, the legal links), stops
 # while the flow types into the test form, and starts again with the form
 # filled, the keyboard down and every character masked, for the tap on
-# «Entrar con correo», the signed-in home and the sign-out back to Login.
+# «Entrar con correo», Inicio, Perfil and the sign-out back to Login.
 appId: ${APP_ID}
 name: Login renders, its links and buttons answer, the test sign-in opens the app and sign-out returns to Login
 ---
@@ -19,13 +19,14 @@ name: Login renders, its links and buttons answer, the test sign-in opens the ap
     optional: true
 - extendedWaitUntil:
     visible:
-      id: 'sign-in-title|start-title'
+      id: 'sign-in-title|home-screen'
     timeout: 120000
 - runFlow:
     when:
       visible:
-        id: start-title
+        id: home-screen
     commands:
+      - runFlow: open-profile.yaml
       - tapOn:
           id: sign-out
       - extendedWaitUntil:
@@ -56,7 +57,7 @@ name: Login renders, its links and buttons answer, the test sign-in opens the ap
       - assertVisible:
           id: sign-in-apple
 - assertNotVisible:
-    id: start-title
+    id: home-screen
 - takeScreenshot: login
 # The legal line: «Términos» opens the Terms in the in-app browser; closing it returns to Login.
 - scrollUntilVisible:
@@ -230,20 +231,21 @@ name: Login renders, its links and buttons answer, the test sign-in opens the ap
           optional: true
 - extendedWaitUntil:
     visible:
-      id: start-title
+      id: home-screen
     timeout: 30000
-- assertVisible:
-    id: signed-in-as
-    text: ${TEST_EMAIL}
 - takeScreenshot: signed-in
+# Perfil, from the header avatar, names the account.
+- runFlow: open-profile.yaml
+- takeScreenshot: signed-in-profile
 # Back can't re-enter Login: the (auth) group is closed while signed in (Android's Back leaves the app).
 - openLink: ${APP_URL}sign-in
 - waitForAnimationToEnd
 - assertVisible:
-    id: start-title
+    id: home-screen
 - assertNotVisible:
     id: sign-in-title
-# Sign out: Login again.
+# Sign out, from Perfil: Login again.
+- runFlow: open-profile.yaml
 - tapOn:
     id: sign-out
 - extendedWaitUntil:
@@ -251,6 +253,6 @@ name: Login renders, its links and buttons answer, the test sign-in opens the ap
       id: sign-in-title
     timeout: 30000
 - assertNotVisible:
-    id: start-title
+    id: home-screen
 - takeScreenshot: signed-out
 - stopRecording

@@ -8,6 +8,8 @@ name: Delete the account from the app, then «Cuenta eliminada»
 - stopApp
 - openLink: ${DEV_URL}
 - runFlow: sign-in.yaml
+# Account deletion lives in Perfil, which the header avatar opens.
+- runFlow: open-profile.yaml
 - takeScreenshot: before-delete
 - tapOn:
     id: delete-account
@@ -25,7 +27,7 @@ name: Delete the account from the app, then «Cuenta eliminada»
       id: account-deleted-title
     timeout: 30000
 - assertNotVisible:
-    id: start-title
+    id: home-screen
 - takeScreenshot: account-deleted
 - tapOn:
     id: account-deleted-continue
@@ -38,7 +40,7 @@ name: Delete the account from the app, then «Cuenta eliminada»
 - openLink: ${DEV_URL}
 - extendedWaitUntil:
     visible:
-      id: 'sign-in-title|start-title'
+      id: 'sign-in-title|home-screen'
     timeout: 120000
 - assertVisible:
     id: sign-in-title

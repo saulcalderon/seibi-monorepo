@@ -2,7 +2,8 @@
 # (features/theme.md). Run through scripts/verify.sh drive <ios|android> theme,
 # which passes APP_ID and DEV_URL and sends recordings and screenshots to the
 # run's evidence folder. The flow switches the device's dark mode itself and
-# leaves it in light, with the preference back on Auto.
+# leaves it in light, with the preference back on Auto. The «Tema» control
+# lives in Perfil, which the header avatar opens.
 appId: ${APP_ID}
 name: The theme follows the phone and the saved preference
 ---
@@ -11,8 +12,9 @@ name: The theme follows the phone and the saved preference
 - setDarkMode: disabled
 - stopApp
 - openLink: ${DEV_URL}
-# The start screen is the signed-in home (SEI-44): sign in first when signed out.
+# Inicio is the signed-in home (SEI-44): sign in first when signed out.
 - runFlow: sign-in.yaml
+- runFlow: open-profile.yaml
 # Start from Auto, in case an earlier run stopped with a saved preference.
 - tapOn:
     id: theme-system
@@ -26,7 +28,7 @@ name: The theme follows the phone and the saved preference
     timeout: 3000
 - takeScreenshot: system-light
 # The phone switches to dark mode while Seibi is open: the screen turns night
-# in place. The heading never leaves the screen, so nothing reloads.
+# in place. Perfil never leaves the screen, so nothing reloads.
 - setDarkMode: enabled
 - extendedWaitUntil:
     visible:
@@ -34,12 +36,9 @@ name: The theme follows the phone and the saved preference
       text: 'theme: night \(system\)'
     timeout: 10000
 - assertVisible:
-    id: start-title
-    text: Seibi
+    id: profile-screen
 - assertVisible:
-    id: engine-check
-    text: 'maintenance-engine: 12500 km'
-# Let the system's crossfade (or the splash fade) finish before the picture.
+    id: tab-home
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: system-night
@@ -58,7 +57,6 @@ name: The theme follows the phone and the saved preference
       id: theme-check
       text: 'theme: night \(preference\)'
     timeout: 10000
-# Let the system's crossfade (or the splash fade) finish before the picture.
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: preference-night
@@ -67,12 +65,15 @@ name: The theme follows the phone and the saved preference
 - openLink: ${DEV_URL}
 - extendedWaitUntil:
     visible:
-      id: start-title
+      id: home-screen
     timeout: 120000
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: preference-night-cold-start-home
+- runFlow: open-profile.yaml
 - assertVisible:
     id: theme-check
     text: 'theme: night \(preference\)'
-# Let the system's crossfade (or the splash fade) finish before the picture.
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: preference-night-cold-start
@@ -84,7 +85,6 @@ name: The theme follows the phone and the saved preference
       id: theme-check
       text: 'theme: light \(system\)'
     timeout: 10000
-# Let the system's crossfade (or the splash fade) finish before the picture.
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: system-light-restored

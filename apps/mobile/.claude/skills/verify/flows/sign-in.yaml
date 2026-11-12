@@ -1,14 +1,15 @@
 # Subflow, not driven alone: other flows run it with `runFlow: sign-in.yaml`
 # right after opening the app. It signs in with the seibi-dev test account
 # (TEST_EMAIL, TEST_PASSWORD from verify.sh) when the sign-in screen shows,
-# and ends on the signed-in home either way. Feature: features/auth.md.
+# and ends on Inicio, the signed-in home, either way. Feature:
+# features/auth.md.
 appId: ${APP_ID}
 name: Sign in with the test account when signed out
 ---
-# The first screen after the splash: sign-in when signed out, home when signed in.
+# The first screen after the splash: sign-in when signed out, Inicio when signed in.
 - extendedWaitUntil:
     visible:
-      id: 'sign-in-title|start-title'
+      id: 'sign-in-title|home-screen'
     timeout: 120000
 - runFlow:
     when:
@@ -42,8 +43,5 @@ name: Sign in with the test account when signed out
                 optional: true
 - extendedWaitUntil:
     visible:
-      id: start-title
+      id: home-screen
     timeout: 30000
-- assertVisible:
-    id: signed-in-as
-    text: ${TEST_EMAIL}

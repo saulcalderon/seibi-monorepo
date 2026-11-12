@@ -13,13 +13,14 @@ name: Login in night (night splash, light Login, night app after sign-in)
 - openLink: ${DEV_URL}
 - extendedWaitUntil:
     visible:
-      id: 'sign-in-title|start-title'
+      id: 'sign-in-title|home-screen'
     timeout: 120000
 - runFlow:
     when:
       visible:
-        id: start-title
+        id: home-screen
     commands:
+      - runFlow: open-profile.yaml
       - tapOn:
           id: sign-out
       - extendedWaitUntil:
@@ -47,10 +48,13 @@ name: Login in night (night splash, light Login, night app after sign-in)
 - runFlow: sign-in.yaml
 - waitForAnimationToEnd:
     timeout: 3000
+- takeScreenshot: night-signed-in
+# Perfil reports the active theme; sign-out lives there too.
+- runFlow: open-profile.yaml
 - assertVisible:
     id: theme-check
     text: 'theme: night.*'
-- takeScreenshot: night-signed-in
+- takeScreenshot: night-signed-in-profile
 - tapOn:
     id: sign-out
 - extendedWaitUntil:

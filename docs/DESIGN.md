@@ -193,6 +193,9 @@ lines fit its box (`text-fit.ts`).
 | `logo.sm` / `md` / `lg` | 24 / 44 / 72 | The isotype's height |
 | `silhouette.sm` / `lg` | 136 / 240 | A silhouette's width |
 | `hero` | 192 | A still hero image's height: the Vehicle on Login (`h-48`) |
+| `avatar` | 36 | The header avatar that opens Perfil (`hitSlop` to 44) |
+| `fab` | 56 | The floating [+] |
+| `tabBar.ios` / `android` | 49 / 80 | The tab bar's height above the bottom safe area, where the [+] sits (NativeTabs can't be measured; checked on screenshots) |
 | `border.thin` / `focus` | 1 / 2 | Field and card borders; the focus ring |
 | `hangingSpace` | 6 | The font size of the thin space `Text` hangs after its words on Android (Type → Text that fits) |
 
@@ -242,7 +245,7 @@ it natively without a re-render.
 | `AppleSignInButton`, `GoogleSignInButton` | `src/auth/provider-buttons.tsx` (not in the kit: they belong to sign-in) | Apple's: Apple's own `AppleAuthenticationButton`, «Continuar con Apple», black, a pill, as tall as Google's (Apple's HIG: the system button, equal prominence). Google's: built to Google's branding guidelines: light style (white fill, 1 pt `#747775` stroke, `#1f1f1f` text), the standard four-colour «G» at 20 pt, Google's padding (iOS 16 · 12 · 16, Android 12 · 10 · 12), a pill, «Continuar con Google» in the platform font at 500, 14/20 (`Text` `family="system"`: Google asks for Google Sans, which apps can't embed); `minHeight` 44, grows with the text; a spinner replaces the «G» while Google opens | Login's pills |
 | `UIProvider` | `provider.tsx` | Wraps the root layout: gesture handler, keyboard controller, toaster | — |
 | Combobox (makes and models) | — | Not in the kit yet: it comes with the Vehicle form | `ui/Combobox.tsx` |
-| Floating [+] | — | Glass on iOS (`expo-glass-effect`), Material-style on Android; ticket C | The Dock's centre [+] |
+| `FloatingAction` | `floating-action.ios.tsx`, `floating-action.tsx` | The floating [+] (SEI-55), 56 pt (`size.fab`), `label` required (spoken alone). iOS: an interactive `GlassView` (`expo-glass-effect`) tinted `radiant` with an `onRadiant` [+], plus the kit's press scale; a solid `inverse` circle where Liquid Glass is missing. Android: Material 3's `FloatingActionButton` from `@expo/ui/jetpack-compose` (its own shape, elevation and ripple), `radiantStrong` with an `onRadiant` glyph (4.88:1). The app shell places it bottom right, `space[3]` above the tab bar | The Dock's centre [+] |
 
 **Native controls (`@expo/ui` 58).** Each was tried on both platforms in
 the sample screen (SEI-54); none needed a React Native fallback, and only

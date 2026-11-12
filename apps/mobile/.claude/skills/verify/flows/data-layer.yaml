@@ -17,8 +17,14 @@ name: The data layer lists Vehicles and saves a Mileage reading
 - openLink: ${DEV_URL}
 - extendedWaitUntil:
     visible:
-      id: start-title
+      id: home-screen
     timeout: 120000
+# Perfil (from the header avatar) links to the data check in Seibi Dev.
+- runFlow: open-profile.yaml
+- scrollUntilVisible:
+    element:
+      id: open-data-check
+    direction: DOWN
 - tapOn:
     id: open-data-check
 - extendedWaitUntil:

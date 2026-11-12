@@ -1,6 +1,7 @@
 # Feature: sign-in, session and sign-out (features/auth.md).
 # Run through scripts/verify.sh drive <ios|android> auth, which passes
 # APP_ID, DEV_URL, APP_URL and the test account (TEST_EMAIL, TEST_PASSWORD).
+# Sign-out lives in Perfil, which the header avatar opens.
 appId: ${APP_ID}
 name: Test sign-in, the session survives a relaunch, sign-out closes the app again
 ---
@@ -10,14 +11,15 @@ name: Test sign-in, the session survives a relaunch, sign-out closes the app aga
 - openLink: ${DEV_URL}
 - extendedWaitUntil:
     visible:
-      id: 'sign-in-title|start-title'
+      id: 'sign-in-title|home-screen'
     timeout: 120000
 # Start signed out: an earlier run may have left the test account signed in.
 - runFlow:
     when:
       visible:
-        id: start-title
+        id: home-screen
     commands:
+      - runFlow: open-profile.yaml
       - tapOn:
           id: sign-out
       - extendedWaitUntil:
@@ -30,7 +32,14 @@ name: Test sign-in, the session survives a relaunch, sign-out closes the app aga
 - assertVisible:
     id: sign-in-title
 - assertNotVisible:
-    id: start-title
+    id: home-screen
+# Nor does a link to a Vehicle (the route is inside the protected group).
+- openLink: ${APP_URL}vehicle/00000000-0000-4000-8000-000000000000
+- waitForAnimationToEnd
+- assertVisible:
+    id: sign-in-title
+- assertNotVisible:
+    id: vehicle-screen
 - takeScreenshot: signed-out
 # Sign in with the test account (development and preview builds only).
 - runFlow: sign-in.yaml
@@ -40,22 +49,21 @@ name: Test sign-in, the session survives a relaunch, sign-out closes the app aga
 - openLink: ${DEV_URL}
 - extendedWaitUntil:
     visible:
-      id: 'sign-in-title|start-title'
+      id: 'sign-in-title|home-screen'
     timeout: 120000
 - assertVisible:
-    id: start-title
-- assertVisible:
-    id: signed-in-as
-    text: ${TEST_EMAIL}
+    id: home-screen
+- runFlow: open-profile.yaml
 - takeScreenshot: session-restored
-# Signed in, the sign-in screen is closed instead.
+# Signed in, the sign-in screen is closed instead: the link lands on Inicio.
 - openLink: ${APP_URL}sign-in
 - waitForAnimationToEnd
-- assertVisible:
-    id: start-title
 - assertNotVisible:
     id: sign-in-title
-# Sign out.
+- assertVisible:
+    id: home-screen
+# Sign out, from Perfil.
+- runFlow: open-profile.yaml
 - tapOn:
     id: sign-out
 - extendedWaitUntil:
@@ -63,7 +71,7 @@ name: Test sign-in, the session survives a relaunch, sign-out closes the app aga
       id: sign-in-title
     timeout: 30000
 - assertNotVisible:
-    id: start-title
+    id: home-screen
 - takeScreenshot: signed-out-again
 # The (app) group is closed again, also from a deep link.
 - openLink: ${APP_URL}
@@ -71,13 +79,13 @@ name: Test sign-in, the session survives a relaunch, sign-out closes the app aga
 - assertVisible:
     id: sign-in-title
 - assertNotVisible:
-    id: start-title
+    id: home-screen
 # And after a relaunch: sign-out left no session on the device.
 - stopApp
 - openLink: ${DEV_URL}
 - extendedWaitUntil:
     visible:
-      id: 'sign-in-title|start-title'
+      id: 'sign-in-title|home-screen'
     timeout: 120000
 - assertVisible:
     id: sign-in-title
