@@ -11,10 +11,8 @@ name: The theme follows the phone and the saved preference
 - setDarkMode: disabled
 - stopApp
 - openLink: ${DEV_URL}
-- extendedWaitUntil:
-    visible:
-      id: start-title
-    timeout: 120000
+# The start screen is the signed-in home (SEI-44): sign in first when signed out.
+- runFlow: sign-in.yaml
 # Start from Auto, in case an earlier run stopped with a saved preference.
 - tapOn:
     id: theme-system

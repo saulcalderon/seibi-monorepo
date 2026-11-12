@@ -21,7 +21,7 @@ function fakeAuth(session: EncryptedStorage, outcome: 'ok' | 'network-error') {
 
 async function signedInDevice() {
   const keys = memoryKeys();
-  const data = memoryData({ 'theme-preference': 'night', 'language.v1': 'es' });
+  const data = memoryData({ 'theme.v1': 'night', 'language.v1': 'es' });
   const session = createEncryptedStorage({ keys, data, cipher });
   await session.setItem(NAME, JSON.stringify({ access_token: 'a', refresh_token: 'r' }));
   await data.setItem(userDataKey('active-vehicle'), 'f3c1');
@@ -38,7 +38,7 @@ describe('signOut', () => {
     await createSignOut({ auth, session, data, providers: [google] })();
 
     expect(auth.calls).toEqual([{ scope: 'local' }]);
-    expect([...data.entries.keys()].sort()).toEqual(['language.v1', 'theme-preference']);
+    expect([...data.entries.keys()].sort()).toEqual(['language.v1', 'theme.v1']);
     expect(keys.value).toBeNull();
     expect(google).toHaveBeenCalledOnce();
   });
@@ -49,7 +49,7 @@ describe('signOut', () => {
 
     await createSignOut({ auth, session, data, providers: [] })();
 
-    expect([...data.entries.keys()].sort()).toEqual(['language.v1', 'theme-preference']);
+    expect([...data.entries.keys()].sort()).toEqual(['language.v1', 'theme.v1']);
     expect(keys.value).toBeNull();
     // The second call finds no session and only emits SIGNED_OUT.
     expect(auth.calls).toHaveLength(2);
@@ -61,7 +61,7 @@ describe('signOut', () => {
 
     await Promise.all([wipeDevice(), wipeDevice()]);
 
-    expect([...data.entries.keys()].sort()).toEqual(['language.v1', 'theme-preference']);
+    expect([...data.entries.keys()].sort()).toEqual(['language.v1', 'theme.v1']);
     expect(keys.value).toBeNull();
   });
 
@@ -73,6 +73,6 @@ describe('signOut', () => {
     });
 
     await expect(createSignOut({ auth, session, data, providers: [failing] })()).resolves.toBeUndefined();
-    expect([...data.entries.keys()].sort()).toEqual(['language.v1', 'theme-preference']);
+    expect([...data.entries.keys()].sort()).toEqual(['language.v1', 'theme.v1']);
   });
 });

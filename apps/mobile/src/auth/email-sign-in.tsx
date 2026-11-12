@@ -1,6 +1,7 @@
 import { Button, Host } from '@expo/ui';
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, useColorScheme, View } from 'react-native';
+import { Text, TextInput, View } from 'react-native';
+import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import { supabase } from '@/lib/supabase';
 
@@ -12,7 +13,7 @@ import { supabase } from '@/lib/supabase';
  * not in es.json, for the same reason: es.json ships in every bundle.
  */
 export function EmailSignIn() {
-  const night = useColorScheme() === 'dark';
+  const { theme } = useUnistyles();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -26,17 +27,16 @@ export function EmailSignIn() {
     if (result.error) setError(result.error.message);
   }
 
-  const input = [styles.input, night ? styles.inputNight : styles.inputLight];
   return (
     <View testID="test-sign-in" style={styles.form}>
-      <Text style={[styles.label, night ? styles.mutedNight : styles.mutedLight]}>Entrar con la cuenta de prueba</Text>
+      <Text style={styles.label}>Entrar con la cuenta de prueba</Text>
       <TextInput
         testID="test-sign-in-email"
-        style={input}
+        style={styles.input}
         value={email}
         onChangeText={setEmail}
         placeholder="Correo"
-        placeholderTextColor="#8b9099"
+        placeholderTextColor={theme.colors.subtle}
         autoCapitalize="none"
         autoCorrect={false}
         autoComplete="off"
@@ -45,11 +45,11 @@ export function EmailSignIn() {
       />
       <TextInput
         testID="test-sign-in-password"
-        style={input}
+        style={styles.input}
         value={password}
         onChangeText={setPassword}
         placeholder="Contraseña"
-        placeholderTextColor="#8b9099"
+        placeholderTextColor={theme.colors.subtle}
         secureTextEntry
         autoCapitalize="none"
         autoComplete="off"
@@ -74,20 +74,31 @@ export function EmailSignIn() {
   );
 }
 
-const styles = StyleSheet.create({
-  form: { alignSelf: 'stretch', gap: 10 },
-  label: { fontFamily: 'Archivo_500Medium', fontSize: 13 },
-  input: {
-    fontFamily: 'Archivo_400Regular',
-    fontSize: 16,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+const styles = StyleSheet.create((theme) => ({
+  form: {
+    alignSelf: 'stretch',
+    gap: theme.space[2.5],
   },
-  inputLight: { backgroundColor: '#ffffff', borderColor: '#c9cdd4', color: '#141517' },
-  inputNight: { backgroundColor: '#1a1c1f', borderColor: '#3a3d43', color: '#f2f4f7' },
-  mutedLight: { color: '#5b606a' },
-  mutedNight: { color: '#a3a8b1' },
-  error: { fontFamily: 'Archivo_400Regular', fontSize: 13, color: '#c2410c' },
-});
+  label: {
+    ...theme.type.footnote,
+    fontFamily: theme.fonts.sans[500],
+    color: theme.colors.muted,
+  },
+  input: {
+    ...theme.type.callout,
+    fontFamily: theme.fonts.sans[400],
+    color: theme.colors.ink,
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.line,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: theme.radius.lg,
+    borderCurve: 'continuous',
+    paddingHorizontal: theme.space[3.5],
+    paddingVertical: theme.space[3],
+  },
+  error: {
+    ...theme.type.footnote,
+    fontFamily: theme.fonts.sans[400],
+    color: theme.colors.overdueText,
+  },
+}));

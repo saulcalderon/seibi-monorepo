@@ -2,7 +2,8 @@ import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { type ComponentType, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Platform, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, Text, View } from 'react-native';
+import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import { signInWithApple } from '@/auth/apple';
 import { googleSignInAvailable, signInWithGoogle } from '@/auth/google';
@@ -21,7 +22,9 @@ type Provider = 'apple' | 'google';
 // The plain sign-in screen. Its design is S1 (SEI-56).
 export default function SignInScreen() {
   const { t } = useTranslation();
-  const night = useColorScheme() === 'dark';
+  // The providers' own buttons take a light or dark style, not theme colours.
+  const { rt, theme } = useUnistyles();
+  const night = rt.themeName === 'dark';
   const [appleAvailable, setAppleAvailable] = useState(false);
   const [busy, setBusy] = useState<Provider | null>(null);
 
@@ -43,12 +46,12 @@ export default function SignInScreen() {
   }
 
   return (
-    <View testID="sign-in-screen" style={[styles.screen, night ? styles.screenNight : styles.screenLight]}>
+    <View testID="sign-in-screen" style={styles.screen}>
       <View style={styles.heading}>
-        <Text testID="sign-in-title" accessibilityRole="header" style={[styles.title, night ? styles.inkNight : styles.inkLight]}>
+        <Text testID="sign-in-title" accessibilityRole="header" style={styles.title}>
           {t('start.title')}
         </Text>
-        <Text style={[styles.subtitle, night ? styles.mutedNight : styles.mutedLight]}>{t('signIn.subtitle')}</Text>
+        <Text style={styles.subtitle}>{t('signIn.subtitle')}</Text>
       </View>
       <View style={styles.buttons}>
         {appleAvailable ? (
@@ -60,7 +63,7 @@ export default function SignInScreen() {
                 ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
                 : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
             }
-            cornerRadius={12}
+            cornerRadius={theme.radius.lg}
             style={styles.providerButton}
             onPress={() => void signIn('apple')}
           />
@@ -82,17 +85,36 @@ export default function SignInScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, justifyContent: 'center', gap: 32, padding: 24 },
-  screenLight: { backgroundColor: '#f2f4f7' },
-  screenNight: { backgroundColor: '#0e0f11' },
-  heading: { alignItems: 'center', gap: 6 },
-  title: { fontFamily: 'Archivo_700Bold', fontSize: 34, letterSpacing: -0.34 },
-  subtitle: { fontFamily: 'Archivo_400Regular', fontSize: 16 },
-  inkLight: { color: '#141517' },
-  inkNight: { color: '#f2f4f7' },
-  mutedLight: { color: '#5b606a' },
-  mutedNight: { color: '#a3a8b1' },
-  buttons: { gap: 12, alignItems: 'stretch' },
-  providerButton: { height: 50, alignSelf: 'stretch' },
-});
+const styles = StyleSheet.create((theme) => ({
+  screen: {
+    flex: 1,
+    justifyContent: 'center',
+    gap: theme.space[8],
+    padding: theme.space[6],
+    backgroundColor: theme.colors.bg,
+  },
+  heading: {
+    alignItems: 'center',
+    gap: theme.space[1.5],
+  },
+  title: {
+    ...theme.type.largeTitle,
+    fontFamily: theme.fonts.display,
+    letterSpacing: theme.type.largeTitle.fontSize * theme.displayTracking,
+    color: theme.colors.ink,
+  },
+  subtitle: {
+    ...theme.type.callout,
+    fontFamily: theme.fonts.sans[400],
+    color: theme.colors.muted,
+  },
+  buttons: {
+    gap: theme.space[3],
+    alignItems: 'stretch',
+  },
+  providerButton: {
+    // Above the 44 pt minimum touch target; Apple's button needs a fixed height.
+    height: theme.space[12],
+    alignSelf: 'stretch',
+  },
+}));

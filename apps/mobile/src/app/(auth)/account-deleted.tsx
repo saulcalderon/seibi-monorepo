@@ -1,6 +1,7 @@
 import { Button, Host } from '@expo/ui';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { StyleSheet } from 'react-native-unistyles';
 
 import { acknowledgeAccountDeleted } from '@/auth/session';
 
@@ -9,14 +10,13 @@ import { acknowledgeAccountDeleted } from '@/auth/session';
 // person is left on the device by the time it shows.
 export default function AccountDeletedScreen() {
   const { t } = useTranslation();
-  const night = useColorScheme() === 'dark';
 
   return (
-    <View testID="account-deleted-screen" style={[styles.screen, night ? styles.screenNight : styles.screenLight]}>
-      <Text testID="account-deleted-title" accessibilityRole="header" style={[styles.title, night ? styles.inkNight : styles.inkLight]}>
+    <View testID="account-deleted-screen" style={styles.screen}>
+      <Text testID="account-deleted-title" accessibilityRole="header" style={styles.title}>
         {t('account.deleted.title')}
       </Text>
-      <Text style={[styles.body, night ? styles.mutedNight : styles.mutedLight]}>{t('account.deleted.message')}</Text>
+      <Text style={styles.body}>{t('account.deleted.message')}</Text>
       <Host matchContents style={styles.action}>
         <Button testID="account-deleted-continue" label={t('account.deleted.continue')} onPress={acknowledgeAccountDeleted} />
       </Host>
@@ -24,15 +24,28 @@ export default function AccountDeletedScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 },
-  screenLight: { backgroundColor: '#f2f4f7' },
-  screenNight: { backgroundColor: '#0e0f11' },
-  title: { fontFamily: 'Archivo_700Bold', fontSize: 28, letterSpacing: -0.28 },
-  body: { fontFamily: 'Archivo_400Regular', fontSize: 16, lineHeight: 22, textAlign: 'center' },
-  inkLight: { color: '#141517' },
-  inkNight: { color: '#f2f4f7' },
-  mutedLight: { color: '#5b606a' },
-  mutedNight: { color: '#a3a8b1' },
-  action: { marginTop: 12 },
-});
+const styles = StyleSheet.create((theme) => ({
+  screen: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.space[3],
+    padding: theme.space[6],
+    backgroundColor: theme.colors.bg,
+  },
+  title: {
+    ...theme.type.title1,
+    fontFamily: theme.fonts.display,
+    letterSpacing: theme.type.title1.fontSize * theme.displayTracking,
+    color: theme.colors.ink,
+  },
+  body: {
+    ...theme.type.callout,
+    fontFamily: theme.fonts.sans[400],
+    color: theme.colors.muted,
+    textAlign: 'center',
+  },
+  action: {
+    marginTop: theme.space[3],
+  },
+}));
