@@ -13,6 +13,15 @@ Reminders for what is due, and cost Estimates. Supabase backend; the PWA in
 
 Read [`docs/DESIGN.md`](./docs/DESIGN.md) before any UI work: tokens, components, accessibility rules.
 
+## Prove it works
+
+A PR that changes what a user sees or does must be proven in the running app before it merges:
+
+- Drive it with the `verify` skill in `apps/mobile/.claude/skills/verify/` (generated in SEI-41 with `create-verification-skill`). Until that exists, record the simulator yourself.
+- Evidence: a video of the journey, screenshots, and a read-only seibi-dev query showing the saved data. Attach the video to the Linear ticket and link it from the PR.
+- Add or update the feature's file in the `verify` skill's `features/` map in the same PR.
+- "It compiles" or "tests pass" is not proof (`principle-prove-it-works`).
+
 ## No ADRs
 
 This repo does not use ADRs or `docs/adr/`. When a skill (e.g.
@@ -38,11 +47,12 @@ the Spanish names in the `CONTEXT.md` mapping table. See
 
 ### Mobile app skills (Expo / React Native)
 
-Installed from `expo/skills`, `emilkowalski/skills` and `Appllama/appllama-skills` (see `skills-lock.json`). Each source has one job:
+Installed from `expo/skills`, `emilkowalski/skills`, `Appllama/appllama-skills` and `michael-denyer/pstack-claude` (see `skills-lock.json`). Each source has one job:
 
 - **Appllama, quality bar:** `appllama-app-design-skill` sets the bar a mobile screen must meet before it ships: HIG fidelity, navigation semantics, motion, simulator check. Design direction comes from `docs/DESIGN.md`, not from Appllama: the port keeps the PWA's look, and the Paper redesign starts after the port.
 - **Expo, best practices:** start every Expo/EAS task with `expo-overview`. It routes to `expo-router`, `expo-native-ui`, `expo-ui`, `expo-design-system`, `expo-data-fetching`, `expo-web-to-native` and the `eas-*` skills.
 - **Emil Kowalski, animation and craft:** `expo-animation` builds motion. It is Emil's `animate-expo`, maintained by Expo. `choreograph`, `find-animation-opportunities`, `improve-animations`, `remove-animations`, `apple-design` and `break-ui` review and refine.
+- **pstack, proof:** `create-verification-skill` generates the app's `verify` skill (SEI-41), `maintain-verification-skill` keeps its feature map current, and `principle-prove-it-works` applies before calling any task done. See "Prove it works" above.
 
 Seibi decisions win over skill defaults:
 
