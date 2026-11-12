@@ -1,0 +1,12 @@
+{
+  "function": "vehicle-lookup",
+  "request": {
+    "vehicleId": "13b4dd9a-fa28-4d63-9a42-5b265efb1164"
+  },
+  "status": 202,
+  "recordedAt": "2026-11-12T09:10:19.484Z",
+  "body": {
+    "scheduleId": "312572c6-22f9-4c41-b5f6-49d31d3e0667",
+    "status": "general"
+  }
+}

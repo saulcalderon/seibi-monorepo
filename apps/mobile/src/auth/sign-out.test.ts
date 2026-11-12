@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { ACTIVE_VEHICLE_KEY, INTRO_DONE_KEY } from '@/data/preferences/keys';
+
 import { createEncryptedStorage, type EncryptedStorage } from './encrypted-storage';
 import { createDeviceWipe, createSignOut, userDataKey } from './sign-out';
 import { memoryData, memoryKeys, webCryptoAesGcm as cipher } from './test-doubles';
@@ -73,6 +75,25 @@ describe('signOut', () => {
     });
 
     await expect(createSignOut({ auth, session, data, providers: [failing] })()).resolves.toBeUndefined();
+    expect([...data.entries.keys()].sort()).toEqual(['language.v1', 'theme.v1']);
+  });
+
+  it("forgets the person's data held in memory (the query cache)", async () => {
+    const { data, session } = await signedInDevice();
+    const queryCache = { clear: vi.fn() };
+
+    await createDeviceWipe({ session, data, providers: [], caches: [queryCache] })();
+
+    expect(queryCache.clear).toHaveBeenCalledOnce();
+  });
+
+  it("deletes the person's device preferences, the active Vehicle and the Intro, and keeps the phone's", async () => {
+    const { data, session } = await signedInDevice();
+    await data.setItem(ACTIVE_VEHICLE_KEY, 'f3c1');
+    await data.setItem(INTRO_DONE_KEY, '1');
+
+    await createDeviceWipe({ session, data, providers: [] })();
+
     expect([...data.entries.keys()].sort()).toEqual(['language.v1', 'theme.v1']);
   });
 });

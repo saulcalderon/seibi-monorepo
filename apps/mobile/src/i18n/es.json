@@ -50,5 +50,201 @@
       "message": "Borramos tu cuenta y todo lo que guardaste en Seibi. Puedes crear una nueva cuando quieras.",
       "continue": "Entendido"
     }
+  },
+  "errors": {
+    "network": "No pudimos conectar con Seibi. Revisa tu conexión e intenta de nuevo.",
+    "unknown": "Algo salió mal. Intenta de nuevo.",
+    "invalid_response": "Algo salió mal. Intenta de nuevo.",
+    "session_expired": "Tu sesión expiró. Inicia sesión de nuevo.",
+    "bad_request": "La solicitud no es válida.",
+    "unauthorized": "Inicia sesión para continuar.",
+    "not_found": "No encontramos ese Vehículo.",
+    "internal": "Algo salió mal. Intenta de nuevo en un momento.",
+    "ai_limit": "Llegaste al límite de consultas de hoy. Vuelve mañana.",
+    "ai_unavailable": "La búsqueda con IA no está disponible todavía.",
+    "ai_timeout": "La búsqueda tardó demasiado. Intenta de nuevo.",
+    "ai_failed": "No pudimos completar la búsqueda. Intenta de nuevo.",
+    "render_unavailable": "Las imágenes de los modelos no están disponibles todavía.",
+    "profile_location": "Dinos tu país y ciudad en Perfil para calcular precios de tu zona.",
+    "number_invalid": "Escribe un número válido.",
+    "reading_not_above_current": "Debe ser mayor que el último registro ({{current}}).",
+    "brand_required": "Elige la marca.",
+    "model_required": "Elige o escribe el modelo.",
+    "year_invalid": "Elige el año.",
+    "date_required": "Elige la fecha.",
+    "service_date_future": "Un Servicio ya realizado no puede tener fecha futura. Para una fecha futura crea una Cita.",
+    "service_items_required": "Agrega al menos un trabajo o pieza.",
+    "cost_invalid": "Escribe un costo válido.",
+    "appointment_date_past": "Una Cita es para hoy o una fecha futura. Si ya lo hiciste, registra un Servicio.",
+    "routine_name_required": "Ponle un nombre, por ejemplo “Trabajo”.",
+    "routine_distance_invalid": "Escribe la distancia de ida y vuelta.",
+    "routine_days_invalid": "Elige cuántos días a la semana.",
+    "reminder_title_required": "Escribe qué quieres recordar."
+  },
+  "relative": {
+    "today": "hoy",
+    "tomorrow": "mañana",
+    "yesterday": "ayer",
+    "days": "{{n}} días",
+    "months": "{{n}} meses",
+    "oneYear": "1 año",
+    "years": "{{n}} años",
+    "in": "en {{span}}",
+    "inCapital": "En {{span}}",
+    "ago": "hace {{span}}"
+  },
+  "greeting": {
+    "morning": "Buenos días",
+    "afternoon": "Buenas tardes",
+    "evening": "Buenas noches"
+  },
+  "reminderText": {
+    "unknownDontKnow": "No sabemos cuándo fue. Conviene revisarlo.",
+    "unknownAsk": "¿Cuándo fue la última vez?",
+    "overdueBy": "Vencido por {{distance}} {{measure}}",
+    "dueToday": "Vence hoy",
+    "overdueSince": "Venció {{when}}",
+    "overdue": "Vencido",
+    "inDistance": "En {{distance}} {{measure}}",
+    "about": "aprox. {{when}}",
+    "ok": "Al día",
+    "both": "{{distance}} · {{time}}",
+    "everyDistance": "{{distance}} {{measure}}",
+    "everyMonth": "1 mes",
+    "everyMonths": "{{n}} meses",
+    "every": "Cada {{interval}}",
+    "everyEither": "Cada {{first}} o {{second}}, lo que llegue primero"
+  },
+  "knowledge": {
+    "unset": "Sin definir",
+    "levels": {
+      "none": {
+        "title": "Estoy empezando",
+        "description": "No conozco mucho de mecánica. Necesito que me expliquen paso a paso."
+      },
+      "basic": {
+        "title": "Conozco lo básico",
+        "description": "Sé cuándo cambiar el aceite, revisar llantas y hacer servicios básicos."
+      },
+      "intermediate": {
+        "title": "Tengo experiencia",
+        "description": "Conozco los componentes del vehículo y entiendo las recomendaciones del mecánico."
+      },
+      "advanced": {
+        "title": "Tengo bastante conocimiento",
+        "description": "Realizo algunos mantenimientos y conozco especificaciones y repuestos."
+      }
+    },
+    "check": {
+      "preventive": {
+        "question": "¿Cuál es el principal objetivo del mantenimiento preventivo de un vehículo?",
+        "options": {
+          "prevent": {
+            "text": "Evitar fallas antes de que ocurran",
+            "detail": "Realizar revisiones y servicios periódicos para prevenir problemas y prolongar la vida útil del vehículo."
+          },
+          "repair": {
+            "text": "Reparar el vehículo cuando deja de funcionar",
+            "detail": "Esperar a que aparezcan fallas para llevarlo al taller y solucionar los problemas."
+          },
+          "looks": {
+            "text": "Mejorar la apariencia del vehículo",
+            "detail": "Mantener la pintura, carrocería e interiores en buenas condiciones."
+          },
+          "dontKnow": {
+            "text": "No sé",
+            "detail": "No tengo conocimientos suficientes sobre mantenimiento preventivo."
+          }
+        }
+      },
+      "care_habits": {
+        "question": "¿Qué hábitos ayudan a mantener tu vehículo en buenas condiciones?",
+        "options": {
+          "checksAndDriving": {
+            "text": "Realizar revisiones y mantener buenos hábitos de conducción",
+            "detail": "Revisar llantas, fluidos, frenos y conducir evitando aceleraciones o frenadas bruscas."
+          },
+          "noChecks": {
+            "text": "Utilizar el vehículo sin preocuparse por las revisiones",
+            "detail": "Conducir normalmente y llevarlo al taller únicamente cuando presente algún problema."
+          },
+          "washing": {
+            "text": "Lavar y mantener limpia la carrocería",
+            "detail": "Cuidar principalmente la pintura, los interiores y la apariencia exterior del vehículo."
+          },
+          "dontKnow": {
+            "text": "No sé",
+            "detail": "No tengo suficientes conocimientos sobre el cuidado adecuado de un vehículo."
+          }
+        }
+      },
+      "coolant_light": {
+        "question": "¿Qué significa esta luz en el tablero?",
+        "options": {
+          "overheating": {
+            "text": "Que el motor está sobrecalentándose",
+            "detail": "La temperatura del refrigerante es demasiado alta y debes detenerte de forma segura para evitar daños al motor."
+          },
+          "fuel": {
+            "text": "Que el nivel de combustible está bajo",
+            "detail": "Indica que queda poco combustible en el tanque y necesitas recargar."
+          },
+          "oil": {
+            "text": "Que el aceite del motor necesita cambiarse",
+            "detail": "Advierte que el aceite ha llegado al intervalo recomendado para su reemplazo."
+          },
+          "dontKnow": {
+            "text": "No sé",
+            "detail": "No conozco el significado de esta señal del tablero."
+          }
+        }
+      }
+    }
+  },
+  "countries": {
+    "SV": "El Salvador",
+    "US": "Estados Unidos"
+  },
+  "paint": {
+    "white": "Blanco",
+    "silver": "Plata",
+    "gray": "Gris",
+    "black": "Negro",
+    "red": "Rojo",
+    "burgundy": "Vino",
+    "blue": "Azul",
+    "green": "Verde",
+    "yellow": "Amarillo",
+    "orange": "Naranja",
+    "brown": "Café",
+    "beige": "Beige",
+    "gold": "Dorado"
+  },
+  "dataCheck": {
+    "open": "Revisar datos (desarrollo)",
+    "title": "Revisión de datos",
+    "subtitle": "Solo en desarrollo: lee y escribe en seibi-dev a través de la capa de datos.",
+    "vehicles": "Vehículos",
+    "loading": "Cargando…",
+    "retry": "Reintentar",
+    "empty": "Sin Vehículos todavía.",
+    "createVehicle": "Crear Vehículo de prueba",
+    "creating": "Creando…",
+    "vehicle": "{{name}} {{year}}",
+    "odometer": "Kilometraje actual: {{value}}",
+    "noOdometer": "Sin lecturas todavía",
+    "readingCount": "Lecturas guardadas: {{n}}",
+    "addReading": "Kilometraje de hoy",
+    "readingPlaceholder": "Escribe el número del odómetro",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "saved": "Kilometraje actualizado: {{value}}",
+    "formats": "Formatos en este teléfono",
+    "usd": "Moneda",
+    "usdCents": "Moneda con centavos",
+    "usdRange": "Rango",
+    "distance": "Distancia",
+    "day": "Fecha",
+    "month": "Mes"
   }
 }

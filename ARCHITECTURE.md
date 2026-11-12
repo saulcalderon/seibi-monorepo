@@ -22,8 +22,9 @@ Seibi is moving from a PWA to a native app:
 - **Target:** a native iOS and Android app built with **Expo + React
   Native** in `apps/mobile` (`@seibi/mobile`). Its base exists (SEI-41:
   config, builds, updates, one placeholder start screen; SEI-43: i18n;
-  SEI-44: native auth); the rest of the Linear milestone «1 · Base nativa»
-  and the port's screens are being built.
+  SEI-44: native auth), and so does its data layer (SEI-53); the rest of
+  the Linear milestone «1 · Base nativa» and the port's screens are being
+  built.
 
 The backend does not change in the move: Supabase, the Edge Functions,
 and `packages/maintenance-engine` serve both apps.
@@ -35,7 +36,7 @@ pnpm workspaces (`apps/*`, `packages/*`).
 | Path | Status | What it is |
 | --- | --- | --- |
 | `apps/app` (`@seibi/app`) | exists, frozen | PWA: Vite + TanStack Router SPA |
-| `apps/mobile` (`@seibi/mobile`) | exists (base + auth) | Expo + React Native app; screens arrive with the port's tickets |
+| `apps/mobile` (`@seibi/mobile`) | exists (base + auth + data layer) | Expo + React Native app; screens arrive with the port's tickets |
 | `packages/maintenance-engine` | exists | Reminder math shared by the apps and Edge Functions |
 | `supabase/migrations/` | exists | Schema, RLS, storage buckets, cron |
 | `supabase/functions/` | exists | Edge Functions (Deno) |
@@ -133,7 +134,9 @@ standards").
   reading is dated today and must be strictly greater than the current
   odometer. An edit may set any non-negative number. Do not add an
   insert trigger on `mileage_readings`: a Service writes its reading
-  first, so Postgres cannot tell a backfill from an update.
+  first, so Postgres cannot tell a backfill from an update. The PWA keeps
+  them in `apps/app/src/lib/mutations.ts`; the native app in
+  `apps/mobile/src/data/mileage/rules.ts`, with unit tests.
 - **Current odometer** is not stored. It is the reading with the latest
   calendar date; on ties, the highest number (`currentOdometer` in
   `@seibi/maintenance-engine/odometer`).
@@ -338,11 +341,13 @@ The migration's order, scope and tickets are in
     Google's remembered account. The same wipe runs on every `SIGNED_OUT`,
     so it also happens when Supabase signs out on its own (a refresh token
     revoked elsewhere). Device preferences stay: the theme (`theme.v1`)
-    and the language (`language.v1`) are not under `user.`. Anything new
-    that keeps a person's data on the device (the query cache in SEI-53, push tokens in SEI-47) is cleared
+    and the language (`language.v1`) are not under `user.`. The wipe also
+    clears the in-memory query cache (`caches`, SEI-53). Anything new that
+    keeps a person's data on the device (push tokens in SEI-47) is cleared
     there.
   - **Delete account:** `deleteAccount()` calls the `delete-account` Edge
-    Function, then `signOut()`, and opens «Cuenta eliminada». The same
+    Function (through `invokeFunction`, which checks for `{ deleted: true }`),
+    then `signOut()`, and opens «Cuenta eliminada». The same
     screen opens when the account was deleted elsewhere: on launch and on
     every return to the foreground, `getUser()` answering `user_not_found`
     signs out and shows it. (With an expired access token the refresh
@@ -400,10 +405,87 @@ The migration's order, scope and tickets are in
     `locales/en.json` and `en` to `locales` and `LANGUAGES` in
     `app.config.ts`. The `app.config.ts` part is native, so English ships
     in a new build, not by OTA alone.
-- **Data:** TanStack Query against Supabase directly, as in the PWA, one
-  folder per domain with query key factories. Tables are typed by the
-  generated Supabase types; Zod validates Edge Function responses, NHTSA
-  vPIC and forms.
+- **Data** (`src/data/`, `src/lib/`; SEI-53): TanStack Query against
+  Supabase directly, ported from the PWA's `apps/app/src/lib/` (copied, not
+  shared; `@seibi/maintenance-engine` stays shared). Screens read and write
+  only through these hooks.
+  - **Client and cache.** The one `supabase` client is typed with
+    `Database` from `src/lib/database.types.ts`. The one `queryClient`
+    (`src/data/query-client.ts`, provided by the root layout) keeps the
+    PWA's defaults (fresh for 60 s, one retry) and refetches stale queries
+    when the app comes back to the foreground: `focusManager` listens to
+    `AppState`. Online state stays TanStack's default (always online):
+    reading the network needs a native module (`expo-network` or NetInfo)
+    the binary doesn't ship. Nothing is persisted (no offline data), and
+    sign-out clears the cache (Auth → Sign-out).
+  - **One folder per domain**, each with its hooks:
+    `vehicle/` (create, update, withdraw, restore, refresh schedule and
+    render, `useRenderNudge` for the shell), `service/`, `mileage/`
+    (`rules.ts`: the Mileage write rules), `reminder/` (hand-written
+    Reminders, Reminder state, `rememberTasks`, the Reminder text),
+    `routine/`, `appointment/`, `estimate/`, `profile/`, `task/` (the
+    Maintenance task catalog), `vpic/`, `account/` and `preferences/`.
+    Vehicle, Service, Mileage, Reminder, Routine and Appointment are read
+    through **one garage query** (`garage/`: `useGarage`), as in the PWA:
+    every Vehicle with its readings, Services, Routines, Reminders,
+    Appointments, schedule and render in one request, derived by the
+    engine, so screens never disagree. Every write to them goes through
+    `useGarageMutation`, which refetches the garage when it settles.
+  - **Query keys** come from a factory in each domain's `keys.ts`, never a
+    loose string: `garageKeys.user(id)` (`['garage', id]`),
+    `profileKeys.user(id)`, `estimateKeys.user(id)`, `taskKeys.catalog`,
+    `vpicKeys.makes()` / `vpicKeys.models(make, year)`. Keys for the
+    person's data carry their user id; each nests under its domain's
+    `all`, so invalidating the domain reaches every entry.
+  - **Errors** (`src/data/errors.ts`): every failure has a stable code and
+    every code a message in `es.json` under `errors.<code>`; screens show
+    `errorMessage(error, t)`, never a server's text. `InputError(field,
+    code, params)` is a form field that breaks a rule; `RequestError` is an
+    Edge Function's code (`ai_limit`, `profile_location`…), `network`, or
+    `invalid_response`. A code the app doesn't know shows `errors.unknown`.
+    No router import, so it also runs in the unit tests. Form rules are the
+    PWA's own checks, ported as they are (`validateVehicle`,
+    `validateService`…), each throwing an `InputError`.
+  - **Zod at the boundaries** whose shape Seibi doesn't control: the
+    responses of `vehicle-lookup`, `vehicle-render`, `estimates` and
+    `delete-account` (`invokeFunction` in `src/data/functions.ts` takes the
+    schema), the NHTSA vPIC answers (`vpic/schemas.ts`), and the JSON
+    columns the Edge Functions write (`maintenance_schedules.sources`,
+    `estimates.result`). An unexpected shape is `invalid_response`, never a
+    half-read object. The tests parse real recorded answers in
+    `src/data/fixtures/`: seibi-dev's Edge Functions called as the test
+    account, a stored `estimates.result` row, and vpic.nhtsa.dot.gov. A
+    successful `delete-account` is not recorded (it would delete the shared
+    test account); its test uses the shape the function's source returns.
+    Table reads use the generated types, not Zod.
+  - **Generated types.** `src/lib/database.types.ts` is generated from
+    seibi-dev's `public` schema, never edited by hand. Regenerate it after
+    a migration lands on seibi-dev, in the same PR: the Supabase MCP's
+    `generate_typescript_types` for project `blirxlxmmrhafomkykmr` (paste
+    its output into the file), or the Supabase CLI after `supabase login`:
+    `npx supabase gen types typescript --project-id blirxlxmmrhafomkykmr
+    --schema public > apps/mobile/src/lib/database.types.ts` (it reads the
+    hosted project; no local stack, no Docker). Then run `pnpm typecheck`.
+  - **Device preferences** in the `expo-sqlite` kv-store, read
+    synchronously, keys versioned `.v1`: the theme (`theme.v1`) and the
+    language (`language.v1`) belong to the phone; the active Vehicle
+    (`user.active-vehicle.v1`, `useActiveVehicle`) and the Intro done
+    (`user.intro-done.v1`) belong to the person (`src/data/preferences/`),
+    so sign-out deletes them.
+  - **Formatters** (`src/lib/format.ts`): `es-SV` numbers, money and days
+    as the PWA prints them in a browser; words come from `es.json` through
+    a `t` argument, so they run outside React. Money uses
+    `Intl.NumberFormat` with `style: 'currency'` and no
+    `currencyDisplay`; on Hermes it prints what a browser prints (`$1,234`,
+    `-$40`, `$1,234.50`), checked with the dev-only screen below on the
+    iOS simulator and the Android emulator, so it needs no workaround.
+  - **Dev-only check.** In Seibi Dev only, the start screen opens
+    «Revisión de datos» (`src/app/(app)/data-check.tsx`, the screen in
+    `src/data/dev/`): it lists the person's Vehicles, saves a standalone
+    reading and prints the formatters on the phone. Other bundles don't
+    contain it (the route `require`s it behind `EXPO_PUBLIC_APP_VARIANT`),
+    and `Stack.Protected` keeps the route closed there. It goes once real
+    screens use the data layer.
 - **Accessibility:** WCAG 2.2 AA (rules in `docs/DESIGN.md`).
 - **CI:** `app-pr.yml` runs `pnpm check` at the repo root on every PR (run
   it yourself before pushing). `check` is a Turbo task of `@seibi/mobile`

@@ -19,6 +19,7 @@
     "@react-native-google-signin/google-signin": "^17.0.0",
     "@seibi/maintenance-engine": "workspace:*",
     "@supabase/supabase-js": "^2.110.3",
+    "@tanstack/react-query": "^5.101.2",
     "expo": "~58.0.24",
     "expo-apple-authentication": "~58.0.3",
     "expo-constants": "~58.0.16",
@@ -53,7 +54,8 @@
     "react-native-svg": "15.16.0",
     "react-native-unistyles": "3.8.1",
     "react-native-web": "~0.21.4",
-    "react-native-worklets": "0.13.0"
+    "react-native-worklets": "0.13.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/react": "~19.3.0",

@@ -200,9 +200,10 @@ From the Paradero and Zagged reviews and the planning session:
 - **Metro + pnpm.** Zagged's SDK upgrade pain was Metro config in a
   monorepo. Settle `metro.config.js` and the pnpm workspace in SEI-41.
 - **Currency on Hermes.** Hermes ignores some `Intl.NumberFormat` options
-  (Paradero: `currencyDisplay: 'narrowSymbol'`). `formatUsd` in
-  `apps/app/src/lib/format.ts` uses `style: 'currency'`; check its output
-  on a device.
+  (Paradero: `currencyDisplay: 'narrowSymbol'`). Checked in SEI-53: the
+  native `formatUsd` (`style: 'currency'`, no `currencyDisplay`) prints the
+  same as the PWA in a browser on the iOS simulator and the Android
+  emulator. Keep `currencyDisplay` out of the formatters.
 - **Android icons.** Material Symbols has no filled variants; filled
   icons on Android are SVG.
 - **App Store.** Set `ITSAppUsesNonExemptEncryption` in `app.config.ts`

@@ -71,3 +71,7 @@ handles, required state, commands and observable proof.
   deletion and «Cuenta eliminada». Flows: `auth`; destructive:
   `delete-account`, `account-deleted-elsewhere`. Subflow for every flow
   that needs a session: `sign-in.yaml`.
+- [The data layer reads and writes seibi-dev](./data-layer.md): the
+  development-only «Revisión de datos» screen lists the test account's
+  Vehicles, refuses and saves a standalone Mileage reading, and prints the
+  formatters as Hermes renders them. Flow: `data-layer`.
