@@ -27,8 +27,9 @@ npx supabase secrets set \
 ```
 
 Optional: `FAL_IMAGE_MODEL` (default `fal-ai/flux-pro/v1.1-ultra`),
-`FAL_3D_MODEL` (default `fal-ai/trellis`), `AI_DAILY_LIMIT` (default 20),
-`ALLOWED_ORIGINS`, `OPENAI_BASE_URL`, `PUBLIC_FUNCTIONS_URL`.
+`AI_DAILY_LIMIT` (default 20), `ALLOWED_ORIGINS`, `OPENAI_BASE_URL`,
+`PUBLIC_FUNCTIONS_URL`. `FAL_3D_MODEL` is no longer read: renders are
+image-only (SEI-48).
 
 Generate VAPID keys with `npx web-push generate-vapid-keys`. The public key
 also goes in the app as `VITE_VAPID_PUBLIC_KEY`.
@@ -52,6 +53,7 @@ select vault.create_secret('<same value as CRON_SECRET>', 'cron_secret');
 npx supabase start
 npx supabase functions serve --env-file supabase/functions/.env.local
 for f in supabase/functions/*/index.ts; do deno check "$f"; done
+(cd supabase/functions && deno test --allow-env)
 ```
 
 fal cannot reach a local webhook; set `PUBLIC_FUNCTIONS_URL` to a tunnel

@@ -1,9 +1,11 @@
-// fal calls this when a render step finishes. The URL carries an HMAC token
-// we minted, so only our own jobs are accepted (verify_jwt is off).
+// fal calls this when a Model render's poster finishes. The URL carries an
+// HMAC token we minted, so only our own jobs are accepted (verify_jwt is off).
+// Renders are image-only: a 3D result left over from before SEI-48 carries a
+// token for its old step and is refused.
 
 import { timingSafeEqual } from '../_shared/keys.ts'
-import { webhookToken, type RenderStep } from '../_shared/fal.ts'
-import { completeStep, failStep } from '../_shared/renderSteps.ts'
+import { webhookToken } from '../_shared/fal.ts'
+import { completePoster, failPoster } from '../_shared/renderPoster.ts'
 import { adminClient } from '../_shared/supabase.ts'
 
 type FalWebhook = {
@@ -16,12 +18,9 @@ type FalWebhook = {
 Deno.serve(async (req) => {
   const url = new URL(req.url)
   const renderId = url.searchParams.get('render') ?? ''
-  const step = url.searchParams.get('step') as RenderStep | null
   const token = url.searchParams.get('token') ?? ''
-  if (!renderId || (step !== 'poster' && step !== 'glb')) {
-    return new Response('bad request', { status: 400 })
-  }
-  if (!timingSafeEqual(token, await webhookToken(renderId, step))) {
+  if (!renderId) return new Response('bad request', { status: 400 })
+  if (!timingSafeEqual(token, await webhookToken(renderId))) {
     return new Response('forbidden', { status: 403 })
   }
 
@@ -36,11 +35,11 @@ Deno.serve(async (req) => {
   const body = (await req.json().catch(() => ({}))) as FalWebhook
 
   try {
-    if (body.status !== 'OK' || !body.payload) throw new Error(body.error ?? `fal ${step} failed`)
-    await completeStep(db, render, step, body.payload)
+    if (body.status !== 'OK' || !body.payload) throw new Error(body.error ?? 'fal poster failed')
+    await completePoster(db, render, body.payload)
   } catch (error) {
-    console.error('vehicle-render-webhook', step, error)
-    await failStep(db, renderId, step, error instanceof Error ? error.message : 'failed')
+    console.error('vehicle-render-webhook', error)
+    await failPoster(db, renderId, error instanceof Error ? error.message : 'failed')
   }
 
   return new Response('ok')
