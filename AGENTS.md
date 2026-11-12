@@ -9,6 +9,9 @@ Reminders for what is due, and cost Estimates. Supabase backend; the PWA in
 1. `AGENTS.md` (this file)
 2. [`CONTEXT.md`](./CONTEXT.md) — domain glossary and the English ↔ schema ↔ Spanish names
 3. [`ARCHITECTURE.md`](./ARCHITECTURE.md) — how Seibi works now: stack, backend, rules, working rules
+4. [`docs/PLAN.md`](./docs/PLAN.md) — the PWA → native migration: scope, tickets, order, launch, gotchas
+
+Read [`docs/DESIGN.md`](./docs/DESIGN.md) before any UI work: tokens, components, accessibility rules.
 
 ## No ADRs
 

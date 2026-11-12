@@ -150,7 +150,8 @@ check` on Edge Functions, and the PWA build on every PR.
   queue itself and after 20 min marks the render failed. A render is an
   illustration, never called a photo. Car art and paint presets stay as
   they are. (The image-to-3D/GLB step still in code is being removed:
-  SEI-48.)
+  SEI-48. The `model_renders.glb_path` column stays until SEI-49: the
+  frozen PWA still selects it.)
 - **Navigation.** The floating dock is **Inicio · Mi flota · [+] · Avisos
   · Estimados**. [+] opens quick actions (record a Service, update
   Mileage, plan an Appointment). Service history lives in each Vehicle's
@@ -158,35 +159,91 @@ check` on Edge Functions, and the PWA build on every PR.
 
 ## Native app standards (`apps/mobile`)
 
-- **Default:** as native as possible — native sheets, haptics, system
-  modals over hand-built web-style equivalents.
-- **Expo:** latest stable SDK, Continuous Native Generation (no `ios/` or
-  `android/` in git), Expo Router, React Compiler, New Architecture.
-  Development builds (no Expo Go).
-- **Variants:** one dynamic `app.config.ts`; installable side by side:
-  `com.seibiapp.app.dev` (Seibi Dev), `com.seibiapp.app.preview` (Seibi
-  Preview), `com.seibiapp.app` (Seibi). URL scheme `seibi`.
-- **Builds:** EAS Build profiles `development`, `preview`, `production`;
-  EAS Update channels for OTA updates.
-- **Styling:** Unistyles 3 with a typed theme, `light` and `night`
-  variants, built from the v3 design tokens of the Claude Design handoff
-  (Radiant, semantic surface/ink colors, Reminder status colors, shadows,
-  radii, Clash Display + Archivo). Components use semantic token names,
-  never raw hex.
+The migration's order, scope and tickets are in
+[`docs/PLAN.md`](./docs/PLAN.md); design rules are in
+[`docs/DESIGN.md`](./docs/DESIGN.md).
+
+- **Default:** as native as possible: system sheets, haptics and native
+  controls over hand-built web-style equivalents.
+- **Expo:** SDK 58, Continuous Native Generation (no `ios/` or `android/`
+  in git), Expo Router, React Compiler, New Architecture, typed routes.
+  Development builds (no Expo Go). Add packages with `npx expo install`.
+- **Variants:** one dynamic `app.config.ts`, selected by
+  `EXPO_PUBLIC_APP_VARIANT`; installable side by side:
+  `com.seibiapp.app.dev` (Seibi Dev) and `com.seibiapp.app` (Seibi). One
+  EAS slug. URL scheme `seibi`.
+- **Builds:** EAS Build profiles `development` (Seibi Dev), `preview` and
+  `production` (both build Seibi). Remote app versions with
+  `autoIncrement`.
+- **Updates:** EAS Update with the `fingerprint` runtime policy. An OTA
+  hook checks on launch and on return to foreground and offers a restart.
+  It ships before the first store release.
+- **Navigation:** four `NativeTabs` (Inicio · Mi flota · Avisos ·
+  Estimados; Estimados joins after launch with S10), each with its own
+  stack holding its detail screens. A
+  floating [+] above the tab bar (glass on iOS, Material on Android) opens
+  the quick actions in a `formSheet`. Perfil opens from the header avatar.
+- **Styling:** Unistyles 3, typed `light` and `night` themes with role
+  names (`surface`, `ink`, `line`…), values from `docs/DESIGN.md`. SEI-42
+  starts with a spike on SDK 58; if Unistyles fails it, the fallback is
+  plain `StyleSheet` + tokens with the same role names. Components use
+  role names, never raw values.
 - **Auth:** Supabase with native Apple (`expo-apple-authentication`) and
   native Google (`@react-native-google-signin/google-signin`), both via
-  `signInWithIdToken`. Session in `expo-secure-store`;
-  `startAutoRefresh` / `stopAutoRefresh` follow app foreground/background;
-  routes gated with `Stack.Protected`.
+  `signInWithIdToken`. The session is encrypted at rest: the key in
+  `expo-secure-store`, the data in local storage (a session can exceed
+  SecureStore's ~2 KB value limit). `startAutoRefresh` / `stopAutoRefresh`
+  follow foreground/background; routes are gated with `Stack.Protected`.
+  Email + password sign-in exists only in `development` and `preview`
+  builds, for testing.
 - **Push:** Expo Push Service via `expo-notifications`; device tokens in a
   `push_tokens` table. `reminders-daily` sends to Expo and keeps Web Push
   until the PWA is shut down (SEI-47, SEI-49).
-- **i18n:** `i18next` + `expo-localization`. Spanish first, English
-  later. The Spanish UI uses the Spanish column of the `CONTEXT.md`
-  mapping; the English UI uses the English terms.
-- **Data:** TanStack Query against Supabase directly, as in the PWA.
-- **Paid features** (RevenueCat, Superwall) start only after the port runs
-  on emulators and physical devices.
+- **i18n:** `i18next` + `expo-localization` with typed keys. Spanish only
+  at launch, English later. The Spanish UI uses the Spanish column of the
+  `CONTEXT.md` mapping; the English UI uses the English terms.
+- **Data:** TanStack Query against Supabase directly, as in the PWA, one
+  folder per domain with query key factories. Tables are typed by the
+  generated Supabase types; Zod validates Edge Function responses, NHTSA
+  vPIC and forms.
+- **Accessibility:** WCAG 2.2 AA (rules in `docs/DESIGN.md`).
+- **CI:** typecheck, lint and three check scripts (no raw values,
+  contrast, no untranslated text) on every PR (SEI-46). E2E with Maestro
+  comes after launch (SEI-52).
+- **Paid features** (RevenueCat, Superwall) start after the launch.
+
+### Libraries
+
+What replaces each part of the PWA. Install with `npx expo install` so
+versions match the SDK.
+
+| Need | PWA | Native |
+| --- | --- | --- |
+| Routing | TanStack Router | Expo Router (`NativeTabs`, stacks, `formSheet`, `Stack.Protected`) |
+| Styling | Tailwind + `index.css` | Unistyles 3 |
+| Data | TanStack Query + supabase-js | Same |
+| Validation | — | Zod, at Edge Function, vPIC and form boundaries |
+| Copy / i18n | Paraglide | `i18next` + `expo-localization` |
+| Errors | `@sentry/react` | `@sentry/react-native` |
+| Push | Web Push + service worker | `expo-notifications` |
+| New versions | Service worker update prompt | `expo-updates` (EAS Update) |
+| Motion | `motion` | `react-native-reanimated` + `react-native-gesture-handler` |
+| Icons | `lucide-react` | `expo-symbols` (SF Symbols / Material Symbols) |
+| Vector art | Inline SVG | `react-native-svg` |
+| Sheets | Custom `Sheet` | Expo Router `formSheet` |
+| Pickers, toggles, menus, date picker | Custom fields, `Combobox` | `@expo/ui` |
+| Toasts | `ToastProvider` | `sonner-native` |
+| Confirmations | Custom dialogs | The native alert |
+| Local preferences | `localStorage` | `expo-sqlite` kv-store (never AsyncStorage) |
+| Session at rest | supabase-js default | Encrypted store, key in `expo-secure-store` |
+| Images | `<img>` | `expo-image` |
+| Long lists | DOM lists | FlashList |
+| Forms and keyboard | Browser | `react-native-keyboard-controller` |
+| Invoice photo | `<input type="file">` | `expo-image-picker` |
+| Links, `mailto:` | `<a>` | `expo-web-browser`, `Linking` |
+| Haptics, splash, fonts | — | `expo-haptics`, `expo-splash-screen`, `expo-font` |
+| Glass surfaces | CSS blur | `expo-glass-effect` |
+| E2E | Playwright | Maestro on EAS Workflows (after launch) |
 
 ## Working rules
 
@@ -206,16 +263,8 @@ check` on Edge Functions, and the PWA build on every PR.
 
 ## Open items
 
-- SEI-40 — Turborepo in the monorepo.
-- SEI-41 — create `apps/mobile` with Expo, Expo Router, EAS (3 variants).
-- SEI-42 — Unistyles 3 theme (light/night tokens, fonts).
-- SEI-43 — i18n with `i18next` + `expo-localization`.
-- SEI-44 — native Supabase auth (Apple, Google).
-- SEI-45 — Sentry in the native app.
-- SEI-46 — CI for the native app on every PR.
-- SEI-47 — native push: `push_tokens` and Expo sending in `reminders-daily`.
-- SEI-48 — remove the 3D step from `vehicle-render` (image only).
-- SEI-49 — shut down the PWA and remove Web Push.
-- SEI-50 / SEI-52 — stop using local Supabase; run E2E against seibi-dev
-  (the README and `supabase/functions/README.md` still describe a local
-  stack).
+The migration's open tickets and questions are in
+[`docs/PLAN.md`](./docs/PLAN.md). Outside it:
+
+- SEI-50 — stop using local Supabase everywhere (the README and
+  `supabase/functions/README.md` still describe a local stack).
