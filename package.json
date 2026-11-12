@@ -12,7 +12,8 @@
     "preview": "pnpm --filter @seibi/app preview",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "check": "turbo run check"
   },
   "devDependencies": {
     "turbo": "^2.11.10"

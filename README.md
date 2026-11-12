@@ -71,6 +71,7 @@ local cache in `.turbo/`.
 | `pnpm typecheck` | Typecheck all packages |
 | `pnpm lint` | Lint all packages |
 | `pnpm test` | Unit tests (maintenance engine) |
+| `pnpm check` | The native app's gate, as in CI: its typecheck, lint and check scripts (`apps/mobile/scripts/`) |
 | `pnpm --filter @seibi/app test:e2e` | Playwright smoke test (needs local Supabase) |
 | `pnpm --filter @seibi/mobile ios` | Build Seibi Dev, install it on the iOS Simulator, start Metro (needs Xcode) |
 | `pnpm --filter @seibi/mobile android` | The same on a running Android emulator (needs the Android SDK and Java 17) |
