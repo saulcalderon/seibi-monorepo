@@ -33,6 +33,7 @@ Done when:
 | Copy `apps/app/src/lib/` into `apps/mobile`; no shared data package. `packages/maintenance-engine` stays shared | The PWA is frozen and will be shut down; sharing would only couple the two |
 | Icons: `expo-symbols`, one `{ ios, android }` name map (Paradero's `icon.tsx`) | Native on both platforms and proven in a live app; 30 icons mapped once instead of twice |
 | Navigation: 4 `NativeTabs` plus a floating [+] (bottom right; glass on iOS, Material on Android) that opens the actions sheet | `NativeTabs` can't host a centre action; the floating button stays in thumb reach |
+| Estimados has no tab at launch (3 tabs + [+]); S10 adds the tab back by OTA. If the MVP finishes early, S10 joins before submission | A "pronto" screen risks rejection under App Review guideline 2.1; tabs are JavaScript, so adding one later needs no new review |
 | Test sign-in: email + password in the `development` and `preview` EAS builds only, never in `production` | Apple and Google sign-in can't be automated; a hidden production login breaks App Review guideline 2.3.1 |
 | Accessibility: Paradero's rules and check scripts, aiming at WCAG 2.2 AA. High-contrast palettes come after the redesign | Cheap from the first screen, expensive to retrofit; high contrast is a new feature |
 | Light palette: change only the text roles that fail AA (primary button on `radiantStrong`, new `radiantText`, `okText`, `soonText`, `overdueText`, darker `subtle`); fills, dots and icons keep their colors. Values in `docs/DESIGN.md` → Accessibility | Keeps both "the PWA's look" and AA with the smallest visible change; the redesign starts from passing tokens |
@@ -110,7 +111,7 @@ ticket and keep its behaviour.
 | --- | --- | --- | --- | --- | --- | --- |
 | A | Data layer | Copy queries, mutations and types from `apps/app/src/lib/`; one folder per domain; query key factories; error code → i18n message map (no router import); Zod at the Edge Function and vPIC boundaries; generated Supabase types; kv-store for theme, active Vehicle and intro-done | Screens | SEI-43, SEI-44 | yes | SEI-53 |
 | B | UI kit | The components in `docs/DESIGN.md` on Unistyles variants; `Icon` with the `expo-symbols` map; `sonner-native` toasts; `@expo/ui` pickers, toggles, menus and date picker, each tested on both platforms | Screens | SEI-42 | yes | SEI-54 |
-| C | App shell | 4 `NativeTabs` (Inicio · Mi flota · Avisos · Estimados), a stack per tab; floating [+] opening the actions `formSheet`; header avatar → Perfil | Screen contents; the Appointment action until S13 | SEI-41, B | yes | SEI-55 |
+| C | App shell | `NativeTabs` Inicio · Mi flota · Avisos (Estimados is added by S10), a stack per tab; floating [+] opening the actions `formSheet`; header avatar → Perfil | Screen contents; the Appointment action until S13 | SEI-41, B | yes | SEI-55 |
 | S1 | Splash and Login | Native splash; Apple and Google buttons; one still Vehicle image; legal line | Lockup fly animation; Vehicle carousel | SEI-44, B | yes | SEI-56 |
 | S2 | Intro | Still slides | The phone animation | B, C | no | SEI-57 |
 | S3 | First-run questions | Every question, the push permission ask, the optional first Vehicle (S5's form) | — | A, B, S5 | yes | SEI-58 |
@@ -120,7 +121,7 @@ ticket and keep its behaviour.
 | S7 | Record a Service | Form with line items, shop, date, Mileage, notes; the Mileage write rules | Invoice photo (S12) | A, B, C | yes | SEI-62 |
 | S8 | Update Mileage | A standalone reading dated today, strictly above the current odometer | — | A, B, C | yes | SEI-63 |
 | S9 | Avisos | Statuses, detail with source, snooze, «Completa tu historial», hand-written Reminders, push opt-in | — | A, B, C, SEI-47 | yes | SEI-64 |
-| S10 | Estimados | Estimate form, results, what drives the price, sources, past queries | Chat | A, B, C | no | SEI-65 |
+| S10 | Estimados | The Estimados tab (shipped by OTA), estimate form, results, what drives the price, sources, past queries | Chat | A, B, C | no | SEI-65 |
 | S11 | Perfil | Name, knowledge level, location, theme, notifications, contact email, privacy policy and terms, delete account | «Planes» card | A, B, C | yes | SEI-66 |
 | S12 | Invoice photo | `expo-image-picker` camera + library → Supabase Storage, on the Service form | — | S7 | no | SEI-67 |
 | S13 | Schedule an Appointment | The form, the [+] action, Appointments in Avisos and Vehicle detail | — | A, B, C | no | SEI-68 |
@@ -222,9 +223,6 @@ From the Paradero and Zagged reviews and the planning session:
   SEI-44.
 - **Play's "App access" credentials.** A dedicated test Google account
   for reviewers. Confirm the current form in the store ticket.
-- **The Estimados tab at launch.** Estimados (S10) ships after launch, so
-  its tab is either hidden until then (added back by OTA, since tabs are
-  JavaScript) or shown in a "pronto" state. Decide in SEI-55.
 - **Night for Garage.** The PWA's v3 Garage is art-directed for day only;
   night uses the base night palette. The port keeps that.
 - **[+] position.** Bottom right by default; centred, as in the PWA, if

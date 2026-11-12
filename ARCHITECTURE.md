@@ -179,7 +179,8 @@ The migration's order, scope and tickets are in
   hook checks on launch and on return to foreground and offers a restart.
   It ships before the first store release.
 - **Navigation:** four `NativeTabs` (Inicio · Mi flota · Avisos ·
-  Estimados), each with its own stack holding its detail screens. A
+  Estimados; Estimados joins after launch with S10), each with its own
+  stack holding its detail screens. A
   floating [+] above the tab bar (glass on iOS, Material on Android) opens
   the quick actions in a `formSheet`. Perfil opens from the header avatar.
 - **Styling:** Unistyles 3, typed `light` and `night` themes with role
