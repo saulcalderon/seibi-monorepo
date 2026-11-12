@@ -10,17 +10,20 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import { useAuth } from '@/auth/session';
 import { useOTAUpdate } from '@/hooks/use-ota-update';
 // Initialises i18next synchronously, before the first render.
 import '@/i18n';
 
-// The native splash stays up until the fonts are ready, so no screen ever
-// renders in a fallback font.
+// The native splash stays up until the fonts are ready and the saved
+// session has been read, so no screen renders in a fallback font and a
+// signed-in person never sees the sign-in screen flash.
 void SplashScreen.preventAutoHideAsync();
 SplashScreen.setOptions({ fade: true, duration: 250 });
 
 export default function RootLayout() {
   useOTAUpdate();
+  const auth = useAuth();
 
   // The fonts docs/DESIGN.md names. Headings use Archivo 600 until Clash
   // Display can ship without its file in this public repo (docs/PLAN.md).
@@ -33,7 +36,7 @@ export default function RootLayout() {
     GeistMono_400Regular,
   });
   // A font that fails to load must not keep the app on the splash forever.
-  const ready = loaded || error !== null;
+  const ready = (loaded || error !== null) && auth.status !== 'loading';
 
   useEffect(() => {
     if (ready) void SplashScreen.hideAsync();
@@ -41,10 +44,22 @@ export default function RootLayout() {
 
   if (!ready) return null;
 
+  // Exactly one group is open at a time; when the auth state changes, the
+  // router leaves the closed screens on its own (no redirects by hand).
   return (
     <>
       <StatusBar style="auto" />
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Protected guard={auth.status === 'signed-in'}>
+          <Stack.Screen name="(app)" />
+        </Stack.Protected>
+        <Stack.Protected guard={auth.status === 'signed-out'}>
+          <Stack.Screen name="(auth)/sign-in" />
+        </Stack.Protected>
+        <Stack.Protected guard={auth.status === 'account-deleted'}>
+          <Stack.Screen name="(auth)/account-deleted" />
+        </Stack.Protected>
+      </Stack>
     </>
   );
 }

@@ -234,9 +234,13 @@ From the Paradero and Zagged reviews and the planning session:
   during the EAS build (and for local builds) so it never sits in git.
   Until one is chosen, headings use Archivo 600, the PWA's own fallback.
   Archivo and Geist Mono are under the SIL Open Font License.
-- **Google sign-in setup.** Native Google sign-in needs the iOS and
-  Android client ids added to Supabase's Google provider. Confirm in
-  SEI-44.
+- **Google sign-in setup.** Confirmed in SEI-44: one web client (the ID
+  token's audience on Android), one iOS client per bundle id, one Android
+  client per package and signing key's SHA-1; Supabase's Google provider
+  lists the web and iOS client ids (and the Android ones), with «Skip nonce
+  check» on for iOS. Saul creates them; the app reads them from
+  `EXPO_PUBLIC_GOOGLE_*` (`ARCHITECTURE.md` → Auth). Proven end to end once
+  they exist, on a physical phone.
 - **Play's "App access" credentials.** A dedicated test Google account
   for reviewers. Confirm the current form in the store ticket.
 - **Night for Garage.** The PWA's v3 Garage is art-directed for day only;

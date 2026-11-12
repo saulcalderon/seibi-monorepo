@@ -1,0 +1,46 @@
+# Feature: delete the account from the app (features/auth.md).
+# DESTRUCTIVE: it deletes the seibi-dev test account. Recreate it afterwards
+# (features/auth.md → Gotchas) before any other flow signs in.
+appId: ${APP_ID}
+name: Delete the account from the app, then «Cuenta eliminada»
+---
+- startRecording: delete-account
+- stopApp
+- openLink: ${DEV_URL}
+- runFlow: sign-in.yaml
+- takeScreenshot: before-delete
+- tapOn:
+    id: delete-account
+# The native alert asks first.
+- extendedWaitUntil:
+    visible:
+      text: '¿Eliminar tu cuenta\?'
+    timeout: 10000
+- takeScreenshot: delete-confirm
+- tapOn:
+    text: 'Eliminar|ELIMINAR'
+# delete-account ran, the device was cleaned, and only this screen is open.
+- extendedWaitUntil:
+    visible:
+      id: account-deleted-title
+    timeout: 30000
+- assertNotVisible:
+    id: start-title
+- takeScreenshot: account-deleted
+- tapOn:
+    id: account-deleted-continue
+- extendedWaitUntil:
+    visible:
+      id: sign-in-title
+    timeout: 15000
+# Nothing of the account is left: a relaunch opens sign-in.
+- stopApp
+- openLink: ${DEV_URL}
+- extendedWaitUntil:
+    visible:
+      id: 'sign-in-title|start-title'
+    timeout: 120000
+- assertVisible:
+    id: sign-in-title
+- takeScreenshot: relaunch-after-delete
+- stopRecording

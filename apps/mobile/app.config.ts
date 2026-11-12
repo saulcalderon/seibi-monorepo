@@ -38,6 +38,23 @@ function appVariant(): AppVariant {
   throw new Error(`EXPO_PUBLIC_APP_VARIANT must be "development" or "production"; got "${value}".`);
 }
 
+/**
+ * Google Sign-In on iOS opens through a URL scheme made from the iOS OAuth
+ * client id (`<id>.apps.googleusercontent.com` reversed). Each variant has
+ * its own client, so the id comes from the build's environment. Without it
+ * the plugin is left out and the app hides the Google button.
+ */
+function googleSignInPlugin(): [string, { iosUrlScheme: string }][] {
+  const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+  if (!iosClientId) return [];
+  const suffix = '.apps.googleusercontent.com';
+  if (!iosClientId.endsWith(suffix)) {
+    throw new Error(`EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID must end with "${suffix}"; got "${iosClientId}".`);
+  }
+  const iosUrlScheme = `com.googleusercontent.apps.${iosClientId.slice(0, -suffix.length)}`;
+  return [['@react-native-google-signin/google-signin', { iosUrlScheme }]];
+}
+
 export default ({ config }: ConfigContext): ExpoConfig => {
   const variantName = appVariant();
   const variant = VARIANTS[variantName];
@@ -98,6 +115,15 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           microphonePermission: false,
         },
       ],
+      // Sign in with Apple entitlement. Supabase's Apple provider must list
+      // both bundle ids (com.seibiapp.app, com.seibiapp.app.dev) as client ids.
+      'expo-apple-authentication',
+      // The session's encryption key (Keychain / Android Keystore). No Face
+      // ID prompt guards it, so no Face ID usage string is declared.
+      ['expo-secure-store', { faceIDPermission: false }],
+      // The kv-store: the sealed session and local preferences.
+      'expo-sqlite',
+      ...googleSignInPlugin(),
     ],
     experiments: {
       typedRoutes: true,

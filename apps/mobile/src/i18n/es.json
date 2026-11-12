@@ -17,5 +17,31 @@
     "message": "Reinicia la app para usarla.",
     "later": "Ahora no",
     "restart": "Reiniciar"
+  },
+  "signIn": {
+    "subtitle": "Inicia sesión para continuar",
+    "failedTitle": "No pudimos iniciar sesión",
+    "failedMessage": "Intenta de nuevo."
+  },
+  "account": {
+    "signOut": {
+      "action": "Cerrar sesión",
+      "failedTitle": "No pudimos cerrar sesión",
+      "failedMessage": "Intenta de nuevo."
+    },
+    "delete": {
+      "action": "Eliminar cuenta",
+      "confirmTitle": "¿Eliminar tu cuenta?",
+      "confirmMessage": "Se borran tu cuenta, tus Vehículos y todo su historial. No se puede deshacer.",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar",
+      "failedTitle": "No pudimos eliminar tu cuenta",
+      "failedMessage": "Revisa tu conexión e intenta de nuevo."
+    },
+    "deleted": {
+      "title": "Cuenta eliminada",
+      "message": "Borramos tu cuenta y todo lo que guardaste en Seibi. Puedes crear una nueva cuando quieras.",
+      "continue": "Entendido"
+    }
   }
 }

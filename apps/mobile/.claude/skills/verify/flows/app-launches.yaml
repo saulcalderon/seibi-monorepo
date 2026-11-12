@@ -1,7 +1,7 @@
 # Feature: the app launches to the start screen (features/app-launches.md).
 # Run through scripts/verify.sh drive <ios|android> app-launches, which
-# passes APP_ID and DEV_URL and sends recordings and screenshots to the
-# run's evidence folder.
+# passes APP_ID, DEV_URL and the test account, and sends recordings and
+# screenshots to the run's evidence folder.
 appId: ${APP_ID}
 name: The app launches to the start screen
 ---
@@ -9,11 +9,10 @@ name: The app launches to the start screen
 # Cold start: nothing of Seibi Dev is running before the link opens it.
 - stopApp
 - openLink: ${DEV_URL}
-# The native splash stays until the fonts load, then the start screen shows.
-- extendedWaitUntil:
-    visible:
-      id: start-title
-    timeout: 120000
+# The native splash stays until the fonts and the saved session are ready,
+# then sign-in (signed out) or the start screen (signed in) shows. The
+# start screen is the signed-in home, so the flow signs in when it has to.
+- runFlow: sign-in.yaml
 - assertVisible:
     id: start-title
     text: Seibi

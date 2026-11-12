@@ -4,20 +4,25 @@
   "private": true,
   "main": "index.ts",
   "scripts": {
-    "start": "EXPO_PUBLIC_APP_VARIANT=development expo start",
-    "ios": "EXPO_PUBLIC_APP_VARIANT=development expo run:ios",
-    "android": "EXPO_PUBLIC_APP_VARIANT=development expo run:android",
+    "start": "EXPO_PUBLIC_APP_VARIANT=development EXPO_PUBLIC_TEST_SIGN_IN=1 expo start",
+    "ios": "EXPO_PUBLIC_APP_VARIANT=development EXPO_PUBLIC_TEST_SIGN_IN=1 expo run:ios",
+    "android": "EXPO_PUBLIC_APP_VARIANT=development EXPO_PUBLIC_TEST_SIGN_IN=1 expo run:android",
     "lint": "expo lint --max-warnings 0",
     "typecheck": "tsc --noEmit",
-    "check": "s=0; node --no-warnings scripts/check-tokens.mjs || s=1; node --no-warnings scripts/check-contrast.ts || s=1; node scripts/check-strings.mjs || s=1; exit $s"
+    "check": "s=0; node --no-warnings scripts/check-tokens.mjs || s=1; node --no-warnings scripts/check-contrast.ts || s=1; node scripts/check-strings.mjs || s=1; exit $s",
+    "test": "vitest run"
   },
   "dependencies": {
     "@expo-google-fonts/archivo": "^0.4.2",
     "@expo-google-fonts/geist-mono": "^0.4.3",
     "@expo/ui": "~58.0.28",
+    "@react-native-google-signin/google-signin": "^17.0.0",
     "@seibi/maintenance-engine": "workspace:*",
+    "@supabase/supabase-js": "^2.110.3",
     "expo": "~58.0.24",
+    "expo-apple-authentication": "~58.0.3",
     "expo-constants": "~58.0.16",
+    "expo-crypto": "~58.0.8",
     "expo-dev-client": "~58.0.19",
     "expo-device": "~58.0.5",
     "expo-font": "~58.0.12",
@@ -27,6 +32,7 @@
     "expo-linking": "~58.0.17",
     "expo-localization": "~58.0.5",
     "expo-router": "~58.0.31",
+    "expo-secure-store": "~58.0.3",
     "expo-splash-screen": "~58.0.14",
     "expo-sqlite": "~58.0.16",
     "expo-status-bar": "~58.0.5",
@@ -54,6 +60,7 @@
     "babel-preset-expo": "~58.0.25",
     "eslint": "^9.39.5",
     "eslint-config-expo": "~58.0.4",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.11"
   }
 }

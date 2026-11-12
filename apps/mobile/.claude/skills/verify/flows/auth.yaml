@@ -1,0 +1,85 @@
+# Feature: sign-in, session and sign-out (features/auth.md).
+# Run through scripts/verify.sh drive <ios|android> auth, which passes
+# APP_ID, DEV_URL, APP_URL and the test account (TEST_EMAIL, TEST_PASSWORD).
+appId: ${APP_ID}
+name: Test sign-in, the session survives a relaunch, sign-out closes the app again
+---
+- startRecording: auth
+# Cold start.
+- stopApp
+- openLink: ${DEV_URL}
+- extendedWaitUntil:
+    visible:
+      id: 'sign-in-title|start-title'
+    timeout: 120000
+# Start signed out: an earlier run may have left the test account signed in.
+- runFlow:
+    when:
+      visible:
+        id: start-title
+    commands:
+      - tapOn:
+          id: sign-out
+      - extendedWaitUntil:
+          visible:
+            id: sign-in-title
+          timeout: 30000
+# Signed out, the (app) group is closed: its home does not open even from a deep link.
+- openLink: ${APP_URL}
+- waitForAnimationToEnd
+- assertVisible:
+    id: sign-in-title
+- assertNotVisible:
+    id: start-title
+- takeScreenshot: signed-out
+# Sign in with the test account (development and preview builds only).
+- runFlow: sign-in.yaml
+- takeScreenshot: signed-in
+# Kill and relaunch: the session comes back from the encrypted store.
+- stopApp
+- openLink: ${DEV_URL}
+- extendedWaitUntil:
+    visible:
+      id: 'sign-in-title|start-title'
+    timeout: 120000
+- assertVisible:
+    id: start-title
+- assertVisible:
+    id: signed-in-as
+    text: ${TEST_EMAIL}
+- takeScreenshot: session-restored
+# Signed in, the sign-in screen is closed instead.
+- openLink: ${APP_URL}sign-in
+- waitForAnimationToEnd
+- assertVisible:
+    id: start-title
+- assertNotVisible:
+    id: sign-in-title
+# Sign out.
+- tapOn:
+    id: sign-out
+- extendedWaitUntil:
+    visible:
+      id: sign-in-title
+    timeout: 30000
+- assertNotVisible:
+    id: start-title
+- takeScreenshot: signed-out-again
+# The (app) group is closed again, also from a deep link.
+- openLink: ${APP_URL}
+- waitForAnimationToEnd
+- assertVisible:
+    id: sign-in-title
+- assertNotVisible:
+    id: start-title
+# And after a relaunch: sign-out left no session on the device.
+- stopApp
+- openLink: ${DEV_URL}
+- extendedWaitUntil:
+    visible:
+      id: 'sign-in-title|start-title'
+    timeout: 120000
+- assertVisible:
+    id: sign-in-title
+- takeScreenshot: relaunch-signed-out
+- stopRecording
