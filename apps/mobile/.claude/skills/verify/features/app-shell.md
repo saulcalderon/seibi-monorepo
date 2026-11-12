@@ -57,7 +57,7 @@ Preconditions:
 
 - iOS's back button shows only a chevron (`headerBackButtonDisplayMode: 'minimal'`) and its accessibility label is the previous screen's title, which is also a tab's label: tapping text «Mi flota» can hit the tab instead. The flow goes back with an edge swipe on iOS and `back` on Android.
 - A drag that starts in the middle of the actions sheet scrolls nothing and doesn't close it; `close-sheet.yaml` drags from the sheet's top edge (68 % of the screen height) to the bottom on iOS.
-- The [+] is placed from a per-platform tab bar height (`size.tabBar` in `src/theme/tokens.ts`): NativeTabs can't be measured. If the [+] overlaps the bar or floats far above it on a new OS or device, fix that token, and check `shell-01-home` on both platforms.
+- The [+] is placed from a per-platform tab bar height (`size.tabBar` in `src/theme/tokens.ts`): NativeTabs can't be measured. If the [+] overlaps the bar or floats far above it on a new OS or device, fix that token, and check `shell-01-home` on both platforms. On Android, `shell-01-home` can catch the Material FAB a shade darker (`#b83f1a`) while Compose is still drawing it in; settled, it is `radiantStrong` (`#c9431a`) in every other screenshot.
 - The tab bar never minimizes on scroll (`minimizeBehavior="never"`): a shrinking bar would leave the [+] floating where the bar was.
 - `seibi-dev://vehicle/<id>` exists in all three tabs; `+native-intent.tsx` sends it to «Mi flota». A link to another route (`seibi-dev://profile`) opens in Inicio.
 - Signed out, a deep link lands on sign-in and is not replayed after signing in.
