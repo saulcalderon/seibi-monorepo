@@ -23,9 +23,22 @@ name: Sign in with the test account when signed out
       - inputText:
           text: ${TEST_PASSWORD}
           label: Type the test account's password
-      - hideKeyboard
-      - tapOn:
-          id: test-sign-in-submit
+      # Return submits the form (the keyboard covers «Entrar con correo»,
+      # and iOS's Passwords bar keeps Maestro from hiding it).
+      - pressKey: Enter
+      # iOS offers to save the password over the home; decline it.
+      - runFlow:
+          when:
+            platform: iOS
+          commands:
+            - extendedWaitUntil:
+                visible:
+                  text: 'Not Now|Ahora no'
+                timeout: 10000
+                optional: true
+            - tapOn:
+                text: 'Not Now|Ahora no'
+                optional: true
 - extendedWaitUntil:
     visible:
       id: start-title
