@@ -1,4 +1,5 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
+import { type ConfigPlugin, withAppDelegate } from 'expo/config-plugins';
 
 // Text iOS draws for the app (permission prompts), outside i18next. One file
 // per language, listed in `locales` below.
@@ -38,11 +39,54 @@ function appVariant(): AppVariant {
   throw new Error(`EXPO_PUBLIC_APP_VARIANT must be "development" or "production"; got "${value}".`);
 }
 
+/**
+ * Google Sign-In on iOS opens through a URL scheme made from the iOS OAuth
+ * client id (`<id>.apps.googleusercontent.com` reversed). Each variant has
+ * its own client, so the id comes from the build's environment. Without it
+ * the plugin is left out and the app hides the Google button.
+ */
+function googleSignInPlugin(): [string, { iosUrlScheme: string }][] {
+  const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+  if (!iosClientId) return [];
+  const suffix = '.apps.googleusercontent.com';
+  if (!iosClientId.endsWith(suffix)) {
+    throw new Error(`EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID must end with "${suffix}"; got "${iosClientId}".`);
+  }
+  const iosUrlScheme = `com.googleusercontent.apps.${iosClientId.slice(0, -suffix.length)}`;
+  return [['@react-native-google-signin/google-signin', { iosUrlScheme }]];
+}
+
+/**
+ * iOS keeps HTTP answers in a disk cache (Library/Caches/<bundle id>/Cache.db)
+ * in plain text, Supabase's included: the sign-in and refresh answers with
+ * their access and refresh tokens, and the account. That would undo the
+ * sealed session (src/auth/device.ts) and outlive sign-out, and a request's
+ * `Cache-Control: no-store` does not stop it. So the app starts with an
+ * in-memory cache only, after clearing whatever an earlier build stored.
+ * Android's HTTP client honours the request header (src/lib/supabase.ts).
+ */
+const withoutHttpDiskCache: ConfigPlugin = (config) =>
+  withAppDelegate(config, (mod) => {
+    const marker = '// Seibi: no HTTP disk cache';
+    if (mod.modResults.contents.includes(marker)) return mod;
+    const launch = /(didFinishLaunchingWithOptions[^{]*\{\n)/;
+    if (mod.modResults.language !== 'swift' || !launch.test(mod.modResults.contents)) {
+      throw new Error('withoutHttpDiskCache: AppDelegate.swift has no didFinishLaunchingWithOptions to extend.');
+    }
+    mod.modResults.contents = mod.modResults.contents.replace(
+      launch,
+      `$1    ${marker} (app.config.ts, withoutHttpDiskCache).\n` +
+        '    URLCache.shared.removeAllCachedResponses()\n' +
+        '    URLCache.shared = URLCache(memoryCapacity: 4 * 1024 * 1024, diskCapacity: 0, directory: nil)\n',
+    );
+    return mod;
+  });
+
 export default ({ config }: ConfigContext): ExpoConfig => {
   const variantName = appVariant();
   const variant = VARIANTS[variantName];
 
-  return {
+  return withoutHttpDiskCache({
     ...config,
     name: variant.name,
     slug: 'seibi',
@@ -98,6 +142,15 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           microphonePermission: false,
         },
       ],
+      // Sign in with Apple entitlement. Supabase's Apple provider must list
+      // both bundle ids (com.seibiapp.app, com.seibiapp.app.dev) as client ids.
+      'expo-apple-authentication',
+      // The session's encryption key (Keychain / Android Keystore). No Face
+      // ID prompt guards it, so no Face ID usage string is declared.
+      ['expo-secure-store', { faceIDPermission: false }],
+      // The kv-store: the sealed session and local preferences.
+      'expo-sqlite',
+      ...googleSignInPlugin(),
     ],
     experiments: {
       typedRoutes: true,
@@ -111,5 +164,5 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       : {
           updates: { enabled: false },
         }),
-  };
+  });
 };

@@ -1,0 +1,49 @@
+# Subflow, not driven alone: other flows run it with `runFlow: sign-in.yaml`
+# right after opening the app. It signs in with the seibi-dev test account
+# (TEST_EMAIL, TEST_PASSWORD from verify.sh) when the sign-in screen shows,
+# and ends on the signed-in home either way. Feature: features/auth.md.
+appId: ${APP_ID}
+name: Sign in with the test account when signed out
+---
+# The first screen after the splash: sign-in when signed out, home when signed in.
+- extendedWaitUntil:
+    visible:
+      id: 'sign-in-title|start-title'
+    timeout: 120000
+- runFlow:
+    when:
+      visible:
+        id: sign-in-title
+    commands:
+      - tapOn:
+          id: test-sign-in-email
+      - inputText: ${TEST_EMAIL}
+      # Return moves to the password field (returnKeyType "next"), so the
+      # flow never taps a field the keyboard might cover.
+      - pressKey: Enter
+      - inputText:
+          text: ${TEST_PASSWORD}
+          label: Type the test account's password
+      # Return submits the form (the keyboard covers «Entrar con correo»,
+      # and iOS's Passwords bar keeps Maestro from hiding it).
+      - pressKey: Enter
+      # iOS offers to save the password over the home; decline it.
+      - runFlow:
+          when:
+            platform: iOS
+          commands:
+            - extendedWaitUntil:
+                visible:
+                  text: 'Not Now|Ahora no'
+                timeout: 10000
+                optional: true
+            - tapOn:
+                text: 'Not Now|Ahora no'
+                optional: true
+- extendedWaitUntil:
+    visible:
+      id: start-title
+    timeout: 30000
+- assertVisible:
+    id: signed-in-as
+    text: ${TEST_EMAIL}

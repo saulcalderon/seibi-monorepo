@@ -1,15 +1,19 @@
+import { Button, Host } from '@expo/ui';
 import { currentOdometer } from '@seibi/maintenance-engine/odometer';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
+import { deleteAccount, signOut, useAuth } from '@/auth/session';
 import { setThemePreference, useThemePreference, type ThemePreference } from '@/theme/preference';
 
-// Placeholder start screen (SEI-41): proves the app boots, the fonts load and
-// Metro resolves the shared @seibi/maintenance-engine package; its copy comes
-// from es.json (SEI-43) and its colours from the theme, which follows the
-// phone or the saved preference (SEI-42). The app shell (SEI-55) replaces
-// this screen; Perfil (S11) gets the real theme control.
+// Placeholder start screen (SEI-41), now the signed-in home (SEI-44): proves
+// the app boots, the fonts load and Metro resolves the shared
+// @seibi/maintenance-engine package; its copy comes from es.json (SEI-43)
+// and its colours from the theme, which follows the phone or the saved
+// preference (SEI-42). It holds sign-out and account deletion until Perfil
+// (S11) exists. The app shell (SEI-55) replaces this screen; Perfil gets the
+// real theme control.
 const sampleReading = currentOdometer([
   { reading: 12000, recordedOn: '2026-11-01' },
   { reading: 12500, recordedOn: '2026-11-10' },
@@ -33,6 +37,7 @@ export default function StartScreen() {
       </Text>
       <ThemeCheck />
       <ThemePicker />
+      <Account />
     </View>
   );
 }
@@ -100,6 +105,50 @@ function ThemeOption({
   );
 }
 
+/** Who is signed in, sign-out and account deletion, until Perfil (S11) holds them. */
+function Account() {
+  const { t } = useTranslation();
+  const auth = useAuth();
+  const email = auth.status === 'signed-in' ? auth.session.user.email : null;
+
+  function confirmDeleteAccount() {
+    Alert.alert(t('account.delete.confirmTitle'), t('account.delete.confirmMessage'), [
+      { text: t('account.delete.cancel'), style: 'cancel' },
+      {
+        text: t('account.delete.confirm'),
+        style: 'destructive',
+        onPress: () => {
+          deleteAccount().catch(() => {
+            Alert.alert(t('account.delete.failedTitle'), t('account.delete.failedMessage'));
+          });
+        },
+      },
+    ]);
+  }
+
+  function signOutOrSay() {
+    signOut().catch(() => {
+      Alert.alert(t('account.signOut.failedTitle'), t('account.signOut.failedMessage'));
+    });
+  }
+
+  return (
+    <View style={styles.account}>
+      {email ? (
+        <Text testID="signed-in-as" style={styles.tagline}>
+          {email}
+        </Text>
+      ) : null}
+      <Host matchContents>
+        <Button testID="sign-out" label={t('account.signOut.action')} variant="outlined" onPress={signOutOrSay} />
+      </Host>
+      <Host matchContents>
+        <Button testID="delete-account" label={t('account.delete.action')} variant="text" onPress={confirmDeleteAccount} />
+      </Host>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create((theme) => ({
   screen: {
     flex: 1,
@@ -162,5 +211,10 @@ const styles = StyleSheet.create((theme) => ({
         false: { color: theme.colors.muted },
       },
     },
+  },
+  account: {
+    alignItems: 'center',
+    gap: theme.space[1],
+    marginTop: theme.space[6],
   },
 }));

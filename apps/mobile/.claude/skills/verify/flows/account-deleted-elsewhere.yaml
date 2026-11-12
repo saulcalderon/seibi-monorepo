@@ -1,0 +1,36 @@
+# Feature: a session whose account was deleted elsewhere (features/auth.md).
+# DESTRUCTIVE: it deletes the seibi-dev test account. Recreate it afterwards
+# (features/auth.md → Gotchas) before any other flow signs in.
+appId: ${APP_ID}
+name: An account deleted on another device shows «Cuenta eliminada» on the next launch
+---
+- startRecording: account-deleted-elsewhere
+- stopApp
+- openLink: ${DEV_URL}
+- runFlow: sign-in.yaml
+- takeScreenshot: signed-in
+- stopApp
+# Meanwhile the person deletes the account somewhere else (the PWA, another
+# phone): the same delete-account call, made with a session of its own.
+- runScript:
+    file: scripts/delete-test-account.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}
+# This phone still holds a valid access token; the server says its account is gone.
+- openLink: ${DEV_URL}
+- extendedWaitUntil:
+    visible:
+      id: account-deleted-title
+    timeout: 120000
+- takeScreenshot: account-deleted
+- tapOn:
+    id: account-deleted-continue
+- extendedWaitUntil:
+    visible:
+      id: sign-in-title
+    timeout: 15000
+- takeScreenshot: signed-out
+- stopRecording

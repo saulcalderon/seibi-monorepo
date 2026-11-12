@@ -54,8 +54,13 @@ What it does, in order:
    waits for `sys.boot_completed`, and maps the Metro port into the emulator
    with `adb reverse`.
 2. **App.** If Seibi Dev is not installed (or `--rebuild` is passed), it
-   runs `expo run:<platform> --no-bundler` with
-   `EXPO_PUBLIC_APP_VARIANT=development`: prebuild, native build, install.
+   builds and installs it with `EXPO_PUBLIC_APP_VARIANT=development`.
+   Android: `expo run:android --no-bundler` (prebuild, native build,
+   install). iOS: `expo prebuild -p ios` when `ios/` is missing, then
+   `xcodebuild` for the Simulator and `simctl install`, not
+   `expo run:ios`: with the Sign in with Apple entitlement, Expo CLI asks
+   for a signing certificate even for the Simulator, and the Simulator
+   needs none. Build log: `$TMPDIR/seibi-verify-<port>/build-<platform>.log`.
    The first build takes 10+ minutes (Android ~18 on a cold Gradle cache);
    later ones are incremental. After any change to native config
    (`app.config.ts`, a package with native code, an Expo SDK change), or if
@@ -91,7 +96,9 @@ Read-only. It prints and checks: the git branch and commit being served,
 the Maestro version, that Metro on the port answers and its manifest is
 `Seibi Dev|seibi|<this checkout's apps/mobile>` (right app, development
 variant, this worktree rather than another one), whether this helper
-started that Metro, that the simulator or emulator is booted, that
+started that Metro, the Supabase project the app's bundle uses (it must be
+seibi-dev), whether the test account is available (never the password),
+that the simulator or emulator is booted, that
 `com.seibiapp.app.dev` is installed (iOS also prints the installed display
 name), and on Android the `adb reverse` for the port. Run it first
 whenever anything looks off. A Metro the helper did not start may belong
@@ -104,7 +111,7 @@ to another session: don't drive it unless it is yours.
 ```
 
 `drive` runs `maestro test --device <udid|emulator-5560> flows/<flow>.yaml`
-with two variables:
+with these variables:
 
 - `APP_ID`: `com.seibiapp.app.dev`.
 - `DEV_URL`: the dev client link that cold-starts Seibi Dev on this Metro,
@@ -115,6 +122,12 @@ with two variables:
   onboarding out of the recording. `localhost` works on both platforms:
   the simulator shares the Mac's network, and `launch` maps the port into
   the emulator.
+- `APP_URL`: `seibi-dev://`, Seibi Dev's own scheme, to open a route by
+  deep link (`${APP_URL}sign-in`). `launch` pre-approves it on iOS too.
+- `TEST_EMAIL`, `TEST_PASSWORD`: the seibi-dev test account (see Sign-in).
+- `SUPABASE_URL`, `SUPABASE_KEY`: the app's seibi-dev URL and publishable
+  key, for a flow script that calls the backend the way another device
+  would. `doctor` fails unless the URL is seibi-dev.
 
 Every flow starts with `startRecording`, then `stopApp` and
 `openLink: ${DEV_URL}`: a cold start, splash included. It ends with
@@ -132,11 +145,28 @@ Writing a flow for a new feature:
 - Copy `flows/app-launches.yaml` as the starting point and keep the
   recording around the whole journey.
 
-Sign-in: the app has none yet. SEI-44 adds the email + password test
-sign-in (development and preview builds only); it must add a
-`flows/sign-in.yaml` that the other flows run first, and say here which
-seibi-dev test account it uses and where its password comes from (never
-in git).
+## Sign-in
+
+Every route but sign-in needs a session. A flow that goes past the sign-in
+screen runs `runFlow: sign-in.yaml` right after opening the app: it signs
+in with the email + password test sign-in when the sign-in screen shows
+and ends on the home either way. That form exists only in development and
+preview builds; `verify.sh` starts Metro with `EXPO_PUBLIC_TEST_SIGN_IN=1`.
+
+- **Account:** `e2e@seibi.test` on seibi-dev, dedicated to these flows
+  (not `prueba@seibi.test`, the «Ana» screenshot account).
+- **Password:** never in git. `verify.sh` takes `SEIBI_TEST_EMAIL` and
+  `SEIBI_TEST_PASSWORD` from the environment (CI), else reads them from
+  `~/.config/seibi/test-account.env` (`SEIBI_TEST_ACCOUNT_FILE` overrides
+  the path; mode 600). `drive` refuses a flow that signs in without them,
+  and replaces the password with `<test-password>` in the run's logs.
+- **The app's backend:** `apps/mobile/.env.local` (gitignored; template in
+  `.env.example`) with the seibi-dev URL and publishable key. `doctor`
+  prints which Supabase project the bundle uses and fails unless it is
+  seibi-dev.
+- **Destructive flows** (`delete-account`, `account-deleted-elsewhere`)
+  delete the test account; recreate it before anything else signs in
+  ([`features/auth.md`](features/auth.md) → Gotchas).
 
 ## Evidence
 
@@ -204,9 +234,11 @@ run. Run cleanup after every failed attempt too.
   a Metro you don't own), `SEIBI_VERIFY_EVIDENCE` (evidence root),
   `SEIBI_VERIFY_AVD` (default `seibi-pixel`), `SEIBI_VERIFY_EMU_PORT`
   (default 5560), `SEIBI_VERIFY_SIM` (default `Seibi Verify`),
-  `MAESTRO_BIN`.
+  `MAESTRO_BIN`, and the test account (`SEIBI_TEST_EMAIL`,
+  `SEIBI_TEST_PASSWORD`, `SEIBI_TEST_ACCOUNT_FILE`; see Sign-in).
 - `flows/*.yaml`: one Maestro flow per feature journey, named in the
-  feature's file.
+  feature's file. `flows/sign-in.yaml` is a subflow, not driven alone.
+  `flows/scripts/` holds the JavaScript that flows run with `runScript`.
 
 ## Isolation
 

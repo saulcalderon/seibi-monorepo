@@ -25,6 +25,9 @@ matching feature file as the recipe. The commands come from
 - Wait with `extendedWaitUntil`, not fixed sleeps.
 - Data a journey saves goes to the hosted seibi-dev project. Restore or
   remove it after the run, but keep the evidence.
+- The home needs a session. A flow that starts there runs
+  `runFlow: sign-in.yaml` after opening the app; it signs in with the
+  seibi-dev test account when the sign-in screen shows.
 
 ## Proof and skip reporting
 
@@ -63,3 +66,8 @@ handles, required state, commands and observable proof.
 - [The theme follows the phone and the saved preference](./theme.md):
   light and night palettes, a live switch with no reload, the «Tema»
   choice kept across a cold start. Flow: `theme`.
+- [Sign-in, session and sign-out](./auth.md): the protected routes, the
+  test sign-in, the session surviving a relaunch, sign-out, account
+  deletion and «Cuenta eliminada». Flows: `auth`; destructive:
+  `delete-account`, `account-deleted-elsewhere`. Subflow for every flow
+  that needs a session: `sign-in.yaml`.

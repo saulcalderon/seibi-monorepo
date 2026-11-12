@@ -15,6 +15,9 @@
 #   SEIBI_VERIFY_EMU_PORT  emulator console port (default 5560 -> serial emulator-5560)
 #   SEIBI_VERIFY_SIM       iOS Simulator name (default "Seibi Verify"), created if missing
 #   MAESTRO_BIN            Maestro CLI (default: maestro on PATH, else ~/.maestro/bin/maestro)
+#   SEIBI_TEST_EMAIL       the seibi-dev test account, for flows that sign in; with
+#   SEIBI_TEST_PASSWORD    SEIBI_TEST_PASSWORD. Unset: read from SEIBI_TEST_ACCOUNT_FILE
+#   SEIBI_TEST_ACCOUNT_FILE  (default ~/.config/seibi/test-account.env), outside git
 set -euo pipefail
 
 SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -23,6 +26,11 @@ FLOWS_DIR="$SKILL_DIR/flows"
 
 APP_ID="com.seibiapp.app.dev"
 DEV_CLIENT_SCHEME="exp+seibi"
+# Seibi Dev's own deep-link scheme (app.config.ts), for flows that open a route directly.
+APP_SCHEME="seibi-dev"
+# The only Supabase project a verification run may talk to.
+SEIBI_DEV_REF="blirxlxmmrhafomkykmr"
+TEST_ACCOUNT_FILE="${SEIBI_TEST_ACCOUNT_FILE:-$HOME/.config/seibi/test-account.env}"
 PORT="${SEIBI_VERIFY_PORT:-8081}"
 EVIDENCE_ROOT="${SEIBI_VERIFY_EVIDENCE:-$HOME/seibi-verify}"
 AVD="${SEIBI_VERIFY_AVD:-seibi-pixel}"
@@ -43,6 +51,8 @@ else MAESTRO="$HOME/.maestro/bin/maestro"; fi
 EXPECTED_METRO="Seibi Dev|seibi|$APP_DIR"
 
 export EXPO_PUBLIC_APP_VARIANT=development
+# The email + password test sign-in (development and preview builds only).
+export EXPO_PUBLIC_TEST_SIGN_IN=1
 mkdir -p "$STATE_DIR"
 
 log() { printf '[verify] %s\n' "$*" >&2; }
@@ -100,11 +110,14 @@ print(ios[-1]["identifier"] if ios else "")')"
   xcrun simctl bootstatus "$udid" -b >/dev/null
   # Show the device for anyone watching; Maestro does not need the window.
   open -a "$(xcode-select -p)/Applications/Simulator.app" --args -CurrentDeviceUDID "$udid" >&2 2>/dev/null || true
-  # Pre-approve the dev client scheme, so opening it shows no "Open in Seibi Dev?" prompt.
+  # Pre-approve the dev client's and the app's schemes, so opening them shows no "Open in Seibi Dev?" prompt.
   local plist="$HOME/Library/Developer/CoreSimulator/Devices/$udid/data/Library/Preferences/com.apple.launchservices.schemeapproval.plist"
-  local key="com.apple.CoreSimulator.CoreSimulatorBridge-->$DEV_CLIENT_SCHEME"
-  /usr/libexec/PlistBuddy -c "Set :'$key' $APP_ID" "$plist" >/dev/null 2>&1 \
-    || /usr/libexec/PlistBuddy -c "Add :'$key' string $APP_ID" "$plist" >/dev/null 2>&1
+  local scheme key
+  for scheme in "$DEV_CLIENT_SCHEME" "$APP_SCHEME"; do
+    key="com.apple.CoreSimulator.CoreSimulatorBridge-->$scheme"
+    /usr/libexec/PlistBuddy -c "Set :'$key' $APP_ID" "$plist" >/dev/null 2>&1 \
+      || /usr/libexec/PlistBuddy -c "Add :'$key' string $APP_ID" "$plist" >/dev/null 2>&1
+  done
   echo "$udid"
 }
 
@@ -185,6 +198,61 @@ dev_url() {
   echo "$DEV_CLIENT_SCHEME://?__expo_url=$enc&__expo_disable_fab=1&__expo_disable_auto_launch=1&__expo_disable_onboarding=1"
 }
 
+# --- Backend and test account --------------------------------------------------
+
+# A value the app's bundle gets: the environment first, else apps/mobile/.env.local (what Expo loads).
+app_env() {
+  local name="$1"
+  if [[ -n "${!name:-}" ]]; then echo "${!name}"; return; fi
+  [[ -f "$APP_DIR/.env.local" ]] && sed -n "s/^$name=//p" "$APP_DIR/.env.local" | tail -1
+}
+
+# The seibi-dev test account (see SKILL.md → Sign-in). Never printed.
+load_test_account() {
+  if [[ -z "${SEIBI_TEST_EMAIL:-}" || -z "${SEIBI_TEST_PASSWORD:-}" ]] && [[ -f "$TEST_ACCOUNT_FILE" ]]; then
+    SEIBI_TEST_EMAIL="$(sed -n 's/^SEIBI_TEST_EMAIL=//p' "$TEST_ACCOUNT_FILE" | tail -1)"
+    SEIBI_TEST_PASSWORD="$(sed -n 's/^SEIBI_TEST_PASSWORD=//p' "$TEST_ACCOUNT_FILE" | tail -1)"
+  fi
+}
+
+# Flows that sign in (directly or through sign-in.yaml) need the test account.
+flow_signs_in() { grep -qE 'TEST_PASSWORD|sign-in\.yaml' "$FLOWS_DIR/$1.yaml"; }
+
+# Maestro's logs and command records repeat what inputText typed; keep the password out of the evidence.
+scrub_password() {
+  [[ -n "${SEIBI_TEST_PASSWORD:-}" ]] || return 0
+  grep -rlF -- "$SEIBI_TEST_PASSWORD" "$1" 2>/dev/null | while read -r file; do
+    P="$SEIBI_TEST_PASSWORD" python3 -I -c '
+import os, sys
+path = sys.argv[1]
+data = open(path, "rb").read().replace(os.environ["P"].encode(), b"<test-password>")
+open(path, "wb").write(data)' "$file"
+  done
+}
+
+# Builds Seibi Dev for the Simulator and installs it. Not `expo run:ios`: with
+# Sign in with Apple in the entitlements, Expo CLI 58 wants a signing
+# certificate even for a Simulator build (simulatorBuildRequiresCodeSigning)
+# and stops with "No code signing certificates are available to use" on a Mac
+# without one. The Simulator needs none: xcodebuild signs a Simulator build
+# ad hoc and still embeds the entitlements.
+build_ios() {
+  local udid="$1" ios="$APP_DIR/ios"
+  if [[ ! -d "$ios" ]]; then
+    # Generates ios/ for the development variant and installs the pods.
+    ( cd "$APP_DIR" && ./node_modules/.bin/expo prebuild -p ios ) || return 1
+  fi
+  if [[ ! -d "$ios/SeibiDev.xcodeproj" ]]; then
+    log "ios/ was not generated for Seibi Dev; regenerate it (SKILL.md → Launch → App)"
+    return 1
+  fi
+  # `expo prebuild --no-install` leaves no pods and no workspace.
+  [[ -d "$ios/Pods" && -d "$ios/SeibiDev.xcworkspace" ]] || ( cd "$ios" && pod install ) || return 1
+  xcodebuild -workspace "$ios/SeibiDev.xcworkspace" -scheme SeibiDev -configuration Debug \
+    -destination "id=$udid" -derivedDataPath "$ios/build" COMPILER_INDEX_STORE_ENABLE=NO build || return 1
+  xcrun simctl install "$udid" "$ios/build/Build/Products/Debug-iphonesimulator/SeibiDev.app"
+}
+
 # --- Commands ----------------------------------------------------------------
 
 cmd_launch() {
@@ -194,8 +262,7 @@ cmd_launch() {
     udid="$(ensure_sim)"
     if [[ -n "$rebuild" ]] || ! xcrun simctl get_app_container "$udid" "$APP_ID" >/dev/null 2>&1; then
       log "building and installing Seibi Dev on $udid (first build takes several minutes)"
-      ( cd "$APP_DIR" && ./node_modules/.bin/expo run:ios --device "$udid" --no-bundler ) > "$STATE_DIR/build-ios.log" 2>&1 \
-        || die "iOS build failed; see $STATE_DIR/build-ios.log"
+      build_ios "$udid" > "$STATE_DIR/build-ios.log" 2>&1 || die "iOS build failed; see $STATE_DIR/build-ios.log"
     fi
   else
     ensure_emulator
@@ -223,6 +290,13 @@ cmd_doctor() {
     if [[ -f "$STATE_DIR/metro.pid" ]]; then echo "           started by verify.sh (pid $(cat "$STATE_DIR/metro.pid"))"
     else echo "           not started by verify.sh: do not drive it unless it is yours"; fi
   else echo "metro:     NOT running on $PORT"; ok=0; fi
+  local supabase_url
+  supabase_url="$(app_env EXPO_PUBLIC_SUPABASE_URL)"
+  if [[ "$supabase_url" == "https://$SEIBI_DEV_REF.supabase.co" ]]; then echo "supabase:  $supabase_url (seibi-dev)"
+  else echo "supabase:  ${supabase_url:-UNSET} is not seibi-dev; set EXPO_PUBLIC_SUPABASE_URL in apps/mobile/.env.local"; ok=0; fi
+  load_test_account
+  if [[ -n "${SEIBI_TEST_EMAIL:-}" && -n "${SEIBI_TEST_PASSWORD:-}" ]]; then echo "test user: $SEIBI_TEST_EMAIL (password set)"
+  else echo "test user: not set (flows that sign in will refuse to run)"; fi
   if [[ "$platform" == ios ]]; then
     udid="$(sim_udid || true)"
     if [[ -n "$udid" && "$(sim_state "$udid")" == "Booted" ]]; then
@@ -247,15 +321,22 @@ cmd_drive() {
   local platform flow device run_dir status=0
   platform="$(platform_arg "${1:-}")"; flow="${2:-}"
   [[ -f "$FLOWS_DIR/$flow.yaml" ]] || die "no flow $FLOWS_DIR/$flow.yaml"
+  load_test_account
+  if flow_signs_in "$flow" && [[ -z "${SEIBI_TEST_EMAIL:-}" || -z "${SEIBI_TEST_PASSWORD:-}" ]]; then
+    die "$flow signs in: set SEIBI_TEST_EMAIL and SEIBI_TEST_PASSWORD, or create $TEST_ACCOUNT_FILE (SKILL.md → Sign-in)"
+  fi
   if [[ "$platform" == ios ]]; then device="$(sim_udid)"; else device="$SERIAL"; fi
   run_dir="$EVIDENCE_ROOT/$(date +%Y%m%d-%H%M%S)-$flow-$platform"
   mkdir -p "$run_dir"
   cmd_doctor "$platform" > "$run_dir/doctor.txt" || { cat "$run_dir/doctor.txt"; die "doctor failed; see above"; }
   log "driving $flow on $platform; evidence: $run_dir"
   "$MAESTRO" test --device "$device" --no-ansi "$FLOWS_DIR/$flow.yaml" \
-    -e APP_ID="$APP_ID" -e DEV_URL="$(dev_url)" \
+    -e APP_ID="$APP_ID" -e DEV_URL="$(dev_url)" -e APP_URL="$APP_SCHEME://" \
+    -e TEST_EMAIL="${SEIBI_TEST_EMAIL:-}" -e TEST_PASSWORD="${SEIBI_TEST_PASSWORD:-}" \
+    -e SUPABASE_URL="$(app_env EXPO_PUBLIC_SUPABASE_URL)" -e SUPABASE_KEY="$(app_env EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY)" \
     --test-output-dir "$run_dir" --debug-output "$run_dir/debug" \
     --format junit --output "$run_dir/report.xml" 2>&1 | tee "$run_dir/maestro.log" || status=1
+  scrub_password "$run_dir"
   echo "evidence:  $run_dir"
   # Maestro nests artifacts as <run>/<timestamp>/<flow name>/{startRecording,takeScreenshot}/.
   find "$run_dir" \( -name '*.mp4' -o -name '*.png' \) -not -path "$run_dir/debug/*" -print | sed 's/^/  /'

@@ -21,9 +21,9 @@ Seibi is moving from a PWA to a native app:
   v3). It is shut down once the native app is in both stores (SEI-49).
 - **Target:** a native iOS and Android app built with **Expo + React
   Native** in `apps/mobile` (`@seibi/mobile`). Its base exists (SEI-41:
-  config, builds, updates, one placeholder start screen; SEI-43: i18n);
-  the rest of the Linear milestone «1 · Base nativa» (SEI-42…SEI-47) and
-  the port's screens are being built.
+  config, builds, updates, one placeholder start screen; SEI-43: i18n;
+  SEI-44: native auth); the rest of the Linear milestone «1 · Base nativa»
+  and the port's screens are being built.
 
 The backend does not change in the move: Supabase, the Edge Functions,
 and `packages/maintenance-engine` serve both apps.
@@ -35,7 +35,7 @@ pnpm workspaces (`apps/*`, `packages/*`).
 | Path | Status | What it is |
 | --- | --- | --- |
 | `apps/app` (`@seibi/app`) | exists, frozen | PWA: Vite + TanStack Router SPA |
-| `apps/mobile` (`@seibi/mobile`) | exists (base only) | Expo + React Native app; screens arrive with the port's tickets |
+| `apps/mobile` (`@seibi/mobile`) | exists (base + auth) | Expo + React Native app; screens arrive with the port's tickets |
 | `packages/maintenance-engine` | exists | Reminder math shared by the apps and Edge Functions |
 | `supabase/migrations/` | exists | Schema, RLS, storage buckets, cron |
 | `supabase/functions/` | exists | Edge Functions (Deno) |
@@ -104,8 +104,9 @@ Shared helpers live in `supabase/functions/_shared/`. Details and setup:
 Server secrets live only in Supabase secrets: `OPENAI_API_KEY`,
 `FAL_KEY`, `CRON_SECRET`, `RENDER_WEBHOOK_SECRET`, VAPID keys (until
 SEI-49). Never put a secret in a client env var (`VITE_*`,
-`EXPO_PUBLIC_*`). Client env holds only the Supabase URL, anon key, and
-optional public keys (Sentry DSN, VAPID public key).
+`EXPO_PUBLIC_*`): those are inlined into the bundle. Client env holds only
+the Supabase URL, its anon (PWA) or publishable (native) key, OAuth client
+ids, and optional public keys (Sentry DSN, VAPID public key).
 
 ### Deploy
 
@@ -210,12 +211,18 @@ The migration's order, scope and tickets are in
   slug (`seibi`) and one project id, set once in `EAS_PROJECT_ID` at the
   top of `app.config.ts`; while it is empty, builds are local only and
   EAS Update is off. `pnpm start` / `ios` / `android` in `apps/mobile`
-  run the `development` variant.
+  run the `development` variant. Since the Sign in with Apple
+  entitlement (SEI-44), `pnpm ios` (`expo run:ios`) asks for a signing
+  certificate even for the Simulator; on a Mac without one, build for the
+  Simulator with the `verify` skill's `launch ios`, which calls
+  `xcodebuild` directly (the Simulator needs no certificate).
 - **Builds:** `apps/mobile/eas.json`. Profiles `development` (dev client,
   Seibi Dev, internal), `development-simulator` (the same for the iOS
   Simulator, for Maestro in CI), `preview` (internal, builds Seibi) and
   `production` (store, Seibi, `autoIncrement`). Each profile has the EAS
-  Update channel and EAS environment of its name. Remote app versions
+  Update channel and EAS environment of its name. `development` (and so
+  `development-simulator`) and `preview` also set
+  `EXPO_PUBLIC_TEST_SIGN_IN=1` (see Auth). Remote app versions
   (`appVersionSource: remote`). Only `com.seibiapp.app` gets an App Store
   Connect record; `.dev` is for the dev client. `ITSAppUsesNonExemptEncryption`
   is `false` (`ios.config.usesNonExemptEncryption`).
@@ -271,14 +278,87 @@ The migration's order, scope and tickets are in
   overrides React Native's colour scheme, so native views (alerts, the
   status bar, `@expo/ui`) match. Perfil (S11) gets the control; until then
   the placeholder start screen carries the PWA's «Tema» segmented control.
-- **Auth:** Supabase with native Apple (`expo-apple-authentication`) and
-  native Google (`@react-native-google-signin/google-signin`), both via
-  `signInWithIdToken`. The session is encrypted at rest: the key in
-  `expo-secure-store`, the data in local storage (a session can exceed
-  SecureStore's ~2 KB value limit). `startAutoRefresh` / `stopAutoRefresh`
-  follow foreground/background; routes are gated with `Stack.Protected`.
-  Email + password sign-in exists only in `development` and `preview`
-  builds, for testing.
+- **Auth** (`src/auth/`, `src/lib/supabase.ts`): the same Supabase users
+  as the PWA.
+  - **Client.** One `supabase` client (`src/lib/supabase.ts`) built from
+    `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`;
+    it throws at startup when either is missing. `startAutoRefresh` /
+    `stopAutoRefresh` follow `AppState` (foreground only); no manual
+    refresh anywhere.
+  - **Session at rest.** Supabase's `auth.storage` is
+    `createEncryptedStorage` (`src/auth/encrypted-storage.ts`, wired in
+    `device.ts`): a 256-bit key in `expo-secure-store`
+    (`AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY`, so a restored backup starts
+    signed out) and the session sealed with AES-256-GCM from `expo-crypto`
+    (CryptoKit on iOS, javax.crypto on Android) in the `expo-sqlite`
+    kv-store, under `auth.session.<storage key>` as `v1:` +
+    base64(nonce ‖ ciphertext ‖ tag), the entry name bound as associated
+    data. A session passes SecureStore's ~2 KB per value (the bare test
+    account's is ~1.9 KB). A value that cannot open (lost key, tampered) is
+    deleted and the person signs in again. Never AsyncStorage.
+  - **No HTTP disk cache.** iOS's URL cache would write Supabase's answers
+    (the sign-in and refresh answers with both tokens, the account) to
+    `Library/Caches/<bundle id>/Cache.db` in plain text, and a request's
+    `Cache-Control: no-store` doesn't stop it. A config plugin in
+    `app.config.ts` (`withoutHttpDiskCache`) gives the app an in-memory
+    URL cache only, cleared at launch. Every Supabase request also sends
+    `Cache-Control: no-store` (`src/lib/supabase.ts`), which Android's
+    OkHttp honours.
+  - **Routes.** `src/app/(app)/` needs a session; `(auth)/sign-in` and
+    `(auth)/account-deleted` are the only other screens. The root layout
+    opens exactly one with `Stack.Protected` guards on `useAuth()`
+    (`src/auth/session.ts`, fed only by `onAuthStateChange`); nothing
+    redirects by hand. The splash stays up until the saved session is read.
+  - **Apple** (iOS): `expo-apple-authentication` →
+    `signInWithIdToken({ provider: 'apple', nonce })`, the SHA-256 of a
+    random nonce signed into Apple's token. Apple sends the name on the
+    first sign-in only: it is saved to `user_metadata.full_name` (Perfil)
+    and the first name to `profiles.display_name` when that is empty (the
+    signup trigger's convention). Supabase's Apple provider lists both bundle
+    ids as client ids.
+  - **Google:** `@react-native-google-signin/google-signin` (Play
+    services' account picker on Android, Google's sign-in sheet on iOS) →
+    `signInWithIdToken({ provider: 'google' })`. Client ids per variant:
+    `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` (the token's audience) and
+    `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` (also the iOS URL scheme, set in
+    `app.config.ts`, so it needs a native build). Android has no id in the
+    app: Google matches the package and the signing key's SHA-1. Without
+    the ids the button is hidden.
+  - **Test sign-in.** Email + password for the seibi-dev test account, only
+    when `EXPO_PUBLIC_TEST_SIGN_IN=1` at bundle time (`development` and
+    `preview` in `eas.json`, the pnpm scripts, `verify.sh`). The sign-in
+    screen `require`s `src/auth/email-sign-in.tsx` behind that check; in
+    any other bundle it folds to `undefined === '1'` and Metro drops the
+    module, so production bundles do not contain the form (proven with
+    `expo export` and a grep in SEI-44). Unset means off.
+  - **Sign-out** is one function, `signOut()` in `session.ts`: it revokes
+    this device's session (`scope: 'local'`; the PWA and other phones stay
+    signed in), then always deletes every `auth.session.*` entry, the key,
+    every kv-store key under `user.` (`userDataKey()` in `sign-out.ts`) and
+    Google's remembered account. The same wipe runs on every `SIGNED_OUT`,
+    so it also happens when Supabase signs out on its own (a refresh token
+    revoked elsewhere). Device preferences stay: the theme (`theme.v1`)
+    and the language (`language.v1`) are not under `user.`. Anything new
+    that keeps a person's data on the device (the query cache in SEI-53, push tokens in SEI-47) is cleared
+    there.
+  - **Delete account:** `deleteAccount()` calls the `delete-account` Edge
+    Function, then `signOut()`, and opens «Cuenta eliminada». The same
+    screen opens when the account was deleted elsewhere: on launch and on
+    every return to the foreground, `getUser()` answering `user_not_found`
+    signs out and shows it. (With an expired access token the refresh
+    fails first and the person just lands on sign-in.)
+  - **Env vars** (`apps/mobile/.env.example`): locally in
+    `apps/mobile/.env.local` (gitignored; the development variant points at
+    seibi-dev); in builds and updates from the EAS environment of the
+    profile (`development` and `preview` → seibi-dev, `production` →
+    production).
+
+    | Variable | Development | Preview | Production |
+    | --- | --- | --- | --- |
+    | `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | seibi-dev | seibi-dev | production |
+    | `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | web client | web client | web client |
+    | `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` | iOS client for `com.seibiapp.app.dev` | iOS client for `com.seibiapp.app` | iOS client for `com.seibiapp.app` |
+    | `EXPO_PUBLIC_TEST_SIGN_IN` | `1` | `1` | never set |
 - **Push:** Expo Push Service via `expo-notifications`; device tokens in a
   `push_tokens` table. `reminders-daily` sends to Expo and keeps Web Push
   until the PWA is shut down (SEI-47, SEI-49).
@@ -359,7 +439,9 @@ The migration's order, scope and tickets are in
     language (the brand name). Text built in a variable outside JSX is not
     seen.
 
-  `@seibi/mobile` has no `build` script: native builds run on EAS.
+  `pnpm test` (also on every PR) runs `@seibi/mobile`'s `test`: Vitest
+  over `src/**/*.test.ts`, plain TypeScript modules only, no React Native
+  in Node. `@seibi/mobile` has no `build` script: native builds run on EAS.
   Typed-route declarations are generated by `expo start`, so CI's
   typecheck does not check route hrefs. Maestro runs the `verify` skill's
   journeys in CI once the first iOS build exists (SEI-52).
@@ -393,7 +475,9 @@ The migration's order, scope and tickets are in
   and report in `~/seibi-verify/`, outside git. Every PR that changes what
   a user sees or does is proven with it before merge, with the saved data
   read from seibi-dev; `maintain-verification-skill` keeps its feature map
-  (`features/`) current. The test sign-in it will need arrives with SEI-44.
+  (`features/`) current. Flows that need a session sign in with the
+  seibi-dev test account through the test sign-in (`flows/sign-in.yaml`);
+  its password lives outside git (the skill's Sign-in section).
 - **Paid features** (RevenueCat, Superwall) start after the launch.
 
 ### Libraries
@@ -419,7 +503,7 @@ versions match the SDK.
 | Toasts | `ToastProvider` | `sonner-native` |
 | Confirmations | Custom dialogs | The native alert |
 | Local preferences | `localStorage` | `expo-sqlite` kv-store (never AsyncStorage) |
-| Session at rest | supabase-js default | Encrypted store, key in `expo-secure-store` |
+| Session at rest | supabase-js default | AES-256-GCM (`expo-crypto`) in the `expo-sqlite` kv-store, key in `expo-secure-store` |
 | Images | `<img>` | `expo-image` |
 | Long lists | DOM lists | FlashList |
 | Forms and keyboard | Browser | `react-native-keyboard-controller` |
