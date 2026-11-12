@@ -152,8 +152,10 @@ Rules:
 
 - **At most 3 tickets in progress.** MVP tickets go first; after-launch
   tickets wait in Backlog until the MVP ships.
-- **Only Saul reviews and merges.** Every ticket is one PR from its own
-  branch.
+- **The orchestrator reviews and merges.** Every ticket is one PR from
+  its own branch, merged into `main` once CI is green and the change is
+  reviewed. Saul hears about every merge that deploys migrations or Edge
+  Functions, and approves destructive production changes first.
 - A ticket that changes what is true updates `ARCHITECTURE.md` in the same
   PR.
 - Work nobody has tried in Seibi or the reference apps starts with a short
