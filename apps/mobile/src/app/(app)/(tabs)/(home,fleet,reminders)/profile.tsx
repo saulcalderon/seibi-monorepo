@@ -40,7 +40,6 @@ function Who() {
   return (
     <Card>
       <ListRow testID="signed-in-as" title={name ?? identity.email ?? ''} subtitle={name ? (identity.email ?? undefined) : undefined} />
-
     </Card>
   );
 }
