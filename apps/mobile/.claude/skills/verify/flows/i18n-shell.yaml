@@ -1,0 +1,42 @@
+# Feature: the app speaks Spanish from es.json (features/i18n.md).
+# Run through scripts/verify.sh drive <ios|android> i18n-shell, which
+# passes APP_ID and DEV_URL and sends recordings and screenshots to the
+# run's evidence folder. The expected text is copied from
+# src/i18n/es.json; change both together.
+appId: ${APP_ID}
+name: The tabs, Inicio and the actions sheet show their copy from es.json
+---
+- startRecording: i18n-shell
+# Cold start: i18next initialises before the first render.
+- stopApp
+- openLink: ${DEV_URL}
+# Inicio is the signed-in home (SEI-44): sign in first when signed out.
+- runFlow: sign-in.yaml
+# tabs.home, tabs.fleet, tabs.reminders (also each tab's spoken label)
+- assertVisible: Inicio
+- assertVisible: Mi flota
+- assertVisible: Avisos
+# home.activeVehicle, with greeting.* above it
+- extendedWaitUntil:
+    visible: 'Tu Vehículo|Sin Vehículos todavía'
+    timeout: 30000
+- assertVisible:
+    id: home-greeting
+    text: 'Buenos días|Buenas tardes|Buenas noches'
+# No raw key reaches the screen (Maestro matches text as a regular expression).
+- assertNotVisible:
+    text: '(tabs|shell|home|fleet|greeting|update)\..*'
+- takeScreenshot: home-es
+# actions.title, actions.service.*, actions.mileage.*
+- tapOn:
+    id: open-actions
+- extendedWaitUntil:
+    visible: '¿Qué quieres hacer\?'
+    timeout: 15000
+- assertVisible: '.*Registrar un Servicio.*'
+- assertVisible: '.*Actualizar Kilometraje.*'
+- assertNotVisible:
+    text: 'actions\..*'
+- takeScreenshot: actions-es
+- runFlow: close-sheet.yaml
+- stopRecording

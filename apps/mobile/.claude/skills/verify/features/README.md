@@ -25,7 +25,7 @@ matching feature file as the recipe. The commands come from
 - Wait with `extendedWaitUntil`, not fixed sleeps.
 - Data a journey saves goes to the hosted seibi-dev project. Restore or
   remove it after the run, but keep the evidence.
-- The home needs a session. A flow that starts there runs
+- Inicio (the home, inside the tabs) needs a session. A flow that starts there runs
   `runFlow: sign-in.yaml` after opening the app; it signs in with the
   seibi-dev test account when the sign-in screen shows.
 
@@ -58,11 +58,16 @@ handles, required state, commands and observable proof.
 
 ## Features
 
-- [The app launches to the start screen](./app-launches.md): cold start,
-  native splash, start screen, on iOS and Android. Flow: `app-launches`.
-- [The start screen speaks Spanish from es.json](./i18n.md): every word
-  from `src/i18n/es.json`, no keys on screen, Spanish also on a device set
-  to English. Flow: `i18n-start-screen`.
+- [The app launches to Inicio](./app-launches.md): cold start, native
+  splash, Inicio inside the tabs, on iOS and Android. Flow: `app-launches`.
+- [The app shell: tabs, the [+] and its actions, Perfil, deep
+  links](./app-shell.md): three tabs with a stack each that keep their
+  place, the floating [+] and its actions sheet, Perfil from the header
+  avatar, `seibi-dev://vehicle/<id>`. Flow: `app-shell`; subflows
+  `open-profile.yaml`, `close-sheet.yaml`.
+- [The app speaks Spanish from es.json](./i18n.md): every word from
+  `src/i18n/es.json`, no keys on screen, Spanish also on a device set to
+  English. Flow: `i18n-shell`.
 - [The theme follows the phone and the saved preference](./theme.md):
   light and night palettes, a live switch with no reload, the «Tema»
   choice kept across a cold start. Flow: `theme`.

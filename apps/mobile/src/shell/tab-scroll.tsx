@@ -1,0 +1,32 @@
+import type { ReactNode } from 'react';
+import { ScrollView } from 'react-native';
+import { StyleSheet } from 'react-native-unistyles';
+
+/**
+ * The scrolling body of every screen inside the tabs. It is the screen's
+ * first view, so iOS's large title collapses with it and the system insets
+ * it under the header and above the tab bar (`contentInsetAdjustmentBehavior`;
+ * on Android, NativeTabs keeps the screen above its bar). Its end leaves room
+ * for the floating [+], so the last row can always scroll clear of it.
+ */
+export function TabScroll({ children, testID }: { children: ReactNode; testID?: string }) {
+  return (
+    <ScrollView testID={testID} contentInsetAdjustmentBehavior="automatic" style={styles.scroll} contentContainerStyle={styles.content}>
+      {children}
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create((theme) => ({
+  scroll: {
+    flex: 1,
+    backgroundColor: theme.colors.bg,
+  },
+  content: {
+    gap: theme.space[4],
+    paddingHorizontal: theme.space[4],
+    paddingTop: theme.space[2],
+    // The [+] (56 pt) and the gap it keeps above the tab bar, twice: below it and around it.
+    paddingBottom: theme.size.fab + theme.space[3] * 2,
+  },
+}));

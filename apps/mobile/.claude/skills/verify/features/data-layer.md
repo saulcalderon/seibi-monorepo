@@ -1,6 +1,6 @@
 # The data layer reads and writes seibi-dev
 
-Signed in to Seibi Dev, the start screen has «Revisar datos (desarrollo)»,
+Signed in to Seibi Dev, Perfil (the header avatar) has «Revisar datos (desarrollo)»,
 which opens «Revisión de datos»: a screen that exists in the development
 variant only, until real screens use the data layer. It lists the person's
 Vehicles from the one garage query with each one's current odometer
@@ -24,7 +24,7 @@ them; they match the PWA's browser output.
 
 ## How to get to it (user POV)
 
-- Sign in, then on the start screen tap «Revisar datos (desarrollo)».
+- Sign in, tap the avatar at the top right of a tab, then «Revisar datos (desarrollo)» under «Desarrollo» in Perfil.
 - Deep link `seibi-dev://data-check` while signed in (development variant only).
 
 ## Driving it with verify.sh
@@ -35,7 +35,7 @@ Preconditions:
 - Seibi Dev is built from a branch that has SEI-53 (JavaScript only: any build since SEI-44 runs it; no rebuild needed).
 
 - **Sign in, then record.** `.claude/skills/verify/scripts/verify.sh drive ios data-layer` (then `android`). The flow signs in with `runFlow: sign-in.yaml` before `startRecording`, then cold-starts the app signed in, so the video never shows the password.
-- **Vehicles listed.** Tap `id: open-data-check`; `id: data-check-vehicle-0` shows with `id: data-check-odometer` reading `Kilometraje actual: <n> km`. On a test account with no Vehicle, `id: data-check-empty` shows first and the flow taps `id: data-check-create-vehicle`. Screenshot `vehicles-listed`.
+- **Vehicles listed.** Open Perfil (`open-profile.yaml`), scroll to and tap `id: open-data-check`; `id: data-check-vehicle-0` shows with `id: data-check-odometer` reading `Kilometraje actual: <n> km`. On a test account with no Vehicle, `id: data-check-empty` shows first and the flow taps `id: data-check-create-vehicle`. Screenshot `vehicles-listed`.
 - **Refused reading.** Type the current odometer into `id: data-check-reading-input`, tap `id: data-check-reading-save`: `id: data-check-reading-error` reads `Debe ser mayor que el último registro (<current> km).`. Screenshot `reading-refused`.
 - **Saved reading.** Erase, type current + 500, tap save: `id: data-check-reading-saved` reads `Kilometraje actualizado: <new> km` and `id: data-check-odometer` moves to it. Screenshot `reading-saved`.
 - **Formats.** Scroll to `id: format-month`: `id: format-usd` `$1,234`, `id: format-usd-negative` `-$40`, `id: format-usd-cents` `$1,234.50`, `id: format-usd-range` `$80 – $120`, `id: format-distance` `30,500 km`. Screenshot `formats`.

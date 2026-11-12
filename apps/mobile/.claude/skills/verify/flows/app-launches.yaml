@@ -1,24 +1,29 @@
-# Feature: the app launches to the start screen (features/app-launches.md).
+# Feature: the app launches to Inicio (features/app-launches.md).
 # Run through scripts/verify.sh drive <ios|android> app-launches, which
 # passes APP_ID, DEV_URL and the test account, and sends recordings and
 # screenshots to the run's evidence folder.
 appId: ${APP_ID}
-name: The app launches to the start screen
+name: The app launches to Inicio
 ---
 - startRecording: app-launches
 # Cold start: nothing of Seibi Dev is running before the link opens it.
 - stopApp
 - openLink: ${DEV_URL}
 # The native splash stays until the fonts and the saved session are ready,
-# then sign-in (signed out) or the start screen (signed in) shows. The
-# start screen is the signed-in home, so the flow signs in when it has to.
+# then sign-in (signed out) or Inicio (signed in) shows. Inicio is the
+# signed-in home, so the flow signs in when it has to.
 - runFlow: sign-in.yaml
+# Inicio inside the tabs, with the [+] over them.
 - assertVisible:
-    id: start-title
-    text: Seibi
-# A value computed by @seibi/maintenance-engine: the shared package resolved and ran.
+    id: tab-home
 - assertVisible:
-    id: engine-check
-    text: 'maintenance-engine: 12500 km'
-- takeScreenshot: start-screen
+    id: open-actions
+# Data derived by @seibi/maintenance-engine reached the screen: the active
+# Vehicle (or the empty state for an account with none).
+- extendedWaitUntil:
+    visible:
+      id: 'home-vehicle|home-empty'
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: home
 - stopRecording

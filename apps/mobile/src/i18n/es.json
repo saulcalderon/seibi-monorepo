@@ -1,9 +1,56 @@
 {
-  "start": {
-    "title": "Seibi",
-    "tagline": "Mantenimiento con total claridad",
-    "engineCheck": "maintenance-engine: {{reading}} km",
-    "noReading": "sin lectura",
+  "tabs": {
+    "home": "Inicio",
+    "fleet": "Mi flota",
+    "reminders": "Avisos"
+  },
+  "shell": {
+    "actions": "Acciones rápidas",
+    "profile": "Perfil"
+  },
+  "actions": {
+    "title": "¿Qué quieres hacer?",
+    "service": {
+      "title": "Registrar un Servicio",
+      "body": "Mantenimiento, reparación o piezas"
+    },
+    "mileage": {
+      "title": "Actualizar Kilometraje",
+      "body": "El número del odómetro hoy"
+    }
+  },
+  "placeholder": {
+    "service": "Aquí registrarás el trabajo hecho en tu Vehículo: el tipo, las piezas, el taller y el kilometraje.",
+    "mileage": "Aquí anotarás el número que marca hoy el odómetro de tu Vehículo.",
+    "close": "Cerrar"
+  },
+  "home": {
+    "activeVehicle": "Tu Vehículo"
+  },
+  "fleet": {
+    "yearPlate": "{{year}} · {{plate}}",
+    "empty": {
+      "title": "Sin Vehículos todavía",
+      "body": "Cuando agregues tu primer Vehículo, aparecerá aquí."
+    }
+  },
+  "reminders": {
+    "openVehicle": "Ver Vehículo"
+  },
+  "vehicleDetail": {
+    "plate": "Placa",
+    "noPlate": "Sin placa",
+    "odometer": "Kilometraje actual",
+    "noOdometer": "Sin lecturas todavía",
+    "missing": {
+      "title": "No encontramos este Vehículo",
+      "body": "Puede que lo hayas retirado de tu flota o que el enlace no sea tuyo."
+    }
+  },
+  "profile": {
+    "title": "Perfil",
+    "account": "Cuenta",
+    "dev": "Desarrollo",
     "themeCheck": "theme: {{theme}} ({{source}})"
   },
   "theme": {
@@ -292,6 +339,7 @@
     }
   },
   "uiKit": {
+    "open": "Kit de UI (desarrollo)",
     "title": "Kit de UI",
     "intro": "Cada componente del kit, en el tema actual. Solo existe en Seibi Dev.",
     "checks": {

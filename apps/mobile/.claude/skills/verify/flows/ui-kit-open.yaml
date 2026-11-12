@@ -10,7 +10,7 @@ name: Open the UI kit's sample screen
 # The first screen after the splash: sign-in when signed out, home when signed in.
 - extendedWaitUntil:
     visible:
-      id: 'sign-in-title|start-title'
+      id: 'sign-in-title|home-screen'
     timeout: 120000
 - openLink: ${APP_URL}ui-kit
 # verify.sh launch pre-approves the scheme, but a simulator that was already

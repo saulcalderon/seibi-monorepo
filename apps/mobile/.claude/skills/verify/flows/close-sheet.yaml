@@ -1,0 +1,23 @@
+# Subflow, not driven alone: closes the actions sheet the way a person
+# does, a drag down on iOS and Back on Android. Feature: features/app-shell.md.
+appId: ${APP_ID}
+name: Close the actions sheet
+---
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      # From the sheet's top edge (its grabber) to the bottom of the screen.
+      - swipe:
+          start: 50%, 68%
+          end: 50%, 99%
+          duration: 400
+- extendedWaitUntil:
+    notVisible:
+      id: actions-sheet
+    timeout: 15000

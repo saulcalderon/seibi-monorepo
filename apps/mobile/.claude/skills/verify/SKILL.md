@@ -179,7 +179,7 @@ Android only (`runFlow` `when: platform: Android`).
 Every route but sign-in needs a session. A flow that goes past the sign-in
 screen runs `runFlow: sign-in.yaml` right after opening the app: it signs
 in with the email + password test sign-in when the sign-in screen shows
-and ends on the home either way. That form exists only in development and
+and ends on Inicio (`id: home-screen`) either way. That form exists only in development and
 preview builds; `verify.sh` starts Metro with `EXPO_PUBLIC_TEST_SIGN_IN=1`.
 
 - **Account:** `e2e@seibi.test` on seibi-dev, dedicated to these flows
@@ -283,7 +283,7 @@ shared: run `reset` after every such run, failed ones too.
   `MAESTRO_BIN`, and the test account (`SEIBI_TEST_EMAIL`,
   `SEIBI_TEST_PASSWORD`, `SEIBI_TEST_ACCOUNT_FILE`; see Sign-in).
 - `flows/*.yaml`: one Maestro flow per feature journey, named in the
-  feature's file. `flows/sign-in.yaml` and `flows/ui-kit-open.yaml` are
+  feature's file. `flows/sign-in.yaml`, `flows/open-profile.yaml`, `flows/close-sheet.yaml` and `flows/ui-kit-open.yaml` are
   subflows, not driven alone.
   `flows/scripts/` holds the JavaScript that flows run with `runScript`.
 

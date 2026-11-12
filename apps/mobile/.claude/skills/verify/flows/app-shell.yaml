@@ -1,0 +1,232 @@
+# Feature: the app shell (features/app-shell.md): three tabs with a stack
+# each, the floating [+] and its actions sheet, Perfil from the header
+# avatar, and a deep link to a Vehicle. Run through scripts/verify.sh drive
+# <ios|android> app-shell. It signs in before the recording starts (a
+# sign-in video can flash the test password) and saves nothing.
+appId: ${APP_ID}
+name: Tabs keep their place, the [+] opens the actions, a link opens a Vehicle
+---
+- stopApp
+- openLink: ${DEV_URL}
+- runFlow: sign-in.yaml
+# The test account's first Vehicle, read the way another device would, for the deep link.
+- runScript:
+    file: scripts/first-vehicle.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}
+- startRecording: app-shell
+# A cold start, already signed in: Inicio, the three tabs and the [+].
+- stopApp
+- openLink: ${DEV_URL}
+- extendedWaitUntil:
+    visible:
+      id: home-screen
+    timeout: 120000
+- extendedWaitUntil:
+    visible:
+      id: home-vehicle
+    timeout: 30000
+- assertVisible:
+    id: tab-home
+- assertVisible:
+    id: tab-fleet
+- assertVisible:
+    id: tab-reminders
+# Spoken labels: each tab says its name, the [+] says what it is for, the avatar says Perfil.
+- assertVisible: Inicio
+- assertVisible: Mi flota
+- assertVisible: Avisos
+- assertVisible: Acciones rápidas
+- assertVisible:
+    id: open-actions
+- assertVisible: Perfil
+- waitForAnimationToEnd
+- takeScreenshot: shell-01-home
+
+# --- Mi flota: open a Vehicle inside the tab; the bar and the [+] stay.
+- tapOn:
+    id: tab-fleet
+- extendedWaitUntil:
+    visible:
+      id: fleet-vehicle-0
+    timeout: 15000
+- takeScreenshot: shell-02-fleet
+- tapOn:
+    id: fleet-vehicle-0
+- extendedWaitUntil:
+    visible:
+      id: vehicle-name
+    timeout: 15000
+- assertVisible:
+    id: tab-fleet
+- assertVisible:
+    id: open-actions
+- waitForAnimationToEnd
+- takeScreenshot: shell-03-fleet-vehicle
+
+# --- Avisos: a long list; its end scrolls clear of the [+].
+- tapOn:
+    id: tab-reminders
+- extendedWaitUntil:
+    visible:
+      id: reminder-0-0
+    timeout: 15000
+- takeScreenshot: shell-04-reminders
+- repeat:
+    times: 6
+    commands:
+      - swipe:
+          start: 50%, 75%
+          end: 50%, 15%
+          duration: 300
+- waitForAnimationToEnd
+- takeScreenshot: shell-05-reminders-end
+
+# --- Back to Mi flota: still on the Vehicle (each tab kept its place).
+- tapOn:
+    id: tab-fleet
+- extendedWaitUntil:
+    visible:
+      id: vehicle-name
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: shell-06-fleet-kept-place
+# Back to the list: the system's back (Android) or the edge swipe (iOS).
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 1%, 50%
+          end: 80%, 50%
+          duration: 400
+- extendedWaitUntil:
+    visible:
+      id: fleet-vehicle-0
+    timeout: 15000
+
+# --- The [+] from each tab root opens the actions; no Appointment action.
+- tapOn:
+    id: open-actions
+- extendedWaitUntil:
+    visible:
+      id: actions-sheet
+    timeout: 15000
+- assertVisible:
+    id: action-record-service
+- assertVisible:
+    id: action-update-mileage
+- assertVisible: '¿Qué quieres hacer\?'
+- assertNotVisible: '.*Cita.*'
+- waitForAnimationToEnd
+- takeScreenshot: shell-07-actions-from-fleet
+- runFlow: close-sheet.yaml
+- tapOn:
+    id: tab-reminders
+- tapOn:
+    id: open-actions
+- extendedWaitUntil:
+    visible:
+      id: actions-sheet
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: shell-08-actions-from-reminders
+# Registrar un Servicio swaps the actions for its own sheet.
+- tapOn:
+    id: action-record-service
+- extendedWaitUntil:
+    visible:
+      id: record-service-sheet
+    timeout: 15000
+- assertNotVisible:
+    id: actions-sheet
+- waitForAnimationToEnd
+- takeScreenshot: shell-09-record-service
+- tapOn:
+    id: record-service-sheet-close
+- extendedWaitUntil:
+    notVisible:
+      id: record-service-sheet
+    timeout: 15000
+- tapOn:
+    id: tab-home
+- extendedWaitUntil:
+    visible:
+      id: home-screen
+    timeout: 15000
+- tapOn:
+    id: open-actions
+- extendedWaitUntil:
+    visible:
+      id: actions-sheet
+    timeout: 15000
+# Actualizar Kilometraje, likewise.
+- tapOn:
+    id: action-update-mileage
+- extendedWaitUntil:
+    visible:
+      id: update-mileage-sheet
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: shell-10-update-mileage
+- tapOn:
+    id: update-mileage-sheet-close
+- extendedWaitUntil:
+    notVisible:
+      id: update-mileage-sheet
+    timeout: 15000
+
+# --- The avatar opens Perfil inside the current tab, under its tab bar.
+- runFlow: open-profile.yaml
+- assertVisible:
+    id: tab-home
+- assertVisible:
+    id: theme-check
+- waitForAnimationToEnd
+- takeScreenshot: shell-11-profile
+
+# --- A deep link to a Vehicle opens its detail in Mi flota, with the list under it.
+- openLink: ${APP_URL}vehicle/${output.vehicleId}
+- runFlow:
+    when:
+      platform: iOS
+      visible: 'Open|Abrir'
+    commands:
+      - tapOn: 'Open|Abrir'
+- extendedWaitUntil:
+    visible:
+      id: vehicle-name
+      text: '${output.vehicleName}.*'
+    timeout: 20000
+- assertVisible:
+    id: tab-fleet
+- waitForAnimationToEnd
+- takeScreenshot: shell-12-deep-link-vehicle
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 1%, 50%
+          end: 80%, 50%
+          duration: 400
+- extendedWaitUntil:
+    visible:
+      id: fleet-vehicle-0
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: shell-13-deep-link-back
+- stopRecording
