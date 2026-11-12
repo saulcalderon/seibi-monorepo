@@ -17,6 +17,9 @@ name: The UI kit draws in night
 # Let the system's crossfade (or the splash fade) finish before the picture.
 - waitForAnimationToEnd:
     timeout: 3000
+- assertVisible:
+    id: kit-fit-check
+    text: 'fit: ok'
 - takeScreenshot: night-01-type
 - scrollUntilVisible:
     element:

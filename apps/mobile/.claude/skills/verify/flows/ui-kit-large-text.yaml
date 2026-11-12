@@ -14,6 +14,10 @@ name: The UI kit at the largest text size
 - assertVisible:
     id: kit-text-check
     text: 'text: (?!1\.00).*×'
+# Nothing is cut at this size either: every Text's drawn lines fit its box.
+- assertVisible:
+    id: kit-fit-check
+    text: 'fit: ok'
 - takeScreenshot: large-01-top
 - scrollUntilVisible:
     element:

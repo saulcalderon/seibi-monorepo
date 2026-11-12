@@ -4,7 +4,8 @@
 #
 #   verify.sh launch  ios|android [--rebuild]   boot the device, install Seibi Dev, start Metro
 #   verify.sh doctor  ios|android               read-only: is this instance worth driving?
-#   verify.sh drive   ios|android <flow>        run flows/<flow>.yaml, record video + screenshots
+#   verify.sh drive   ios|android <flow>        run flows/<flow>.yaml, record video + screenshots,
+#                                               then check the corners of every round-* crop
 #   verify.sh cleanup [ios|android|all]         stop what launch started (all: Metro too); evidence stays
 #   verify.sh a11y    ios|android <setting>     large-text | reduce-motion | reset: the device's
 #                                               text size and motion settings, for flows that need them
@@ -343,6 +344,12 @@ cmd_drive() {
   # Maestro nests artifacts as <run>/<timestamp>/<flow name>/{startRecording,takeScreenshot}/.
   find "$run_dir" \( -name '*.mp4' -o -name '*.png' \) -not -path "$run_dir/debug/*" -print | sed 's/^/  /'
   find "$run_dir" -name '*.mp4' -not -path "$run_dir/debug/*" | grep -q . || { log "no video was recorded"; status=1; }
+  # Crops named round-* are elements that must keep their rounded corners (SKILL.md → Pixel checks).
+  local crops=()
+  while IFS= read -r crop; do crops+=("$crop"); done < <(find "$run_dir" -name 'round-*.png' -not -path "$run_dir/debug/*" | sort)
+  if [[ ${#crops[@]} -gt 0 ]]; then
+    python3 "$SKILL_DIR/scripts/round-check.py" "${crops[@]}" | tee "$run_dir/round-check.txt" || status=1
+  fi
   [[ "$status" == 0 ]] && echo "result:    PASS" || echo "result:    FAIL"
   return "$status"
 }

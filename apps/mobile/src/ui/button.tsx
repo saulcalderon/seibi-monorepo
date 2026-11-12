@@ -17,7 +17,7 @@ export interface ButtonProps extends Pick<PressableProps, 'onPress' | 'testID' |
   size?: Size;
   icon?: IconName;
   trailingIcon?: IconName;
-  /** Shows a spinner in place of the leading icon and ignores presses, keeping the label. */
+  /** Shows a spinner in place of the leading icon and ignores presses, keeping the label at full strength. */
   loading?: boolean;
   disabled?: boolean;
   /** Stretches to the container's width. */
@@ -52,7 +52,8 @@ export function Button({
   const { theme } = useUnistyles();
   const { pressed, pressHandlers } = usePressed();
   const inactive = disabled || loading;
-  styles.useVariants({ variant, size, pressed: pressed && !inactive, block, disabled: inactive });
+  // Only a disabled button fades: a busy one keeps its colours, so the spinner reads against the fill.
+  styles.useVariants({ variant, size, pressed: pressed && !inactive, block, disabled });
   const tone = TONE[variant];
 
   return (
@@ -137,7 +138,9 @@ const styles = StyleSheet.create((theme) => ({
       variant: {
         primary: { backgroundColor: theme.colors.radiantStrong, boxShadow: theme.shadow.primary },
         secondary: { backgroundColor: theme.colors.surface, borderWidth: theme.size.border.thin, borderColor: theme.colors.line },
-        ghost: {},
+        // No fill until pressed. On Android a rounded view with no fill is flattened away and its pressed
+        // fill drawn square; `overflow: 'hidden'` keeps it a real view (docs/DESIGN.md → Corners on Android).
+        ghost: { overflow: 'hidden' },
         danger: { backgroundColor: theme.colors.overdueSoft },
         inverse: { backgroundColor: theme.colors.inverse },
       },
@@ -167,7 +170,8 @@ const styles = StyleSheet.create((theme) => ({
     borderCurve: 'continuous',
     variants: {
       iconVariant: {
-        ghost: {},
+        // As the ghost Button: clipping keeps the pressed fill rounded on Android.
+        ghost: { overflow: 'hidden' },
         secondary: {
           backgroundColor: theme.colors.surface,
           borderWidth: theme.size.border.thin,

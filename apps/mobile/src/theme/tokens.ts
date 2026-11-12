@@ -126,6 +126,12 @@ export const size = {
   silhouette: { sm: 136, lg: 240 },
   /** Borders: the PWA's `ring-1` around fields and cards, `ring-2` on focus. */
   border: { thin: 1, focus: 2 },
+  /**
+   * The font size of the space Text hangs after its words on Android, so a
+   * line is never cut (docs/DESIGN.md → Text that fits). Archivo's space is
+   * 0.2 em, so 1.2 pt: wider than the pixel lost to rounding, too thin to see.
+   */
+  hangingSpace: 6,
 } as const;
 
 /** Opacities for states. Colours never change opacity for any other reason. */

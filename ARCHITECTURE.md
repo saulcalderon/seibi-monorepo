@@ -283,14 +283,22 @@ The migration's order, scope and tickets are in
   platform lives in `native-controls.ios.tsx` and `native-controls.tsx`
   (`@expo/ui/swift-ui` can't load on Android). Forms use `FormLayout`
   inside an Expo Router `formSheet` route. Helpers for numbers and dates
-  in es-SV are in `src/lib/number.ts` and `src/lib/date.ts`.
-- **UI kit sample screen:** `src/app/ui-kit/` shows every component and a
-  sample form sheet, at `seibi-dev://ui-kit`. Its layout redirects home
-  unless `EXPO_PUBLIC_APP_VARIANT` is `development`, so Seibi, preview
-  builds and updates published without the variant never mount it. The
-  root stack lists it outside the `Stack.Protected` groups: it opens
-  signed in or signed out. The `verify` skill drives it
-  (`features/ui-kit.md`).
+  in es-SV are in `src/lib/number.ts` and `src/lib/date.ts`. Two React
+  Native 0.88 Android bugs shape the kit: text with a `lineHeight` can
+  lose its last line (so `Text` hangs a thin space after its words), and a
+  rounded view that Fabric flattened (no fill at mount) is drawn square
+  when a fill appears (so rounded views that change fill keep a native
+  view from mount). Both are in `docs/DESIGN.md`
+  (Type → Text that fits; Spacing and radius → Corners on Android).
+- **UI kit sample screen:** every component and a sample form sheet, at
+  `seibi-dev://ui-kit`. The screens live in `src/ui/dev/`; the routes in
+  `src/app/ui-kit/` `require` them only when `EXPO_PUBLIC_APP_VARIANT` is
+  `development`, the same bundle-time fold as the data check, so Metro
+  leaves them out of every other bundle. The layout also redirects home
+  outside development, so Seibi, preview builds and updates published
+  without the variant never mount the route. The root stack lists it
+  outside the `Stack.Protected` groups: it opens signed in or signed out.
+  The `verify` skill drives it (`features/ui-kit.md`).
 - **Theme preference:** `system` (default), `light` or `night` (the PWA's
   Auto · Claro · Oscuro), under `theme.v1` in the expo-sqlite kv-store
   (`src/theme/preference.ts`). `unistyles.ts` reads it synchronously before

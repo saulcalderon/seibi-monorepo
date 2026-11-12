@@ -37,6 +37,11 @@ name: The UI kit draws and works in light
 - assertVisible:
     id: kit-text-check
     text: 'text: 1.00×'
+# Every Text's drawn lines fit its box: no label is cut. Maestro reads a
+# label's words, not its pixels, so the screen measures and says it.
+- assertVisible:
+    id: kit-fit-check
+    text: 'fit: ok'
 - takeScreenshot: light-01-type
 
 # Buttons: a tap counts; the loading and disabled buttons ignore taps.
@@ -66,6 +71,19 @@ name: The UI kit draws and works in light
     id: kit-chip-check
     text: 'Filtro: overdue'
 - takeScreenshot: light-03-chips
+# The count of the chip that just lost the selection keeps its pill shape:
+# Android drew it square when its fill appeared after mount. verify.sh
+# checks the crop's corners. The id is on a plain wrapper around the badge
+# (a testID on the badge would hide the bug). iOS doesn't list a view
+# inside a button, so Android only.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - takeScreenshot:
+          path: round-01-chip-count
+          cropOn:
+            id: kit-chip-all-count
 
 # Cards and rows: a row is one button.
 - scrollUntilVisible:
@@ -303,4 +321,13 @@ name: The UI kit draws and works in light
     end: 50%, 20%
     duration: 2000
 - takeScreenshot: light-19-icons
+# Still no cut text after every control was used: the screen repeats the
+# fit check under the icons.
+- scrollUntilVisible:
+    element:
+      id: kit-fit-check-end
+    timeout: 60000
+- assertVisible:
+    id: kit-fit-check-end
+    text: 'fit: ok'
 - stopRecording

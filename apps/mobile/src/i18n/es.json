@@ -295,7 +295,10 @@
     "checks": {
       "theme": "theme: {{theme}} ({{source}})",
       "motion": "motion: {{motion}}",
-      "text": "text: {{scale}}×"
+      "text": "text: {{scale}}×",
+      "fit": "fit: {{result}}",
+      "fitOk": "ok",
+      "fitCut": "{{count}} cut: {{texts}}"
     },
     "sections": {
       "type": "Texto",

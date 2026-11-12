@@ -46,10 +46,14 @@ export function Chip({ label, selected = false, onPress, icon, count, radio = fa
             {label}
           </Text>
           {count != null ? (
-            <View style={styles.count}>
-              <Text step="caption" family="mono" tone={tone}>
-                {count}
-              </Text>
+            // The testID sits on a plain wrapper: on the badge it would keep Fabric from flattening it,
+            // and hide the Android bug a flow checks for (docs/DESIGN.md → Corners on Android).
+            <View style={styles.countSlot} testID={testID ? `${testID}-count` : undefined}>
+              <View style={styles.count}>
+                <Text step="caption" family="mono" tone={tone}>
+                  {count}
+                </Text>
+              </View>
             </View>
           ) : null}
         </View>
@@ -75,13 +79,17 @@ const styles = StyleSheet.create((theme) => ({
       },
     },
   },
-  count: {
+  countSlot: {
     marginLeft: theme.space[0.5],
+  },
+  count: {
     paddingHorizontal: theme.space[1.5],
     borderRadius: theme.radius.pill,
     variants: {
       // The PWA tints the count on a selected chip with 15 % of `onInverse`; the port keeps the inverse fill.
-      selected: { true: {}, false: { backgroundColor: theme.colors.surface3 } },
+      // A fill in both states: on Android a rounded view with no fill at mount is flattened away, and
+      // when a fill appears later it is drawn square (docs/DESIGN.md → Corners on Android).
+      selected: { true: { backgroundColor: theme.colors.inverse }, false: { backgroundColor: theme.colors.surface3 } },
     },
   },
 }));

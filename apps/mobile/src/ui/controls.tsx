@@ -151,7 +151,9 @@ const styles = StyleSheet.create((theme, rt) => ({
     backgroundColor: theme.colors.surface,
     borderWidth: theme.size.border.thin,
     borderColor: theme.colors.line,
-    boxShadow: theme.shadow.card,
+    // Android's MenuView clips its child to the trigger's square bounds, so a shadow there shows as
+    // a grey square behind the rounded button: the border alone carries it on Android.
+    boxShadow: process.env.EXPO_OS === 'ios' ? theme.shadow.card : undefined,
   },
   date: {
     alignItems: process.env.EXPO_OS === 'ios' ? 'flex-start' : 'stretch',

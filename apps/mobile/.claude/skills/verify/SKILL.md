@@ -145,6 +145,34 @@ Writing a flow for a new feature:
   service-saved`).
 - Copy `flows/app-launches.yaml` as the starting point and keep the
   recording around the whole journey.
+- Maestro reads a label's words (its text or accessibility text), never
+  its pixels, so an assertion passes on a label that is drawn cut or a
+  pill drawn square. Prove what the eye would catch with a screen-side
+  readout a flow can assert (the UI kit's `fit: ok`) or a pixel check.
+
+### Pixel checks
+
+A flow can crop a screenshot to one element:
+
+```yaml
+- takeScreenshot:
+    path: round-01-chip-count
+    cropOn:
+      id: kit-chip-all-count
+```
+
+After the flow, `drive` runs `scripts/round-check.py` on every crop named
+`round-*`: the element must show what is behind it at its four corners,
+not its own fill (its fill is the crop's most common colour). Any square
+corner fails the run; the results are in `round-check.txt`. Crop elements
+whose fill differs from their background, and not while they are pressed
+(a pressed button is scaled down inside its bounds). Mind what the
+`testID` changes: it keeps React Native from flattening the view, and
+Android's square-corner bug only hits flattened views (docs/DESIGN.md →
+Corners on Android). To check a view for that bug, put the `testID` on a
+plain wrapper around it, as `Chip` does for its count. Android lists views
+inside a button in its hierarchy; iOS doesn't, so crops of those run on
+Android only (`runFlow` `when: platform: Android`).
 
 ## Sign-in
 
@@ -180,14 +208,15 @@ Each `drive` writes one run folder outside git:
   report.xml                              JUnit result
   <timestamp>/<flow name>/
     startRecording/<name>.mp4             the video of the whole journey
-    takeScreenshot/<name>.png             the screenshots
+    takeScreenshot/<name>.png             the screenshots (crops too)
     commands.json, logs/                  each command's result, device logs
   debug/                                  Maestro's debug output
 ```
 
 `verify.sh where` prints the root (`SEIBI_VERIFY_EVIDENCE` overrides it).
-`drive` fails if the flow fails or no video was recorded, and lists the
-video and screenshots it wrote.
+`drive` fails if the flow fails, no video was recorded or a `round-*` crop
+has a square corner (`round-check.txt`), and lists the video and
+screenshots it wrote.
 
 Proof standards for a PR (`AGENTS.md` → "Prove it works"):
 

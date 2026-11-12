@@ -127,6 +127,26 @@ nearest step. Ticket B checks the mapping screen by screen.
 Text grows with the system text size: no fixed heights on text, and rows
 stack instead of truncating at accessibility sizes.
 
+**Text that fits.** On Android, React Native 0.88 measures a text that has
+a `lineHeight` (every step does) at its exact width, then lays it out for
+drawing about 1 px narrower: the width goes from pixels to points and back
+and rounds down. When the text sits in a box as wide as its words (a chip,
+a badge, a button), the last word no longer fits, moves to a second line,
+and that line falls outside the box: the chip «Al día» showed «Al», and at
+font scale 2.0 «Abrir formulario en hoja» lost its second line. Neither
+Unistyles nor the font is the cause; a plain React Native `Text` with a
+plain `StyleSheet` does the same. So `Text`, on Android only, ends its
+words with a thin space (Archivo at `size.hangingSpace`, 6 pt: 1.2 pt
+wide). A trailing space hangs past the end of the line, so it widens the
+measured box without needing room when the line breaks. The space is
+drawing, not words: `Text` gives TalkBack (and Maestro) the words alone as
+its `accessibilityLabel`. Nested `Text` is a span of its parent and adds
+nothing. Other fixes tried: `textBreakStrategy`, `includeFontPadding`,
+hyphenation and letter spacing don't help; `numberOfLines={1}` would cut
+long labels at large text sizes. A screen that provides `TextFitContext`
+(the sample screen does) gets every `Text`'s report of whether its drawn
+lines fit its box (`text-fit.ts`).
+
 ### Spacing and radius
 
 - **Spacing:** a 4 pt grid (Tailwind's unit in the PWA). `space[n]` is
@@ -162,10 +182,24 @@ stack instead of truncating at accessibility sizes.
 | `logo.sm` / `md` / `lg` | 24 / 44 / 72 | The isotype's height |
 | `silhouette.sm` / `lg` | 136 / 240 | A silhouette's width |
 | `border.thin` / `focus` | 1 / 2 | Field and card borders; the focus ring |
+| `hangingSpace` | 6 | The font size of the thin space `Text` hangs after its words on Android (Type → Text that fits) |
 
 - **Opacity** (`opacity`): `disabled` 0.5, `pressed` 0.85 (danger and
   inverse buttons, which have no pressed color), `skeleton` 0.55 (the low
   point of the pulse). Colors never change opacity for any other reason.
+- **Corners on Android.** React Native 0.88's Fabric renderer flattens a
+  view whose styles draw nothing (a radius and padding with no fill, no
+  border, no `testID`, not accessible): it never becomes a native view.
+  When a later state gives it a fill (a pressed state, a selection), the
+  view React Native then creates on Android is drawn square: the chip's
+  count went square once its chip lost the selection, the `ghost` button's
+  pressed fill was square. A rounded view whose fill changes therefore
+  keeps a native view from mount: a fill in every state (the count is
+  `surface3`, or `inverse` like its chip when selected), or, for a view
+  that must stay see-through until pressed, `overflow: 'hidden'` (`ghost`
+  `Button` and `IconButton`). Pressables are accessible, so they are never
+  flattened (a `Segment`'s own fill is safe). The `verify` skill checks the
+  count's corners (`round-*` crops).
 
 ## Components
 
@@ -177,9 +211,9 @@ it natively without a re-render.
 
 | Component | File | Variants and behaviour | From the PWA |
 | --- | --- | --- | --- |
-| `Text` | `text.tsx` | `step` (the type scale), `family` (`display`, `sans`, `mono`), `weight` (300–700, as a font file), `tone` (`ink`, `muted`, `subtle`, `radiant`, `ok`, `soon`, `overdue`, `unknown`, `onInverse`, `onRadiant`; each status tone uses its `*Text` role), `align`, `heading` (`accessibilityRole="header"`) | — |
+| `Text` | `text.tsx` | `step` (the type scale), `family` (`display`, `sans`, `mono`), `weight` (300–700, as a font file), `tone` (`ink`, `muted`, `subtle`, `radiant`, `ok`, `soon`, `overdue`, `unknown`, `onInverse`, `onRadiant`; each status tone uses its `*Text` role), `align`, `heading` (`accessibilityRole="header"`). On Android it hangs a thin space after its words so no line is cut (Type → Text that fits) | — |
 | `Icon` | `icon.tsx` | `size` `xs`–`xl`, `tone` or `color`, `label` (only when the icon means something alone), `fixed`. See Icons | lucide-react |
-| `Button` | `button.tsx` | `variant`: `primary` (`radiantStrong`, glow), `secondary`, `ghost`, `danger`, `inverse`; `size`: `sm` 36, `md` 44, `lg` 56 (`minHeight`; `sm` gets `hitSlop` to 44); `icon`, `trailingIcon`, `loading` (spinner, keeps its label for screen readers, `busy`), `disabled`, `block` | `ui/Button.tsx` |
+| `Button` | `button.tsx` | `variant`: `primary` (`radiantStrong`, glow), `secondary`, `ghost`, `danger`, `inverse`; `size`: `sm` 36, `md` 44, `lg` 56 (`minHeight`; `sm` gets `hitSlop` to 44); `icon`, `trailingIcon`, `loading` (the platform's spinner in place of the icon, keeps its label and colors, ignores presses, `busy`; the PWA also dims it, which left Android's thin arc almost invisible on the orange), `disabled` (dims to `opacity.disabled`), `block` | `ui/Button.tsx` |
 | `IconButton` | `button.tsx` | `ghost`, `secondary`, `inverse`; 44 × 44; `label` is required | `ui/Button.tsx` |
 | `Chip` | `chip.tsx` | `selected`, `count`, `icon`, `radio` (one of a group: `accessibilityRole="radio"`, the group is a `radiogroup`) | filter chips |
 | `Card`, `SectionHeader`, `ListRow`, `RowDivider`, `IconTile` | `card.tsx` | A `ListRow` with `onPress` is one button with a chevron and a background highlight on press (never a scale); from `largeTextScale` (1.35×) its title, subtitle and trailing part stack. `IconTile` tone: `neutral`, `radiant`, `ok`, `soon`, `overdue`, `unknown`; size `sm`, `md` | `ui/Card.tsx` |
@@ -210,12 +244,17 @@ iOS's select uses another `@expo/ui` control than the first one tried.
 The universal layer has no menu or date picker in SDK 58, so those two come
 from the community drop-ins and, for iOS's date, from `@expo/ui/swift-ui`
 in `native-controls.ios.tsx` (the SwiftUI modifiers can't load on Android).
+On Android the menu's trigger has a border but no shadow: `MenuView` clips
+its child to the trigger's square bounds, so the shadow showed as a grey
+square behind the rounded button.
 
 **Sample screen.** Seibi Dev has every component on one screen at
-`seibi-dev://ui-kit` (`src/app/ui-kit/`), with a sample form in a sheet.
-It shows the theme, Reduce Motion and text size it is drawn with. The
-route exists only in development builds: anywhere else it redirects home.
-`features/ui-kit.md` in the `verify` skill drives it.
+`seibi-dev://ui-kit`, with a sample form in a sheet (`src/ui/dev/`; the
+routes in `src/app/ui-kit/` load them in development builds only). It
+shows the theme, Reduce Motion and text size it is drawn with, and
+whether every `Text` fits its box («fit: ok», or the cut words). Anywhere
+but Seibi Dev the route redirects home and the samples aren't in the
+bundle. `features/ui-kit.md` in the `verify` skill drives it.
 
 ## Icons
 
@@ -272,7 +311,7 @@ redesign.
 
 | Phone setting | What Seibi does |
 | --- | --- |
-| Text size | All text grows; rows and switch rows stack from 1.35× (`largeTextScale`) instead of truncating; icons beside text grow with it. Known gap: on Android at font scale 2.0 a button label long enough to wrap («Abrir formulario en hoja») is laid out one line tall, so its second line is cut off. A re-render lays it out right, a cold start doesn't; the likely cause is React Native's text measurement with Android 14+'s non-linear font scaling, not the kit. Wrapping the label in a shrinking view, dropping `textAlign`, a full-width button, `textBreakStrategy="simple"` and removing the press-scale wrapper didn't change it. Keep button labels short until it's fixed |
+| Text size | All text grows; rows and switch rows stack from 1.35× (`largeTextScale`) instead of truncating; icons beside text grow with it. No line is cut on Android at any size (Type → Text that fits) |
 | Reduce Motion | No animations; content appears in place |
 | VoiceOver / TalkBack | Every pressable has `accessibilityRole` and a full spoken label that starts with its visible words; headings are marked as headings |
 

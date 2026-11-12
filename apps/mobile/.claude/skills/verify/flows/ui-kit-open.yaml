@@ -27,10 +27,12 @@ name: Open the UI kit's sample screen
     timeout: 20000
 # Opened by a link with no touch yet, Android can give focus to a button
 # far down and scroll the page to it. Start from the top: at font scale 2.0
-# the way up takes minutes at the default speed, so fling.
+# the way up takes minutes at the default speed, so fling. Not `speed: 100`:
+# Maestro makes that a 1 ms swipe (1000 × (100 − speed) / 100 + 1), which
+# Android sometimes doesn't scroll at all; 90 is a 101 ms fling.
 - scrollUntilVisible:
     element:
       id: kit-theme-check
     direction: UP
-    speed: 100
+    speed: 90
     timeout: 240000

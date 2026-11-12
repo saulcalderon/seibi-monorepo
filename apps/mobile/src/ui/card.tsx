@@ -125,7 +125,9 @@ const styles = StyleSheet.create((theme, rt) => ({
   sectionHeader: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    alignItems: 'flex-end',
+    // The title and the action share a baseline. The action is 44 pt tall (its touch target), so
+    // aligning their bottoms would lift its words above the title's.
+    alignItems: 'baseline',
     justifyContent: 'space-between',
     columnGap: theme.space[3],
     paddingHorizontal: theme.space[1],
