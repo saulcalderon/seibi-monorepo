@@ -108,7 +108,7 @@ export function ProgressBar({ value, status }: { value: number; status: Reminder
   const pct = Math.max(4, Math.min(100, Math.round(value * 100)))
   return (
     <div
-      className="h-2 w-full overflow-hidden rounded-full bg-surface-3"
+      className="h-1 w-full overflow-hidden rounded-full bg-[var(--g-track)]"
       role="progressbar"
       aria-valuemin={0}
       aria-valuemax={100}
