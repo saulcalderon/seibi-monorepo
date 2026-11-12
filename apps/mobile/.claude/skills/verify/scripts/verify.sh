@@ -4,8 +4,11 @@
 #
 #   verify.sh launch  ios|android [--rebuild]   boot the device, install Seibi Dev, start Metro
 #   verify.sh doctor  ios|android               read-only: is this instance worth driving?
-#   verify.sh drive   ios|android <flow>        run flows/<flow>.yaml, record video + screenshots
+#   verify.sh drive   ios|android <flow>        run flows/<flow>.yaml, record video + screenshots,
+#                                               then check the corners of every round-* crop
 #   verify.sh cleanup [ios|android|all]         stop what launch started (all: Metro too); evidence stays
+#   verify.sh a11y    ios|android <setting>     large-text | reduce-motion | reset: the device's
+#                                               text size and motion settings, for flows that need them
 #   verify.sh where                             print the evidence root
 #
 # Environment (all optional):
@@ -341,6 +344,12 @@ cmd_drive() {
   # Maestro nests artifacts as <run>/<timestamp>/<flow name>/{startRecording,takeScreenshot}/.
   find "$run_dir" \( -name '*.mp4' -o -name '*.png' \) -not -path "$run_dir/debug/*" -print | sed 's/^/  /'
   find "$run_dir" -name '*.mp4' -not -path "$run_dir/debug/*" | grep -q . || { log "no video was recorded"; status=1; }
+  # Crops named round-* are elements that must keep their rounded corners (SKILL.md → Pixel checks).
+  local crops=()
+  while IFS= read -r crop; do crops+=("$crop"); done < <(find "$run_dir" -name 'round-*.png' -not -path "$run_dir/debug/*" | sort)
+  if [[ ${#crops[@]} -gt 0 ]]; then
+    python3 "$SKILL_DIR/scripts/round-check.py" "${crops[@]}" | tee "$run_dir/round-check.txt" || status=1
+  fi
   [[ "$status" == 0 ]] && echo "result:    PASS" || echo "result:    FAIL"
   return "$status"
 }
@@ -378,11 +387,52 @@ cmd_cleanup() {
   log "evidence kept in $EVIDENCE_ROOT"
 }
 
+# Accessibility settings the flows can't change themselves. Text size applies
+# while the app runs; Reduce Motion is read at launch, so flows cold-start
+# after it. `reset` puts back the defaults: run it before handing the device back.
+cmd_a11y() {
+  local platform setting udid
+  platform="$(platform_arg "${1:-}")"; setting="${2:-}"
+  case "$setting" in large-text|reduce-motion|reset) ;; *) die "setting must be large-text, reduce-motion or reset" ;; esac
+  if [[ "$platform" == ios ]]; then
+    udid="$(sim_udid)"; [[ -n "$udid" && "$(sim_state "$udid")" == "Booted" ]] || die "simulator not booted (run: verify.sh launch ios)"
+    case "$setting" in
+      large-text) xcrun simctl ui "$udid" content_size accessibility-extra-extra-extra-large ;;
+      reduce-motion) xcrun simctl spawn "$udid" defaults write com.apple.Accessibility ReduceMotionEnabled -bool true ;;
+      reset)
+        xcrun simctl ui "$udid" content_size large
+        xcrun simctl spawn "$udid" defaults write com.apple.Accessibility ReduceMotionEnabled -bool false ;;
+    esac
+    echo "text size: $(xcrun simctl ui "$udid" content_size)"
+    echo "reduce motion: $(xcrun simctl spawn "$udid" defaults read com.apple.Accessibility ReduceMotionEnabled 2>/dev/null || echo 0)"
+  else
+    emu_running || die "emulator $SERIAL not running (run: verify.sh launch android)"
+    local scale key
+    case "$setting" in
+      large-text) "$ADB" -s "$SERIAL" shell settings put system font_scale 2.0 ;;
+      reduce-motion)
+        # Android's «Remove animations»: Reanimated reads the transition scale.
+        for key in transition_animation_scale window_animation_scale animator_duration_scale; do
+          "$ADB" -s "$SERIAL" shell settings put global "$key" 0
+        done ;;
+      reset)
+        "$ADB" -s "$SERIAL" shell settings put system font_scale 1.0
+        for key in transition_animation_scale window_animation_scale animator_duration_scale; do
+          "$ADB" -s "$SERIAL" shell settings put global "$key" 1
+        done ;;
+    esac
+    echo "font scale: $("$ADB" -s "$SERIAL" shell settings get system font_scale | tr -d '\r')"
+    scale="$("$ADB" -s "$SERIAL" shell settings get global transition_animation_scale | tr -d '\r')"
+    echo "transition animation scale: $scale"
+  fi
+}
+
 case "${1:-}" in
   launch) shift; cmd_launch "$@" ;;
   doctor) shift; cmd_doctor "$@" ;;
   drive) shift; cmd_drive "$@" ;;
   cleanup) shift; cmd_cleanup "$@" ;;
+  a11y) shift; cmd_a11y "$@" ;;
   where) echo "$EVIDENCE_ROOT" ;;
-  *) sed -n '2,20p' "${BASH_SOURCE[0]}"; exit 2 ;;
+  *) sed -n '2,25p' "${BASH_SOURCE[0]}"; exit 2 ;;
 esac

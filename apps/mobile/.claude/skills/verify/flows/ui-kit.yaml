@@ -1,0 +1,331 @@
+# Feature: the UI kit's sample screen (features/ui-kit.md), in light: every
+# section on screen and every control used once. Run through
+# scripts/verify.sh drive <ios|android> ui-kit, which passes APP_ID, DEV_URL
+# and APP_URL and sends recordings and screenshots to the run's evidence
+# folder. The device stays in light mode; the kit's own «Tema» control goes
+# back to Auto if an earlier run left a saved preference.
+appId: ${APP_ID}
+name: The UI kit draws and works in light
+---
+- setDarkMode: disabled
+- startRecording: ui-kit
+- runFlow: ui-kit-open.yaml
+# Start from Auto, in case an earlier run stopped with a saved preference.
+- runFlow:
+    when:
+      notVisible:
+        id: kit-theme-check
+        text: 'theme: light \(system\)'
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: kit-theme-system
+          timeout: 60000
+          centerElement: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+      - tapOn:
+          id: kit-theme-system
+      - scrollUntilVisible:
+          element:
+            id: kit-theme-check
+          direction: UP
+          timeout: 60000
+- assertVisible:
+    id: kit-theme-check
+    text: 'theme: light \(system\)'
+- assertVisible:
+    id: kit-text-check
+    text: 'text: 1.00×'
+# Every Text's drawn lines fit its box: no label is cut. Maestro reads a
+# label's words, not its pixels, so the screen measures and says it.
+- assertVisible:
+    id: kit-fit-check
+    text: 'fit: ok'
+- takeScreenshot: light-01-type
+
+# Buttons: a tap counts; the loading and disabled buttons ignore taps.
+- scrollUntilVisible:
+    element:
+      id: kit-section-buttons
+    timeout: 60000
+- swipe:
+    start: 50%, 80%
+    end: 50%, 25%
+    duration: 2000
+- tapOn:
+    id: kit-button-primary
+- assertVisible:
+    id: kit-button-presses
+    text: 'Toques: 1'
+- takeScreenshot: light-02-buttons
+
+# Chips: one filter at a time.
+- scrollUntilVisible:
+    element:
+      id: kit-chip-check
+    timeout: 60000
+- tapOn:
+    id: kit-chip-overdue
+- assertVisible:
+    id: kit-chip-check
+    text: 'Filtro: overdue'
+- takeScreenshot: light-03-chips
+# The count of the chip that just lost the selection keeps its pill shape:
+# Android drew it square when its fill appeared after mount. verify.sh
+# checks the crop's corners. The id is on a plain wrapper around the badge
+# (a testID on the badge would hide the bug). iOS doesn't list a view
+# inside a button, so Android only.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - takeScreenshot:
+          path: round-01-chip-count
+          cropOn:
+            id: kit-chip-all-count
+
+# Cards and rows: a row is one button. Scroll down to the line under the
+# card first: the card then sits mid-screen. Scrolling to the row itself can
+# stop with it under the iOS header, which Maestro counts as visible, and the
+# tap lands on the header.
+- scrollUntilVisible:
+    element:
+      id: kit-row-check
+    timeout: 60000
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    id: kit-row-oil
+- assertVisible:
+    id: kit-row-check
+    text: 'Fila tocada: Cambio de aceite'
+- takeScreenshot: light-04-cards
+
+# Fields: focus ring, keyboard, and the Mileage grouped as it is typed.
+- scrollUntilVisible:
+    element:
+      id: kit-field-plate
+    timeout: 60000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    id: kit-field-plate
+- inputText: P123456
+- takeScreenshot: light-05-field-focus
+# Dragging the screen puts the keyboard away (the number pad has no return key).
+- swipe:
+    start: 50%, 35%
+    end: 50%, 55%
+    duration: 800
+- scrollUntilVisible:
+    element:
+      id: kit-field-mileage
+    timeout: 60000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    id: kit-field-mileage
+- eraseText: 10
+- inputText: '52000'
+- assertVisible:
+    id: kit-field-mileage
+    text: '52,000'
+- takeScreenshot: light-06-mileage
+- swipe:
+    start: 50%, 35%
+    end: 50%, 55%
+    duration: 800
+
+# Native controls: the system's picker, switch, menu and date picker.
+- scrollUntilVisible:
+    element:
+      id: kit-section-native
+    timeout: 60000
+- swipe:
+    start: 50%, 80%
+    end: 50%, 30%
+    duration: 2000
+- tapOn:
+    id: kit-select
+- extendedWaitUntil:
+    visible: 'Reparación'
+    timeout: 5000
+- takeScreenshot: light-07-select-open
+- tapOn: 'Reparación'
+- tapOn:
+    id: kit-toggle
+- tapOn:
+    id: kit-menu
+- extendedWaitUntil:
+    visible: 'Archivar'
+    timeout: 5000
+- takeScreenshot: light-08-menu-open
+- tapOn: 'Archivar'
+- assertVisible:
+    id: kit-menu-check
+    text: 'Menú: Archivar'
+- tapOn:
+    id: kit-date
+# The 20th: iOS labels the day «20»; Android reads the whole date («Friday, November 20, 2026»).
+- extendedWaitUntil:
+    visible: '20|.* 20,? .*2026'
+    timeout: 5000
+- takeScreenshot: light-09-date-open
+- tapOn: '20|.* 20,? .*2026'
+# iOS: the calendar is a popover; a tap outside closes it. Android: a dialog with «Aceptar».
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          point: 50%, 95%
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn: 'Aceptar'
+- scrollUntilVisible:
+    element:
+      id: kit-native-check
+    timeout: 60000
+- assertVisible:
+    id: kit-native-check
+    text: 'Tipo: Reparación · Recordatorios: no · Fecha: 20 nov 2026'
+- takeScreenshot: light-10-native-values
+
+# States: badges and bars, the empty and error states.
+- scrollUntilVisible:
+    element:
+      id: kit-error-retry
+    timeout: 60000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    id: kit-error-retry
+- scrollUntilVisible:
+    element:
+      id: kit-retry-check
+    timeout: 60000
+- assertVisible:
+    id: kit-retry-check
+    text: 'Reintentos: 1'
+- takeScreenshot: light-11-states
+
+# Loading: the skeleton takes exactly the content's height.
+- scrollUntilVisible:
+    element:
+      id: kit-loading-toggle
+    timeout: 60000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    id: kit-loading-toggle
+- assertVisible:
+    id: kit-skeleton
+- takeScreenshot: light-12-skeleton
+- tapOn:
+    id: kit-loading-toggle
+- assertVisible:
+    id: kit-loaded
+- assertVisible:
+    id: kit-loading-check
+    text: 'Alto con contenido: (\d+) pt · cargando: \1 pt'
+
+# Toasts and the confirmation alert.
+- scrollUntilVisible:
+    element:
+      id: kit-toast-success
+    timeout: 60000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    id: kit-toast-success
+    # The toast lasts 3.2 s: don't wait for the screen to settle first.
+    waitToSettleTimeoutMs: 500
+# Android leaves sonner-native's toast out of the accessibility tree, where
+# Maestro looks: there the screenshot is the proof.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: 'Servicio guardado'
+          timeout: 5000
+- takeScreenshot: light-13-toast-success
+- tapOn:
+    id: kit-toast-error
+    # The toast lasts 3.2 s: don't wait for the screen to settle first.
+    waitToSettleTimeoutMs: 500
+# Android leaves sonner-native's toast out of the accessibility tree, where
+# Maestro looks: there the screenshot is the proof.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: 'No pudimos guardar el servicio'
+          timeout: 5000
+- takeScreenshot: light-14-toast-error
+- tapOn:
+    id: kit-confirm
+- extendedWaitUntil:
+    visible: '¿Eliminar este servicio?'
+    timeout: 5000
+- takeScreenshot: light-15-confirm
+- tapOn: 'Cancelar'
+- assertVisible:
+    id: kit-confirm-check
+    text: 'Confirmación: cancelado'
+- tapOn:
+    id: kit-confirm
+- extendedWaitUntil:
+    visible: '¿Eliminar este servicio?'
+    timeout: 5000
+- tapOn: 'Eliminar'
+- assertVisible:
+    id: kit-confirm-check
+    text: 'Confirmación: eliminado'
+
+# Brand: the isotype and the body-type silhouettes.
+- scrollUntilVisible:
+    element:
+      id: kit-silhouette-wagon
+    timeout: 60000
+- takeScreenshot: light-16-brand
+
+# Icons, last on the screen.
+- scrollUntilVisible:
+    element:
+      id: kit-section-icons
+    timeout: 60000
+- swipe:
+    start: 50%, 80%
+    end: 50%, 20%
+    duration: 2000
+- takeScreenshot: light-17-icons
+- swipe:
+    start: 50%, 80%
+    end: 50%, 20%
+    duration: 2000
+- takeScreenshot: light-18-icons
+- swipe:
+    start: 50%, 80%
+    end: 50%, 20%
+    duration: 2000
+- takeScreenshot: light-19-icons
+# Still no cut text after every control was used: the screen repeats the
+# fit check under the icons.
+- scrollUntilVisible:
+    element:
+      id: kit-fit-check-end
+    timeout: 60000
+- assertVisible:
+    id: kit-fit-check-end
+    text: 'fit: ok'
+- stopRecording

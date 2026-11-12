@@ -72,6 +72,11 @@ group, light and night.
 
 The logo mark has its own colors: accent `#ec3a27`, ticks `#1f1f1f` (light)
 or `#ffffff` (night). It ships as SVG (`apps/app/src/components/Logo.tsx`).
+These and the body-type silhouettes' colors (silver paint `#c3c7cd`,
+outline, glass, tyres, rims, hubs, ground shadow, sheen) are the theme's
+`art` group (`palettes.ts` → `art`): drawing colors, never text, so the
+contrast check skips them. `logoTickOnLight` and `logoTickOnDark` draw the
+mark on a fixed light or dark surface whatever the theme.
 
 ### Shadows
 
@@ -79,6 +84,7 @@ or `#ffffff` (night). It ships as SVG (`apps/app/src/components/Logo.tsx`).
 | --- | --- | --- |
 | `shadow.card` | `0 1px 2px rgb(20 21 23 / 4%), 0 10px 28px rgb(20 21 23 / 6%)` | `0 1px 0 rgb(255 255 255 / 4%) inset, 0 10px 28px rgb(0 0 0 / 35%)` |
 | `shadow.float` | `0 12px 40px rgb(20 21 23 / 16%), 0 2px 6px rgb(20 21 23 / 8%)` | `0 16px 44px rgb(0 0 0 / 55%)` |
+| `shadow.primary` | `0 8px 20px rgba(232, 83, 34, 0.28)` | same | The primary button's radiant glow |
 
 React Native's `boxShadow` style (New Architecture) takes these strings.
 Put a shadow on the rounded surface itself, not on a square container
@@ -121,6 +127,26 @@ nearest step. Ticket B checks the mapping screen by screen.
 Text grows with the system text size: no fixed heights on text, and rows
 stack instead of truncating at accessibility sizes.
 
+**Text that fits.** On Android, React Native 0.88 measures a text that has
+a `lineHeight` (every step does) at its exact width, then lays it out for
+drawing about 1 px narrower: the width goes from pixels to points and back
+and rounds down. When the text sits in a box as wide as its words (a chip,
+a badge, a button), the last word no longer fits, moves to a second line,
+and that line falls outside the box: the chip «Al día» showed «Al», and at
+font scale 2.0 «Abrir formulario en hoja» lost its second line. Neither
+Unistyles nor the font is the cause; a plain React Native `Text` with a
+plain `StyleSheet` does the same. So `Text`, on Android only, ends its
+words with a thin space (Archivo at `size.hangingSpace`, 6 pt: 1.2 pt
+wide). A trailing space hangs past the end of the line, so it widens the
+measured box without needing room when the line breaks. The space is
+drawing, not words: `Text` gives TalkBack (and Maestro) the words alone as
+its `accessibilityLabel`. Nested `Text` is a span of its parent and adds
+nothing. Other fixes tried: `textBreakStrategy`, `includeFontPadding`,
+hyphenation and letter spacing don't help; `numberOfLines={1}` would cut
+long labels at large text sizes. A screen that provides `TextFitContext`
+(the sample screen does) gets every `Text`'s report of whether its drawn
+lines fit its box (`text-fit.ts`).
+
 ### Spacing and radius
 
 - **Spacing:** a 4 pt grid (Tailwind's unit in the PWA). `space[n]` is
@@ -138,37 +164,121 @@ stack instead of truncating at accessibility sizes.
 | `3xl` | 24 | `rounded-3xl` (sheets) |
 | `pill` | 999 | `rounded-full` |
 
-## Components (ticket B)
+- **Sizes** (`size` in `tokens.ts`), from the PWA's components. Heights
+  are `minHeight`: a control grows with its text.
 
-Use what exists before writing styles. Variants are Unistyles variants, so
-a screen picks `variant` and `size`, never colors.
-
-| Component | Variants | From the PWA |
+| Token | pt | Use |
 | --- | --- | --- |
-| `Text` | `step` (the type scale), `family` (`display`, `sans`, `mono`), `tone` (`ink`, `muted`, `subtle`, `radiant`, `ok`, `soon`, `overdue`; each maps to its `*Text` token) | — |
-| `Button` | `variant`: `primary` (`radiantStrong` fill), `secondary`, `ghost`, `danger`, `inverse`; `size`: `sm` 36, `md` 44, `lg` 56 (`minHeight`); `loading`, leading and trailing icon | `ui/Button.tsx` |
-| `IconButton` | `ghost`, `secondary`, `inverse`; 44 × 44 | `ui/Button.tsx` |
-| `Card`, `SectionHeader`, `ListRow`, `IconTile` | `IconTile` tone: `neutral`, `radiant`, `ok`, `soon`, `overdue`, `unknown`; size `sm`, `md` | `ui/Card.tsx` |
-| `TextField`, `TextAreaField`, `SelectField`, `Toggle`, `Segmented`, `Chip` | Selects, toggles, menus and the date picker are `@expo/ui` controls | `ui/fields.tsx` |
-| Combobox (makes and models) | A searchable list in a sheet | `ui/Combobox.tsx` |
-| Sheet | Content for an Expo Router `formSheet` route | `ui/Sheet.tsx` |
-| `Skeleton`, `EmptyState`, `ErrorState` | Placeholders take the space of the content they replace | `ui/feedback.tsx` |
-| `StatusBadge`, `ProgressBar` | One per Reminder status, always with its text | `ui/feedback.tsx` |
-| Toast | `sonner-native`, mounted once at the root | `ToastProvider` in `ui/feedback.tsx` |
-| `Icon` | `size`: `sm` 16, `md` 20, `lg` 24 | lucide-react, 30 icons |
-| Floating [+] | Glass on iOS (`expo-glass-effect`), Material-style on Android; bottom right above the tab bar (ticket C) | The Dock's centre [+] |
+| `target` | 44 | The minimum touch target |
+| `control.sm` / `md` / `lg` | 36 / 44 / 56 | Button heights (`h-9`, `h-11`, `h-14`) |
+| `field` | 52 | Text, number and select fields (`h-13`) |
+| `chip` | 40 | Chips |
+| `badge` | 28 | Status badges |
+| `row` | 56 | A tappable list row |
+| `tile.sm` / `md` / `lg` | 36 / 44 / 64 | Icon tiles; `lg` is the empty and error states' |
+| `icon.xs` … `xl` | 14, 16, 20, 24, 28 | Icon sides |
+| `track` | 8 | A progress bar |
+| `readable` | 288 | The widest centred body text (`max-w-[18rem]`) |
+| `logo.sm` / `md` / `lg` | 24 / 44 / 72 | The isotype's height |
+| `silhouette.sm` / `lg` | 136 / 240 | A silhouette's width |
+| `border.thin` / `focus` | 1 / 2 | Field and card borders; the focus ring |
+| `hangingSpace` | 6 | The font size of the thin space `Text` hangs after its words on Android (Type → Text that fits) |
+
+- **Opacity** (`opacity`): `disabled` 0.5, `pressed` 0.85 (danger and
+  inverse buttons, which have no pressed color), `skeleton` 0.55 (the low
+  point of the pulse). Colors never change opacity for any other reason.
+- **Corners on Android.** React Native 0.88's Fabric renderer flattens a
+  view whose styles draw nothing (a radius and padding with no fill, no
+  border, no `testID`, not accessible): it never becomes a native view.
+  When a later state gives it a fill (a pressed state, a selection), the
+  view React Native then creates on Android is drawn square: the chip's
+  count went square once its chip lost the selection, the `ghost` button's
+  pressed fill was square. A rounded view whose fill changes therefore
+  keeps a native view from mount: a fill in every state (the count is
+  `surface3`, or `inverse` like its chip when selected), or, for a view
+  that must stay see-through until pressed, `overflow: 'hidden'` (`ghost`
+  `Button` and `IconButton`). Pressables are accessible, so they are never
+  flattened (a `Segment`'s own fill is safe). The `verify` skill checks the
+  count's corners (`round-*` crops).
+
+## Components
+
+The UI kit (SEI-54) lives in `apps/mobile/src/ui/`. Use what exists before
+writing styles. Variants are Unistyles variants, so a screen picks
+`variant`, `size` or `tone`, never colors. Every component reads the theme
+through `StyleSheet.create((theme, rt) => …)`, so a theme switch recolors
+it natively without a re-render.
+
+| Component | File | Variants and behaviour | From the PWA |
+| --- | --- | --- | --- |
+| `Text` | `text.tsx` | `step` (the type scale), `family` (`display`, `sans`, `mono`), `weight` (300–700, as a font file), `tone` (`ink`, `muted`, `subtle`, `radiant`, `ok`, `soon`, `overdue`, `unknown`, `onInverse`, `onRadiant`; each status tone uses its `*Text` role), `align`, `heading` (`accessibilityRole="header"`). On Android it hangs a thin space after its words so no line is cut (Type → Text that fits) | — |
+| `Icon` | `icon.tsx` | `size` `xs`–`xl`, `tone` or `color`, `label` (only when the icon means something alone), `fixed`. See Icons | lucide-react |
+| `Button` | `button.tsx` | `variant`: `primary` (`radiantStrong`, glow), `secondary`, `ghost`, `danger`, `inverse`; `size`: `sm` 36, `md` 44, `lg` 56 (`minHeight`; `sm` gets `hitSlop` to 44); `icon`, `trailingIcon`, `loading` (the platform's spinner in place of the icon, keeps its label and colors, ignores presses, `busy`; the PWA also dims it, which left Android's thin arc almost invisible on the orange), `disabled` (dims to `opacity.disabled`), `block` | `ui/Button.tsx` |
+| `IconButton` | `button.tsx` | `ghost`, `secondary`, `inverse`; 44 × 44; `label` is required | `ui/Button.tsx` |
+| `Chip` | `chip.tsx` | `selected`, `count`, `icon`, `radio` (one of a group: `accessibilityRole="radio"`, the group is a `radiogroup`) | filter chips |
+| `Card`, `SectionHeader`, `ListRow`, `RowDivider`, `IconTile` | `card.tsx` | A `ListRow` with `onPress` is one button with a chevron and a background highlight on press (never a scale); from `largeTextScale` (1.35×) its title, subtitle and trailing part stack. `IconTile` tone: `neutral`, `radiant`, `ok`, `soon`, `overdue`, `unknown`; size `sm`, `md` | `ui/Card.tsx` |
+| `TextField`, `TextAreaField`, `NumberField`, `MileageField`, `Segmented`, `Field` | `fields.tsx` | Label above, `hint`, `error` (replaces the hint, red border, announced), `optional` («· opcional»), `suffix` (units), `mono`; a 2 pt `radiant` ring on focus. `NumberField` `kind`: `integer`, `decimal`. `MileageField` keeps a number, groups thousands as it is typed (es-SV: `45,000`) and shows `km` or `mi`. `Segmented` is a radio group | `ui/fields.tsx` |
+| `SelectField`, `Toggle`, `MenuButton`, `DateField` | `controls.tsx`, `native-controls*.tsx` | The platform's own controls from `@expo/ui` (results below). `Toggle` is a settings row whose switch carries the row's text as its label; from `largeTextScale` the switch goes under the text | `ui/fields.tsx` |
+| `FormLayout` | `form.tsx` | A form's scroll view plus an action bar that rides on the keyboard (`react-native-keyboard-controller`): «Guardar» never sits under it. Dragging the form puts the keyboard away on iOS (the number pad has no return key). On Android a downward drag on a form sheet moves the sheet and closes it, typed values and all; Back puts the keyboard away there. Real forms must ask before closing with unsaved input (`usePreventRemove`); the sample form doesn't. The content of an Expo Router `formSheet` route, which replaces the PWA's Sheet | `ui/Sheet.tsx` |
+| `SkeletonGroup`, `Skeleton`, `TextSkeleton`, `ListRowSkeleton` | `feedback.tsx` | Placeholders shaped like the content they replace, at its height (a `ListRowSkeleton` is a `ListRow`'s size); the group is announced once as «Cargando» | `ui/feedback.tsx` |
+| `EmptyState`, `ErrorState` | `feedback.tsx` | Icon tile, title, body, one action; `ErrorState` has default copy and «Reintentar», and is announced | `ui/feedback.tsx` |
+| `StatusBadge`, `ProgressBar` | `feedback.tsx` | One per Reminder status, always with its text («Al día», «Pronto», «Vencido», «Revisar»); the bar fills to its value on mount and is a `progressbar` with its percentage | `ui/feedback.tsx` |
+| `Toaster`, `notify`, `confirm` | `toast.tsx` | `sonner-native`, mounted once in `UIProvider`, at the top. `notify.success` is `inverse` with `onInverse` text, `notify.error` is `overdue` with `onInverse` text, both announced to VoiceOver and TalkBack with `announceForAccessibility` (on Android the toast itself never reaches the accessibility tree, so TalkBack hears it once but can't move to it). `confirm()` is the native alert and resolves to `true` or `false` | `ToastProvider` |
+| `Logo` | `logo.tsx` | The isotype, `size` `sm`/`md`/`lg`, `surface` `auto`/`light`/`dark`; labelled «Seibi» | `components/Logo.tsx` |
+| `Silhouette` | `silhouette.tsx` | One per `BodyType` (`sedan`, `hatchback`, `suv`, `pickup`, `van`, `minivan`, `coupe`, `wagon`), `paint` (silver when unset), `width`; labelled «Silueta del Vehículo» | `components/VehicleVisual.tsx` |
+| `UIProvider` | `provider.tsx` | Wraps the root layout: gesture handler, keyboard controller, toaster | — |
+| Combobox (makes and models) | — | Not in the kit yet: it comes with the Vehicle form | `ui/Combobox.tsx` |
+| Floating [+] | — | Glass on iOS (`expo-glass-effect`), Material-style on Android; ticket C | The Dock's centre [+] |
+
+**Native controls (`@expo/ui` 58).** Each was tried on both platforms in
+the sample screen (SEI-54); none needed a React Native fallback, and only
+iOS's select uses another `@expo/ui` control than the first one tried.
+
+| Control | iOS | Android |
+| --- | --- | --- |
+| Select | `MenuView` over Seibi's field box: the system menu with a checkmark on the current option. SwiftUI's menu `Picker` (the universal one) was tried first: it opens only from its label, and at the largest text size its label runs past the box, so it is not used | Universal `Picker`: Material's exposed dropdown, which draws its own filled box at Material's width (280 dp), not the field's full width |
+| Switch | Universal `Switch`, tinted `radiant`, label hidden and given to VoiceOver | Universal `Switch` (Compose), `radiant` seed color, TalkBack label through `semantics` |
+| Menu | `MenuView` (`@expo/ui/community/menu`): SwiftUI menu with SF Symbols and a red destructive item | `MenuView`: Material dropdown menu, text only |
+| Date | SwiftUI `DatePicker`, compact: a pill that opens the calendar in a popover, Spanish month and weekday names | `DateTimePicker` (`@expo/ui/community/datetime-picker`), Material's date dialog with «Aceptar» and «Cancelar». Its header and day names follow the phone's language, not the app's: English on an English phone |
+
+The universal layer has no menu or date picker in SDK 58, so those two come
+from the community drop-ins and, for iOS's date, from `@expo/ui/swift-ui`
+in `native-controls.ios.tsx` (the SwiftUI modifiers can't load on Android).
+On Android the menu's trigger has a border but no shadow: `MenuView` clips
+its child to the trigger's square bounds, so the shadow showed as a grey
+square behind the rounded button.
+
+**Sample screen.** Seibi Dev has every component on one screen at
+`seibi-dev://ui-kit`, with a sample form in a sheet (`src/ui/dev/`; the
+routes in `src/app/ui-kit/` load them in development builds only). It
+shows the theme, Reduce Motion and text size it is drawn with, and
+whether every `Text` fits its box («fit: ok», or the cut words). Anywhere
+but Seibi Dev the route redirects home and the samples aren't in the
+bundle. `features/ui-kit.md` in the `verify` skill drives it.
 
 ## Icons
 
-`Icon` wraps `SymbolView` from `expo-symbols`, with one map: each icon has
-an SF Symbol name for iOS and a Material Symbols name for Android, typed so
-a missing name fails `typecheck` (Paradero's `src/components/icon.tsx`).
-The map replaces the PWA's 30 Lucide icons.
+`Icon` wraps `SymbolView` from `expo-symbols`, with one map
+(`src/ui/icon.tsx`, after Paradero's `src/components/icon.tsx`, MIT): each
+meaning has an SF Symbol name for iOS and a Material Symbols name for
+Android, typed so a missing or misspelled name fails `typecheck`. The map
+has 78 entries for the PWA's 80 Lucide icons: `House` and `Home` are one
+entry; `LoaderCircle` is `ActivityIndicator`, not an icon; `Rotate3d` went
+with the 3D viewer (SEI-48); `Signal` and `Wifi` drew a phone status bar in
+the Intro's animation, which the port drops. It adds `more` (menus) and
+two filled icons for toasts. Two Lucide icons have no SF Symbol of their
+own: `BellPlus` uses `bell.badge` and `Calculator` uses
+`minus.forwardslash.plus`.
+
+Icons are silent for VoiceOver and TalkBack unless they get a `label`: the
+control around them carries the name. Icons beside text grow with the
+system text size, up to twice their size (`maxIconScale`); icons in a
+fixed box (tiles, icon buttons) pass `fixed` and keep theirs.
 
 SVG (`react-native-svg`) covers what symbols can't: the logo, the
-body-type silhouettes (`VehicleVisual.tsx`), the art on Login and the
-Intro, and filled icons on Android, where Material Symbols has outline
-only.
+body-type silhouettes, the art on Login and the Intro, and filled icons on
+Android, where Material Symbols has outline only (`androidPath`, from
+Google's Material Icons, Apache 2.0).
 
 ## Motion
 
@@ -181,9 +291,18 @@ Reanimated 4 and Gesture Handler. The PWA's curves become
 | `spring` | `(0.34, 1.4, 0.64, 1)` | Small overshoots (splash ticks) |
 | `paint` | `(0.2, 0.7, 0.2, 1)`, 400 ms | Garage paint and accent crossfade |
 
+The theme's `motion` tokens hold the kit's timings: press feedback 120 ms
+to scale 0.97 on the `out` curve `(0.23, 1, 0.32, 1)`, landing on
+press-in (buttons and chips; rows highlight instead); the skeleton's pulse,
+900 ms each way; a progress bar's fill on mount, 700 ms on `smooth`. They
+are Reanimated CSS transitions and animations. Sheets, menus, pickers,
+alerts and screen transitions are the system's own.
+
 The three first-run animations are simplified in the port: a native
 splash, one still image on Login, still slides in the Intro. With Reduce
-Motion on, nothing animates; the content just appears.
+Motion on, nothing animates; the content just appears: no press scale, a
+still skeleton, bars drawn at their value, toasts that appear in place
+(`sonner-native` reads the setting).
 
 ## Accessibility
 
@@ -192,7 +311,7 @@ redesign.
 
 | Phone setting | What Seibi does |
 | --- | --- |
-| Text size | All text grows; rows stack instead of truncating |
+| Text size | All text grows; rows and switch rows stack from 1.35× (`largeTextScale`) instead of truncating; icons beside text grow with it. No line is cut on Android at any size (Type → Text that fits) |
 | Reduce Motion | No animations; content appears in place |
 | VoiceOver / TalkBack | Every pressable has `accessibilityRole` and a full spoken label that starts with its visible words; headings are marked as headings |
 
@@ -221,7 +340,8 @@ Which background each text role sits on:
   `surface`, `surface2`, and their soft fill (`radiantSoft`, `okSoft`…). A
   badge sits on any of the three surfaces, so a translucent fill (night's)
   is measured over each of them.
-- `onInverse` on `inverse`; `onRadiant` on `radiantStrong` and
+- `onInverse` on `inverse` and on `overdue` (the error toast; 4.53 in
+  light, 6.54 in night); `onRadiant` on `radiantStrong` and
   `radiantPressed`.
 
 | Palette | Pair | PWA | Port | Worst ratio after |

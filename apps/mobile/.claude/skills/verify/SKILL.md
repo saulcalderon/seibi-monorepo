@@ -18,6 +18,7 @@ Everything goes through one helper, run from `apps/mobile`:
 .claude/skills/verify/scripts/verify.sh doctor  ios|android
 .claude/skills/verify/scripts/verify.sh drive   ios|android <flow>
 .claude/skills/verify/scripts/verify.sh cleanup [ios|android|all]
+.claude/skills/verify/scripts/verify.sh a11y    ios|android large-text|reduce-motion|reset
 .claude/skills/verify/scripts/verify.sh where
 ```
 
@@ -144,6 +145,34 @@ Writing a flow for a new feature:
   service-saved`).
 - Copy `flows/app-launches.yaml` as the starting point and keep the
   recording around the whole journey.
+- Maestro reads a label's words (its text or accessibility text), never
+  its pixels, so an assertion passes on a label that is drawn cut or a
+  pill drawn square. Prove what the eye would catch with a screen-side
+  readout a flow can assert (the UI kit's `fit: ok`) or a pixel check.
+
+### Pixel checks
+
+A flow can crop a screenshot to one element:
+
+```yaml
+- takeScreenshot:
+    path: round-01-chip-count
+    cropOn:
+      id: kit-chip-all-count
+```
+
+After the flow, `drive` runs `scripts/round-check.py` on every crop named
+`round-*`: the element must show what is behind it at its four corners,
+not its own fill (its fill is the crop's most common colour). Any square
+corner fails the run; the results are in `round-check.txt`. Crop elements
+whose fill differs from their background, and not while they are pressed
+(a pressed button is scaled down inside its bounds). Mind what the
+`testID` changes: it keeps React Native from flattening the view, and
+Android's square-corner bug only hits flattened views (docs/DESIGN.md →
+Corners on Android). To check a view for that bug, put the `testID` on a
+plain wrapper around it, as `Chip` does for its count. Android lists views
+inside a button in its hierarchy; iOS doesn't, so crops of those run on
+Android only (`runFlow` `when: platform: Android`).
 
 ## Sign-in
 
@@ -179,14 +208,15 @@ Each `drive` writes one run folder outside git:
   report.xml                              JUnit result
   <timestamp>/<flow name>/
     startRecording/<name>.mp4             the video of the whole journey
-    takeScreenshot/<name>.png             the screenshots
+    takeScreenshot/<name>.png             the screenshots (crops too)
     commands.json, logs/                  each command's result, device logs
   debug/                                  Maestro's debug output
 ```
 
 `verify.sh where` prints the root (`SEIBI_VERIFY_EVIDENCE` overrides it).
-`drive` fails if the flow fails or no video was recorded, and lists the
-video and screenshots it wrote.
+`drive` fails if the flow fails, no video was recorded or a `round-*` crop
+has a square corner (`round-check.txt`), and lists the video and
+screenshots it wrote.
 
 Proof standards for a PR (`AGENTS.md` → "Prove it works"):
 
@@ -226,10 +256,26 @@ for the other platform. It never kills by process name and never deletes
 `build-<platform>.log`) stay for debugging and are overwritten by the next
 run. Run cleanup after every failed attempt too.
 
+## Accessibility settings
+
+```bash
+.claude/skills/verify/scripts/verify.sh a11y ios large-text      # or: reduce-motion | reset
+```
+
+Maestro can switch dark mode (`setDarkMode`) but not the text size or
+Reduce Motion, so `a11y` sets them on the device before a flow that needs
+them: `large-text` is iOS's largest accessibility size
+(`accessibility-extra-extra-extra-large`) or Android's font scale 2.0;
+`reduce-motion` is iOS's Reduce Motion or Android's «Remove animations»
+(the three animation scales at 0). The text size applies while the app
+runs; Reduce Motion is read at launch, so the flow's cold start picks it
+up. `reset` puts back the defaults and prints the result. The device is
+shared: run `reset` after every such run, failed ones too.
+
 ## Helpers
 
-- `scripts/verify.sh`: the launch, doctor, drive and cleanup commands
-  above. Run it with no arguments for usage. Settings, all optional:
+- `scripts/verify.sh`: the launch, doctor, drive, cleanup and a11y
+  commands above. Run it with no arguments for usage. Settings, all optional:
   `SEIBI_VERIFY_PORT` (Metro port, default 8081; use another to run beside
   a Metro you don't own), `SEIBI_VERIFY_EVIDENCE` (evidence root),
   `SEIBI_VERIFY_AVD` (default `seibi-pixel`), `SEIBI_VERIFY_EMU_PORT`
@@ -237,7 +283,8 @@ run. Run cleanup after every failed attempt too.
   `MAESTRO_BIN`, and the test account (`SEIBI_TEST_EMAIL`,
   `SEIBI_TEST_PASSWORD`, `SEIBI_TEST_ACCOUNT_FILE`; see Sign-in).
 - `flows/*.yaml`: one Maestro flow per feature journey, named in the
-  feature's file. `flows/sign-in.yaml` is a subflow, not driven alone.
+  feature's file. `flows/sign-in.yaml` and `flows/ui-kit-open.yaml` are
+  subflows, not driven alone.
   `flows/scripts/` holds the JavaScript that flows run with `runScript`.
 
 ## Isolation
