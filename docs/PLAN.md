@@ -35,6 +35,7 @@ Done when:
 | Navigation: 4 `NativeTabs` plus a floating [+] (bottom right; glass on iOS, Material on Android) that opens the actions sheet | `NativeTabs` can't host a centre action; the floating button stays in thumb reach |
 | Test sign-in: email + password in the `development` and `preview` EAS builds only, never in `production` | Apple and Google sign-in can't be automated; a hidden production login breaks App Review guideline 2.3.1 |
 | Accessibility: Paradero's rules and check scripts, aiming at WCAG 2.2 AA. High-contrast palettes come after the redesign | Cheap from the first screen, expensive to retrofit; high contrast is a new feature |
+| Light palette: change only the text roles that fail AA (primary button on `radiantStrong`, new `radiantText`, `okText`, `soonText`, `overdueText`, darker `subtle`); fills, dots and icons keep their colors. Values in `docs/DESIGN.md` → Accessibility | Keeps both "the PWA's look" and AA with the smallest visible change; the redesign starts from passing tokens |
 | Pace: at most 3 tickets in progress; only Saul reviews and merges PRs; agents never merge | Review is the bottleneck, and merging to `main` deploys to production |
 | 3D is out of the port. SEI-48 removes the 3D step and keeps the `glb_path` column; whether 3D returns is a Backlog idea (SEI-11) | The frozen PWA still selects `glb_path` (`apps/app/src/lib/garage.ts`); 3D's future is undecided |
 | Launch: App Store by 2026-12-15 at the latest, with the full MVP. The date moves before the scope does | Ship the MVP whole, then the rest |
@@ -213,11 +214,6 @@ From the Paradero and Zagged reviews and the planning session:
 
 ## Open questions
 
-- **Contrast vs "keep the PWA's look".** Several light-palette pairs fail
-  WCAG 2.2 AA (4.5:1), starting with white text on Radiant (3.69). The
-  list is in `docs/DESIGN.md` → Accessibility. Decide before SEI-46 turns
-  the contrast check on: adjust those values, or allow the large-text
-  threshold (3:1) for specific pairs.
 - **Clash Display licence.** It comes from Fontshare (ITF Free Font
   License). Confirm it allows bundling in a distributed app before SEI-42.
   Archivo and Geist Mono are under the SIL Open Font License.

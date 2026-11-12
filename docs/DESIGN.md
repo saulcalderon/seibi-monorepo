@@ -20,8 +20,10 @@ role name here and in the theme; don't write it in the screen.
 
 | Role | Light | Night | Use |
 | --- | --- | --- | --- |
-| `radiant` | `#e85322` | `#e85322` | Brand accent: primary buttons, focus, active states |
-| `radiantStrong` | `#c9431a` | `#c9431a` | Pressed primary |
+| `radiant` | `#e85322` | `#e85322` | Brand accent for non-text: focus rings, active indicators, icons |
+| `radiantStrong` | `#c9431a` | `#c9431a` | Primary button fill (white text 4.88:1) |
+| `radiantPressed` | `#b83d18` | `#b83d18` | Pressed primary button (white text 5.65:1) |
+| `radiantText` | `#c14019` | `#e85322` | Radiant-coloured text and links |
 | `radiantSoft` | `#fdeee8` | `rgb(232 83 34 / 16%)` | Brand-tinted backgrounds |
 | `bg` | `#f2f4f7` | `#0e0f11` | Screen background |
 | `surface` | `#ffffff` | `#17181b` | Cards, sheets |
@@ -29,13 +31,16 @@ role name here and in the theme; don't write it in the screen.
 | `surface3` | `#eceef2` | `#26282d` | Controls, tracks, skeletons |
 | `ink` | `#141517` | `#f2f4f7` | Primary text |
 | `muted` | `#5b606a` | `#a3a8b1` | Secondary text |
-| `subtle` | `#8a909a` | `#7c828c` | Tertiary text, chevrons |
+| `subtle` | `#686e79` | `#7c828c` | Tertiary text, chevrons |
 | `line` | `rgb(20 21 23 / 8%)` | `rgb(242 244 247 / 9%)` | Hairlines, card borders |
 | `inverse` | `#141517` | `#f2f4f7` | Inverse surfaces |
 | `onInverse` | `#f2f4f7` | `#141517` | Text on `inverse` |
-| `ok` / `okSoft` | `#178a55` / `#e3f5ec` | `#3ccf8a` / `rgb(60 207 138 / 14%)` | Reminder status «Al día» |
-| `soon` / `soonSoft` | `#b86e00` / `#fdf1dc` | `#f2b544` / `rgb(242 181 68 / 14%)` | Reminder status «Por vencer» |
-| `overdue` / `overdueSoft` | `#d0342a` / `#fde8e6` | `#ff6b5e` / `rgb(255 107 94 / 15%)` | Reminder status «Vencido» |
+| `ok` / `okSoft` | `#178a55` / `#e3f5ec` | `#3ccf8a` / `rgb(60 207 138 / 14%)` | Reminder status «Al día»: dots, bars, icons |
+| `okText` | `#157c4c` | `#3ccf8a` | «Al día» text, on surfaces and on `okSoft` badges |
+| `soon` / `soonSoft` | `#b86e00` / `#fdf1dc` | `#f2b544` / `rgb(242 181 68 / 14%)` | Reminder status «Por vencer»: dots, bars, icons |
+| `soonText` | `#9d5e00` | `#f2b544` | «Por vencer» text, on surfaces and on `soonSoft` badges |
+| `overdue` / `overdueSoft` | `#d0342a` / `#fde8e6` | `#ff6b5e` / `rgb(255 107 94 / 15%)` | Reminder status «Vencido»: dots, bars, icons |
+| `overdueText` | `#c63128` | `#ff6b5e` | «Vencido» text, on surfaces and on `overdueSoft` badges |
 | `unknown` / `unknownSoft` | `#5b606a` / `#eceef2` | `#a3a8b1` / `rgb(163 168 177 / 14%)` | Reminder status unknown |
 
 Three palette rules the PWA already has, and the port keeps:
@@ -45,7 +50,7 @@ Three palette rules the PWA already has, and the port keeps:
 - **Garage (Inicio, v3) has its own light palette**, used on Inicio and the
   intro (`.v3`, `.intro-v3`): `bg #f1f1f2`, `surface #ffffff`, `surface2
   #f4f4f5`, `surface3 #e4e4e6`, `ink #0e0f11`, `muted #6b6e74`, `subtle
-  #9a9ca1`, `line rgb(14 15 17 / 8%)`, `inverse #0e0f11`, `onInverse
+  #6a6c72` (was `#9a9ca1`, see Accessibility), `line rgb(14 15 17 / 8%)`, `inverse #0e0f11`, `onInverse
   #ffffff`, `overdue #ad2831`, `overdueSoft #f8e6e7`. Red is only for
   «Vencido». Night is not art-directed for v3; Garage in night uses the
   base night palette.
@@ -129,8 +134,8 @@ a screen picks `variant` and `size`, never colors.
 
 | Component | Variants | From the PWA |
 | --- | --- | --- |
-| `Text` | `step` (the type scale), `family` (`display`, `sans`, `mono`), `tone` (`ink`, `muted`, `subtle`, status roles) | — |
-| `Button` | `variant`: `primary`, `secondary`, `ghost`, `danger`, `inverse`; `size`: `sm` 36, `md` 44, `lg` 56 (`minHeight`); `loading`, leading and trailing icon | `ui/Button.tsx` |
+| `Text` | `step` (the type scale), `family` (`display`, `sans`, `mono`), `tone` (`ink`, `muted`, `subtle`, `radiant`, `ok`, `soon`, `overdue`; each maps to its `*Text` token) | — |
+| `Button` | `variant`: `primary` (`radiantStrong` fill), `secondary`, `ghost`, `danger`, `inverse`; `size`: `sm` 36, `md` 44, `lg` 56 (`minHeight`); `loading`, leading and trailing icon | `ui/Button.tsx` |
 | `IconButton` | `ghost`, `secondary`, `inverse`; 44 × 44 | `ui/Button.tsx` |
 | `Card`, `SectionHeader`, `ListRow`, `IconTile` | `IconTile` tone: `neutral`, `radiant`, `ok`, `soon`, `overdue`, `unknown`; size `sm`, `md` | `ui/Card.tsx` |
 | `TextField`, `TextAreaField`, `SelectField`, `Toggle`, `Segmented`, `Chip` | Selects, toggles, menus and the date picker are `@expo/ui` controls | `ui/fields.tsx` |
@@ -188,20 +193,23 @@ Rules:
 - Color is never the only signal: each Reminder status shows its text.
 - Text contrast is 4.5:1, large text 3:1, checked on both palettes.
 
-**Known failures in the light palette** (WCAG ratios, from `index.css`).
-Night passes. Deciding the fix is an open question in `PLAN.md`:
+**Light-palette fixes** (decided 2026-11-11). The PWA's light palette
+failed AA in these pairs; the port changes only the text roles, so fills,
+dots, bars and icons keep their colors (non-text needs 3:1, which they
+meet). Night already passes, so its text roles equal the base colors.
 
-| Pair | Ratio |
-| --- | --- |
-| White on `radiant` (primary button) | 3.69 |
-| `radiant` text on `surface` | 3.69 |
-| `subtle` on `bg` / on `surface` | 2.92 / 3.21 |
-| `ok` on `surface` | 4.37 |
-| `soon` on `surface` | 3.99 |
-| `soon` on `soonSoft` / `ok` on `okSoft` (badges) | 3.57 / 3.86 |
-| Garage `subtle` on Garage `bg` | 2.43 |
+| Pair | PWA | Port | Worst ratio after |
+| --- | --- | --- | --- |
+| White on the primary button | `radiant` 3.69 | fill `radiantStrong` | 4.88 |
+| Radiant text on surfaces and `radiantSoft` | `radiant` 3.69 | `radiantText #c14019` | 4.63 |
+| `subtle` on `bg`, `surface`, `surface2` | `#8a909a` 2.92 | `#686e79` | 4.65 |
+| Garage `subtle` on Garage `bg` | `#9a9ca1` 2.43 | `#6a6c72` | 4.65 |
+| «Al día» text, incl. on `okSoft` | `ok` 3.86 | `okText #157c4c` | 4.61 |
+| «Por vencer» text, incl. on `soonSoft` | `soon` 3.57 | `soonText #9d5e00` | 4.66 |
+| «Vencido» text, incl. on `bg` and `overdueSoft` | `overdue` 4.25 | `overdueText #c63128` | 4.61 |
 
-For reference, white on `radiantStrong` is 4.88.
+Each new shade is the same hue, darkened until it reaches 4.6:1 against
+every background it sits on. The contrast check (SEI-46) tests these pairs.
 
 ## Checks (SEI-46)
 
