@@ -43,7 +43,7 @@ Done when:
 | Styling: Unistyles 3. SEI-42 starts with a spike on SDK 58; on failure, fall back to plain `StyleSheet` + tokens | Same `StyleSheet.create` API plus themes and variants for the UI kit; neither reference app uses it |
 | Zod at three boundaries: Edge Function responses, NHTSA vPIC, forms. Table reads use the generated Supabase types | Validate only the data whose shape Seibi doesn't control |
 | Two app variants: Seibi Dev (`com.seibiapp.app.dev`) and Seibi (`com.seibiapp.app`). The `preview` EAS profile builds the production app | TestFlight and Play's closed test use the production app; one Apple app record fewer |
-| Maestro E2E is postponed until after launch (SEI-52) | Days of setup that find little before there are users; CI keeps typecheck, lint and the check scripts |
+| Verification: every PR proves itself in the real app with pstack's `verify` skill (generated in SEI-41 with `create-verification-skill`): a video of the journey, screenshots, and a read-only seibi-dev query for the saved data. Maestro in CI (SEI-52) starts as soon as the first iOS EAS build exists and becomes part of every PR's proof | No human reviews PRs (2026-11-11), so proof from the running app is the merge gate; CI-run Maestro needs an iOS build first |
 | Expo SDK 58 | The latest SDK; Paradero ships on it |
 | References: Paradero (`~/Desktop/Personal/paradero`, MIT) for the native UI layer, check scripts and release script; Zagged for auth, variants and OTA (patterns only, previous-employer code) | Two apps that shipped |
 
@@ -97,13 +97,14 @@ ticket and keep its behaviour.
 | Id | Title | In | Out | Depends on | MVP | Linear |
 | --- | --- | --- | --- | --- | --- | --- |
 | SEI-40 | Turborepo | `turbo.json`, root scripts and CI through `turbo` | Remote cache | — | yes | SEI-40 |
-| SEI-41 | `apps/mobile` with Expo SDK 58, Expo Router, EAS | `app.config.ts` with `EXPO_PUBLIC_APP_VARIANT` (2 variants), one slug, `eas.json` with `development` / `preview` / `production`, Metro + pnpm config, `expo-updates` with `fingerprint` and the OTA hook, splash + font gate, `ITSAppUsesNonExemptEncryption`, `react-native-svg`, the native modules after-launch tickets need (`expo-image-picker`) | Screens | SEI-40 | yes | SEI-41 |
+| SEI-41 | `apps/mobile` with Expo SDK 58, Expo Router, EAS | `app.config.ts` with `EXPO_PUBLIC_APP_VARIANT` (2 variants), one slug, `eas.json` with `development` / `preview` / `production`, Metro + pnpm config, `expo-updates` with `fingerprint` and the OTA hook, splash + font gate, `ITSAppUsesNonExemptEncryption`, `react-native-svg`, the native modules after-launch tickets need (`expo-image-picker`); the `verify` skill in `apps/mobile/.claude/skills/verify/` generated with `create-verification-skill` (Maestro on the iOS Simulator and Android emulator, test sign-in, video evidence), proven on one feature | Screens | SEI-40 | yes | SEI-41 |
 | SEI-42 | Unistyles 3 theme | Spike on SDK 58 first; `light` / `night` themes from `docs/DESIGN.md`; fonts | High contrast | SEI-41 | yes | SEI-42 |
 | SEI-43 | i18n | i18next + expo-localization, typed keys, `es.json` | `en.json` | SEI-41 | yes | SEI-43 |
 | SEI-44 | Native auth | Apple + Google via `signInWithIdToken`; encrypted session store; `startAutoRefresh` / `stopAutoRefresh` on app state; full name on first Apple sign-in; `Stack.Protected`; email + password test sign-in in `development` / `preview` only; account-deleted screen | — | SEI-41 | yes | SEI-44 |
 | SEI-45 | Sentry | `@sentry/react-native`, source maps from EAS builds | — | SEI-41 | yes | SEI-45 |
 | SEI-46 | CI for the native app | Typecheck, lint, Paradero's 3 check scripts (tokens, contrast, strings) on every PR | Maestro (SEI-52) | SEI-41, SEI-42 | yes | SEI-46 |
 | SEI-47 | Native push | `push_tokens` table + RLS; register the token after sign-in, delete it on sign-out; `reminders-daily` also sends through Expo; a tap opens Avisos | Web Push removal (SEI-49) | SEI-44 | yes | SEI-47 |
+| SEI-52 | Maestro in CI | The `verify` map's journeys on every PR against seibi-dev, with the test sign-in and the recordings attached | — | SEI-41 (the first iOS EAS build) | yes | SEI-52 |
 
 ### 2 · Migración
 
@@ -134,7 +135,6 @@ ticket and keep its behaviour.
 | SEI-71 | Recruit 12 testers for Play's closed test | 3 · Prueba en dispositivos (no blockers) | SEI-71 |
 | SEI-69 | Chat with Seibi | 4 · Después | SEI-69 |
 | SEI-70 | High-contrast palettes | 4 · Después | SEI-70 |
-| SEI-52 | Maestro E2E against seibi-dev, with the test sign-in | 4 · Después | SEI-52 |
 | SEI-11 | Bring 3D back? (idea) | Backlog | SEI-11 |
 | SEI-49 | Shut down the PWA and remove Web Push | 4 · Después, after both stores | SEI-49 |
 
@@ -158,6 +158,12 @@ Rules:
   Functions, and approves destructive production changes first.
 - A ticket that changes what is true updates `ARCHITECTURE.md` in the same
   PR.
+- **Every PR carries proof.** A PR that changes what a user sees or does
+  adds or updates its feature file in the `verify` skill's map
+  (`apps/mobile/.claude/skills/verify/features/`) and proves it: a video
+  of the journey, screenshots, and a read-only seibi-dev query for the
+  saved data. The video goes on the Linear ticket, linked from the PR. No
+  proof, no merge. Once SEI-52 lands, the same journeys also run in CI.
 - Work nobody has tried in Seibi or the reference apps starts with a short
   spike before anything is built on it (see Gotchas).
 

@@ -208,8 +208,14 @@ The migration's order, scope and tickets are in
   vPIC and forms.
 - **Accessibility:** WCAG 2.2 AA (rules in `docs/DESIGN.md`).
 - **CI:** typecheck, lint and three check scripts (no raw values,
-  contrast, no untranslated text) on every PR (SEI-46). E2E with Maestro
-  comes after launch (SEI-52).
+  contrast, no untranslated text) on every PR (SEI-46). Maestro runs the
+  `verify` skill's journeys in CI once the first iOS build exists (SEI-52).
+- **Verification:** `apps/mobile/.claude/skills/verify/` (generated in
+  SEI-41 with `create-verification-skill`) drives the app on the
+  simulator the way a user does and captures a video, screenshots and the
+  saved data. Every PR that changes what a user sees or does is proven
+  with it before merge; `maintain-verification-skill` keeps its feature
+  map current.
 - **Paid features** (RevenueCat, Superwall) start after the launch.
 
 ### Libraries
@@ -243,7 +249,7 @@ versions match the SDK.
 | Links, `mailto:` | `<a>` | `expo-web-browser`, `Linking` |
 | Haptics, splash, fonts | — | `expo-haptics`, `expo-splash-screen`, `expo-font` |
 | Glass surfaces | CSS blur | `expo-glass-effect` |
-| E2E | Playwright | Maestro on EAS Workflows (after launch) |
+| E2E | Playwright | Maestro: the `verify` skill locally, then CI after the first iOS build (SEI-52) |
 
 ## Working rules
 
