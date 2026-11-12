@@ -1,0 +1,14 @@
+{
+  "start": {
+    "title": "Seibi",
+    "tagline": "Mantenimiento con total claridad",
+    "engineCheck": "maintenance-engine: {{reading}} km",
+    "noReading": "sin lectura"
+  },
+  "update": {
+    "title": "Hay una versión nueva de Seibi",
+    "message": "Reinicia la app para usarla.",
+    "later": "Ahora no",
+    "restart": "Reiniciar"
+  }
+}

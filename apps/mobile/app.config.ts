@@ -1,5 +1,16 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
+// iOS shows these in its own dialogs (permission prompts), outside the app's
+// i18next text. One file per language, listed in `locales` below.
+import nativeEs from './locales/es.json';
+
+/**
+ * The languages Seibi ships (src/i18n/languages.ts lists the same ones).
+ * iOS and Android show the app's own system text (pickers, permission
+ * prompts) in one of these, and offer them in the per-app language setting.
+ */
+const LANGUAGES = ['es'];
+
 /**
  * The EAS project that both variants share: one slug, one project id
  * (per-variant slugs break EAS). `eas init` prints the id; paste it here.
@@ -45,6 +56,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       bundleIdentifier: variant.id,
       supportsTablet: false,
       config: { usesNonExemptEncryption: false },
+      // Spanish is the source language, also for the native strings.
+      infoPlist: { CFBundleDevelopmentRegion: 'es' },
     },
     android: {
       package: variant.id,
@@ -57,8 +70,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // Only React Native's old debug overlay used it; Play asks every app that declares it why.
       blockedPermissions: ['android.permission.SYSTEM_ALERT_WINDOW'],
     },
+    locales: { es: './locales/es.json' },
     plugins: [
       'expo-router',
+      ['expo-localization', { supportedLocales: LANGUAGES }],
       // The dev client opens through `exp+seibi://`. Only Seibi Dev claims it,
       // so `expo start` never opens the store app by mistake.
       ['expo-dev-client', { addGeneratedScheme: variantName === 'development' }],
@@ -75,8 +90,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         'expo-image-picker',
         {
           // Invoice photo on a Service (S12, SEI-67) ships by OTA, so the module is in the first binary.
-          photosPermission: 'Seibi usa tus fotos para adjuntar la factura o el recibo de un Servicio.',
-          cameraPermission: 'Seibi usa la cámara para fotografiar la factura o el recibo de un Servicio.',
+          photosPermission: nativeEs.ios.NSPhotoLibraryUsageDescription,
+          cameraPermission: nativeEs.ios.NSCameraUsageDescription,
           microphonePermission: false,
         },
       ],

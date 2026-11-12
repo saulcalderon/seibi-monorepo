@@ -21,9 +21,9 @@ Seibi is moving from a PWA to a native app:
   v3). It is shut down once the native app is in both stores (SEI-49).
 - **Target:** a native iOS and Android app built with **Expo + React
   Native** in `apps/mobile` (`@seibi/mobile`). Its base exists (SEI-41:
-  config, builds, updates, one placeholder start screen); the rest of the
-  Linear milestone «1 · Base nativa» (SEI-42…SEI-47) and the port's
-  screens are being built.
+  config, builds, updates, one placeholder start screen; SEI-43: i18n);
+  the rest of the Linear milestone «1 · Base nativa» (SEI-42…SEI-47) and
+  the port's screens are being built.
 
 The backend does not change in the move: Supabase, the Edge Functions,
 and `packages/maintenance-engine` serve both apps.
@@ -60,7 +60,7 @@ often are), pnpm adds that exact version to `minimumReleaseAgeExclude` in
 | UI runtime | React, Vite, TanStack Router | Expo (latest SDK), React Native, Expo Router, React Compiler, New Architecture |
 | Data | TanStack Query → Supabase | TanStack Query → Supabase |
 | Styling | Tailwind + Radix | Unistyles 3 |
-| Copy / i18n | Inline Spanish strings, Paraglide compiled | `i18next` + `expo-localization` |
+| Copy / i18n | Inline Spanish strings, Paraglide compiled | `i18next` + `react-i18next` + `expo-localization`, `es.json` |
 | Auth | Supabase OAuth (Apple, Google) | Supabase, native Apple + Google |
 | Push | Web Push (VAPID, `push_subscriptions`) | Expo Push Service (`push_tokens`) |
 | Ship | Dockerfile, deployed by Dokploy | EAS Build + EAS Update |
@@ -239,9 +239,44 @@ The migration's order, scope and tickets are in
 - **Push:** Expo Push Service via `expo-notifications`; device tokens in a
   `push_tokens` table. `reminders-daily` sends to Expo and keeps Web Push
   until the PWA is shut down (SEI-47, SEI-49).
-- **i18n:** `i18next` + `expo-localization` with typed keys. Spanish only
-  at launch, English later. The Spanish UI uses the Spanish column of the
-  `CONTEXT.md` mapping; the English UI uses the English terms.
+- **i18n:** `i18next` + `react-i18next` + `expo-localization`, in
+  `src/i18n/`. Spanish only at launch, English later. The Spanish UI uses
+  the Spanish column of the `CONTEXT.md` mapping; the English UI uses the
+  English terms.
+  - **Every UI string is in `src/i18n/es.json` from a screen's first
+    commit**: JSX text, spoken props (`accessibilityLabel`, `title`,
+    `placeholder`…) and alert copy. Screens read it with
+    `const { t } = useTranslation()`; code outside React uses the default
+    export of `@/i18n` (`i18n.t`). Never call `t` at module scope. Keys are
+    grouped by screen or feature (`start.title`, `update.restart`). SEI-46's
+    strings check fails on text that doesn't come from i18n.
+  - **Typed keys.** `src/i18n/i18next.d.ts` types `t()` from `es.json`, so
+    a key that isn't in it fails `typecheck` (also with a default value:
+    `strictKeyChecks`).
+  - **Which language.** The user's stored choice, else the device's first
+    language that Seibi speaks (the device only suggests), else Spanish.
+    While only `es.json` exists every device gets Spanish. The choice is
+    stored by `setLanguage` in the `expo-sqlite` kv-store (`language.v1`;
+    `system` removes it). The language picker arrives with Perfil and
+    English.
+  - **Synchronous start.** The root layout imports `@/i18n`, which at
+    module load reads the stored choice with `getItemSync` and inits
+    i18next with the bundled JSON and `initAsync: false`. Init is done
+    before the first render, so no frame shows a key.
+  - **Native strings.** Text the OS draws for the app (iOS permission
+    prompts) lives in `locales/<lang>.json` (Expo `locales`, which writes
+    `<lang>.lproj/InfoPlist.strings`); `app.config.ts` also reads the
+    Spanish file for the `expo-image-picker` plugin. The bundle's
+    development region is `es`, and `expo-localization`'s
+    `supportedLocales` (the `LANGUAGES` list in `app.config.ts`) limits
+    the native localisations and the per-app language setting to the
+    languages Seibi ships.
+  - **Adding English** touches no screen: add `src/i18n/en.json` with
+    every key of `es.json` and add `en` to `LANGUAGES` in
+    `src/i18n/languages.ts` (typecheck fails while a key is missing); add
+    `locales/en.json` and `en` to `locales` and `LANGUAGES` in
+    `app.config.ts`. The `app.config.ts` part is native, so English ships
+    in a new build, not by OTA alone.
 - **Data:** TanStack Query against Supabase directly, as in the PWA, one
   folder per domain with query key factories. Tables are typed by the
   generated Supabase types; Zod validates Edge Function responses, NHTSA
@@ -277,7 +312,7 @@ versions match the SDK.
 | Styling | Tailwind + `index.css` | Unistyles 3 |
 | Data | TanStack Query + supabase-js | Same |
 | Validation | — | Zod, at Edge Function, vPIC and form boundaries |
-| Copy / i18n | Paraglide | `i18next` + `expo-localization` |
+| Copy / i18n | Paraglide | `i18next` + `react-i18next` + `expo-localization` (typed keys from `es.json`) |
 | Errors | `@sentry/react` | `@sentry/react-native` |
 | Push | Web Push + service worker | `expo-notifications` |
 | New versions | Service worker update prompt | `expo-updates` (EAS Update) |

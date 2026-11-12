@@ -3,7 +3,8 @@
 A cold start of Seibi shows the native splash (the logo mark on the light
 background) until the app's fonts have loaded, then the start screen with
 the heading «Seibi». Today the start screen is a placeholder that also
-shows one value computed by the shared maintenance engine; the app shell
+shows a tagline and one value computed by the shared maintenance engine;
+its text comes from `es.json` ([`i18n.md`](./i18n.md)). The app shell
 (SEI-55) and Login (S1) replace it, and this file changes with them.
 
 ## Sub-features
