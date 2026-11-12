@@ -38,21 +38,21 @@ export function Avisos() {
 
   if (garage.isLoading) {
     return (
-      <Screen title="Avisos" className="min-h-full bg-[#f7f2ee]">
+      <Screen title="Avisos" className="garage v3 min-h-full">
         <ScreenSkeleton />
       </Screen>
     )
   }
   if (garage.isError) {
     return (
-      <Screen title="Avisos" className="min-h-full bg-[#f7f2ee]">
+      <Screen title="Avisos" className="garage v3 min-h-full">
         <ErrorState onRetry={garage.refetch} />
       </Screen>
     )
   }
   if (garage.vehicles.length === 0 || !active) {
     return (
-      <Screen title="Avisos" className="min-h-full bg-[#f7f2ee]">
+      <Screen title="Avisos" className="garage v3 min-h-full">
         <EmptyState
           icon={CarFront}
           title="Aún no hay avisos"
@@ -73,7 +73,7 @@ export function Avisos() {
 
   return (
     <Screen
-      className="min-h-full bg-[#f7f2ee]"
+      className="garage v3 min-h-full"
       title="Avisos"
       actions={
         <IconButton icon={BellPlus} label="Nuevo Recordatorio" variant="secondary" onClick={() => actions.addReminder()} />
@@ -81,7 +81,7 @@ export function Avisos() {
     >
       <div className="flex flex-col gap-5 px-5">
         {lead ? (
-          <div className="overflow-hidden rounded-2xl bg-surface ring-1 ring-line">
+          <div className="overflow-hidden rounded-3xl bg-surface shadow-card">
             <button
               type="button"
               aria-expanded={showOthers}
@@ -205,7 +205,7 @@ function VehicleAvisos({
   return (
     <section className="flex flex-col gap-3" aria-label={`${vehicleName(vehicle)} ${vehicle.year}`}>
       <div className="flex items-center gap-3 px-1">
-        <span className="flex h-11 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-linear-to-b from-surface-2 to-surface-3 ring-1 ring-line">
+        <span className="flex h-11 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--g-control)]">
           <VehicleVisual
             render={vehicle.render}
             bodyType={vehicle.bodyType}
@@ -216,19 +216,23 @@ function VehicleAvisos({
           />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-[1.02rem]">{vehicleName(vehicle)}</h2>
-          <p className="truncate text-[0.78rem] text-muted">
+          <h2 className="truncate font-sans text-[15px] font-medium tracking-normal">{vehicleName(vehicle)}</h2>
+          <p className="truncate text-[13px] text-muted">
             {vehicle.year} · {identity(vehicle)}
           </p>
         </div>
-        <span className="shrink-0">
-          <span className="inline-flex h-7 items-center rounded-full bg-surface-2 px-2.5 text-[0.72rem] font-semibold">
-            {overdue.length > 0
-              ? `${overdue.length} por atender`
-              : vehicle.health === 'unknown'
-                ? 'Sin datos'
-                : 'Al día'}
-          </span>
+        <span
+          className={cx(
+            'inline-flex shrink-0 items-center gap-1.5 text-[13px] font-medium',
+            overdue.length > 0 ? 'text-[var(--g-alert)]' : 'text-muted',
+          )}
+        >
+          {overdue.length > 0 ? <span className="size-1.5 rounded-full bg-[var(--g-alert)]" aria-hidden /> : null}
+          {overdue.length > 0
+            ? `${overdue.length} por atender`
+            : vehicle.health === 'unknown'
+              ? 'Sin datos'
+              : 'Al día'}
         </span>
       </div>
       <Card className="divide-y divide-line overflow-hidden">

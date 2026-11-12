@@ -44,7 +44,7 @@ export function Perfil() {
   const country = COUNTRIES.find((c) => c.id === p?.country)
 
   return (
-    <Screen back title="Perfil">
+    <Screen back title="Perfil" className="garage v3 min-h-full">
       <div className="flex flex-col gap-6 px-5">
         <Card className="flex items-center gap-4 p-5">
           <span className="inline-flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-inverse text-[1.2rem] font-bold text-on-inverse">

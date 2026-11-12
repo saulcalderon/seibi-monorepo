@@ -18,13 +18,22 @@ type SheetProps = {
   panelClassName?: string
   /** Seibi v3 sheet: white panel, v3 palette, light title, softer scrim. */
   look?: 'v3'
+  /** Fires after the panel has left the screen. */
+  onExited?: () => void
+}
+
+const SHEET_EASE = [0.22, 1, 0.36, 1] as const
+const SHEET_TRANSITION = { duration: 0.32, ease: SHEET_EASE }
+const SHEET_VARIANTS = {
+  closed: { y: '100%' },
+  open: { y: 0 },
 }
 
 /**
  * Bottom sheet. Rendered into #root so it stays inside the phone frame on
  * desktop. Closes on backdrop tap, Escape, or dragging the handle down.
  */
-export function Sheet({ open, onClose, title, description, children, footer, tall, panelClassName, look }: SheetProps) {
+export function Sheet({ open, onClose, title, description, children, footer, tall, panelClassName, look, onExited }: SheetProps) {
   const v3 = look === 'v3'
   const titleId = useId()
   const panelRef = useRef<HTMLDivElement>(null)
@@ -49,7 +58,7 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
   if (!host) return null
 
   return createPortal(
-    <AnimatePresence>
+    <AnimatePresence onExitComplete={onExited}>
       {open ? (
         <div className="fixed inset-0 z-50 flex flex-col justify-end" role="presentation">
           <motion.div
@@ -57,7 +66,7 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={SHEET_TRANSITION}
             onClick={onClose}
           />
           <motion.div
@@ -71,10 +80,11 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
               panelClassName ?? (v3 ? 'v3 bg-surface' : 'bg-bg'),
               tall ? 'h-[94%]' : 'max-h-[92%]',
             )}
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 32, stiffness: 340 }}
+            variants={SHEET_VARIANTS}
+            initial="closed"
+            animate="open"
+            exit="closed"
+            transition={SHEET_TRANSITION}
             drag="y"
             dragListener={false}
             dragControls={drag}

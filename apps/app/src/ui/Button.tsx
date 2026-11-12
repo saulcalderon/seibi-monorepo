@@ -6,8 +6,7 @@ type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'inverse'
 type Size = 'sm' | 'md' | 'lg'
 
 const VARIANTS: Record<Variant, string> = {
-  primary:
-    'bg-radiant text-white shadow-[0_8px_20px_rgb(232_83_34/28%)] hover:bg-radiant-strong active:bg-radiant-strong',
+  primary: 'bg-ink text-bg hover:opacity-90 active:opacity-80',
   secondary: 'bg-surface text-ink ring-1 ring-line hover:bg-surface-2',
   ghost: 'text-ink hover:bg-surface-3/70',
   danger: 'bg-overdue-soft text-overdue hover:brightness-95',
@@ -91,10 +90,10 @@ export function IconButton({
       aria-label={label}
       title={label}
       className={cx(
-        'inline-flex size-11 shrink-0 items-center justify-center rounded-2xl transition-[background,transform] duration-150 active:scale-95 disabled:opacity-40',
-        variant === 'ghost' && 'text-ink hover:bg-surface-3/70',
-        variant === 'secondary' && 'bg-surface text-ink ring-1 ring-line shadow-card',
-        variant === 'inverse' && 'bg-inverse text-on-inverse',
+        'inline-flex size-11 shrink-0 items-center justify-center transition-[background,transform] duration-150 active:scale-95 disabled:opacity-40',
+        variant === 'ghost' && 'rounded-2xl text-ink hover:bg-surface-3/70',
+        variant === 'secondary' && 'rounded-full bg-surface text-ink shadow-card',
+        variant === 'inverse' && 'rounded-2xl bg-inverse text-on-inverse',
         className,
       )}
       {...rest}
