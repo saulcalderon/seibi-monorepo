@@ -1,4 +1,7 @@
 # App checks on every pull request. Dokploy builds the Dockerfile after merge.
+# The pnpm scripts below run through Turborepo (turbo.json), the same commands
+# developers run locally. Turbo's strict env mode only passes the variables
+# declared in turbo.json (VITE_*, EXPO_PUBLIC_*) to the build.
 name: App PR
 
 on:

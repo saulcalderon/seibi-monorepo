@@ -7,11 +7,14 @@
     "node": "^24.0.0"
   },
   "scripts": {
-    "dev": "pnpm --filter @seibi/app dev",
-    "build": "pnpm --filter @seibi/app build",
+    "dev": "turbo run dev --filter=@seibi/app",
+    "build": "turbo run build",
     "preview": "pnpm --filter @seibi/app preview",
-    "typecheck": "pnpm -r typecheck",
-    "lint": "pnpm -r lint",
-    "test": "pnpm -r --if-present test"
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "turbo": "^2.11.10"
   }
 }
