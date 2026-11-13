@@ -20,7 +20,6 @@
     }
   },
   "placeholder": {
-    "service": "Aquí registrarás el trabajo hecho en tu Vehículo: el tipo, las piezas, el taller y el kilometraje.",
     "mileage": "Aquí anotarás el número que marca hoy el odómetro de tu Vehículo.",
     "close": "Cerrar"
   },
@@ -45,6 +44,83 @@
     "missing": {
       "title": "No encontramos este Vehículo",
       "body": "Puede que lo hayas retirado de tu flota o que el enlace no sea tuyo."
+    },
+    "services": {
+      "title": "Servicios",
+      "record": "Registrar un Servicio",
+      "empty": "Todavía no hay Servicios en este Vehículo.",
+      "repair": "Reparación"
+    }
+  },
+  "serviceForm": {
+    "titleNew": "Registrar Servicio",
+    "titleEdit": "Editar Servicio",
+    "description": "Puedes registrar trabajos de hoy o de fechas pasadas.",
+    "close": "Cerrar",
+    "vehicle": "Vehículo",
+    "type": {
+      "label": "Tipo de Servicio",
+      "maintenance": "Mantenimiento",
+      "repair": "Reparación"
+    },
+    "whatWasDone": "¿Qué se hizo?",
+    "whatWasDoneHint": "Toca lo que hicieron. Si no aparece, agrégalo abajo.",
+    "taskPending": "{{task}}, pendiente",
+    "showAllTasks": "Ver todas las tareas",
+    "showFewerTasks": "Ver menos tareas",
+    "items_one": "{{count}} trabajo o pieza",
+    "items_other": "{{count}} trabajos o piezas",
+    "perItemCost": "Costo por pieza",
+    "totalOnly": "Solo costo total",
+    "item": {
+      "custom": "Otro trabajo o pieza",
+      "name": "Nombre del trabajo o pieza",
+      "namePlaceholder": "Ej. Alternador, bombillo, empaque",
+      "cost": "Costo",
+      "costSuffix": "USD",
+      "partBrand": "Marca de la pieza",
+      "partNumber": "Número de parte",
+      "remove": "Quitar {{name}}",
+      "help": "¿Qué es {{name}}?"
+    },
+    "addItem": "Agregar otro trabajo o pieza",
+    "date": "Fecha",
+    "mileage": "Kilometraje",
+    "mileageHintToday": "El que marcaba el odómetro ese día. Hoy: {{current}}.",
+    "mileageHint": "El número que marcaba el odómetro ese día.",
+    "totalCost": "Costo total",
+    "totalCostSuffix": "USD",
+    "itemsTotal": "Total: {{total}}",
+    "itemsTotalLabel": "Total:",
+    "shop": "Taller",
+    "shopPlaceholder": "Nombre del taller o agencia",
+    "notes": "Notas",
+    "notesPlaceholder": "Lo que te dijo el mecánico, garantía, etc.",
+    "saveNew": "Guardar Servicio",
+    "saveEdit": "Guardar cambios",
+    "saved": "Servicio registrado",
+    "updated": "Servicio actualizado",
+    "withdraw": {
+      "action": "Quitar del historial",
+      "title": "¿Quitar este Servicio del historial?",
+      "body": "El kilometraje registrado se conserva.",
+      "confirm": "Quitar",
+      "cancel": "Cancelar",
+      "done": "Servicio quitado del historial"
+    },
+    "discard": {
+      "title": "¿Descartar los cambios?",
+      "body": "Lo que escribiste en este Servicio no se guardará.",
+      "confirm": "Descartar",
+      "cancel": "Seguir editando"
+    },
+    "missing": {
+      "title": "No encontramos este Servicio",
+      "body": "Puede que lo hayas quitado del historial o que el enlace no sea tuyo."
+    },
+    "noVehicles": {
+      "title": "Agrega un Vehículo primero",
+      "body": "Cada Servicio pertenece a un Vehículo. Agrégalo en Mi flota."
     }
   },
   "profile": {
@@ -123,6 +199,7 @@
     "date_required": "Elige la fecha.",
     "service_date_future": "Un Servicio ya realizado no puede tener fecha futura. Para una fecha futura crea una Cita.",
     "service_items_required": "Agrega al menos un trabajo o pieza.",
+    "service_reading_required": "Escribe el kilometraje de ese día.",
     "cost_invalid": "Escribe un costo válido.",
     "appointment_date_past": "Una Cita es para hoy o una fecha futura. Si ya lo hiciste, registra un Servicio.",
     "routine_name_required": "Ponle un nombre, por ejemplo “Trabajo”.",

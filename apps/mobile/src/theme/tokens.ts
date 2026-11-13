@@ -125,6 +125,8 @@ export const size = {
   icon: { xs: 14, sm: 16, md: 20, lg: 24, xl: 28 },
   /** A progress bar's track: `h-2`. */
   track: 8,
+  /** A status dot beside a label: `size-1.5` (a pending task on a Service's task chip). */
+  dot: 6,
   /** The longest comfortable line for centred body text: `max-w-[18rem]`. */
   readable: 288,
   /** The isotype's height. Its width follows its 658 × 444 proportions. */

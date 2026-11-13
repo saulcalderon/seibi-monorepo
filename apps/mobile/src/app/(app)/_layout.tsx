@@ -22,8 +22,9 @@ export default function AppLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="actions" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
-      {/* Placeholders until the Service form (S7) and the Mileage form (S8) take these routes. */}
-      <Stack.Screen name="record-service" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
+      {/* The Service form (S7): tall, as the PWA's sheet; record-service?vehicleId= | serviceId= | tasks=. */}
+      <Stack.Screen name="record-service" options={{ ...sheet, sheetAllowedDetents: [0.92] }} />
+      {/* A placeholder until the Mileage form (S8) takes this route. */}
       <Stack.Screen name="update-mileage" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
       {/* The data check screen exists in Seibi Dev (the development variant) only. */}
       <Stack.Protected guard={process.env.EXPO_PUBLIC_APP_VARIANT === 'development'}>

@@ -14,6 +14,12 @@ export interface ChipProps {
   count?: number;
   /** In a set where only one can be on, chips are radios. */
   radio?: boolean;
+  /**
+   * A status dot after the label (a Maintenance task that is due, on the
+   * Service form). It is drawn only while the chip is off; say what it means
+   * in `accessibilityLabel`, since a colour is never the only signal.
+   */
+  dot?: 'soon' | 'overdue';
   /** Spoken label; defaults to the label and the count. */
   accessibilityLabel?: string;
   testID?: string;
@@ -24,7 +30,7 @@ export interface ChipProps {
  * inverse; the state is also spoken, so colour is never the only signal.
  * Chips are 40 pt tall to sit in a row; `hitSlop` takes the touch area to 44.
  */
-export function Chip({ label, selected = false, onPress, icon, count, radio = false, accessibilityLabel, testID }: ChipProps) {
+export function Chip({ label, selected = false, onPress, icon, count, radio = false, dot, accessibilityLabel, testID }: ChipProps) {
   const { theme } = useUnistyles();
   const { pressed, pressHandlers } = usePressed();
   styles.useVariants({ selected });
@@ -45,6 +51,7 @@ export function Chip({ label, selected = false, onPress, icon, count, radio = fa
           <Text step="subhead" weight={600} tone={tone}>
             {label}
           </Text>
+          {dot && !selected ? <View style={[styles.dot, dot === 'overdue' ? styles.dotOverdue : styles.dotSoon]} /> : null}
           {count != null ? (
             // The testID sits on a plain wrapper: on the badge it would keep Fabric from flattening it,
             // and hide the Android bug a flow checks for (docs/DESIGN.md → Corners on Android).
@@ -78,6 +85,17 @@ const styles = StyleSheet.create((theme) => ({
         false: { backgroundColor: theme.colors.surface, borderColor: theme.colors.line },
       },
     },
+  },
+  dot: {
+    width: theme.size.dot,
+    height: theme.size.dot,
+    borderRadius: theme.radius.pill,
+  },
+  dotSoon: {
+    backgroundColor: theme.colors.soon,
+  },
+  dotOverdue: {
+    backgroundColor: theme.colors.overdue,
   },
   countSlot: {
     marginLeft: theme.space[0.5],
