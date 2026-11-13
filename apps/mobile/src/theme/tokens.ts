@@ -131,6 +131,10 @@ export const size = {
   logo: { sm: 24, md: 44, lg: 72 },
   /** A body-type silhouette's width; its height follows its 240 × 96 proportions. */
   silhouette: { sm: 136, lg: 240 },
+  /** A Vehicle's picture on its Mi flota card: `h-16 w-24`. */
+  thumb: { width: 96, height: 64 },
+  /** A paint swatch in the Vehicle form: `size-10`, with `hitSlop` up to `target`. */
+  swatch: 40,
   /** A still hero image's height: the Vehicle on the sign-in screen (`h-48`). */
   hero: 192,
   /** The header's avatar, which opens Perfil: `size-9`, with `hitSlop` up to `target`. */

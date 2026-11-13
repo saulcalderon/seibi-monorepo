@@ -30,6 +30,12 @@ describe('NHTSA vPIC makes', () => {
     expect(new Set(names).size).toBe(names.length);
   });
 
+  it('keeps one spelling per brand, ignoring case: the popular «Kia», not vPIC’s «KIA»', () => {
+    const names = makeNames([cars, { Results: [{ MakeName: 'kia' }, { MakeName: 'TOYOTA' }] }]);
+    expect(names.filter((name) => name.toLowerCase() === 'kia')).toEqual(['Kia']);
+    expect(names.filter((name) => name.toLowerCase() === 'toyota')).toEqual(['Toyota']);
+  });
+
   it('refuses an answer without results', () => {
     let caught: unknown;
     try {
@@ -51,6 +57,10 @@ describe('NHTSA vPIC models', () => {
     expect(names).toContain('Corolla');
     expect(names).toContain('Scion tC');
     expect(names).toHaveLength(new Set(names).size);
+  });
+
+  it('lists a model once however vPIC capitalises it', () => {
+    expect(modelNames({ Results: [{ Model_Name: 'Yaris' }, { Model_Name: 'YARIS' }, { Model_Name: ' Corolla ' }] })).toEqual(['Corolla', 'Yaris']);
   });
 
   it('is empty for a brand vPIC doesn’t know (typed by hand: Hilux, NP300)', () => {

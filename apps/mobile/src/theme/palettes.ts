@@ -118,7 +118,34 @@ export interface Art {
   googleGreen: string;
   googleYellow: string;
   googleRed: string;
+  /**
+   * The 13 paint presets a Vehicle can have (`vehicles.color`), as the PWA
+   * draws them (`apps/app/src/lib/paint.ts`): the Vehicle form's swatches and
+   * a silhouette's paint. They never carry text.
+   */
+  paint: Record<PaintSwatch, string>;
+  /** A swatch's hairline, so white and beige show on a white surface (`ring-black/10`). */
+  paintRing: string;
+  /** The check on the chosen swatch: dark on the light paints, white on the rest. */
+  paintCheckOnLight: string;
+  paintCheckOnDark: string;
 }
+
+/** The paint codes (`src/lib/paint.ts` → `PAINT_CODES`), kept here too so this file has no imports. */
+export type PaintSwatch =
+  | 'white'
+  | 'silver'
+  | 'gray'
+  | 'black'
+  | 'red'
+  | 'burgundy'
+  | 'blue'
+  | 'green'
+  | 'yellow'
+  | 'orange'
+  | 'brown'
+  | 'beige'
+  | 'gold';
 
 export const light: Palette = {
   radiant: '#e85322',
@@ -261,8 +288,30 @@ const GOOGLE = {
   googleRed: '#ea4335',
 };
 
+/** The PWA's `PAINTS` (apps/app/src/lib/paint.ts), the same in every theme. */
+const PAINT = {
+  paint: {
+    white: '#f4f5f7',
+    silver: '#c3c7cd',
+    gray: '#6d7178',
+    black: '#16171a',
+    red: '#c8261d',
+    burgundy: '#6b1a24',
+    blue: '#1f4f9a',
+    green: '#2f6b45',
+    yellow: '#e9c030',
+    orange: '#e8702a',
+    brown: '#6b4a32',
+    beige: '#d8c7a6',
+    gold: '#b8964d',
+  },
+  paintRing: 'rgba(0, 0, 0, 0.1)',
+  paintCheckOnLight: '#000000',
+  paintCheckOnDark: '#ffffff',
+} satisfies Pick<Art, 'paint' | 'paintRing' | 'paintCheckOnLight' | 'paintCheckOnDark'>;
+
 export const art: Record<PaletteName, Art> = {
-  light: { ...LOGO, ...CAR, ...GOOGLE, logoTick: LOGO.logoTickOnLight, carGround: 'rgba(20, 21, 23, 0.1)' },
-  night: { ...LOGO, ...CAR, ...GOOGLE, logoTick: LOGO.logoTickOnDark, carGround: 'rgba(242, 244, 247, 0.1)' },
-  garage: { ...LOGO, ...CAR, ...GOOGLE, logoTick: LOGO.logoTickOnLight, carGround: 'rgba(14, 15, 17, 0.1)' },
+  light: { ...LOGO, ...CAR, ...GOOGLE, ...PAINT, logoTick: LOGO.logoTickOnLight, carGround: 'rgba(20, 21, 23, 0.1)' },
+  night: { ...LOGO, ...CAR, ...GOOGLE, ...PAINT, logoTick: LOGO.logoTickOnDark, carGround: 'rgba(242, 244, 247, 0.1)' },
+  garage: { ...LOGO, ...CAR, ...GOOGLE, ...PAINT, logoTick: LOGO.logoTickOnLight, carGround: 'rgba(14, 15, 17, 0.1)' },
 };

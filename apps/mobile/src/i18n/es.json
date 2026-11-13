@@ -28,11 +28,119 @@
     "activeVehicle": "Tu Vehículo"
   },
   "fleet": {
-    "yearPlate": "{{year}} · {{plate}}",
     "empty": {
-      "title": "Sin Vehículos todavía",
-      "body": "Cuando agregues tu primer Vehículo, aparecerá aquí."
+      "title": "Tu flota está vacía",
+      "body": "Agrega tu primer Vehículo para ver su plan de mantenimiento y sus avisos."
+    },
+    "add": "Agregar Vehículo",
+    "addShort": "Agregar",
+    "search": "Buscar por marca, modelo, año o placa",
+    "countOne": "1 Vehículo",
+    "countMany": "{{count}} Vehículos",
+    "attentionOne": "1 requiere atención",
+    "attentionMany": "{{count}} requieren atención",
+    "summary": "{{count}} · {{attention}}",
+    "filters": {
+      "label": "Filtrar Vehículos",
+      "all": "Todos",
+      "attention": "Requiere atención",
+      "ok": "Al día"
+    },
+    "noResults": {
+      "title": "Sin resultados",
+      "query": "Ningún Vehículo coincide con “{{query}}”.",
+      "filter": "Ningún Vehículo en este filtro.",
+      "showAll": "Ver todos"
+    },
+    "card": {
+      "noOdometer": "Sin km",
+      "noData": "Sin datos",
+      "home": "En Inicio",
+      "spoken": "{{name}} {{year}}, {{details}}, {{status}}",
+      "spokenHome": "{{name}} {{year}}, en Inicio, {{details}}, {{status}}",
+      "plateAndOdometer": "{{plate}} · {{odometer}}",
+      "more": "Más acciones para {{name}}",
+      "edit": "Editar Vehículo",
+      "withdraw": "Retirar de mi flota"
+    },
+    "withdrawn": {
+      "show": "Ver Vehículos retirados ({{count}})",
+      "hide": "Ocultar Vehículos retirados ({{count}})",
+      "rowOne": "{{year}} · Retirado · se elimina en 1 día",
+      "rowMany": "{{year}} · Retirado · se elimina en {{days}} días",
+      "restore": "Restaurar",
+      "restoreSpoken": "Restaurar {{name}} {{year}}",
+      "restored": "Vehículo restaurado"
     }
+  },
+  "vehicleForm": {
+    "addTitle": "Agregar Vehículo",
+    "editTitle": "Editar Vehículo",
+    "intro": "Con la marca, el modelo y el año buscamos el plan de mantenimiento de tu Vehículo.",
+    "close": "Cancelar",
+    "brand": "Marca",
+    "brandPlaceholder": "Toyota, Nissan, Hyundai…",
+    "year": "Año",
+    "yearPlaceholder": "Elige el año",
+    "model": "Modelo",
+    "modelPlaceholder": "Corolla, Sentra, Tucson…",
+    "modelNeedsBrandYear": "Primero elige marca y año",
+    "modelHint": "¿No aparece? Escríbelo como está en tu tarjeta de circulación.",
+    "engine": "Motor",
+    "enginePlaceholder": "1.8L, 2.0 turbo",
+    "trim": "Versión",
+    "trimPlaceholder": "LE, EX, GLS",
+    "color": "Color",
+    "plate": "Placa",
+    "platePlaceholder": "P123-456",
+    "measure": "El tablero marca",
+    "measureSpoken": "Medida del odómetro",
+    "measureHint": "Usa la misma medida que ves en el odómetro.",
+    "measureLocked": "No se puede cambiar: ya hay lecturas registradas en esta medida.",
+    "km": "Kilómetros",
+    "mi": "Millas",
+    "odometer": "Kilometraje actual",
+    "odometerPlaceholder": "Ej. 45,000",
+    "odometerHint": "Es el número del odómetro hoy. Con él calculamos tus próximos mantenimientos.",
+    "submitAdd": "Agregar Vehículo",
+    "submitEdit": "Guardar cambios",
+    "added": "Vehículo agregado",
+    "updated": "Vehículo actualizado",
+    "pickHint": "Abre la lista para elegir",
+    "discard": {
+      "title": "¿Descartar los cambios?",
+      "message": "Lo que escribiste en este Vehículo no se guardará.",
+      "confirm": "Descartar",
+      "keep": "Seguir editando"
+    }
+  },
+  "picker": {
+    "searchBrand": "Buscar marca",
+    "searchYear": "Buscar año",
+    "searchModel": "Buscar modelo",
+    "popular": "Marcas populares",
+    "allBrands": "Todas las marcas",
+    "models": "Modelos {{year}}",
+    "use": "Usar “{{value}}”",
+    "useSpoken": "Usar {{value}}, escrito por ti",
+    "chosen": "{{value}}, elegido",
+    "failed": "No pudimos cargar la lista. Puedes escribirlo tú en la búsqueda.",
+    "typeIt": "Escribe el nombre en la búsqueda, como está en tu tarjeta de circulación.",
+    "nothing": "Nada coincide con “{{query}}”.",
+    "cancel": "Cancelar"
+  },
+  "withdraw": {
+    "title": "Retirar {{name}}",
+    "body": "Lleva un registro de {{span}}{{services}}. Sale de tu flota y de Inicio. Puedes restaurarlo durante 30 días. Después se elimina el Vehículo y su registro.",
+    "servicesOne": ", con 1 Servicio",
+    "servicesMany": ", con {{count}} Servicios",
+    "spanDayOne": "1 día",
+    "spanDays": "{{count}} días",
+    "spanYearOne": "1 año",
+    "spanYears": "{{count}} años",
+    "confirm": "Retirar de mi flota",
+    "cancel": "Cancelar",
+    "done": "Vehículo retirado"
   },
   "reminders": {
     "openVehicle": "Ver Vehículo"
