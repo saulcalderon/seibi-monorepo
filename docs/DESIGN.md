@@ -67,12 +67,21 @@ Three palette rules the PWA already has, and the port keeps:
   for v3; Garage in night uses the base night palette. In the app it is
   the `garage` theme, applied to a subtree with Unistyles' `ScopedTheme`.
 - **On Garage, the active Vehicle's paint is the only accent** (pager dot,
-  interval bars). The 13 paint presets and the paint → accent rule live in
-  `apps/app/src/lib/paint.ts`; port them as they are.
+  interval bars). The 13 paint presets are `paints` in `palettes.ts`; the
+  paint → accent rule is `paintAccent` in `src/theme/garage.ts`, the PWA's
+  OKLCH maths unchanged (a test pins every preset's accent to the PWA's).
 
-Garage stage colors (`--g-*` in `index.css`: floor gradient, vignette,
-control, track, dot) belong to S4 and live in the theme as a `garage`
-group, light and night.
+Garage stage colors (`--g-*` in `index.css`) are the theme's `garage` group
+(`palettes.ts` → `garageStage`), light and night: the control's fill and
+pressed fill, the cards' track, the pager's idle dot, the floor's four
+stops, the light from above, the vignette, the contact shadow, and whether
+the poster multiplies into the floor (light) or not (night). They are
+drawing colours, so the contrast check skips them. `src/theme/garage.ts`
+turns them into `backgroundImage` gradients (`stageFloor`, `paintTint`,
+`paintGlow`, `contactShadow`, `stageVignette`, `reflectionFade`);
+screens call those, never write a gradient. The poster's feathered edge is
+the PWA's radial mask, drawn with `react-native-svg` (opaque to 72 % of the
+ellipse, clear at its edge).
 
 The logo mark has its own colors: accent `#ec3a27`, ticks `#1f1f1f` (light)
 or `#ffffff` (night). It ships as SVG (`apps/app/src/components/Logo.tsx`).
@@ -138,6 +147,13 @@ Login's headline («Mantenimiento con total claridad») keeps the PWA's
 first-run style: `title1` in Archivo 300, tracked `-0.025em` with a 1.12
 line height (`heroType` in `tokens.ts`).
 
+Inicio (Garage v3) has two sizes outside the scale (`garageType` in
+`tokens.ts`): the Vehicle's name, «Sin lectura» and «Sin Vehículos
+todavía» at 32/34 in Archivo 300, tracked `-0.025em`; the odometer at
+52/54 in Archivo 300, tracked `-0.03em`, with tabular figures (the PWA's
+Inicio uses Archivo, not Geist Mono, for it). Both grow with the system
+text size.
+
 **Text that fits.** On Android, React Native 0.88 measures a text that has
 a `lineHeight` (every step does) at its exact width, then lays it out for
 drawing about 1 px narrower: the width goes from pixels to points and back
@@ -198,6 +214,9 @@ lines fit its box (`text-fit.ts`).
 | `tabBar.ios` / `android` | 49 / 80 | The tab bar's height above the bottom safe area, where the [+] sits (NativeTabs can't be measured; checked on screenshots) |
 | `border.thin` / `focus` | 1 / 2 | Field and card borders; the focus ring |
 | `hangingSpace` | 6 | The font size of the thin space `Text` hangs after its words on Android (Type → Text that fits) |
+| `stage.height` / `stage.floor` | 316 / 220 | Inicio's stage (`h-[316px]`) and the floor under its text where the Vehicle stands; minimums, so the stage grows with its text |
+| `pagerDot.side` / `pagerDot.active` | 6 / 18 | The stage's pager dots; the active one is wider and takes the paint accent |
+| `bar` | 4 | A status card's interval bar on Inicio (`h-1`) |
 
 - **Opacity** (`opacity`): `disabled` 0.5, `pressed` 0.85 (danger and
   inverse buttons, which have no pressed color), `skeleton` 0.55 (the low
@@ -228,8 +247,8 @@ it natively without a re-render.
 | --- | --- | --- | --- |
 | `Text` | `text.tsx` | `step` (the type scale), `family` (`display`, `sans`, `mono`; `system`, the platform font at 500, only where a third party's brand rules ask for it), `weight` (300–700, as a font file), `tone` (`ink`, `muted`, `subtle`, `radiant`, `ok`, `soon`, `overdue`, `unknown`, `onInverse`, `onRadiant`; each status tone uses its `*Text` role), `align`, `heading` (`accessibilityRole="header"`). On Android it hangs a thin space after its words so no line is cut (Type → Text that fits) | — |
 | `Icon` | `icon.tsx` | `size` `xs`–`xl`, `tone` or `color`, `label` (only when the icon means something alone), `fixed`. See Icons | lucide-react |
-| `Button` | `button.tsx` | `variant`: `primary` (`radiantStrong`, glow), `secondary`, `ghost`, `danger`, `inverse`; `size`: `sm` 36, `md` 44, `lg` 56 (`minHeight`; `sm` gets `hitSlop` to 44); `icon`, `trailingIcon`, `loading` (the platform's spinner in place of the icon, keeps its label and colors, ignores presses, `busy`; the PWA also dims it, which left Android's thin arc almost invisible on the orange), `disabled` (dims to `opacity.disabled`), `block` | `ui/Button.tsx` |
-| `IconButton` | `button.tsx` | `ghost`, `secondary`, `inverse`; 44 × 44; `label` is required | `ui/Button.tsx` |
+| `Button` | `button.tsx` | `variant`: `primary` (`radiantStrong`, glow), `secondary`, `tonal` (`surface3` with no border, pressed `garage.controlPressed`: Inicio's «Actualizar»), `ghost`, `danger`, `inverse`; `size`: `sm` 36, `md` 44, `lg` 56 (`minHeight`; `sm` gets `hitSlop` to 44); `icon`, `trailingIcon`, `loading` (the platform's spinner in place of the icon, keeps its label and colors, ignores presses, `busy`; the PWA also dims it, which left Android's thin arc almost invisible on the orange), `disabled` (dims to `opacity.disabled`), `block` | `ui/Button.tsx` |
+| `IconButton` | `button.tsx` | `ghost`, `secondary`, `inverse`; 44 × 44; `round` makes it a circle (Inicio's arrows); `label` is required | `ui/Button.tsx` |
 | `Chip` | `chip.tsx` | `selected`, `count`, `icon`, `radio` (one of a group: `accessibilityRole="radio"`, the group is a `radiogroup`) | filter chips |
 | `Card`, `SectionHeader`, `ListRow`, `RowDivider`, `IconTile` | `card.tsx` | A `ListRow` with `onPress` is one button with a chevron and a background highlight on press (never a scale); from `largeTextScale` (1.35×) its title, subtitle and trailing part stack. `IconTile` tone: `neutral`, `radiant`, `ok`, `soon`, `overdue`, `unknown`; size `sm`, `md` | `ui/Card.tsx` |
 | `TextField`, `TextAreaField`, `NumberField`, `MileageField`, `Segmented`, `Field` | `fields.tsx` | Label above, `hint`, `error` (replaces the hint, red border, announced), `optional` («· opcional»), `suffix` (units), `mono`; a 2 pt `radiant` ring on focus. `NumberField` `kind`: `integer`, `decimal`. `MileageField` keeps a number, groups thousands as it is typed (es-SV: `45,000`) and shows `km` or `mi`. `Segmented` is a radio group | `ui/fields.tsx` |

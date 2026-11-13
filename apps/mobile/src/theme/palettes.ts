@@ -266,3 +266,78 @@ export const art: Record<PaletteName, Art> = {
   night: { ...LOGO, ...CAR, ...GOOGLE, logoTick: LOGO.logoTickOnDark, carGround: 'rgba(242, 244, 247, 0.1)' },
   garage: { ...LOGO, ...CAR, ...GOOGLE, logoTick: LOGO.logoTickOnLight, carGround: 'rgba(14, 15, 17, 0.1)' },
 };
+
+/**
+ * The 13 paint presets stored on `vehicles.color` (English codes), with the
+ * swatch the PWA draws (apps/app/src/lib/paint.ts). Labels live in es.json
+ * under `paint.<code>`. Car art and paint presets stay as they are (SEI-51).
+ */
+export const paints = {
+  white: '#f4f5f7',
+  silver: '#c3c7cd',
+  gray: '#6d7178',
+  black: '#16171a',
+  red: '#c8261d',
+  burgundy: '#6b1a24',
+  blue: '#1f4f9a',
+  green: '#2f6b45',
+  yellow: '#e9c030',
+  orange: '#e8702a',
+  brown: '#6b4a32',
+  beige: '#d8c7a6',
+  gold: '#b8964d',
+} as const;
+
+/**
+ * Inicio's stage (Garage v3: `--g-*` in the PWA's index.css), light and
+ * night. Drawing colours: floor, light, shadow, the control's fill and the
+ * pager's idle dot. None of them carries text, so the contrast check skips
+ * them. `src/theme/garage.ts` builds the stage's gradients from these.
+ */
+export interface GarageStage {
+  /** The «Actualizar» control's fill (`--g-control`) and its pressed fill. */
+  control: string;
+  controlPressed: string;
+  /** A status card's interval track (`--g-track`). */
+  track: string;
+  /** The pager's idle dot (`--g-dot`); the active one takes the paint accent. */
+  dot: string;
+  /** The floor (`--g-floor`): a vertical gradient, top to bottom, at 0, 58, 66 and 100 %. */
+  floor: readonly [string, string, string, string];
+  /** The light from above (`--g-overhead`), as r, g, b and alpha. */
+  overhead: readonly [number, number, number, number];
+  /** The stage's darker edges (`--g-vignette`), as r, g, b and alpha. */
+  vignette: readonly [number, number, number, number];
+  /** The contact shadow under a silhouette (`--g-contact`), as r, g, b. */
+  contact: readonly [number, number, number];
+  /** Whether the poster's grey studio sweep multiplies into the floor (light) or sits on it (night). */
+  posterBlend: 'multiply' | 'normal';
+}
+
+const GARAGE_LIGHT: GarageStage = {
+  control: '#e4e4e6',
+  controlPressed: '#d9d9dc',
+  track: '#e6e6e8',
+  dot: '#c9cacd',
+  floor: ['#f7f7f8', '#ededef', '#e3e3e6', '#efeff1'],
+  overhead: [255, 255, 255, 1],
+  vignette: [14, 15, 17, 0.09],
+  contact: [10, 11, 13],
+  posterBlend: 'multiply',
+};
+
+export const garageStage: Record<PaletteName, GarageStage> = {
+  light: GARAGE_LIGHT,
+  garage: GARAGE_LIGHT,
+  night: {
+    control: night.surface3,
+    controlPressed: '#30333a',
+    track: night.surface3,
+    dot: '#4a4d55',
+    floor: ['#1d1f23', '#17181b', '#121316', '#17181b'],
+    overhead: [255, 255, 255, 0.07],
+    vignette: [0, 0, 0, 0.3],
+    contact: [0, 0, 0],
+    posterBlend: 'normal',
+  },
+};

@@ -1,0 +1,101 @@
+# Feature: Inicio, the Garage (features/home.md), on the shared seibi-dev
+# test account. Run through scripts/verify.sh drive <ios|android> home. It
+# signs in before the recording starts (a sign-in video can flash the test
+# password) and saves nothing but the active-Vehicle preference on the
+# device. It assumes no Vehicle by name or count: other sessions add and
+# withdraw Vehicles on the account. Paging, the silhouette and the empty
+# state are home-fixture.yaml's.
+appId: ${APP_ID}
+name: Inicio shows the greeting, the active Vehicle, its Mileage and opens it
+---
+- stopApp
+- openLink: ${DEV_URL}
+- runFlow: sign-in.yaml
+- runScript:
+    file: scripts/garage-vehicles.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}
+- startRecording: home
+# A cold start, already signed in.
+- stopApp
+- openLink: ${DEV_URL}
+- extendedWaitUntil:
+    visible:
+      id: home-screen
+    timeout: 120000
+# The greeting is the header's large title; the avatar beside it opens Perfil.
+- assertVisible: 'Buenos días|Buenas tardes|Buenas noches'
+- assertVisible:
+    id: open-profile
+# The stage names one of the account's Vehicles with its year and paint.
+- extendedWaitUntil:
+    visible:
+      id: home-stage-vehicle
+      text: ${output.vehicleNames}
+    timeout: 30000
+# Its Mileage and the control to update it.
+- assertVisible:
+    id: home-odometer
+    text: 'Kilometraje: .*'
+- assertVisible:
+    id: home-update-mileage
+- waitForAnimationToEnd
+- takeScreenshot: home-01-garage
+# «Estado» shows only once a Service is known; scroll to whatever is under the odometer.
+- swipe:
+    start: 50%, 75%
+    end: 50%, 30%
+    duration: 800
+- waitForAnimationToEnd
+- takeScreenshot: home-02-below
+- swipe:
+    start: 50%, 30%
+    end: 50%, 80%
+    duration: 800
+# «Actualizar» opens the Mileage sheet (a placeholder until S8).
+- tapOn:
+    id: home-update-mileage
+- extendedWaitUntil:
+    visible:
+      id: update-mileage-sheet
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: home-03-update-mileage
+- tapOn:
+    id: update-mileage-sheet-close
+- extendedWaitUntil:
+    notVisible:
+      id: update-mileage-sheet
+    timeout: 15000
+# The Vehicle's name opens it inside Inicio's tab (a placeholder until S6).
+- tapOn:
+    id: home-stage-vehicle
+- extendedWaitUntil:
+    visible:
+      id: vehicle-name
+    timeout: 15000
+- assertVisible:
+    id: tab-home
+- waitForAnimationToEnd
+- takeScreenshot: home-04-vehicle
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 1%, 50%
+          end: 80%, 50%
+          duration: 400
+- extendedWaitUntil:
+    visible:
+      id: home-stage-vehicle
+    timeout: 15000
+- stopRecording

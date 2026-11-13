@@ -16,13 +16,11 @@ name: The tabs, Inicio and the actions sheet show their copy from es.json
 - assertVisible: Inicio
 - assertVisible: Mi flota
 - assertVisible: Avisos
-# home.activeVehicle, with greeting.* above it
+# home.mileage.label (or home.empty.title), with greeting.* as Inicio's large title
 - extendedWaitUntil:
-    visible: 'Tu Vehículo|Sin Vehículos todavía'
+    visible: '.*Kilometraje.*|Sin Vehículos todavía'
     timeout: 30000
-- assertVisible:
-    id: home-greeting
-    text: 'Buenos días|Buenas tardes|Buenas noches'
+- assertVisible: 'Buenos días|Buenas tardes|Buenas noches'
 # No raw key reaches the screen (Maestro matches text as a regular expression).
 - assertNotVisible:
     text: '(tabs|shell|home|fleet|greeting|update)\..*'

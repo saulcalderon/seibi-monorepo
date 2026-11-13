@@ -152,7 +152,31 @@ export const size = {
    * 0.2 em, so 1.2 pt: wider than the pixel lost to rounding, too thin to see.
    */
   hangingSpace: 6,
+  /**
+   * Inicio's stage (Garage v3, `h-[316px]`): the card the Vehicles page
+   * through, and the floor under its text where the Vehicle stands. Both are
+   * minimums, so the stage grows when the text above the Vehicle does.
+   */
+  stage: { height: 316, floor: 220 },
+  /** The pager's dots: 6 pt round, the active one 18 pt wide (`h-1.5 w-1.5`, `w-[18px]`). */
+  pagerDot: { side: 6, active: 18 },
+  /** A status card's interval bar on Inicio (`h-1`). */
+  bar: 4,
 } as const;
+
+/**
+ * Inicio's type (Garage v3), which sits outside the scale: the Vehicle's name
+ * and «Sin lectura» at 32/34, Archivo 300, `tracking-[-0.025em]`; the
+ * odometer at 52/54, Archivo 300, `tracking-[-0.03em]`, tabular figures.
+ * Multiply `tracking` by the font size.
+ */
+export const garageType = {
+  display: { fontSize: 32, lineHeight: 34, tracking: -0.025 },
+  odometer: { fontSize: 52, lineHeight: 54, tracking: -0.03 },
+} as const;
+
+/** fal's posters are 2368 × 1792; the stage sizes a poster by this until it has loaded. */
+export const posterAspect = 2368 / 1792;
 
 /** Opacities for states. Colours never change opacity for any other reason. */
 export const opacity = {

@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
+import { greeting } from '@/lib/format';
 import { TabStack } from '@/shell/tab-stack';
 
 /**
@@ -24,5 +25,6 @@ export default function TabStackLayout({ segment }: { segment: string }) {
   const { t } = useTranslation();
   if (segment === '(fleet)') return <TabStack root="fleet" title={t('tabs.fleet')} />;
   if (segment === '(reminders)') return <TabStack root="reminders" title={t('tabs.reminders')} />;
-  return <TabStack root="index" title={t('tabs.home')} />;
+  // Inicio's large title is the greeting; its tab is still «Inicio».
+  return <TabStack root="index" title={greeting(t)} />;
 }

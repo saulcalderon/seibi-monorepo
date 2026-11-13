@@ -5,7 +5,7 @@ import { Icon, type IconName } from './icon';
 import { PressScale, usePressed } from './press';
 import { Text } from './text';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'inverse';
+type Variant = 'primary' | 'secondary' | 'tonal' | 'ghost' | 'danger' | 'inverse';
 type Size = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends Pick<PressableProps, 'onPress' | 'testID' | 'accessibilityHint'> {
@@ -25,7 +25,7 @@ export interface ButtonProps extends Pick<PressableProps, 'onPress' | 'testID' |
 }
 
 /** Each variant's text and icon colour. */
-const TONE = { primary: 'onRadiant', secondary: 'ink', ghost: 'ink', danger: 'overdue', inverse: 'onInverse' } as const;
+const TONE = { primary: 'onRadiant', secondary: 'ink', tonal: 'ink', ghost: 'ink', danger: 'overdue', inverse: 'onInverse' } as const;
 /** The label's step for each size: 0.82, 0.92 and 1 rem in the PWA. */
 const STEP = { sm: 'footnote', md: 'subhead', lg: 'callout' } as const;
 const ICON = { sm: 'sm', md: 'sm', lg: 'md' } as const;
@@ -91,13 +91,15 @@ export interface IconButtonProps extends Pick<PressableProps, 'onPress' | 'testI
   /** Required: the button has no visible words, so this is all VoiceOver and TalkBack say. */
   label: string;
   variant?: 'ghost' | 'secondary' | 'inverse';
+  /** A circle instead of a rounded square: the carousel's arrows on Inicio. */
+  round?: boolean;
   disabled?: boolean;
 }
 
 /** A 44 × 44 button with only an icon (the PWA's IconButton). */
-export function IconButton({ icon, label, variant = 'ghost', disabled = false, onPress, testID, accessibilityHint }: IconButtonProps) {
+export function IconButton({ icon, label, variant = 'ghost', round = false, disabled = false, onPress, testID, accessibilityHint }: IconButtonProps) {
   const { pressed, pressHandlers } = usePressed();
-  styles.useVariants({ iconVariant: variant, pressed: pressed && !disabled, disabled });
+  styles.useVariants({ iconVariant: variant, round, pressed: pressed && !disabled, disabled });
   return (
     <Pressable
       testID={testID}
@@ -138,6 +140,8 @@ const styles = StyleSheet.create((theme) => ({
       variant: {
         primary: { backgroundColor: theme.colors.radiantStrong, boxShadow: theme.shadow.primary },
         secondary: { backgroundColor: theme.colors.surface, borderWidth: theme.size.border.thin, borderColor: theme.colors.line },
+        // A filled control with no border: Inicio's «Actualizar» (`--g-control`, which is `surface3` on Garage and night).
+        tonal: { backgroundColor: theme.colors.surface3 },
         // No fill until pressed. On Android a rounded view with no fill is flattened away and its pressed
         // fill drawn square; `overflow: 'hidden'` keeps it a real view (docs/DESIGN.md → Corners on Android).
         ghost: { overflow: 'hidden' },
@@ -150,6 +154,7 @@ const styles = StyleSheet.create((theme) => ({
     compoundVariants: [
       { variant: 'primary', pressed: true, styles: { backgroundColor: theme.colors.radiantPressed } },
       { variant: 'secondary', pressed: true, styles: { backgroundColor: theme.colors.surface2 } },
+      { variant: 'tonal', pressed: true, styles: { backgroundColor: theme.garage.controlPressed } },
       { variant: 'ghost', pressed: true, styles: { backgroundColor: theme.colors.surface3 } },
       { variant: 'danger', pressed: true, styles: { opacity: theme.opacity.pressed } },
       { variant: 'inverse', pressed: true, styles: { opacity: theme.opacity.pressed } },
@@ -180,6 +185,7 @@ const styles = StyleSheet.create((theme) => ({
         },
         inverse: { backgroundColor: theme.colors.inverse },
       },
+      round: { true: { borderRadius: theme.radius.pill }, false: {} },
       pressed: { true: {}, false: {} },
       disabled: { true: { opacity: theme.opacity.disabled }, false: {} },
     },
