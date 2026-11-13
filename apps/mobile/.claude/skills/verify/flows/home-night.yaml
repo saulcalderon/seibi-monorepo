@@ -1,0 +1,60 @@
+# Feature: Inicio, the Garage (features/home.md), in night: Garage is not
+# art-directed for night, so it draws on the night palette with the stage's
+# night floor. The real Inicio, then the sample screen's poster, silhouette
+# and cards. Run through scripts/verify.sh drive <ios|android> home-night
+# with «Tema» on Auto; the flow leaves the device back in light mode.
+appId: ${APP_ID}
+name: Inicio draws in night
+---
+- stopApp
+- openLink: ${DEV_URL}
+- runFlow: sign-in.yaml
+- setDarkMode: enabled
+- startRecording: home-night
+- stopApp
+- openLink: ${DEV_URL}
+- extendedWaitUntil:
+    visible:
+      id: home-stage-vehicle
+    timeout: 120000
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: night-01-home
+- runFlow:
+    file: home-fixture-open.yaml
+- runFlow:
+    when:
+      visible:
+        id: home-stage-vehicle
+        text: 'Mazda 3,.*'
+    commands:
+      - tapOn:
+          id: home-stage-previous
+- extendedWaitUntil:
+    visible:
+      id: home-vehicle-poster
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: night-02-poster
+- tapOn:
+    id: home-stage-next
+- extendedWaitUntil:
+    visible:
+      id: home-vehicle-silhouette
+    timeout: 15000
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: night-03-silhouette
+- tapOn:
+    id: home-stage-previous
+- scrollUntilVisible:
+    element:
+      id: home-status-summary
+    timeout: 20000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: night-04-status
+- setDarkMode: disabled
+- stopRecording

@@ -1,51 +1,35 @@
 import { useRouter } from 'expo-router';
-import { useTranslation } from 'react-i18next';
 
 import { useGarage } from '@/data/garage/use-garage';
 import { useActiveVehicle } from '@/data/preferences/store';
-import { greeting, vehicleName } from '@/lib/format';
-import { TabScroll } from '@/shell/tab-scroll';
-import { Card, ListRow, SectionHeader } from '@/ui/card';
-import { EmptyState, ErrorState, ListRowSkeleton, SkeletonGroup } from '@/ui/feedback';
-import { Text } from '@/ui/text';
+import { useProfile } from '@/data/profile/queries';
+import { Garage } from '@/home/garage';
 
 /**
- * Inicio, as a placeholder (SEI-55): the greeting and the active Vehicle,
- * which opens inside this tab. The Garage (S4) replaces it.
+ * Inicio (S4, SEI-59): the Garage. The greeting is the header's large title
+ * and the avatar sits beside it (the tab's stack). The Vehicle shown is the
+ * one picked last on this phone (`useActiveVehicle`), else the first.
  */
 export default function HomeScreen() {
-  const { t } = useTranslation();
   const router = useRouter();
   const garage = useGarage();
-  const { active } = useActiveVehicle(garage.vehicles);
+  const profile = useProfile();
+  const { active, select } = useActiveVehicle(garage.vehicles);
   return (
-    <TabScroll testID="home-screen">
-      <Text step="title3" family="display" heading testID="home-greeting">
-        {greeting(t)}
-      </Text>
-      {garage.isLoading ? (
-        <SkeletonGroup>
-          <Card>
-            <ListRowSkeleton />
-          </Card>
-        </SkeletonGroup>
-      ) : garage.isError ? (
-        <ErrorState onRetry={garage.refetch} />
-      ) : active ? (
-        <>
-          <SectionHeader title={t('home.activeVehicle')} />
-          <Card>
-            <ListRow
-              testID="home-vehicle"
-              title={vehicleName(active)}
-              subtitle={String(active.year)}
-              onPress={() => router.push(`/vehicle/${active.id}`)}
-            />
-          </Card>
-        </>
-      ) : (
-        <EmptyState testID="home-empty" icon="vehicle" title={t('fleet.empty.title')} body={t('fleet.empty.body')} />
-      )}
-    </TabScroll>
+    <Garage
+      testID="home-screen"
+      state={garage.isLoading ? 'loading' : garage.isError ? 'error' : 'ready'}
+      vehicles={garage.vehicles}
+      active={active}
+      tasks={garage.tasks}
+      knowledgeLevel={profile.data?.knowledgeLevel}
+      onSelect={select}
+      onOpenVehicle={(id) => router.push(`/vehicle/${id}`)}
+      // The Mileage form (S8) takes this route and reads the Vehicle from it.
+      onUpdateMileage={(id) => router.push({ pathname: '/update-mileage', params: { vehicleId: id } })}
+      // Mi flota is where Vehicles are added (S5 puts its form there).
+      onAddVehicle={() => router.navigate('/fleet')}
+      onRetry={garage.refetch}
+    />
   );
 }

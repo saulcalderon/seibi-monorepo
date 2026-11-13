@@ -27,7 +27,7 @@ name: Tabs keep their place, the [+] opens the actions, a link opens a Vehicle
     timeout: 120000
 - extendedWaitUntil:
     visible:
-      id: home-vehicle
+      id: home-stage-vehicle
     timeout: 30000
 - assertVisible:
     id: tab-home

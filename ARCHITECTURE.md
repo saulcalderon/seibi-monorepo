@@ -256,7 +256,7 @@ The migration's order, scope and tickets are in
   src/app/
     _layout.tsx                  root Stack: Stack.Protected (app) · (auth)/… · ui-kit
     +native-intent.tsx           seibi-dev://vehicle/<id> → Mi flota (src/shell/links.ts)
-    (app)/_layout.tsx            Stack, anchor (tabs): (tabs) · actions · record-service · update-mileage · data-check
+    (app)/_layout.tsx            Stack, anchor (tabs): (tabs) · actions · record-service · update-mileage · data-check · garage-fixture
     (app)/(tabs)/_layout.tsx     NativeTabs + the floating [+] drawn over them
     (app)/(tabs)/(home)/index.tsx            Inicio  (/)
     (app)/(tabs)/(fleet)/fleet.tsx           Mi flota (/fleet)
@@ -311,11 +311,57 @@ The migration's order, scope and tickets are in
     sign-in). `vehicle/[id]` exists in all three tabs, so
     `+native-intent.tsx` sends `seibi-dev://vehicle/<id>` (or `seibi://`)
     to Mi flota, where a person would find it; other links pass through.
-  - **Placeholders.** The tab roots, the Vehicle detail and Perfil are
-    placeholders built from kit components over the data layer (Inicio:
-    greeting and active Vehicle; Mi flota: the Vehicles; Avisos: each
-    Vehicle's Reminders). The S-tickets replace their content, not the
-    routes.
+  - **Placeholders.** Mi flota, Avisos, the Vehicle detail and Perfil are
+    placeholders built from kit components over the data layer (Mi flota:
+    the Vehicles; Avisos: each Vehicle's Reminders). The S-tickets replace
+    their content, not the routes. Inicio is the Garage (below).
+- **Inicio** (S4, SEI-59): the PWA's Garage v3 without the 3D branch, in
+  `src/home/` (`garage.tsx`, `stage.tsx`, `ticker.tsx`; the decisions as
+  plain functions in `garage-logic.ts`, with unit tests). The route
+  (`(home)/index.tsx`) reads `useGarage`, `useProfile` and
+  `useActiveVehicle` and passes them to `Garage` as props.
+  - **Header.** The large title is the greeting for the time of day
+    (`greeting()`; the tab stays «Inicio»), with the avatar beside it.
+  - **Palette.** `garage` in a `ScopedTheme` in light; the night theme in
+    night (Garage is not art-directed for night). The stage's colours are
+    the theme's `garage` group (`palettes.ts` → `garageStage`), its
+    gradients `backgroundImage` strings built in `src/theme/garage.ts`
+    (React Native 0.88 draws CSS linear and radial gradients natively;
+    Unistyles converts them on a theme change). The paint presets and the
+    paint → accent rule (OKLCH, the PWA's maths) are there too, with a test
+    that pins every preset's accent to the PWA's.
+  - **Carousel.** The Vehicles are pages of a native horizontal paging
+    `ScrollView`: the page follows the finger and settles where the
+    platform settles it; `onMomentumScrollEnd` picks the active Vehicle.
+    The arrows step and wrap, as the PWA's. For VoiceOver and TalkBack the
+    pager is one `adjustable` element («Tus Vehículos», value «<Vehículo>,
+    N de M», increment and decrement), as a system page control is; the
+    current page's name is a button that opens the Vehicle; other pages
+    are hidden from the accessibility tree. No new native module.
+  - **The Vehicle.** The poster through `expo-image` with
+    `cachePolicy="memory-disk"` (downloaded once, then from disk),
+    multiplied into the floor in light. React Native has no CSS mask, so
+    the PWA's feathered edge is drawn as the floor's colour over the
+    poster's edges. Without a poster (none, `pending`, or a failed load)
+    the paint-coloured `Silhouette` stands on the floor with its contact
+    shadow and a faded reflection.
+  - **Mileage and Estado.** The odometer is the screen's big number
+    (Archivo 300 at 52 pt, `garageType` in `tokens.ts`); its digits roll
+    to a new value with Reanimated layout animations (`Ticker`), never on
+    mount. The hint under it comes from the engine's `mileagePrompt`.
+    «Actualizar» opens `/update-mileage` with the Vehicle's id (S8 reads
+    it). «Estado» shows up to four known, unsnoozed Reminders, overdue
+    first, with «Todo al día» or «N por atender»; the cards are not
+    buttons until S9 has a Reminder detail. «Completa tu historial» (the
+    unknown tasks) is S9's and joins Inicio with it.
+  - **Empty.** «Sin Vehículos todavía»; «Agregar mi Vehículo» opens Mi
+    flota, where S5 puts the Vehicle form.
+  - **Sample screen.** Seibi Dev only: `seibi-dev://garage-fixture`
+    (`?case=empty`), the same `Garage` drawn from two sample Vehicles
+    derived by the engine (`src/home/dev/`, required behind
+    `EXPO_PUBLIC_APP_VARIANT` like the data check). It shows what the
+    shared test account can't: paging, a missing poster, the cards and
+    the empty state. It writes nothing to seibi-dev.
 - **Styling:** Unistyles 3 (`react-native-unistyles` on
   `react-native-nitro-modules`; SEI-42's spike proved it on SDK 58 on both
   platforms). The theme lives in `src/theme/`, values from

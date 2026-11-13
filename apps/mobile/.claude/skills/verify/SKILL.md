@@ -283,8 +283,8 @@ shared: run `reset` after every such run, failed ones too.
   `MAESTRO_BIN`, and the test account (`SEIBI_TEST_EMAIL`,
   `SEIBI_TEST_PASSWORD`, `SEIBI_TEST_ACCOUNT_FILE`; see Sign-in).
 - `flows/*.yaml`: one Maestro flow per feature journey, named in the
-  feature's file. `flows/sign-in.yaml`, `flows/open-profile.yaml`, `flows/close-sheet.yaml` and `flows/ui-kit-open.yaml` are
-  subflows, not driven alone.
+  feature's file. `flows/sign-in.yaml`, `flows/open-profile.yaml`, `flows/close-sheet.yaml`, `flows/ui-kit-open.yaml` and
+  `flows/home-fixture-open.yaml` are subflows, not driven alone.
   `flows/scripts/` holds the JavaScript that flows run with `runScript`.
 
 ## Isolation

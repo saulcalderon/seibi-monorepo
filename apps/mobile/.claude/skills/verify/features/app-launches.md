@@ -3,19 +3,18 @@
 A cold start of Seibi shows the native splash (the logo mark on the
 phone's light or night background) until the app's fonts have loaded and the saved session has
 been read, then the sign-in screen (signed out) or Inicio, the first of the
-three tabs (signed in), with the floating [+] over the tab bar. Inicio is a
-placeholder today: a greeting and the active Vehicle, derived by the shared
-maintenance engine from the garage query. The tabs themselves are
-[`app-shell.md`](./app-shell.md); sign-in is [`auth.md`](./auth.md); the
-Garage (S4) replaces Inicio's content.
+three tabs (signed in), with the floating [+] over the tab bar. Inicio is the
+Garage ([`home.md`](./home.md)): the active Vehicle and its Mileage,
+derived by the shared maintenance engine from the garage query. The tabs themselves are
+[`app-shell.md`](./app-shell.md); sign-in is [`auth.md`](./auth.md).
 
 ## Sub-features
 
 - `launch-ios` cold-starts Seibi Dev on the iOS Simulator to Inicio.
 - `launch-android` cold-starts Seibi Dev on the Android emulator to Inicio.
 - `splash-gate` keeps the native splash up until the fonts load and the session is read; no frame of fallback text, and no flash of sign-in for a signed-in person.
-- `home` shows the tabs, the [+] and the large title «Inicio» in the heading font (Archivo SemiBold until Clash Display joins), in the theme's colours ([`theme.md`](./theme.md)).
-- `engine` shows the active Vehicle («Tu Vehículo»), which only appears once `@seibi/maintenance-engine` has derived the garage; an account with no Vehicle shows «Sin Vehículos todavía».
+- `home` shows the tabs, the [+] and the large title (Inicio's greeting) in the heading font (Archivo SemiBold until Clash Display joins), in the theme's colours ([`theme.md`](./theme.md)).
+- `engine` shows the active Vehicle on the stage, which only appears once `@seibi/maintenance-engine` has derived the garage; an account with no Vehicle shows «Sin Vehículos todavía».
 
 ## How to get to it (user POV)
 
@@ -35,7 +34,7 @@ Preconditions:
 
 - **Cold start.** Run `.claude/skills/verify/scripts/verify.sh drive android app-launches` (then `ios`). The flow runs `stopApp`, then `openLink: ${DEV_URL}`. The splash shows the logo mark on `#F2F4F7` (dark ticks), or on `#0E0F11` with white ticks when the phone is in dark mode (`login-night`, [`auth.md`](./auth.md)).
 - **Inicio.** `runFlow: sign-in.yaml` waits up to 120 s for `id: sign-in-title` or `id: home-screen`, signs in with the test account if it is the sign-in screen, and waits for `id: home-screen`. The flow asserts `id: tab-home` and `id: open-actions`. The video shows the splash, then Inicio, with no frame in a fallback font. In a development build the dev client's own screens show between the two (see Gotchas).
-- **Engine and data.** The flow waits for `id: home-vehicle` (or `id: home-empty`). It never shows when the garage query or the shared package fails (an error state shows instead).
+- **Engine and data.** The flow waits for `id: home-stage-vehicle` (or `id: home-empty`). It never shows when the garage query or the shared package fails (an error state shows instead).
 - **Proof.** The flow takes `takeScreenshot: home` and stops the recording. The run folder holds `startRecording/app-launches.mp4` and `takeScreenshot/home.png`. `doctor.txt` shows the branch, commit and the installed app.
 
 ## Gotchas

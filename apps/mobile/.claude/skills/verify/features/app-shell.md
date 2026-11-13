@@ -11,8 +11,8 @@ Servicio» and «Actualizar Kilometraje» (no Appointment action until S13);
 each opens its own sheet, a placeholder until S7 and S8. The avatar on the
 right of each tab's header opens «Perfil» inside the current tab. A link to
 a Vehicle (`seibi-dev://vehicle/<id>`) opens its detail in «Mi flota» with
-the fleet list under it. The tab roots, the Vehicle detail and Perfil are
-placeholders that the S-tickets fill in.
+the fleet list under it. Inicio is the Garage ([`home.md`](./home.md)); Mi flota, Avisos, the
+Vehicle detail and Perfil are placeholders that the S-tickets fill in.
 
 ## Sub-features
 
@@ -30,7 +30,7 @@ placeholders that the S-tickets fill in.
 ## How to get to it (user POV)
 
 - Sign in: Inicio is the first screen. Tap a tab at the bottom.
-- In «Mi flota», tap a Vehicle; in «Inicio», tap «Tu Vehículo»; in «Avisos», tap «Ver Vehículo».
+- In «Mi flota», tap a Vehicle; in «Inicio», tap the Vehicle's name on the stage; in «Avisos», tap «Ver Vehículo».
 - Tap the [+] at the bottom right, then an action.
 - Tap the avatar at the top right of any tab.
 - Open `seibi-dev://vehicle/<id>` from outside the app (Notes, Safari, `xcrun simctl openurl`, `adb shell am start -d`).
@@ -44,7 +44,7 @@ Preconditions:
 - Light mode, default text size (`verify.sh a11y <platform> reset`).
 
 - **Whole journey.** `.claude/skills/verify/scripts/verify.sh drive ios app-shell` (then `android`). It signs in before `startRecording`, reads the first Vehicle's id and name (`first-vehicle.js`, read-only), then cold-starts signed in.
-- **Tabs and labels.** `id: home-screen` with `id: home-vehicle`; `id: tab-home`, `tab-fleet`, `tab-reminders` and `id: open-actions` visible; the texts «Inicio», «Mi flota», «Avisos», «Acciones rápidas» and «Perfil» are on screen (Maestro reads the accessibility labels). Screenshot `shell-01-home`.
+- **Tabs and labels.** `id: home-screen` with `id: home-stage-vehicle`; `id: tab-home`, `tab-fleet`, `tab-reminders` and `id: open-actions` visible; the texts «Inicio», «Mi flota», «Avisos», «Acciones rápidas» and «Perfil» are on screen (Maestro reads the accessibility labels). Screenshot `shell-01-home`.
 - **A Vehicle inside its tab.** Tap `tab-fleet`, then `id: fleet-vehicle-0`: `id: vehicle-name` shows with `tab-fleet` and `open-actions` still visible. Screenshots `shell-02-fleet`, `shell-03-fleet-vehicle`.
 - **The [+] doesn't cover content.** Tap `tab-reminders` (`id: reminder-0-0`), swipe to the end: the last row and the card's bottom edge sit above the [+]. Screenshots `shell-04-reminders`, `shell-05-reminders-end`; look at the second one.
 - **Each tab keeps its place.** Tap `tab-fleet`: still `id: vehicle-name`. Screenshot `shell-06-fleet-kept-place`. Back (edge swipe on iOS, Back on Android) to `fleet-vehicle-0`.

@@ -9,7 +9,8 @@ import { StyleSheet } from 'react-native-unistyles';
  * on Android, NativeTabs keeps the screen above its bar). Its end leaves room
  * for the floating [+], so the last row can always scroll clear of it.
  */
-export function TabScroll({ children, testID }: { children: ReactNode; testID?: string }) {
+export function TabScroll({ children, flush = false, testID }: { children: ReactNode; flush?: boolean; testID?: string }) {
+  styles.useVariants({ flush });
   return (
     <ScrollView testID={testID} contentInsetAdjustmentBehavior="automatic" style={styles.scroll} contentContainerStyle={styles.content}>
       {children}
@@ -23,10 +24,15 @@ const styles = StyleSheet.create((theme) => ({
     backgroundColor: theme.colors.bg,
   },
   content: {
-    gap: theme.space[4],
-    paddingHorizontal: theme.space[4],
     paddingTop: theme.space[2],
     // The [+] (56 pt) and the gap it keeps above the tab bar, twice: below it and around it.
     paddingBottom: theme.size.fab + theme.space[3] * 2,
+    variants: {
+      // `flush`: the screen lays out its own sides and gaps (Inicio's stage runs closer to the edges than its text).
+      flush: {
+        true: {},
+        false: { gap: theme.space[4], paddingHorizontal: theme.space[4] },
+      },
+    },
   },
 }));
