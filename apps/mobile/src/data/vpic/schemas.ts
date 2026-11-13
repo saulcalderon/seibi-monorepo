@@ -59,13 +59,26 @@ function titleCase(value: string) {
 
 const spanish = (a: string, b: string) => a.localeCompare(b, 'es');
 
-/** The popular brands and every vPIC make, title-cased, once each, in Spanish order. */
-export function makeNames(lists: MakesResponse[]): string[] {
-  const fromVpic = lists.flatMap((list) => list.Results.map((r) => titleCase(r.MakeName.trim())));
-  return [...new Set([...POPULAR_BRANDS, ...fromVpic])].sort(spanish);
+/**
+ * Each name once, however it is capitalised («Kia» and vPIC's «KIA»): the
+ * first spelling seen wins, so the popular brands keep theirs.
+ */
+function oncePerName(names: string[]): string[] {
+  const seen = new Map<string, string>();
+  for (const name of names) {
+    const key = name.toLocaleLowerCase('es');
+    if (name && !seen.has(key)) seen.set(key, name);
+  }
+  return [...seen.values()];
 }
 
-/** A year's models, once each, in Spanish order. */
+/** The popular brands and every vPIC make, title-cased, once each (ignoring case), in Spanish order. */
+export function makeNames(lists: MakesResponse[]): string[] {
+  const fromVpic = lists.flatMap((list) => list.Results.map((r) => titleCase(r.MakeName.trim())));
+  return oncePerName([...POPULAR_BRANDS, ...fromVpic]).sort(spanish);
+}
+
+/** A year's models, once each (ignoring case), in Spanish order. */
 export function modelNames(body: ModelsResponse): string[] {
-  return [...new Set(body.Results.map((r) => r.Model_Name.trim()))].sort(spanish);
+  return oncePerName(body.Results.map((r) => r.Model_Name.trim())).sort(spanish);
 }
