@@ -256,7 +256,8 @@ The migration's order, scope and tickets are in
   src/app/
     _layout.tsx                  root Stack: Stack.Protected (app) · (auth)/… · ui-kit
     +native-intent.tsx           seibi-dev://vehicle/<id> → Mi flota (src/shell/links.ts)
-    (app)/_layout.tsx            Stack, anchor (tabs): (tabs) · actions · record-service · update-mileage · data-check
+    (app)/_layout.tsx            Stack, anchor (tabs): (tabs) · actions · record-service · update-mileage · vehicle · data-check
+    (app)/vehicle/               the Vehicle form, a modal with its own Stack: new · [id]/edit · pick
     (app)/(tabs)/_layout.tsx     NativeTabs + the floating [+] drawn over them
     (app)/(tabs)/(home)/index.tsx            Inicio  (/)
     (app)/(tabs)/(fleet)/fleet.tsx           Mi flota (/fleet)
@@ -311,11 +312,55 @@ The migration's order, scope and tickets are in
     sign-in). `vehicle/[id]` exists in all three tabs, so
     `+native-intent.tsx` sends `seibi-dev://vehicle/<id>` (or `seibi://`)
     to Mi flota, where a person would find it; other links pass through.
-  - **Placeholders.** The tab roots, the Vehicle detail and Perfil are
+  - **Placeholders.** Inicio, Avisos, the Vehicle detail and Perfil are
     placeholders built from kit components over the data layer (Inicio:
-    greeting and active Vehicle; Mi flota: the Vehicles; Avisos: each
-    Vehicle's Reminders). The S-tickets replace their content, not the
-    routes.
+    greeting and active Vehicle; Avisos: each Vehicle's Reminders). The
+    S-tickets replace their content, not the routes.
+  - **Mi flota** (`(fleet)/fleet.tsx`, S5, SEI-60): the PWA's Fleet. A
+    FlashList of cards (`src/vehicle/fleet-card.tsx`): the Model render or
+    the silhouette in the Vehicle's paint, name and year, Plate and current
+    odometer, health. The Vehicle Inicio shows comes first (a house icon),
+    then by urgency (`byUrgency`). With two or more Vehicles the header has
+    the system search bar (`Stack.SearchBar`; at the bottom on iOS 26) and
+    the list has the «Todos · Requiere atención · Al día» chips. Search
+    matches every typed word against make, model, year, Plate (with or
+    without its dashes) and trim, ignoring accents and capitals
+    (`src/vehicle/search.ts`). «Tu flota está vacía» with no Vehicle, «Sin
+    resultados» when nothing matches. A card opens `vehicle/[id]` in this
+    tab; its «…» menu (`MenuButton`) opens «Editar Vehículo» or withdraws
+    it. «Agregar» opens `/vehicle/new`.
+  - **The Vehicle form** (`src/vehicle/vehicle-form.tsx`, `VehicleForm`):
+    one component for adding and editing, with the routes that host it:
+
+    | Route | Opens | Who opens it |
+    | --- | --- | --- |
+    | `/vehicle/new` | «Agregar Vehículo», empty; saving closes it | Mi flota's «Agregar»; S3's first run can push it, or render `VehicleForm` in its own screen with `onSaved` |
+    | `/vehicle/<id>/edit` | «Editar Vehículo» with «Retirar de mi flota»; saving or withdrawing closes it | Mi flota's menu; S6's Vehicle detail with the id alone |
+    | `/vehicle/pick?kind=brand\|year\|model` | The make, year or model picker, pushed inside the modal | The form's fields only |
+
+    `vehicle` is a `modal` in `(app)`'s stack (a page sheet on iOS) with a
+    stack of its own, so the pickers push inside it. The form is a
+    `FormLayout` (the save button rides the keyboard); leaving with unsaved
+    input asks first (`usePreventRemove`, the native alert). Its rules are a
+    Zod schema (`src/vehicle/form-schema.ts`, the PWA's checks: make,
+    model, year 1950 to next year, a whole odometer) that names the first
+    failing field with an `InputError`; the mutation checks them again.
+    Make and model come from NHTSA vPIC (`src/data/vpic/`; «Kia» and
+    «KIA» are one make, case-insensitively), on a search screen with the
+    system search bar (`PickerList`, a FlashList): popular makes first,
+    and «Usar “…”» takes what was typed when vPIC doesn't list it (Hilux,
+    NP300), as the PWA's Combobox did. The picker hands its choice back
+    through `src/vehicle/picker-channel.ts`, not a context, so the form
+    works in any screen. Paint is the 13 presets (`theme.art.paint`).
+    The odometer measure can't change once the Vehicle has readings.
+    `+native-intent.tsx` leaves `vehicle/new` and `vehicle/pick` alone.
+  - **Withdraw and restore.** `useWithdrawWithConfirm`
+    (`src/vehicle/use-withdraw.ts`, for S6 too) asks with the native alert
+    («Retirar <Vehículo>», how long its record is and how many Services it
+    has, 30 days to restore), then sets `deleted_at`. Withdrawn Vehicles
+    stay restorable for 30 days (`withdrawnDaysLeft`, counted up); Mi
+    flota lists them under «Ver Vehículos retirados (n)», the last
+    withdrawn first, each with «Restaurar».
 - **Styling:** Unistyles 3 (`react-native-unistyles` on
   `react-native-nitro-modules`; SEI-42's spike proved it on SDK 58 on both
   platforms). The theme lives in `src/theme/`, values from

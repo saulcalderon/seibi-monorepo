@@ -1,0 +1,45 @@
+# Feature: Mi flota (features/fleet.md). Run through scripts/verify.sh drive
+# <ios|android> fleet-cleanup after a `fleet` run that failed half-way: it
+# withdraws, through the app, every Vehicle of the test account whose Plate
+# starts with «S5-», so the next run starts from the same state. Vehicles
+# without that Plate (the Toyota Yaris other flows use) are never touched.
+appId: ${APP_ID}
+name: Withdraw the S5 test Vehicles
+---
+- stopApp
+- openLink: ${DEV_URL}
+- runFlow: sign-in.yaml
+- startRecording: fleet-cleanup
+- tapOn:
+    id: tab-fleet
+- extendedWaitUntil:
+    visible:
+      id: 'fleet-vehicle-0|fleet-empty'
+    timeout: 20000
+- runFlow:
+    when:
+      visible:
+        id: fleet-filter-all
+    commands:
+      - runFlow: fleet-search-field.yaml
+      - inputText: S5-
+      - hideKeyboard
+      - repeat:
+          # Not the text «S5-»: the search field holds it too.
+          while:
+            visible:
+              id: fleet-vehicle-0
+          times: 10
+          commands:
+            - tapOn:
+                id: fleet-vehicle-0-menu
+            - tapOn: 'Retirar de mi flota'
+            - extendedWaitUntil:
+                visible: 'Retirar .*'
+                timeout: 10000
+            - tapOn: 'Retirar|RETIRAR'
+            - waitForAnimationToEnd
+      - assertNotVisible:
+          id: fleet-vehicle-0
+- takeScreenshot: cleanup-done
+- stopRecording

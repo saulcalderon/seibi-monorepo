@@ -1,0 +1,264 @@
+# Feature: Mi flota and the Vehicle form (features/fleet.md). Run through
+# scripts/verify.sh drive <ios|android> fleet. It signs in before the
+# recording starts, then adds a Kia Rio 2020 plated S5-RIO-01 with vPIC's
+# make and model, finds it by Plate, edits it, withdraws and restores it, and
+# withdraws it again at the end, so the next run starts from the same state.
+# It never touches any other Vehicle of the test account.
+appId: ${APP_ID}
+name: Mi flota lists, searches, adds, edits, withdraws and restores a Vehicle
+---
+- stopApp
+- openLink: ${DEV_URL}
+- runFlow: sign-in.yaml
+- startRecording: fleet
+- tapOn:
+    id: tab-fleet
+- extendedWaitUntil:
+    visible:
+      id: fleet-vehicle-0
+    timeout: 20000
+- assertVisible:
+    id: fleet-summary
+- assertNotVisible: '.*S5-RIO-01.*'
+- waitForAnimationToEnd
+- takeScreenshot: fleet-01-list
+
+# --- Add: an empty form, then leaving with something typed asks first.
+- tapOn:
+    id: fleet-add
+- extendedWaitUntil:
+    visible:
+      id: vehicle-form-brand
+    timeout: 15000
+- assertVisible: 'Agregar Vehículo'
+- waitForAnimationToEnd
+- takeScreenshot: fleet-02-form-empty
+# Saving an empty form names the first missing field.
+- tapOn:
+    id: vehicle-form-save
+- extendedWaitUntil:
+    visible: 'Elige la marca.'
+    timeout: 10000
+- takeScreenshot: fleet-03-form-brand-required
+
+# --- Make from vPIC: search «kia», one «Kia» (vPIC's «KIA» folded into it).
+- tapOn:
+    id: vehicle-form-brand
+- extendedWaitUntil:
+    visible:
+      id: pick-option-Toyota
+    timeout: 15000
+- runFlow: fleet-search-field.yaml
+- inputText: kia
+- extendedWaitUntil:
+    visible:
+      id: pick-option-Kia
+    timeout: 15000
+# Maestro matches ids and text ignoring case, so it can't tell «Kia» from «KIA»:
+# the screenshot shows a single row (and the unit test in src/data/vpic proves it).
+- hideKeyboard
+- waitForAnimationToEnd
+- takeScreenshot: fleet-04-brand-search
+- tapOn:
+    id: pick-option-Kia
+- extendedWaitUntil:
+    visible: 'Marca, Kia.*'
+    timeout: 10000
+
+# --- Year, then the model from vPIC's 2020 Kia list.
+- tapOn:
+    id: vehicle-form-year
+- extendedWaitUntil:
+    visible:
+      id: pick-option-2020
+    timeout: 10000
+- tapOn:
+    id: pick-option-2020
+- extendedWaitUntil:
+    visible: 'Año, 2020.*'
+    timeout: 10000
+- tapOn:
+    id: vehicle-form-model
+- extendedWaitUntil:
+    visible:
+      id: pick-option-Rio
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: fleet-05-models
+- tapOn:
+    id: pick-option-Rio
+- extendedWaitUntil:
+    visible: 'Modelo, Rio.*'
+    timeout: 10000
+
+# --- The rest of the form: engine, paint, Plate, measure, Mileage.
+- tapOn:
+    id: vehicle-form-engine
+- inputText: 1.6L
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: vehicle-form-paint-blue
+    direction: DOWN
+- tapOn:
+    id: vehicle-form-paint-blue
+- scrollUntilVisible:
+    element:
+      id: vehicle-form-plate
+    direction: DOWN
+- tapOn:
+    id: vehicle-form-plate
+- inputText: s5-rio-01
+# The keyboard is up: the save button rides above it.
+- assertVisible:
+    id: vehicle-form-save
+- waitForAnimationToEnd
+- takeScreenshot: fleet-06-keyboard-save-visible
+# Return moves to Kilometraje actual.
+- pressKey: Enter
+- inputText: '12345'
+- assertVisible: '.*12,345.*'
+- assertVisible:
+    id: vehicle-form-save
+- waitForAnimationToEnd
+- takeScreenshot: fleet-07-mileage-keyboard
+- tapOn:
+    id: vehicle-form-measure-km
+- tapOn:
+    id: vehicle-form-save
+- extendedWaitUntil:
+    notVisible:
+      id: vehicle-form-brand
+    timeout: 20000
+- extendedWaitUntil:
+    visible: '.*Kia Rio.*S5-RIO-01.*'
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: fleet-08-added
+
+# --- Search by Plate, then a search with no match, then a filter with none.
+- runFlow: fleet-search-field.yaml
+- inputText: S5-RIO
+- extendedWaitUntil:
+    visible: '.*Kia Rio.*S5-RIO-01.*'
+    timeout: 10000
+- assertNotVisible: '.*Toyota Yaris.*'
+- waitForAnimationToEnd
+- takeScreenshot: fleet-09-search-plate
+- eraseText: 10
+- inputText: zzz
+- extendedWaitUntil:
+    visible:
+      id: fleet-no-results
+    timeout: 10000
+- assertVisible: 'Sin resultados'
+- hideKeyboard
+- waitForAnimationToEnd
+- takeScreenshot: fleet-10-no-results
+- tapOn:
+    id: fleet-show-all
+- extendedWaitUntil:
+    visible: '.*Kia Rio.*S5-RIO-01.*'
+    timeout: 10000
+- runFlow:
+    when:
+      platform: iOS
+      visible: 'Cancelar'
+    commands:
+      - tapOn: 'Cancelar'
+- tapOn:
+    id: fleet-filter-ok
+- waitForAnimationToEnd
+- takeScreenshot: fleet-11-filter
+- tapOn:
+    id: fleet-filter-all
+
+# --- Narrow the list to the S5 Vehicle, so its card is fleet-vehicle-0 whatever
+# else the shared test account holds (and never the Yaris).
+- runFlow: fleet-search-field.yaml
+- inputText: S5-RIO
+- extendedWaitUntil:
+    visible: '.*Kia Rio.*S5-RIO-01.*'
+    timeout: 10000
+- hideKeyboard
+
+# --- Edit from the card's menu: the form opens with its values.
+- tapOn:
+    id: fleet-vehicle-0-menu
+- tapOn: 'Editar Vehículo'
+- extendedWaitUntil:
+    visible: 'Marca, Kia.*'
+    timeout: 15000
+- assertVisible: 'Editar Vehículo'
+- tapOn:
+    id: vehicle-form-trim
+- inputText: LX
+- hideKeyboard
+- waitForAnimationToEnd
+- takeScreenshot: fleet-12-edit
+- tapOn:
+    id: vehicle-form-save
+- extendedWaitUntil:
+    notVisible:
+      id: vehicle-form-brand
+    timeout: 20000
+
+# --- Withdraw from the edit form: the native alert asks, the card leaves the list.
+- extendedWaitUntil:
+    visible: '.*Kia Rio.*S5-RIO-01.*'
+    timeout: 10000
+- tapOn:
+    id: fleet-vehicle-0-menu
+- tapOn: 'Editar Vehículo'
+- scrollUntilVisible:
+    element:
+      id: vehicle-form-withdraw
+    direction: DOWN
+- tapOn:
+    id: vehicle-form-withdraw
+- extendedWaitUntil:
+    visible: 'Retirar Kia Rio'
+    timeout: 10000
+- assertVisible: '.*Puedes restaurarlo durante 30 días.*'
+- takeScreenshot: fleet-13-withdraw-alert
+- tapOn: 'Retirar|RETIRAR'
+- extendedWaitUntil:
+    notVisible: '.*Kia Rio.*S5-RIO-01.*'
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: fleet-withdrawn-toggle
+    direction: DOWN
+- tapOn:
+    id: fleet-withdrawn-toggle
+- extendedWaitUntil:
+    visible:
+      id: fleet-restore-0
+    timeout: 10000
+- assertVisible: '.*2020 · Retirado · se elimina en 30 días.*'
+- waitForAnimationToEnd
+- takeScreenshot: fleet-14-withdrawn
+
+# --- Restore within the window: the card comes back.
+- tapOn:
+    id: fleet-restore-0
+- extendedWaitUntil:
+    visible: '.*Kia Rio.*S5-RIO-01.*'
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: fleet-15-restored
+
+# --- Clean up: withdraw it again from the card's menu.
+- tapOn:
+    id: fleet-vehicle-0-menu
+- tapOn: 'Retirar de mi flota'
+- extendedWaitUntil:
+    visible: 'Retirar Kia Rio'
+    timeout: 10000
+- tapOn: 'Retirar|RETIRAR'
+- extendedWaitUntil:
+    notVisible: '.*Kia Rio.*S5-RIO-01.*'
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: fleet-16-withdrawn-again
+- stopRecording

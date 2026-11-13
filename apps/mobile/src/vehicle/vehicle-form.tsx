@@ -266,7 +266,7 @@ export function VehicleForm({ vehicle, onSaved, onWithdrawn, submitLabel, testID
             testID={`${testID}-withdraw`}
             variant="danger"
             icon="archive"
-            label={t('withdraw.confirm')}
+            label={t('fleet.card.withdraw')}
             loading={withdraw.isPending}
             onPress={() =>
               void withdraw.run(vehicle).then((withdrawn) => {

@@ -39,7 +39,7 @@
     "countMany": "{{count}} Vehículos",
     "attentionOne": "1 requiere atención",
     "attentionMany": "{{count}} requieren atención",
-    "summary": "{{count}} · {{attention}}",
+    "summary": "{{vehicles}} · {{attention}}",
     "filters": {
       "label": "Filtrar Vehículos",
       "all": "Todos",
@@ -138,7 +138,7 @@
     "spanDays": "{{count}} días",
     "spanYearOne": "1 año",
     "spanYears": "{{count}} años",
-    "confirm": "Retirar de mi flota",
+    "confirm": "Retirar",
     "cancel": "Cancelar",
     "done": "Vehículo retirado"
   },

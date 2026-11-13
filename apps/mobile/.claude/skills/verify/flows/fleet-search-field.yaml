@@ -1,0 +1,20 @@
+# Subflow, not driven alone: puts the cursor in the screen's header search
+# bar (Mi flota's, or a Vehicle form picker's). iOS 26 shows it as a field at
+# the bottom of the screen with its placeholder; Android shows a search icon
+# in the toolbar that opens it. Feature: features/fleet.md.
+appId: ${APP_ID}
+name: Focus the header search bar
+---
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: 'Buscar.*'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          id: '.*search_button|.*action_search'
+          optional: true
+      - tapOn: 'Search|Buscar.*'
