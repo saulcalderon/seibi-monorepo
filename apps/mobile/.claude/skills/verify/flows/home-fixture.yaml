@@ -43,11 +43,11 @@ name: Inicio pages between Vehicles, remembers the choice and shows its empty st
 - takeScreenshot: fixture-01-yaris-poster
 
 # --- A swipe on the stage pages to the next Vehicle.
+# A flick across the stage, right to left (its Vehicle sits at about 35 % of the screen's height).
 - swipe:
-    from:
-      id: home-stage-pages
-    direction: LEFT
-    duration: 400
+    start: 85%, 35%
+    end: 10%, 35%
+    duration: 250
 - extendedWaitUntil:
     visible:
       id: home-stage-vehicle
@@ -89,19 +89,35 @@ name: Inicio pages between Vehicles, remembers the choice and shows its empty st
       id: home-stage-vehicle
       text: 'Toyota Yaris, 2015 · Negro'
     timeout: 15000
-# A swipe back the other way.
+# Swipes don't wrap (the first page has nothing before it): left to the Mazda, then right back.
 - swipe:
-    from:
-      id: home-stage-pages
-    direction: RIGHT
-    duration: 400
+    start: 85%, 35%
+    end: 10%, 35%
+    duration: 250
+- extendedWaitUntil:
+    visible:
+      id: home-stage-vehicle
+      text: 'Mazda 3, 2019 · Rojo'
+    timeout: 15000
+- swipe:
+    start: 15%, 35%
+    end: 90%, 35%
+    duration: 250
+- extendedWaitUntil:
+    visible:
+      id: home-stage-vehicle
+      text: 'Toyota Yaris, 2015 · Negro'
+    timeout: 15000
+# And the previous arrow wraps from the first to the last.
+- tapOn:
+    id: home-stage-previous
 - extendedWaitUntil:
     visible:
       id: home-stage-vehicle
       text: 'Mazda 3, 2019 · Rojo'
     timeout: 15000
 - tapOn:
-    id: home-stage-previous
+    id: home-stage-next
 - extendedWaitUntil:
     visible:
       id: home-stage-vehicle

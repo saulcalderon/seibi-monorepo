@@ -338,11 +338,14 @@ The migration's order, scope and tickets are in
     N de M», increment and decrement), as a system page control is; the
     current page's name is a button that opens the Vehicle; other pages
     are hidden from the accessibility tree. No new native module.
-  - **The Vehicle.** The poster through `expo-image` with
-    `cachePolicy="memory-disk"` (downloaded once, then from disk),
-    multiplied into the floor in light. React Native has no CSS mask, so
-    the PWA's feathered edge is drawn as the floor's colour over the
-    poster's edges. Without a poster (none, `pending`, or a failed load)
+  - **The Vehicle.** The poster is downloaded once into `expo-image`'s
+    disk cache (`Image.prefetch`, then `Image.getCachePathAsync`) and
+    drawn from that file with `react-native-svg`, under the PWA's radial
+    mask (opaque to 72 % of the ellipse, clear at its edge): React Native
+    views can't be masked, and on iOS a blend mode on a parent doesn't
+    blend its children as one group, so painting the edges over failed on
+    the screenshots. In light the masked poster multiplies into the floor
+    (`mixBlendMode`). Without a poster (none, `pending`, or a failed load)
     the paint-coloured `Silhouette` stands on the floor with its contact
     shadow and a faded reflection.
   - **Mileage and Estado.** The odometer is the screen's big number

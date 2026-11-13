@@ -78,8 +78,10 @@ stops, the light from above, the vignette, the contact shadow, and whether
 the poster multiplies into the floor (light) or not (night). They are
 drawing colours, so the contrast check skips them. `src/theme/garage.ts`
 turns them into `backgroundImage` gradients (`stageFloor`, `paintTint`,
-`paintGlow`, `contactShadow`, `stageVignette`, `posterFeather`,
-`reflectionFade`); screens call those, never write a gradient.
+`paintGlow`, `contactShadow`, `stageVignette`, `reflectionFade`);
+screens call those, never write a gradient. The poster's feathered edge is
+the PWA's radial mask, drawn with `react-native-svg` (opaque to 72 % of the
+ellipse, clear at its edge).
 
 The logo mark has its own colors: accent `#ec3a27`, ticks `#1f1f1f` (light)
 or `#ffffff` (night). It ships as SVG (`apps/app/src/components/Logo.tsx`).

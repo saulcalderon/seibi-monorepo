@@ -59,4 +59,5 @@ Preconditions:
 - With the pager as an adjustable control, its dots are one element: Maestro can't tap a single dot. Swipe the stage or tap the arrows.
 - iOS hides the page's texts behind its button (`home-stage-vehicle` carries their words); Android lists them too (`home-vehicle-brand`, `home-vehicle-model`, `home-vehicle-details`). Assert on `home-stage-vehicle`.
 - The poster loads from seibi-dev's public `vehicle-renders` bucket the first time, then from expo-image's disk cache; on a cold cache `home-vehicle-poster` can take a few seconds.
-- React Native can't mask an image, so the poster's edges are feathered by drawing the floor's colour over them: on the screenshots the poster's box must not show as a rectangle.
+- The poster's edges fade through an SVG mask; on the screenshots its box must never show as a rectangle (a flat edge or a lighter square around the car). Painting the edges over with a colour was tried first and showed one on iOS.
+- Maestro's `swipe` with `from: id` and a direction didn't page the stage on iOS; the flow flicks across it by coordinates (35 % of the screen's height). If the stage moves (a taller header, another device), fix those coordinates.

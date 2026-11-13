@@ -103,16 +103,6 @@ export function stageVignette(stage: GarageStage) {
   return `radial-gradient(115% 95% at 50% 38%, ${rgba([r, g, b], 0)} 55%, ${rgba([r, g, b], a)} 100%)`;
 }
 
-/**
- * The poster is a studio photo, not a cut-out: the PWA feathers its edges
- * with a radial mask. React Native has no mask, so the floor's colour is
- * drawn over the poster's edges instead, from 72 % of the ellipse out.
- */
-export function posterFeather(stage: GarageStage) {
-  const floor = rgb(stage.floor[1]);
-  return `radial-gradient(closest-side, ${rgba(floor, 0)} 72%, ${rgba(floor, 1)} 100%)`;
-}
-
 /** Fades a silhouette's reflection into the floor, as the PWA's mask does from half its height. */
 export function reflectionFade(stage: GarageStage) {
   const floor = rgb(stage.floor[3]);

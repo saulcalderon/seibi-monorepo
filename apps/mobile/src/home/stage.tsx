@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { useEffect, useRef, useState, type ComponentRef } from 'react';
+import { useEffect, useId, useRef, useState, type ComponentRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Pressable,
@@ -10,7 +10,8 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
-import Animated, { cubicBezier, useReducedMotion } from 'react-native-reanimated';
+import Animated, { cubicBezier, FadeIn, useReducedMotion } from 'react-native-reanimated';
+import Svg, { Defs, Image as SvgImage, Mask, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import type { VehicleView } from '@/data/garage/types';
@@ -22,7 +23,6 @@ import {
   paintGlow,
   paintHex,
   paintTint,
-  posterFeather,
   reflectionFade,
   stageFloor,
   stageVignette,
@@ -210,41 +210,48 @@ function StagePage({
 }
 
 /**
+ * The poster as a file on the phone: expo-image downloads it once into its
+ * disk cache (the cache key is the URL), and every later launch reads it from
+ * there. `null` while it loads; `failed` when it can't be had, so the
+ * silhouette stands in.
+ */
+function useCachedPoster(url: string | null) {
+  const [state, setState] = useState<{ url: string | null; file: string | null; failed: boolean }>({
+    url: null,
+    file: null,
+    failed: false,
+  });
+  useEffect(() => {
+    if (!url) return;
+    let live = true;
+    Image.prefetch(url, 'disk')
+      .then((ok) => (ok ? Image.getCachePathAsync(url) : null))
+      .then((path) => {
+        if (live) setState({ url, file: path ? `file://${path}` : null, failed: !path });
+      })
+      .catch(() => {
+        if (live) setState({ url, file: null, failed: true });
+      });
+    return () => {
+      live = false;
+    };
+  }, [url]);
+  return state.url === url ? state : { url, file: null, failed: false };
+}
+
+/**
  * The Vehicle: the fal poster when it exists, feathered into the floor, else
  * the paint-coloured silhouette standing on the floor with its reflection.
- * The poster goes through expo-image's memory and disk cache, so it is
- * downloaded once.
  */
 function StageCar({ vehicle, pageWidth, paint }: { vehicle: VehicleView; pageWidth: number; paint: string }) {
-  const { t } = useTranslation();
   const { theme } = useUnistyles();
-  const [failed, setFailed] = useState(false);
-  const [aspect, setAspect] = useState(posterAspect);
-  const poster = failed ? null : (vehicle.render?.posterUrl ?? null);
+  const poster = useCachedPoster(vehicle.render?.posterUrl ?? null);
 
-  if (poster) {
+  if (vehicle.render?.posterUrl && !poster.failed) {
     return (
       <>
         <View style={[styles.glow, { backgroundImage: paintGlow(paint) }]} />
-        <View style={styles.posterBox}>
-          <View style={[styles.poster, { aspectRatio: aspect }]}>
-            <Image
-              source={poster}
-              cachePolicy="memory-disk"
-              contentFit="contain"
-              transition={motion.progress.duration}
-              recyclingKey={vehicle.id}
-              onLoad={(event) => setAspect(event.source.width / event.source.height)}
-              onError={() => setFailed(true)}
-              style={styles.posterImage}
-              accessible
-              accessibilityRole="image"
-              accessibilityLabel={t('home.stage.poster', { name: vehicleName(vehicle), year: vehicle.year })}
-              testID="home-vehicle-poster"
-            />
-            <View style={styles.feather} pointerEvents="none" />
-          </View>
-        </View>
+        {poster.file ? <Poster vehicle={vehicle} file={poster.file} /> : null}
       </>
     );
   }
@@ -266,6 +273,52 @@ function StageCar({ vehicle, pageWidth, paint }: { vehicle: VehicleView; pageWid
     </>
   );
 }
+
+/**
+ * The poster is a studio photo, not a cut-out. As the PWA does, its edges
+ * fade out through a radial mask (opaque to 72 % of the ellipse, clear at its
+ * edge), drawn with react-native-svg because React Native views can't be
+ * masked; in light the masked poster multiplies into the floor, so its grey
+ * sweep becomes the floor's shade. It fades in once, the first time it shows.
+ */
+function Poster({ vehicle, file }: { vehicle: VehicleView; file: string }) {
+  const { t } = useTranslation();
+  const reduced = useReducedMotion();
+  const mask = `feather-${useId().replace(/:/g, '')}`;
+  const [box, setBox] = useState<{ width: number; height: number } | null>(null);
+  const width = box ? Math.min(box.width, box.height * posterAspect) : 0;
+  const height = width / posterAspect;
+  return (
+    <View style={styles.posterBox} onLayout={(event) => setBox(event.nativeEvent.layout)}>
+      {box ? (
+        <Animated.View entering={reduced ? undefined : FadeIn.duration(motion.progress.duration)} style={styles.poster}>
+          <Svg
+            width={width}
+            height={height}
+            accessible
+            accessibilityRole="image"
+            accessibilityLabel={t('home.stage.poster', { name: vehicleName(vehicle), year: vehicle.year })}
+            testID="home-vehicle-poster"
+          >
+            <Defs>
+              <RadialGradient id={`${mask}-fade`} cx="50%" cy="50%" rx="50%" ry="50%">
+                <Stop offset="0.72" stopColor={FEATHER_OPAQUE} stopOpacity={1} />
+                <Stop offset="1" stopColor={FEATHER_OPAQUE} stopOpacity={0} />
+              </RadialGradient>
+              <Mask id={mask}>
+                <Rect width={width} height={height} fill={`url(#${mask}-fade)`} />
+              </Mask>
+            </Defs>
+            <SvgImage href={file} width={width} height={height} preserveAspectRatio="xMidYMid meet" mask={`url(#${mask})`} />
+          </Svg>
+        </Animated.View>
+      ) : null}
+    </View>
+  );
+}
+
+/** A mask lets through what is white in it: the luminance that keeps the poster, not a colour on screen. */
+const FEATHER_OPAQUE = 'white';
 
 /** A pager dot: the active one is wider and takes the paint's accent; both change in 200 ms. */
 function Dot({ on, accent }: { on: boolean; accent: string }) {
@@ -368,17 +421,9 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // One view, so the masked poster multiplies into the floor as one layer.
   poster: {
-    height: '100%',
-    maxWidth: '100%',
-  },
-  posterImage: {
-    ...StyleSheet.absoluteFillObject,
     mixBlendMode: theme.garage.posterBlend,
-  },
-  feather: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundImage: posterFeather(theme.garage),
   },
   vignette: {
     ...StyleSheet.absoluteFillObject,
