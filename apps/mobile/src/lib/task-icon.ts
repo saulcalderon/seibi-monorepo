@@ -1,7 +1,7 @@
-import type { IconName } from './icon';
+import type { IconName } from '@/ui/icon';
 
-/** Each Maintenance task's icon, from the PWA's `taskIcon` (apps/app/src/lib/tasks.ts). */
-const TASK_ICONS: Record<string, IconName> = {
+/** Each Maintenance task's icon, as the PWA's `taskIcon` (apps/app/src/lib/tasks.ts). */
+const ICONS: Record<string, IconName> = {
   engine_oil: 'engineOil',
   oil_filter: 'oilFilter',
   air_filter: 'airFilter',
@@ -28,8 +28,8 @@ const TASK_ICONS: Record<string, IconName> = {
   general_inspection: 'inspection',
 };
 
-/** A line with no task (a part or job of the person's own) is a wrench; an unknown task, a refresh. */
+/** A task's icon: a wrench for no task, the refresh arrows for a code the app doesn't know (as the PWA). */
 export function taskIcon(code: string | null | undefined): IconName {
   if (!code) return 'service';
-  return TASK_ICONS[code] ?? 'refresh';
+  return ICONS[code] ?? 'refresh';
 }

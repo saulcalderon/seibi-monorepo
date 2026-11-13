@@ -120,7 +120,8 @@ name: Record a Service from the [+], edit it and withdraw it
     id: service-items-total
     text: 'Total: \$57\.50'
 
-# --- The Mileage of that day: required, and any number (below today's too).
+# --- The Mileage of that day is required. The flow types today's odometer
+# (52,000) so the shared Yaris's current Mileage doesn't move.
 - scrollUntilVisible:
     element:
       id: service-mileage
@@ -137,10 +138,10 @@ name: Record a Service from the [+], edit it and withdraw it
 - takeScreenshot: service-06-mileage-required
 - tapOn:
     id: service-mileage
-- inputText: '51900'
+- inputText: '52000'
 - assertVisible:
     id: service-mileage
-    text: '51,900'
+    text: '52,000'
 - runFlow: service-hide-keyboard.yaml
 
 # --- Shop and notes; Guardar stays above the keyboard on the last field.
@@ -178,11 +179,14 @@ name: Record a Service from the [+], edit it and withdraw it
     timeout: 15000
 - takeScreenshot: service-08-saved
 
-# --- After: the oil change's Reminder now counts from this Service.
-- extendedWaitUntil:
-    visible: 'Cambio de aceite, En .*'
-    timeout: 15000
+# --- After: the oil change's Reminder now counts from this Service; it
+# leaves the top of the list (unknown Reminders come first) for its place.
 - assertNotVisible: 'Cambio de aceite, ¿Cuándo fue la última vez\?'
+- scrollUntilVisible:
+    element:
+      text: 'Cambio de aceite, En .*'
+    timeout: 20000
+    centerElement: true
 - takeScreenshot: service-09-reminders-after
 
 # --- The Vehicle lists it; a tap opens it to edit.
@@ -203,7 +207,7 @@ name: Record a Service from the [+], edit it and withdraw it
     centerElement: true
 - assertVisible:
     id: vehicle-service-0
-    text: 'Cambio de aceite, Bombillo de freno.*51,900 km.*'
+    text: 'Cambio de aceite, Bombillo de freno.*52,000 km.*'
 - takeScreenshot: service-10-vehicle-services
 - tapOn:
     id: vehicle-service-0

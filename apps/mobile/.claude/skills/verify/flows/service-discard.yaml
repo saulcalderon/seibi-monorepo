@@ -1,0 +1,128 @@
+# Feature: features/service.md. The Service form from a Vehicle (the
+# Vehicle comes chosen), in night: closing it untouched just closes;
+# closing it with something typed asks first, a swipe down (iOS) or Back
+# (Android) included; «Seguir editando» keeps what was typed and
+# «Descartar» closes without saving. Run through scripts/verify.sh drive
+# <ios|android> service-discard. It saves nothing.
+appId: ${APP_ID}
+name: Unsaved changes on the Service form ask before closing
+---
+# Night before the app starts, so the cold start reads it.
+- setDarkMode: enabled
+- stopApp
+- openLink: ${DEV_URL}
+- runFlow: sign-in.yaml
+- runScript:
+    file: scripts/first-vehicle.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}
+- startRecording: service-discard
+- openLink: ${APP_URL}vehicle/${output.vehicleId}
+- runFlow:
+    when:
+      platform: iOS
+      visible: 'Open|Abrir'
+    commands:
+      - tapOn: 'Open|Abrir'
+- extendedWaitUntil:
+    visible:
+      id: vehicle-name
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: vehicle-record-service
+    centerElement: true
+- takeScreenshot: discard-01-vehicle-night
+
+# --- From the Vehicle, that Vehicle comes chosen (the field shows only with
+# more than one Vehicle). Untouched, Cerrar just closes.
+- tapOn:
+    id: vehicle-record-service
+- extendedWaitUntil:
+    visible:
+      id: service-form-title
+      text: Registrar Servicio
+    timeout: 20000
+- runFlow:
+    when:
+      visible:
+        id: service-vehicle
+    commands:
+      - assertVisible: '.*${output.vehicleName} 2015.*'
+- tapOn:
+    id: service-close
+- extendedWaitUntil:
+    notVisible:
+      id: service-form
+    timeout: 10000
+- assertNotVisible: '¿Descartar los cambios\?'
+
+# --- With a line chosen, a swipe down (Back on Android) asks first.
+- tapOn:
+    id: vehicle-record-service
+- extendedWaitUntil:
+    visible:
+      id: service-form
+    timeout: 20000
+- tapOn:
+    id: service-task-engine_oil
+- tapOn:
+    id: service-task-tire_rotation
+- waitForAnimationToEnd
+- takeScreenshot: discard-02-form-night
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      # From the sheet's grabber to the bottom of the screen.
+      - swipe:
+          start: 50%, 18%
+          end: 50%, 99%
+          duration: 400
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- extendedWaitUntil:
+    visible: '¿Descartar los cambios\?'
+    timeout: 10000
+- takeScreenshot: discard-03-ask
+- tapOn: 'Seguir editando'
+- extendedWaitUntil:
+    visible:
+      id: service-form
+    timeout: 10000
+- assertVisible:
+    id: service-item-0
+- scrollUntilVisible:
+    element:
+      id: service-item-1
+    centerElement: true
+- takeScreenshot: discard-04-kept
+
+# --- Cerrar asks too; «Descartar» closes and saves nothing.
+- scrollUntilVisible:
+    element:
+      id: service-close
+    direction: UP
+- tapOn:
+    id: service-close
+- extendedWaitUntil:
+    visible: '¿Descartar los cambios\?'
+    timeout: 10000
+- tapOn: 'Descartar'
+- extendedWaitUntil:
+    notVisible:
+      id: service-form
+    timeout: 10000
+- assertVisible:
+    id: vehicle-services
+- assertNotVisible:
+    id: vehicle-service-0
+- takeScreenshot: discard-05-discarded
+- stopRecording
+- setDarkMode: disabled

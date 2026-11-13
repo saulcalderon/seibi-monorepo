@@ -91,6 +91,7 @@
     "totalCost": "Costo total",
     "totalCostSuffix": "USD",
     "itemsTotal": "Total: {{total}}",
+    "itemsTotalLabel": "Total:",
     "shop": "Taller",
     "shopPlaceholder": "Nombre del taller o agencia",
     "notes": "Notas",

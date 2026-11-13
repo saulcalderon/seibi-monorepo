@@ -1,4 +1,4 @@
-import { useNavigation, usePreventRemove, useRouter } from 'expo-router';
+import { usePreventRemove, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, type LayoutChangeEvent, type ScrollViewInstance } from 'react-native';
@@ -24,6 +24,7 @@ import { useSaveService, useWithdrawService } from '@/data/service/mutations';
 import { orderedTaskCodes, taskMap, type MaintenanceTask } from '@/data/task/catalog';
 import { formatDistance, formatUsd, todayIso, vehicleName } from '@/lib/format';
 import { knowledgeProfile, taskLabel, type KnowledgeProfile } from '@/lib/knowledge';
+import { taskIcon } from '@/lib/task-icon';
 import { Button, IconButton } from '@/ui/button';
 import { Card, IconTile } from '@/ui/card';
 import { Chip } from '@/ui/chip';
@@ -31,7 +32,6 @@ import { DateField, SelectField } from '@/ui/controls';
 import { EmptyState, ErrorState, Skeleton, SkeletonGroup, TextSkeleton } from '@/ui/feedback';
 import { Field, MileageField, NumberField, Segmented, TextAreaField, TextField } from '@/ui/fields';
 import { FormLayout } from '@/ui/form';
-import { taskIcon } from '@/ui/task-icon';
 import { Text } from '@/ui/text';
 import { confirm, notify } from '@/ui/toast';
 
@@ -147,7 +147,6 @@ function ServiceFormBody({
   const { t } = useTranslation();
   const { theme } = useUnistyles();
   const router = useRouter();
-  const navigation = useNavigation();
   const save = useSaveService();
   const withdraw = useWithdrawService();
   const byCode = useMemo(() => taskMap(tasks), [tasks]);
@@ -162,6 +161,10 @@ function ServiceFormBody({
   const [allTasks, setAllTasks] = useState(false);
   /** Set once saved or withdrawn: the sheet closes without asking. */
   const [leaving, setLeaving] = useState(false);
+  /** Set when the person chose «Descartar»: the close they asked for goes through. */
+  const [discarded, setDiscarded] = useState(false);
+  /** The discard question is on screen: a second close attempt (a swipe and Back) doesn't stack another. */
+  const asking = useRef(false);
 
   const scroll = useRef<ScrollViewInstance>(null);
   const sections = useRef<Record<string, number>>({});
@@ -178,7 +181,9 @@ function ServiceFormBody({
   };
 
   // Unsaved changes are never lost to a swipe, Back or «Cerrar» without asking.
-  usePreventRemove(isDirty(draft, initial) && !leaving, ({ data }) => {
+  usePreventRemove(isDirty(draft, initial) && !leaving && !discarded, ({ repeat }) => {
+    if (asking.current) return;
+    asking.current = true;
     void confirm({
       title: t('serviceForm.discard.title'),
       message: t('serviceForm.discard.body'),
@@ -186,7 +191,11 @@ function ServiceFormBody({
       cancelLabel: t('serviceForm.discard.cancel'),
       destructive: true,
     }).then((discard) => {
-      if (discard) navigation.dispatch(data.action);
+      asking.current = false;
+      if (!discard) return;
+      setDiscarded(true);
+      // Lifts the prevention, then closes the way the person asked (swipe, Back or Cerrar).
+      repeat();
     });
   });
   useEffect(() => {
@@ -425,9 +434,14 @@ function ServiceFormBody({
             onChangeText={(totalCost) => patch({ totalCost })}
           />
         ) : sum > 0 ? (
-          <Text testID="service-items-total" step="body" family="mono" style={styles.total}>
-            {t('serviceForm.itemsTotal', { total: formatUsd(sum, true) })}
-          </Text>
+          <View testID="service-items-total" accessible accessibilityLabel={t('serviceForm.itemsTotal', { total: formatUsd(sum, true) })} style={styles.total}>
+            <Text step="body" weight={600}>
+              {t('serviceForm.itemsTotalLabel')}
+            </Text>
+            <Text step="body" family="mono">
+              {formatUsd(sum, true)}
+            </Text>
+          </View>
         ) : null}
         <TextField
           testID="service-shop"
@@ -617,6 +631,10 @@ const styles = StyleSheet.create((theme) => ({
     backgroundColor: theme.colors.surface2,
   },
   total: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    columnGap: theme.space[2],
     paddingHorizontal: theme.space[1],
   },
   formError: {

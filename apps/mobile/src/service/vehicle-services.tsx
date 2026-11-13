@@ -8,9 +8,9 @@ import { useProfile } from '@/data/profile/queries';
 import { taskMap, type MaintenanceTask } from '@/data/task/catalog';
 import { formatDay, formatDistance, formatUsd } from '@/lib/format';
 import { knowledgeProfile, taskLabel } from '@/lib/knowledge';
+import { taskIcon } from '@/lib/task-icon';
 import { Button } from '@/ui/button';
 import { Card, IconTile, ListRow, RowDivider, SectionHeader } from '@/ui/card';
-import { taskIcon } from '@/ui/task-icon';
 import { Text } from '@/ui/text';
 
 /**
