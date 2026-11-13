@@ -26,6 +26,22 @@ Default product project: **[App móvil Seibi](https://linear.app/seibi/project/a
 
 Issue identifiers look like `SEI-123`. The GitHub repo is for code and PRs only.
 
+## Keep Linear current
+
+Linear is where the owner and other agents read where the project stands, so a ticket must never lag behind GitHub. Update it in the same turn as the change, not later. Comments are in Spanish, like everything else in Linear.
+
+| When | Do this on the ticket |
+|---|---|
+| You start work | `state: "In Progress"`, assignee set. |
+| You open a PR, draft or not | A comment with the PR link, what is done and what is left. |
+| Work pauses or is blocked | A comment saying why, what is left, and where the work lives (branch, worktree, PR). |
+| The PR merges | A closing comment (what shipped, the proof video, follow-ups), then `state: "Done"`. |
+| Scope changes or a follow-up appears | A comment, plus a new issue for the follow-up rather than a growing old one. |
+
+After something important for the whole project, such as a milestone merged, a new blocker, or a change of plan, also post a project status update on **App móvil Seibi** (`save_status_update`): its health (on track, at risk, off track) and a few lines on what changed and what's next.
+
+Leave test data, credentials and proof files out of comments. Link to them instead.
+
 ## Pull requests as a triage surface
 
 **PRs as a request surface: no.** _(Set to `yes` if this repo treats external PRs as feature requests; `/triage` reads this flag.)_
