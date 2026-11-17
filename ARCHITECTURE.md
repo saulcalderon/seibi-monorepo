@@ -256,7 +256,7 @@ The migration's order, scope and tickets are in
   src/app/
     _layout.tsx                  root Stack: Stack.Protected (app) · (auth)/… · ui-kit
     +native-intent.tsx           seibi-dev://vehicle/<id> → Mi flota (src/shell/links.ts)
-    (app)/_layout.tsx            Stack, anchor (tabs): (tabs) · actions · record-service · update-mileage · vehicle · data-check · garage-fixture
+    (app)/_layout.tsx            Stack, anchor (tabs): (tabs) · actions · record-service · update-mileage · profile-name · profile-level · profile-location · vehicle · data-check · garage-fixture
     (app)/vehicle/               the Vehicle form, a modal with its own Stack: new · [id]/edit · pick
     (app)/(tabs)/_layout.tsx     NativeTabs + the floating [+] drawn over them
     (app)/(tabs)/(home)/index.tsx            Inicio  (/)
@@ -303,17 +303,15 @@ The migration's order, scope and tickets are in
     `record-service` (S7) and `update-mileage` (S8).
   - **Perfil** opens from the header avatar (`ProfileButton`: Google's
     picture, else initials; on iOS 26 the header seats it on its own glass
-    circle) inside the current tab. Until S11 it is a placeholder with
-    who is signed in, «Tema», «Cerrar sesión», «Eliminar cuenta» and, in
-    Seibi Dev, links to «Revisión de datos» and the UI kit.
+    circle) inside the current tab (S11, below).
   - **Deep links.** Everything in `(app)` is behind `Stack.Protected`:
     signed out, a link lands on sign-in (and is not replayed after
     sign-in). `vehicle/[id]` exists in all three tabs, so
     `+native-intent.tsx` sends `seibi-dev://vehicle/<id>` (or `seibi://`)
     to Mi flota, where a person would find it; other links pass through.
-  - **Placeholders.** Avisos, the Vehicle detail and Perfil are
-    placeholders built from kit components over the data layer (Avisos:
-    each Vehicle's Reminders). The S-tickets replace their content, not
+  - **Placeholders.** Avisos and the Vehicle detail are placeholders
+    built from kit components over the data layer (Avisos: each Vehicle's
+    Reminders). The S-tickets replace their content, not
     the routes. Inicio is the Garage, Mi flota the Fleet (below).
 - **Inicio** (S4, SEI-59): the PWA's Garage v3 without the 3D branch, in
   `src/home/` (`garage.tsx`, `stage.tsx`, `ticker.tsx`; the decisions as
@@ -487,6 +485,44 @@ The migration's order, scope and tickets are in
   (`reading_not_above_current`); an empty field fails with
   `reading_required`. Closing with a number typed asks «¿Descartar los
   cambios?» (`usePreventRemove` + `repeat()`, the `FormLayout` rule).
+- **Perfil** (S11, SEI-66): the PWA's Perfil without its «Planes» card
+  (the paywall replaces it after launch), in `src/profile/`
+  (`profile-screen.tsx`, `profile-sheets.tsx`; the decisions as plain
+  functions in `profile-logic.ts`, with unit tests). The route
+  (`(home,fleet,reminders)/profile.tsx`) renders `ProfileScreen`.
+  - **Card.** Google's picture or the initials on `inverse`
+    (`size.profileAvatar`), the name (`profiles.display_name`, else the
+    account's name, else the email; `headerName`) and the email; spoken as
+    one element.
+  - **«Tú».** «Cómo te llamamos», «Nivel de conocimiento» and «Ubicación»
+    each push their own `formSheet` route in `(app)`: `profile-name` (one
+    field, 60 characters, the `profiles_display_name_length` limit; empty
+    saves as none), `profile-level` (the four levels as option cards, the
+    chosen one on `radiantSoft` with a `radiant` ring; a tap saves and
+    closes) and `profile-location` (country, El Salvador when none is
+    saved, and city, 80 characters). They save through `useUpdateProfile`
+    (optimistic, rolled back on failure) and close once the save lands, as
+    the PWA's sheets; a failed save shows its message in the sheet. Unlike
+    the PWA, the name and location sheets ask «¿Descartar los cambios?»
+    before closing with new input (`useUnsavedGuard`, the `FormLayout`
+    rule; `unsaved` ignores spaces at the ends). A sheet opened before the
+    profile has loaded waits for it, or shows «Reintentar».
+  - **«Preferencias».** «Notificaciones de avisos» is off and disabled,
+    with «Pronto podrás recibirlas en este teléfono.», as the PWA's switch
+    is where a browser can't receive push: native push needs
+    `expo-notifications` and `push_tokens` (SEI-47), which wire the
+    switch to `profiles.notifications_enabled`. «Tema» is the control
+    above (Theme preference). In Seibi Dev a `theme-check` line under it
+    reads the active theme for the `verify` flows.
+  - **«Legal y ayuda».** «Términos de uso» and «Política de privacidad»
+    open `openLegal()` (Legal pages, under Auth); «Escríbenos» opens
+    `mailto:hola@seibiapp.com` with `Linking`, and a toast gives the
+    address when no mail app answers (the iOS Simulator has none).
+  - **Account.** «Cerrar sesión» and «Eliminar mi cuenta» are SEI-44's
+    `signOut()` and `deleteAccount()` (Auth below), the deletion behind
+    the native alert, where the PWA asked to type «ELIMINAR». Under them,
+    «Seibi · <version>» (`expoConfig.version`), and in Seibi Dev the
+    «Desarrollo» links to the data check and the UI kit.
 - **Styling:** Unistyles 3 (`react-native-unistyles` on
   `react-native-nitro-modules`; SEI-42's spike proved it on SDK 58 on both
   platforms). The theme lives in `src/theme/`, values from
@@ -543,8 +579,10 @@ The migration's order, scope and tickets are in
   configuring, so a cold start draws the chosen theme first. `system` turns
   Unistyles' adaptive themes on; a fixed choice turns them off and also
   overrides React Native's colour scheme, so native views (alerts, the
-  status bar, `@expo/ui`) match. The control is the PWA's «Tema»
-  segmented control, in the placeholder Perfil until S11 ports the screen.
+  status bar, `@expo/ui`) match. What each choice stores and applies is
+  plain data in `src/theme/theme-choice.ts` (`themePlan`, unit-tested);
+  `preference.ts` carries it out. The control is the PWA's «Tema»
+  segmented control, in Perfil.
 - **Auth** (`src/auth/`, `src/lib/supabase.ts`): the same Supabase users
   as the PWA.
   - **Client.** One `supabase` client (`src/lib/supabase.ts`) built from
@@ -599,8 +637,7 @@ The migration's order, scope and tickets are in
     pages, `https://seibiapp.com/legal/terminos` and
     `https://seibiapp.com/legal/privacidad` (one copy of the text), and
     `openLegal()` opens them with `expo-web-browser`
-    (SFSafariViewController, Custom Tabs). Login links them; Perfil (S11)
-    will too.
+    (SFSafariViewController, Custom Tabs). Login and Perfil link them.
   - **Apple** (iOS): `expo-apple-authentication` →
     `signInWithIdToken({ provider: 'apple', nonce })`, the SHA-256 of a
     random nonce signed into Apple's token. Apple sends the name on the
@@ -674,7 +711,7 @@ The migration's order, scope and tickets are in
     language that Seibi speaks (the device only suggests), else Spanish.
     While only `es.json` exists every device gets Spanish. The choice is
     stored by `setLanguage` in the `expo-sqlite` kv-store (`language.v1`;
-    `system` removes it). The language picker arrives with Perfil and
+    `system` removes it). The language picker joins Perfil with
     English.
   - **Synchronous start.** The root layout imports `@/i18n`, which at
     module load reads the stored choice with `getItemSync` and inits
