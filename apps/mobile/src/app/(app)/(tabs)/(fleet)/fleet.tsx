@@ -1,6 +1,6 @@
 import { FlashList } from '@shopify/flash-list';
 import { Stack, useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 import type { SearchBarCommands } from 'react-native-screens';
@@ -48,6 +48,11 @@ export default function FleetScreen() {
     setQuery('');
     setFilter('all');
   }
+  // The native bar keeps its text across remounts (Android) while the query was reset —
+  // it must never show text the list isn't filtering by, so clear it on every such change.
+  useEffect(() => {
+    if (total <= 1) search.current?.clearText();
+  }, [total]);
   const sorted = [...garage.vehicles].sort((a, b) => (a.id === active?.id ? -1 : b.id === active?.id ? 1 : byUrgency(a, b)));
   const attention = sorted.filter(needsAttention).length;
   const ok = sorted.filter((v) => v.health === 'ok').length;
