@@ -1,6 +1,6 @@
 import { FlashList } from '@shopify/flash-list';
 import { Stack, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 import type { SearchBarCommands } from 'react-native-screens';
@@ -39,6 +39,9 @@ export default function FleetScreen() {
   const [filter, setFilter] = useState<Filter>('all');
   const [showWithdrawn, setShowWithdrawn] = useState(false);
   const search = useRef<SearchBarCommands>(null);
+  /** Bumped when the search bar hides: the remounted one must be a fresh view
+   * (Android keeps the old native bar — text and a dead `onChangeText`). */
+  const [barKey, setBarKey] = useState(0);
   const add = () => router.push('/vehicle/new');
 
   const total = garage.vehicles.length;
@@ -48,11 +51,10 @@ export default function FleetScreen() {
     setQuery('');
     setFilter('all');
   }
-  // The native bar keeps its text across remounts (Android) while the query was reset —
-  // it must never show text the list isn't filtering by, so clear it on every such change.
-  useEffect(() => {
-    if (total <= 1) search.current?.clearText();
-  }, [total]);
+  // The native bar keeps its text and a dead `onChangeText` across remounts
+  // (Android) while the query was reset — it must never show text the list
+  // isn't filtering by, so the next bar mounts fresh under a new key.
+  if (total <= 1 && query !== '') setBarKey((key) => key + 1);
   const sorted = [...garage.vehicles].sort((a, b) => (a.id === active?.id ? -1 : b.id === active?.id ? 1 : byUrgency(a, b)));
   const attention = sorted.filter(needsAttention).length;
   const ok = sorted.filter((v) => v.health === 'ok').length;
@@ -158,6 +160,7 @@ export default function FleetScreen() {
       />
       {total > 1 ? (
         <Stack.SearchBar
+          key={barKey}
           ref={search}
           placeholder={t('fleet.search')}
           onChangeText={(event) => setQuery(event.nativeEvent.text)}
