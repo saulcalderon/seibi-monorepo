@@ -4,6 +4,15 @@
 appId: ${APP_ID}
 name: Detalle del Vehículo shows its four tabs and edits them
 ---
+# A failed run leaves its Service and Routines behind, and they change the
+# totals this flow asserts: clear them first.
+- runScript:
+    file: scripts/cleanup-sei61.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}
 - runScript:
     file: scripts/first-vehicle.js
     env:
@@ -227,6 +236,11 @@ name: Detalle del Vehículo shows its four tabs and edits them
 - takeScreenshot: detail-05-corrected
 
 # --- Uso: the estimate card, then a Routine added, edited and deleted.
+# The tabs scroll with the content: bring them back before switching.
+- scrollUntilVisible:
+    element:
+      id: detail-tabs-uso
+    direction: UP
 - tapOn:
     id: detail-tabs-uso
 - extendedWaitUntil:
@@ -284,9 +298,8 @@ name: Detalle del Vehículo shows its four tabs and edits them
 - assertVisible:
     id: routine-0
 - assertVisible: '.*verify SEI-61 trabajo.*20 km ida y vuelta.*5 días por semana.*'
-- assertVisible:
-    id: routine-total
-    text: 'Total de rutinas: 20 km por semana'
+# 20 km round trip × 5 days.
+- assertVisible: '.*Total de rutinas:.*100 km.*por semana.*'
 - takeScreenshot: detail-06-routine
 # Editing keeps the fields and changes to 3 días.
 - tapOn:
@@ -308,6 +321,7 @@ name: Detalle del Vehículo shows its four tabs and edits them
       id: routine-sheet
     timeout: 20000
 - assertVisible: '.*3 días por semana.*'
+- assertVisible: '.*Total de rutinas:.*60 km.*por semana.*'
 - takeScreenshot: detail-07-routine-edited
 # Deleting asks first.
 - tapOn:
@@ -322,7 +336,12 @@ name: Detalle del Vehículo shows its four tabs and edits them
     visible: '.*Deja de contar para el cálculo de uso.*'
     timeout: 5000
 - takeScreenshot: detail-08-routine-delete-confirm
-- tapOn: 'Eliminar Rutina'
+# «Eliminar Rutina» also names the alert's title and the sheet's button: the
+# alert's button is the one between its message and «Cancelar».
+- tapOn:
+    text: 'Eliminar Rutina'
+    below: '.*Deja de contar para el cálculo de uso.*'
+    above: 'Cancelar'
 - runFlow:
     when:
       platform: iOS
@@ -339,6 +358,11 @@ name: Detalle del Vehículo shows its four tabs and edits them
     timeout: 15000
 
 # --- Datos: the rows, «Editar datos» opens and closes unchanged.
+# The tabs scroll with the content: bring them back before switching.
+- scrollUntilVisible:
+    element:
+      id: detail-tabs-datos
+    direction: UP
 - tapOn:
     id: detail-tabs-datos
 - extendedWaitUntil:
@@ -347,7 +371,9 @@ name: Detalle del Vehículo shows its four tabs and edits them
     timeout: 15000
 - assertVisible: 'Toyota'
 - assertVisible: 'Yaris'
-- assertVisible: 'Kilómetros'
+- scrollUntilVisible:
+    element: 'Kilómetros'
+    centerElement: true
 - waitForAnimationToEnd
 - takeScreenshot: detail-09-datos
 - scrollUntilVisible:
