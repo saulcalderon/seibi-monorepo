@@ -71,8 +71,7 @@ handles, required state, commands and observable proof.
 - [The first-run questions](./first-run.md): an account without
   `onboarded_at` opens the questions instead of Inicio: name, Knowledge
   level and its check, country and city, the first Vehicle or «Lo agrego
-  después», with a Vehicle its Routine and last maintenance, avisos, «Se
-  guardó tu información», Inicio. Flows: `first-run`, `first-run-skip`;
+  después», «Se guardó tu información», Inicio. Flows: `first-run`, `first-run-skip`;
   subflow `first-run-finish.yaml` (run by `sign-in.yaml`); script
   `scripts/reset-first-run.js`.
 - [Inicio: the Garage](./home.md): the greeting, the stage with the

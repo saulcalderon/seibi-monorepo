@@ -3,13 +3,13 @@
 # usually finished its first run, so the flow first resets it the way a new
 # account starts (scripts/reset-first-run.js: the profile's name, level,
 # country, city and onboarded_at back to empty, nothing else). Then it
-# answers every question with a Vehicle — a Toyota Corolla 2018 plated
-# S3-RUN-01 — its Routine and its last maintenance, says «Ahora no» to
-# avisos, sees «Se guardó tu información» and lands on Inicio. At the end it
+# answers every question and adds a Vehicle — a Toyota Corolla 2018 plated
+# S3-RUN-01 — which ends the questions: «Se guardó tu información», then
+# Inicio. At the end it
 # withdraws the S3 Vehicle through Mi flota, so the next run starts from the
 # same state; `fleet-cleanup` withdraws any S3- Vehicle a failed run left.
 appId: ${APP_ID}
-name: The first-run questions save the profile, a first Vehicle, its Routine and its history
+name: The first-run questions save the profile and a first Vehicle
 ---
 - runScript:
     file: scripts/reset-first-run.js
@@ -221,75 +221,20 @@ name: The first-run questions save the profile, a first Vehicle, its Routine and
 - tapOn:
     id: first-run-vehicle-form-save
 
-# --- Uso (with a Vehicle only): a pattern, then the distance it needs.
-- extendedWaitUntil:
-    visible:
-      id: first-run-usage-title
-    timeout: 20000
-- assertVisible:
-    id: first-run-usage-continue
-    enabled: false
-- tapOn:
-    id: first-run-usage-daily
-- tapOn:
-    id: first-run-usage-continue
-- extendedWaitUntil:
-    visible:
-      id: first-run-usage-error
-      text: 'Escribe la distancia aproximada.'
-    timeout: 10000
-- tapOn:
-    id: first-run-usage-distance
-- inputText: '24'
-- hideKeyboard
-- waitForAnimationToEnd
-- takeScreenshot: first-run-07-usage
-- tapOn:
-    id: first-run-usage-continue
-
-# --- Mantenimiento: two answers, so the button reads «Calcular mis avisos».
-- extendedWaitUntil:
-    visible:
-      id: first-run-history-title
-    timeout: 15000
-- assertVisible:
-    id: first-run-history-continue
-    text: 'Continuar'
-- tapOn:
-    id: first-run-history-engine_oil-3to6
-- tapOn:
-    id: first-run-history-battery-unknown
-- assertVisible:
-    id: first-run-history-continue
-    text: 'Calcular mis avisos'
-- waitForAnimationToEnd
-- takeScreenshot: first-run-08-history
-- tapOn:
-    id: first-run-history-continue
-
-# --- Avisos: saying no blocks nothing.
-- extendedWaitUntil:
-    visible:
-      id: first-run-notifications-title
-    timeout: 15000
-- waitForAnimationToEnd
-- takeScreenshot: first-run-09-notifications
-- tapOn:
-    id: first-run-notifications-later
-
-# --- The confirmation, then Inicio on its own.
+# --- Saving the Vehicle ends the questions, as in the live PWA: the
+# confirmation, then Inicio on its own.
 - extendedWaitUntil:
     visible:
       id: first-run-done-title
       text: 'Se guardó tu información'
     timeout: 10000
-- takeScreenshot: first-run-10-done
+- takeScreenshot: first-run-07-done
 - extendedWaitUntil:
     visible:
       id: home-screen
     timeout: 30000
 - waitForAnimationToEnd
-- takeScreenshot: first-run-11-home
+- takeScreenshot: first-run-08-home
 
 # --- A cold start opens Inicio now: the questions don't come back.
 - stopApp
@@ -300,7 +245,7 @@ name: The first-run questions save the profile, a first Vehicle, its Routine and
     timeout: 60000
 - assertNotVisible:
     id: first-run-name-field
-- takeScreenshot: first-run-12-relaunch
+- takeScreenshot: first-run-09-relaunch
 
 # --- Clean up: withdraw the S3 Vehicle through Mi flota (never another one).
 - tapOn:
@@ -328,5 +273,5 @@ name: The first-run questions save the profile, a first Vehicle, its Routine and
 - extendedWaitUntil:
     notVisible: '.*Toyota Corolla.*S3-RUN-01.*'
     timeout: 20000
-- takeScreenshot: first-run-13-cleaned
+- takeScreenshot: first-run-10-cleaned
 - stopRecording

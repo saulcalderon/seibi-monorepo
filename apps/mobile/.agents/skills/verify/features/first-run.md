@@ -9,13 +9,10 @@ levels), three check questions (the third with the coolant light), then
 the calibrated level («Tu nivel», «Prefiero otro nivel»). «Ubicación»:
 country (El Salvador or Estados Unidos) and a city of two letters or more.
 «Tu Vehículo»: «Agrega tu Vehículo» with the Vehicle form, or «Lo agrego
-después». With a Vehicle only: «¿Cómo usas tu Vehículo?» (three patterns
-and the round-trip distance, or «Prefiero no decirlo») and «Tu último
-mantenimiento» (oil, tire rotation, battery; «Calcular mis avisos» once
-one is answered). «Avisos»: «¿Te avisamos a tiempo?» with «Activar avisos»
-or «Ahora no»; neither asks the system for permission yet (native push is
-SEI-47), and neither blocks. Then «Se guardó tu información» for 2 s and
-Inicio. A cold start after that opens Inicio.
+después». Either way out ends the questions, as in the live PWA: «Se
+guardó tu información» for 2 s, then Inicio. There is no Routine, last
+maintenance or push step (Avisos asks for push, S9). A cold start after
+that opens Inicio.
 
 ## Sub-features
 
@@ -36,16 +33,7 @@ Inicio. A cold start after that opens Inicio.
   (`-brand`, `-year`, `-model`, `-plate`, `-odometer`, `-measure-km`),
   «Agregar y continuar» `id: first-run-vehicle-form-save`, «Lo agrego
   después» `id: first-run-vehicle-later`; the pickers are Mi flota's
-  (`pick-option-<value>`, `pick-custom`). Back on this step after adding:
-  «Vehículo agregado» `id: first-run-vehicle-added`.
-- `usage` `id: first-run-usage-daily|some|weekend`, the distance `id:
-  first-run-usage-distance` («Escribe la distancia aproximada.» when
-  missing), «Continuar» `id: first-run-usage-continue`, «Prefiero no
-  decirlo» `id: first-run-usage-skip`.
-- `history` the chips `id: first-run-history-<engine_oil|tire_rotation|battery>-<under3|3to6|6to12|over12|unknown>`,
-  the button `id: first-run-history-continue`.
-- `notifications` «Activar avisos» `id: first-run-notifications-enable`,
-  «Ahora no» `id: first-run-notifications-later`.
+  (`pick-option-<value>`, `pick-custom`).
 - `done` «Se guardó tu información» `id: first-run-done-title`; on a
   failed save its error and «Reintentar» (`id: first-run-done-retry`).
 
@@ -80,16 +68,13 @@ Preconditions:
   «Prefiero otro nivel» open (`-04-result`), «Santa Ana» after «S» kept
   «Continuar» off (`-05-location`), the Vehicle step with «Lo agrego
   después» (`-06-vehicle`), a Toyota Corolla 2018, Plate S3-RUN-01,
-  30,000 km, «Agregar y continuar»; «Todos los días» with the missing
-  distance's error, then 24 km (`-07-usage`); oil «3–6 meses» and battery
-  «No sé» turning the button into «Calcular mis avisos» (`-08-history`);
-  avisos (`-09-notifications`), «Ahora no», «Se guardó tu información»
-  (`-10-done`), Inicio (`-11-home`), Inicio again after a cold start
-  (`-12-relaunch`), and the S3 Vehicle withdrawn through Mi flota
-  (`-13-cleaned`).
-- **Skip the Vehicle and avisos.** `drive ios first-run-skip`: «Lo agrego
-  después» goes straight to avisos (no Routine or history step), «Ahora
-  no» still ends on Inicio (`first-run-skip-home`).
+  30,000 km, «Agregar y continuar», which goes straight to «Se guardó tu
+  información» (`-07-done`), Inicio (`-08-home`), Inicio again after a
+  cold start (`-09-relaunch`), and the S3 Vehicle withdrawn through Mi
+  flota (`-10-cleaned`).
+- **Skip the Vehicle.** `drive ios first-run-skip`: «Lo agrego después»
+  goes straight to the confirmation and ends on Inicio
+  (`first-run-skip-home`).
 - **Every other flow.** `sign-in.yaml` answers the questions the short
   way (`first-run-finish.yaml`) when an account lands on them, so the
   test account works after a reset or a recreation.
@@ -98,23 +83,18 @@ Preconditions:
 
   ```sql
   select p.display_name, p.knowledge_level, p.country, p.city, p.onboarded_at,
-         v.brand, v.model, v.plate, v.deleted_at,
-         r.name as routine, r.round_trip_distance, r.days_per_week,
-         (select json_agg(json_build_object('task', s.task_code, 'on', s.remembered_on, 'unknown', s.last_unknown) order by s.task_code)
-            from reminder_states s where s.vehicle_id = v.id) as history
+         v.brand, v.model, v.year, v.plate, v.odometer_measure, v.deleted_at
   from profiles p
   join auth.users u on u.id = p.user_id
   left join vehicles v on v.user_id = p.user_id and v.plate = 'S3-RUN-01'
-  left join routines r on r.vehicle_id = v.id
   where u.email = 'e2e@seibi.test'
   order by v.created_at desc nulls last
   limit 1;
   ```
 
   Expected: `E2E`, `intermediate`, `SV`, `Santa Ana`, a fresh
-  `onboarded_at`; Toyota Corolla `S3-RUN-01` withdrawn by the cleanup;
-  routine «Trabajo o estudio», 24, 5 days; history `engine_oil` and
-  `oil_filter` about 4 months back, `battery` unknown.
+  `onboarded_at`; Toyota Corolla 2018 `S3-RUN-01`, `km`, withdrawn by the
+  cleanup.
 
 ## Gotchas
 
@@ -125,9 +105,6 @@ Preconditions:
 - «Sin Vehículos todavía» after «Lo agrego después» can't be shown on the
   shared account, which keeps its Toyota Yaris; Inicio's sample screen
   (`home-fixture`, `?case=empty`) shows the empty state.
-- «Activar avisos» asks no system permission until SEI-47 adds native push:
-  it only keeps the answer on the phone. Don't report a permission prompt
-  as proven.
 - vPIC can be down: the model step takes «Usar "Corolla"» when the list
   fails, as in `fleet`.
 - Each step is its own screen in a stack; covered steps stay mounted, so

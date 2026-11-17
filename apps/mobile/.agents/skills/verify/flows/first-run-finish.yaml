@@ -40,16 +40,13 @@ name: Finish the first-run questions without a Vehicle
 - inputText: San Salvador
 - tapOn:
     id: first-run-location-continue
-# «Agrega tu Vehículo» → «Lo agrego después».
+# «Agrega tu Vehículo» → «Lo agrego después», which ends the questions.
 - extendedWaitUntil:
     visible:
       id: first-run-vehicle-later
     timeout: 15000
 - tapOn:
     id: first-run-vehicle-later
-# «¿Te avisamos a tiempo?» → «Ahora no».
-- tapOn:
-    id: first-run-notifications-later
 - extendedWaitUntil:
     visible:
       id: first-run-done-title

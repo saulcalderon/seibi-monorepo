@@ -321,25 +321,22 @@ The migration's order, scope and tickets are in
   screen per step) and `src/onboarding/` (the decisions as plain functions
   in `flow.ts`, with unit tests; the answers so far in `state.tsx`; the
   step's frame in `step.tsx`; the answer card in `option.tsx`).
-  - **Steps.** In the PWA's `ORDER`: «¿Cómo te llamamos?»
+  - **Steps.** As the live PWA asks them: «¿Cómo te llamamos?»
     (`display_name`); «¿Cuánto sabes de carros?», three check questions
     (`?q=0|1|2`) and the result, which save `knowledge_level`
     (`calibrateLevel`) and offer «Prefiero otro nivel»; country and city;
-    «Agrega tu Vehículo» (the Vehicle form) or «Lo agrego después»; with a
-    Vehicle only, «¿Cómo usas tu Vehículo?» (a `routines` row) and «Tu
-    último mantenimiento» (`reminder_states` through `useRememberTasks`, the
-    oil filter with the oil); «¿Te avisamos a tiempo?»; then «Se guardó tu
-    información», which saves `onboarded_at` and after 2 s lets the root
-    layout open Inicio. Each answer is saved when given, as in the PWA (the
-    name and level in the background; the city, Routine and history
-    awaited). In the PWA since #30 both ways out of the Vehicle step jump
-    to the confirmation, so its Routine, history and push steps are never
-    shown; the port shows them, as SEI-58 asks.
+    «Agrega tu Vehículo» (the Vehicle form) or «Lo agrego después». Either
+    way out of the Vehicle step goes to «Se guardó tu información», which
+    saves `onboarded_at` and after 2 s lets the root layout open Inicio.
+    Each answer is saved when given, as in the PWA (the name and level in
+    the background, the city awaited). The PWA's code also has a Routine,
+    a last-maintenance and a push step that the live PWA never shows
+    (since #30); the port leaves them out (decided 2026-11-17): it changes
+    no behaviour, and Avisos asks for push (S9).
   - **Navigation.** A native stack, so the system's back (iOS's edge
     swipe, Android's back) returns to the step before, as the PWA's swipe
     right did; the PWA's slide between steps is the stack's own push.
-    Coming back to the Vehicle step after adding one shows «Vehículo
-    agregado». «Se guardó tu información» is a one-way door (no back swipe,
+    «Se guardó tu información» is a one-way door (no back swipe,
     Android's back ignored). Its save is not optimistic: a failed save
     shows the error and «Reintentar» there, where the PWA went on to Inicio
     and was sent back to the start.
@@ -349,14 +346,7 @@ The migration's order, scope and tickets are in
     N de M»), the title in the first-run style (`heroType`), white answer
     cards with a round mark, black pills (`Button` `inverse`), the dots
     under the buttons, which ride on the keyboard (`FormLayout` with
-    `divider={false}`). The avisos bell wiggles as in the PWA (a Reanimated
-    CSS animation; still with Reduce Motion on).
-  - **Push** is stubbed until SEI-47: «Activar avisos» and «Ahora no» ask
-    the system nothing; the answer is kept on the phone
-    (`user.push-answer.v1` in the kv-store, `savePushAnswer` /
-    `pushAnswer` in `src/data/preferences/store.ts`, deleted on sign-out)
-    for SEI-47 to ask the permission and register the token. Nothing about
-    it is written to Supabase, as in the PWA's first run.
+    `divider={false}`).
 - **Inicio** (S4, SEI-59): the PWA's Garage v3 without the 3D branch, in
   `src/home/` (`garage.tsx`, `stage.tsx`, `ticker.tsx`; the decisions as
   plain functions in `garage-logic.ts`, with unit tests). The route

@@ -333,8 +333,7 @@ Reanimated 4 and Gesture Handler. The PWA's curves become
 The theme's `motion` tokens hold the kit's timings: press feedback 120 ms
 to scale 0.97 on the `out` curve `(0.23, 1, 0.32, 1)`, landing on
 press-in (buttons and chips; rows highlight instead); the skeleton's pulse,
-900 ms each way; a progress bar's fill on mount, 700 ms on `smooth`. The first run's avisos bell wiggles
-(-10°, 10°, -6°) for 0.8 s every 2.4 s, as in the PWA (`motion.bell`). They
+900 ms each way; a progress bar's fill on mount, 700 ms on `smooth`. They
 are Reanimated CSS transitions and animations. Sheets, menus, pickers,
 alerts and screen transitions are the system's own.
 
