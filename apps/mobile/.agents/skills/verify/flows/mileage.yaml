@@ -62,6 +62,19 @@ name: Update Mileage opens from [+] and Inicio, validates and saves today's read
 # From Inicio's «Actualizar», straight onto this Vehicle.
 - tapOn:
     id: home-update-mileage
+# Android: the autofocused field's number pad pushes the sheet's header off
+# the top. Wait for the field first (Back before it mounts would pop the
+# sheet), then drop the pad so the header comes back.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: mileage-reading
+          timeout: 15000
+      - back
+      - waitForAnimationToEnd
 # The container testID is intermittently invisible to XCUITest on a
 # re-presented formSheet (its children render fine): wait on a leaf instead.
 - extendedWaitUntil:
