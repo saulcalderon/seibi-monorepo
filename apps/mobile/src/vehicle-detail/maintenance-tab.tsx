@@ -16,7 +16,7 @@ import { taskIcon } from '@/lib/task-icon';
 import { plainText } from '@/lib/text';
 import { Button } from '@/ui/button';
 import { Card, IconTile, RowDivider, SectionHeader } from '@/ui/card';
-import { ProgressBar, StatusBadge } from '@/ui/feedback';
+import { ProgressBar } from '@/ui/feedback';
 import { Icon } from '@/ui/icon';
 import { Text } from '@/ui/text';
 
@@ -103,11 +103,11 @@ export function MaintenanceTab({ vehicle }: { vehicle: VehicleView }) {
   );
 }
 
-/** A Reminder row, not tappable until S9 gives each Reminder a screen (the PWA's ReminderRow, plain variant). */
+/** A Reminder row, not tappable until S9 gives each Reminder a screen (the PWA's ReminderRow, plain variant, without its chevron). */
 function ReminderRow({ reminder, measure, task, k }: { reminder: Reminder; measure: VehicleView['measure']; task: MaintenanceTask | undefined; k: ReturnType<typeof knowledgeProfile> }) {
   const { t } = useTranslation();
   const tone = reminder.snoozed ? 'unknown' : reminder.status;
-  const due = reminder.snoozed ? t('reminders.snoozed', { defaultValue: 'Pospuesto' }) : reminderDueText(reminder, measure, t);
+  const due = reminder.snoozed ? t('reminders.snoozed') : reminderDueText(reminder, measure, t);
   return (
     <View style={styles.row} testID={`reminder-${reminder.taskCode}`}>
       <IconTile icon={taskIcon(reminder.taskCode)} />
@@ -129,7 +129,6 @@ function ReminderRow({ reminder, measure, task, k }: { reminder: Reminder; measu
         </Text>
         {reminder.status !== 'unknown' ? <ProgressBar value={reminder.used} status={tone} /> : null}
       </View>
-      <StatusBadge status={reminder.status} testID={`reminder-status-${reminder.taskCode}`} />
     </View>
   );
 }
@@ -160,7 +159,7 @@ function ScheduleBanner({ vehicle }: { vehicle: VehicleView }) {
           </Text>
         </View>
         {vehicle.schedule?.summary ? (
-          <Text step="footnote" style={styles.bannerBody}>
+          <Text step="footnote">
             {plainText(vehicle.schedule.summary)}
           </Text>
         ) : null}
@@ -172,7 +171,7 @@ function ScheduleBanner({ vehicle }: { vehicle: VehicleView }) {
       <Text step="footnote" weight={600}>
         {t('vehicleDetail.schedule.generalTitle')}
       </Text>
-      <Text step="footnote" tone="muted" style={styles.bannerBody}>
+      <Text step="footnote" tone="muted">
         {`${scheduleGeneralBody(vehicle) === 'generalFound' ? plainText(vehicle.schedule?.summary) || t('vehicleDetail.schedule.generalFound') : t('vehicleDetail.schedule.generalNone')} ${t('vehicleDetail.schedule.manualNote')}`}
       </Text>
       {variant === 'general-cta' ? (
@@ -248,5 +247,4 @@ const styles = StyleSheet.create((theme) => ({
     flex: 1,
     flexShrink: 1,
   },
-  bannerBody: {},
 }));
