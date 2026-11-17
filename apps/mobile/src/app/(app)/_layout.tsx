@@ -26,6 +26,8 @@ export default function AppLayout() {
       <Stack.Screen name="record-service" options={{ ...sheet, sheetAllowedDetents: [0.92] }} />
       {/* A placeholder until the Mileage form (S8) takes this route. */}
       <Stack.Screen name="update-mileage" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
+      {/* The Vehicle form (S5): a modal with its own stack, so its pickers push inside it. */}
+      <Stack.Screen name="vehicle" options={{ presentation: 'modal', contentStyle: { backgroundColor: theme.colors.bg } }} />
       {/* The data check and Inicio's sample screen exist in Seibi Dev (the development variant) only. */}
       <Stack.Protected guard={process.env.EXPO_PUBLIC_APP_VARIANT === 'development'}>
         <Stack.Screen

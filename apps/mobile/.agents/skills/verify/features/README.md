@@ -73,6 +73,10 @@ handles, required state, commands and observable proof.
   «Actualizar», «Estado» and «Todo al día», «Sin Vehículos todavía», night.
   Flows: `home` (the real account), `home-fixture` (Seibi Dev's sample
   Vehicles), `home-night`; subflow `home-fixture-open.yaml`.
+- [Mi flota and the Vehicle form](./fleet.md): the card list ordered by
+  urgency, header search and the status chips, add and edit in the modal
+  form, withdraw with the 30-day restore. Flows: `fleet`, `fleet-cleanup`;
+  subflow `fleet-search-field.yaml`.
 - [Registrar un Servicio](./service.md): the form sheet from [+] and the
   Vehicle's «Servicios», tasks and lines, validation order, the Mileage
   reading it writes, edit and withdraw, «¿Descartar los cambios?».

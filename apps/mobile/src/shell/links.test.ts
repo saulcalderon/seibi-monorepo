@@ -27,4 +27,10 @@ describe('vehicleLinkTarget', () => {
     expect(vehicleLinkTarget('exp+seibi://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081')).toBeNull();
     expect(vehicleLinkTarget('/')).toBeNull();
   });
+
+  it('leaves the Vehicle form’s routes to the form', () => {
+    expect(vehicleLinkTarget('seibi-dev://vehicle/new')).toBeNull();
+    expect(vehicleLinkTarget('/vehicle/pick?kind=brand')).toBeNull();
+    expect(vehicleLinkTarget(`seibi-dev://vehicle/${ID}/edit`)).toBeNull();
+  });
 });

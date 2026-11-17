@@ -7,39 +7,50 @@ import { makeNames, makesResponse, modelNames, modelsResponse } from './schemas'
 
 const BASE = 'https://vpic.nhtsa.dot.gov/api/vehicles';
 const DAY_MS = 24 * 60 * 60_000;
+/** A slow vPIC answer fails the query (and shows picker's error note) instead of hanging. */
+const TIMEOUT_MS = 10_000;
 /** vPIC's vehicle types that cover cars, pickups and SUVs. */
 const VEHICLE_TYPES = ['car', 'truck', 'multipurpose passenger vehicle (mpv)'];
 
-async function getJson(url: string): Promise<unknown> {
+async function getJson(url: string, signal: AbortSignal): Promise<unknown> {
+  // No AbortSignal.timeout on Hermes: an AbortController and a timer, both
+  // chained to the query's own signal so react-query's cancellation wins too.
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  const timeout = setTimeout(abort, TIMEOUT_MS);
+  signal.addEventListener('abort', abort, { once: true });
   let response: Response;
   try {
-    response = await fetch(url);
+    response = await fetch(url, { signal: controller.signal });
   } catch {
     throw new RequestError('network');
+  } finally {
+    clearTimeout(timeout);
+    signal.removeEventListener('abort', abort);
   }
   if (!response.ok) throw new RequestError('unknown', response.status);
   return response.json().catch(() => null);
 }
 
-async function fetchMakes(): Promise<string[]> {
+async function fetchMakes(signal: AbortSignal): Promise<string[]> {
   const lists = await Promise.all(
     VEHICLE_TYPES.map(async (type) =>
-      parseResponse('vpic', makesResponse, await getJson(`${BASE}/GetMakesForVehicleType/${encodeURIComponent(type)}?format=json`)),
+      parseResponse('vpic', makesResponse, await getJson(`${BASE}/GetMakesForVehicleType/${encodeURIComponent(type)}?format=json`, signal)),
     ),
   );
   return makeNames(lists);
 }
 
-async function fetchModels(make: string, year: number): Promise<string[]> {
+async function fetchModels(make: string, year: number, signal: AbortSignal): Promise<string[]> {
   const url = `${BASE}/GetModelsForMakeYear/make/${encodeURIComponent(make.trim())}/modelyear/${year}?format=json`;
-  return modelNames(parseResponse('vpic', modelsResponse, await getJson(url)));
+  return modelNames(parseResponse('vpic', modelsResponse, await getJson(url, signal)));
 }
 
 /** Every brand for the Vehicle form, the popular ones included. Fetched once, kept a day. */
 export function useMakes(enabled: boolean) {
   return useQuery({
     queryKey: vpicKeys.makes(),
-    queryFn: fetchMakes,
+    queryFn: ({ signal }) => fetchMakes(signal),
     enabled,
     staleTime: Infinity,
     gcTime: DAY_MS,
@@ -51,7 +62,7 @@ export function useMakes(enabled: boolean) {
 export function useModels(make: string, year: number | null) {
   return useQuery({
     queryKey: vpicKeys.models(make, year ?? 0),
-    queryFn: () => fetchModels(make, year!),
+    queryFn: ({ signal }) => fetchModels(make, year!, signal),
     enabled: make.trim().length > 1 && year != null,
     staleTime: Infinity,
     gcTime: DAY_MS,

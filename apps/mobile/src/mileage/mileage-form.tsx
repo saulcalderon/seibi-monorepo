@@ -62,7 +62,19 @@ export function MileageForm({ vehicleId }: MileageFormProps) {
   if (!vehicle) {
     return (
       <SheetMessage testID="mileage-no-vehicles" onClose={() => router.back()}>
-        <EmptyState icon="vehicle" title={t('forms.noVehicles.title')} body={t('forms.noVehicles.body')} />
+        <EmptyState
+          icon="vehicle"
+          title={t('forms.noVehicles.title')}
+          body={t('forms.noVehicles.body')}
+          action={
+            <Button
+              testID="forms-add-vehicle"
+              variant="secondary"
+              label={t('home.empty.add')}
+              onPress={() => router.replace('/vehicle/new')}
+            />
+          }
+        />
       </SheetMessage>
     );
   }
