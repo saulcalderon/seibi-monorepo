@@ -300,8 +300,7 @@ The migration's order, scope and tickets are in
     content, «¿Qué quieres hacer?» with «Registrar un Servicio» and
     «Actualizar Kilometraje». No Appointment action until S13 ships it.
     An action replaces the sheet with its own (`router.replace`):
-    `record-service` and `update-mileage`, placeholder sheets until S7 and
-    S8 put their forms on those routes.
+    `record-service` (S7) and `update-mileage` (S8).
   - **Perfil** opens from the header avatar (`ProfileButton`: Google's
     picture, else initials; on iOS 26 the header seats it on its own glass
     circle) inside the current tab. Until S11 it is a placeholder with
@@ -445,6 +444,22 @@ The migration's order, scope and tickets are in
     sheet. The PWA's expandable Service card — lines with part brand,
     part number and cost, Taller, notas, «Quitar» — comes with S6
     (SEI-61).
+- **Actualizar Kilometraje** (S8, SEI-63): the PWA's Mileage sheet as a
+  `formSheet` route, `update-mileage` (`src/mileage/mileage-form.tsx`,
+  logic in `src/mileage/mileage-logic.ts`). Its only param is
+  `?vehicleId=` (Inicio's «Actualizar»); the [+] actions sheet opens it
+  with none and the active Vehicle is used, then the first — with no
+  Vehicles it shows the same empty state as the Service form. The sheet
+  keeps the PWA's order: the context line («Yaris 2015 · último: 52,000
+  km · hace 4 días»), the Vehicle picker with two or more, the reading
+  field (digits only, leading zeros dropped, 7 digits max, the current
+  odometer as placeholder, the Vehicle's measure), the «+100 · +500 ·
+  +1,000» chips and «Guardar», which names the number once typed.
+  `useAddReading` writes a `mileage_readings` row dated today through
+  `standaloneReading`, so it must be strictly above the current odometer
+  (`reading_not_above_current`); an empty field fails with
+  `reading_required`. Closing with a number typed asks «¿Descartar los
+  cambios?» (`usePreventRemove` + `repeat()`, the `FormLayout` rule).
 - **Styling:** Unistyles 3 (`react-native-unistyles` on
   `react-native-nitro-modules`; SEI-42's spike proved it on SDK 58 on both
   platforms). The theme lives in `src/theme/`, values from

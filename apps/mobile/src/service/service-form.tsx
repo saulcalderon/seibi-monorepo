@@ -1,5 +1,5 @@
-import { usePreventRemove, useRouter } from 'expo-router';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useRouter } from 'expo-router';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, type LayoutChangeEvent, type ScrollViewInstance } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
@@ -34,6 +34,7 @@ import { Field, MileageField, NumberField, Segmented, TextAreaField, TextField }
 import { FormLayout } from '@/ui/form';
 import { Text } from '@/ui/text';
 import { confirm, notify } from '@/ui/toast';
+import { useUnsavedGuard } from '@/ui/use-unsaved-guard';
 
 /** How many task chips show before «Ver todas las tareas» (the PWA's 8). */
 const FIRST_TASKS = 8;
@@ -95,7 +96,7 @@ export function ServiceForm({ vehicleId, serviceId, taskCodes }: ServiceFormProp
   if (!vehicle) {
     return (
       <SheetMessage testID="service-form-no-vehicles" onClose={() => router.back()}>
-        <EmptyState icon="vehicle" title={t('serviceForm.noVehicles.title')} body={t('serviceForm.noVehicles.body')} />
+        <EmptyState icon="vehicle" title={t('forms.noVehicles.title')} body={t('forms.noVehicles.body')} />
       </SheetMessage>
     );
   }
@@ -159,13 +160,6 @@ function ServiceFormBody({
   const [error, setError] = useState<FormError | null>(null);
   const [helpFor, setHelpFor] = useState<string | null>(null);
   const [allTasks, setAllTasks] = useState(false);
-  /** Set once saved or withdrawn: the sheet closes without asking. */
-  const [leaving, setLeaving] = useState(false);
-  /** Set when the person chose «Descartar»: the close they asked for goes through. */
-  const [discarded, setDiscarded] = useState(false);
-  /** The discard question is on screen: a second close attempt (a swipe and Back) doesn't stack another. */
-  const asking = useRef(false);
-
   const scroll = useRef<ScrollViewInstance>(null);
   const sections = useRef<Record<string, number>>({});
 
@@ -181,26 +175,12 @@ function ServiceFormBody({
   };
 
   // Unsaved changes are never lost to a swipe, Back or «Cerrar» without asking.
-  usePreventRemove(isDirty(draft, initial) && !leaving && !discarded, ({ repeat }) => {
-    if (asking.current) return;
-    asking.current = true;
-    void confirm({
-      title: t('serviceForm.discard.title'),
-      message: t('serviceForm.discard.body'),
-      confirmLabel: t('serviceForm.discard.confirm'),
-      cancelLabel: t('serviceForm.discard.cancel'),
-      destructive: true,
-    }).then((discard) => {
-      asking.current = false;
-      if (!discard) return;
-      setDiscarded(true);
-      // Lifts the prevention, then closes the way the person asked (swipe, Back or Cerrar).
-      repeat();
-    });
+  const { leave } = useUnsavedGuard(isDirty(draft, initial), {
+    title: t('serviceForm.discard.title'),
+    message: t('serviceForm.discard.body'),
+    confirmLabel: t('serviceForm.discard.confirm'),
+    cancelLabel: t('serviceForm.discard.cancel'),
   });
-  useEffect(() => {
-    if (leaving) router.back();
-  }, [leaving, router]);
 
   // Tasks to suggest: what this Vehicle needs first, then the common ones, then the catalog.
   const dueStatus = new Map(vehicle.reminders.filter((r) => r.status === 'overdue' || r.status === 'soon').map((r) => [r.taskCode, r.status]));
@@ -233,7 +213,7 @@ function ServiceFormBody({
       const input = serviceInputFromDraft(draft, { serviceId: editing?.id, readingId: editing?.readingId, today: isoDate() });
       await save.mutateAsync(input);
       notify.success(t(editing ? 'serviceForm.updated' : 'serviceForm.saved'));
-      setLeaving(true);
+      leave();
     } catch (e) {
       show(e);
     }
@@ -252,7 +232,7 @@ function ServiceFormBody({
     try {
       await withdraw.mutateAsync(editing.id);
       notify.success(t('serviceForm.withdraw.done'));
-      setLeaving(true);
+      leave();
     } catch (e) {
       show(e);
     }

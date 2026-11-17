@@ -10,6 +10,8 @@ import { Text } from './text';
 
 export interface FieldShellProps {
   label: string;
+  /** A testID for the error line, when a flow needs to assert it (`<field>-error`). */
+  errorTestID?: string;
   /** Help under the field. An error replaces it. */
   hint?: string;
   error?: string | null;
@@ -21,7 +23,7 @@ export interface FieldShellProps {
  * The label, hint and error around a control: the PWA's Field. The error is
  * text (never only a red border) and is read out when it appears.
  */
-export function Field({ label, hint, error, optional, children, testID }: FieldShellProps & { children: ReactNode }) {
+export function Field({ label, hint, error, optional, children, testID, errorTestID }: FieldShellProps & { children: ReactNode }) {
   const { t } = useTranslation();
   return (
     <View style={styles.field} testID={testID}>
@@ -35,7 +37,7 @@ export function Field({ label, hint, error, optional, children, testID }: FieldS
       </Text>
       {children}
       {error ? (
-        <Text step="footnote" weight={500} tone="overdue" accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.label}>
+        <Text testID={errorTestID} step="footnote" weight={500} tone="overdue" accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.label}>
           {error}
         </Text>
       ) : hint ? (
@@ -66,13 +68,13 @@ export interface TextFieldProps extends FieldShellProps, Omit<TextInputProps, 's
 }
 
 /** A single-line text input: the PWA's TextField. */
-export function TextField({ label, hint, error, optional, suffix, mono = false, testID, multiline, onFocus, onBlur, ...input }: TextFieldProps) {
+export function TextField({ label, hint, error, errorTestID, optional, suffix, mono = false, testID, multiline, onFocus, onBlur, ...input }: TextFieldProps) {
   const { theme } = useUnistyles();
   const [focused, setFocused] = useState(false);
   const speech = useFieldSpeech({ label, hint, error, optional });
   styles.useVariants({ focused, invalid: Boolean(error), multiline: Boolean(multiline), mono });
   return (
-    <Field label={label} hint={hint} error={error} optional={optional}>
+    <Field label={label} hint={hint} error={error} errorTestID={errorTestID} optional={optional}>
       <View style={styles.control}>
         <TextInput
           testID={testID}

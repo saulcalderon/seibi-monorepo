@@ -31,6 +31,7 @@ const INPUT_CODES = [
   'service_date_future',
   'service_items_required',
   'service_reading_required',
+  'reading_required',
   'cost_invalid',
   'appointment_date_past',
   'routine_name_required',

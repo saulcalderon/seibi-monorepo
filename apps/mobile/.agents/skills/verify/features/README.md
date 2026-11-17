@@ -82,6 +82,9 @@ handles, required state, commands and observable proof.
   reading it writes, edit and withdraw, «¿Descartar los cambios?».
   Flows: `service`, `service-discard`, `service-cleanup`; subflow
   `service-hide-keyboard.yaml`.
+- [Actualizar Kilometraje](./mileage.md): today's odometer from [+] and
+  Inicio's «Actualizar», the context line, the bump chips, strictly above
+  the last reading, the toast. Flow: `mileage`.
 - [The app speaks Spanish from es.json](./i18n.md): every word from
   `src/i18n/es.json`, no keys on screen, Spanish also on a device set to
   English. Flow: `i18n-shell`.
