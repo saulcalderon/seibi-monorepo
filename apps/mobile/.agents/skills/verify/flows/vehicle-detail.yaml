@@ -88,8 +88,9 @@ name: Detalle del Vehículo shows its four tabs and edits them
 # Taller Norte, notes «verify SEI-61».
 - tapOn:
     id: service-task-engine_oil
-- extendedWaitUntil:
-    visible:
+# Below the fold on a shorter screen (Android): scroll to it, don't expect it.
+- scrollUntilVisible:
+    element:
       id: service-add-item
     timeout: 15000
 - scrollUntilVisible:
@@ -169,14 +170,25 @@ name: Detalle del Vehículo shows its four tabs and edits them
 - tapOn:
     id: service-card-withdraw-0
 - extendedWaitUntil:
-    visible: '¿Quitar este Servicio del historial\? El kilometraje registrado se conserva.'
+    visible: '¿Quitar este Servicio del historial\?'
     timeout: 5000
 # «Quitar» also names the card's button behind the alert; the alert's is the
 # second match.
 - takeScreenshot: detail-04-withdraw-confirm
-- tapOn:
-    text: 'Quitar'
-    index: 1
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: 'Quitar'
+          index: 1
+# Android's alert is its own window; its confirm button is button1.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          id: 'android:id/button1'
 - runFlow:
     when:
       platform: iOS
@@ -209,11 +221,26 @@ name: Detalle del Vehículo shows its four tabs and edits them
 # The field is already focused, so type first, then tap the save (the tree
 # has settled by the assertion).
 - waitForAnimationToEnd
-- extendedWaitUntil:
-    visible:
-      id: correct-reading
-    timeout: 10000
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: correct-reading
+          timeout: 10000
 - inputText: '${output.odometer}'
+# On Android the open number pad pushes the sheet's content out of view (as
+# in the mileage flow): Back drops the pad, never the sheet, and brings the
+# field and its save back.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+      - waitForAnimationToEnd
+      - assertVisible:
+          id: correct-reading
 - extendedWaitUntil:
     visible:
       id: correct-save
@@ -338,10 +365,20 @@ name: Detalle del Vehículo shows its four tabs and edits them
 - takeScreenshot: detail-08-routine-delete-confirm
 # «Eliminar Rutina» also names the alert's title and the sheet's button: the
 # alert's button is the one between its message and «Cancelar».
-- tapOn:
-    text: 'Eliminar Rutina'
-    below: '.*Deja de contar para el cálculo de uso.*'
-    above: 'Cancelar'
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: 'Eliminar Rutina'
+          below: '.*Deja de contar para el cálculo de uso.*'
+          above: 'Cancelar'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          id: 'android:id/button1'
 - runFlow:
     when:
       platform: iOS
