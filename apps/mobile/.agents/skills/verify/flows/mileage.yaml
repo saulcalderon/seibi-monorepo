@@ -37,8 +37,10 @@ name: Update Mileage opens from [+] and Inicio, validates and saves today's read
       id: mileage-sheet
     timeout: 15000
 # The field autofocuses on open: the keyboard's rise shifts the sheet's
-# bounds, so a tap aimed at the still-settling header can miss. Dismiss it.
-- hideKeyboard
+# bounds mid-animation, so a tap aimed at the header can miss. Tapping a
+# non-interactive line dismisses the number pad (keyboardShouldPersistTaps)
+# and lets the sheet settle.
+- tapOn: '.*próximos mantenimientos con este dato.*'
 - waitForAnimationToEnd
 - takeScreenshot: mileage-01-sheet
 - tapOn:
@@ -84,8 +86,8 @@ name: Update Mileage opens from [+] and Inicio, validates and saves today's read
     id: mileage-reading
 - eraseText: 12
 # The field autofocuses on open, so the number pad covers the bump chips:
-# dismiss it before tapping or the key below the chip eats the tap.
-- hideKeyboard
+# dismiss it the same way before tapping or the key below eats the tap.
+- tapOn: '.*próximos mantenimientos con este dato.*'
 - waitForAnimationToEnd
 - tapOn:
     id: mileage-bump-100
