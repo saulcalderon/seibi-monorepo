@@ -47,9 +47,11 @@ name: Update Mileage opens from [+] and Inicio, validates and saves today's read
 # From Inicio's «Actualizar», straight onto this Vehicle.
 - tapOn:
     id: home-update-mileage
+# The container testID is intermittently invisible to XCUITest on a
+# re-presented formSheet (its children render fine): wait on a leaf instead.
 - extendedWaitUntil:
     visible:
-      id: mileage-sheet
+      id: mileage-title
     timeout: 15000
 - assertVisible:
     id: mileage-context
