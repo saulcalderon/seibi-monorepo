@@ -419,9 +419,54 @@
   },
   "profile": {
     "title": "Perfil",
-    "account": "Cuenta",
     "dev": "Desarrollo",
-    "themeCheck": "theme: {{theme}} ({{source}})"
+    "themeCheck": "theme: {{theme}} ({{source}})",
+    "fallbackName": "Tu cuenta",
+    "you": "Tú",
+    "name": {
+      "row": "Cómo te llamamos",
+      "unset": "Sin nombre",
+      "title": "¿Cómo te llamamos?",
+      "label": "Nombre"
+    },
+    "level": {
+      "row": "Nivel de conocimiento",
+      "title": "Nivel de conocimiento",
+      "body": "Cambia cómo te explicamos las cosas. Tus datos y avisos no cambian.",
+      "group": "Nivel"
+    },
+    "location": {
+      "row": "Ubicación",
+      "unset": "Sin definir",
+      "summary": "{{city}}, {{country}}",
+      "title": "Ubicación",
+      "body": "La usamos para estimar precios de tu zona.",
+      "country": "País",
+      "countryOption": "{{flag}} {{name}}",
+      "city": "Ciudad"
+    },
+    "save": "Guardar",
+    "close": "Cerrar",
+    "discard": {
+      "title": "¿Descartar los cambios?",
+      "body": "Lo que escribiste no se guardará.",
+      "confirm": "Descartar",
+      "cancel": "Seguir editando"
+    },
+    "preferences": "Preferencias",
+    "notifications": {
+      "label": "Notificaciones de avisos",
+      "unavailable": "Pronto podrás recibirlas en este teléfono."
+    },
+    "legal": {
+      "title": "Legal y ayuda",
+      "terms": "Términos de uso",
+      "privacy": "Política de privacidad",
+      "contact": "Escríbenos",
+      "email": "hola@seibiapp.com",
+      "mailFailed": "No pudimos abrir tu correo. Escríbenos a {{email}}."
+    },
+    "version": "Seibi · {{version}}"
   },
   "theme": {
     "label": "Tema",
@@ -456,7 +501,7 @@
       "failedMessage": "Intenta de nuevo."
     },
     "delete": {
-      "action": "Eliminar cuenta",
+      "action": "Eliminar mi cuenta",
       "confirmTitle": "¿Eliminar tu cuenta?",
       "confirmMessage": "Se borran tu cuenta, tus Vehículos y todo su historial. No se puede deshacer.",
       "cancel": "Cancelar",

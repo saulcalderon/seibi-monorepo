@@ -141,6 +141,8 @@ export const size = {
   hero: 192,
   /** The header's avatar, which opens Perfil: `size-9`, with `hitSlop` up to `target`. */
   avatar: 36,
+  /** The picture or initials on Perfil's card: `size-16`. */
+  profileAvatar: 64,
   /** The floating [+] that opens the actions sheet: Material's 56 pt FAB (the PWA's dock button is 52). */
   fab: 56,
   /**

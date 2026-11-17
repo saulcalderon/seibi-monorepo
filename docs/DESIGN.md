@@ -210,6 +210,7 @@ lines fit its box (`text-fit.ts`).
 | `silhouette.sm` / `lg` | 136 / 240 | A silhouette's width |
 | `hero` | 192 | A still hero image's height: the Vehicle on Login (`h-48`) |
 | `avatar` | 36 | The header avatar that opens Perfil (`hitSlop` to 44) |
+| `profileAvatar` | 64 | The picture or initials on Perfil's card (`size-16`) |
 | `fab` | 56 | The floating [+] |
 | `tabBar.ios` / `android` | 49 / 80 | The tab bar's height above the bottom safe area, where the [+] sits (NativeTabs can't be measured; checked on screenshots) |
 | `border.thin` / `focus` | 1 / 2 | Field and card borders; the focus ring |
@@ -379,7 +380,9 @@ their base colors, which already pass.
 Which background each text role sits on:
 
 - `ink` and `muted`: `bg`, `surface`, `surface2`, and `surface3`
-  (controls: segmented controls, neutral badges and tiles).
+  (controls: segmented controls, neutral badges and tiles), and
+  `radiantSoft` over each of the three surfaces (a chosen option card:
+  Perfil's Knowledge level).
 - `subtle`: `bg`, `surface`, `surface2`.
 - `radiantText`, `okText`, `soonText`, `overdueText`, `unknownText`: `bg`,
   `surface`, `surface2`, and their soft fill (`radiantSoft`, `okSoft`…). A
