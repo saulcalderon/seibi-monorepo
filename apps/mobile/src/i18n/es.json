@@ -175,22 +175,147 @@
     "done": "Vehículo retirado"
   },
   "reminders": {
-    "openVehicle": "Ver Vehículo"
+    "openVehicle": "Ver Vehículo",
+    "snoozed": "Pospuesto"
   },
   "vehicleDetail": {
     "plate": "Placa",
     "noPlate": "Sin placa",
     "odometer": "Kilometraje actual",
     "noOdometer": "Sin lecturas todavía",
+    "edit": "Editar Vehículo",
     "missing": {
       "title": "No encontramos este Vehículo",
-      "body": "Puede que lo hayas retirado de tu flota o que el enlace no sea tuyo."
+      "body": "Puede que lo hayas retirado de tu flota o que el enlace no sea tuyo.",
+      "goFleet": "Ir a Mi flota"
+    },
+    "tabs": {
+      "label": "Secciones",
+      "mantenimiento": "Mantenimiento",
+      "historial": "Historial",
+      "uso": "Uso",
+      "datos": "Datos"
+    },
+    "tiles": {
+      "mileage": "Kilometraje",
+      "update": "{{measure}} · actualizar",
+      "health": "estado",
+      "pending_one": "{{count}} pendiente",
+      "pending_other": "{{count}} pendientes",
+      "perWeek": "{{measure}} por semana",
+      "usage": "Uso"
+    },
+    "schedule": {
+      "pending": "Buscando el plan del fabricante para tu {{model}}. Mientras tanto usamos recomendaciones generales.",
+      "model": "Plan del fabricante para tu {{name}}",
+      "generalTitle": "Recomendación general, no específica de tu modelo",
+      "generalFound": "No encontramos un plan publicado por el fabricante para este modelo.",
+      "generalNone": "Aún no tenemos el plan del fabricante para este modelo.",
+      "manualNote": "Revisa el manual del propietario si lo tienes.",
+      "search": "Buscar plan del fabricante"
+    },
+    "appointments": {
+      "title": "Citas y recordatorios",
+      "workshop": "Cita en el taller",
+      "emptyHint": "Guarda fechas de citas en el taller o cosas como el seguro y la revisión técnica."
+    },
+    "history": {
+      "services": "Servicios",
+      "spent": "Gastado este año",
+      "record": "Registrar Servicio",
+      "emptyTitle": "Sin Servicios todavía",
+      "emptyBody": "Registra mantenimientos y reparaciones, incluso de fechas pasadas, para tener el historial completo.",
+      "readings": "Lecturas de kilometraje",
+      "repair": "Reparación",
+      "edit": "Editar",
+      "remove": "Quitar",
+      "removeAsk": "¿Quitar este Servicio del historial? El kilometraje registrado se conserva.",
+      "removed": "Servicio quitado del historial",
+      "shop": "Taller: {{shop}}",
+      "cancel": "Cancelar"
+    },
+    "correct": {
+      "title": "Corregir lectura",
+      "description": "Si anotaste mal un número, corrígelo aquí. No afecta la fecha.",
+      "field": "Kilometraje correcto",
+      "invalid": "Escribe un número válido.",
+      "save": "Guardar corrección",
+      "saved": "Lectura corregida",
+      "discard": {
+        "title": "¿Descartar la corrección?",
+        "body": "Lo que escribiste se pierde.",
+        "confirm": "Descartar",
+        "cancel": "Seguir editando"
+      }
+    },
+    "usage": {
+      "estimated": "Uso estimado",
+      "none": "Sin datos",
+      "perWeek": "por semana",
+      "fromReadings": "Calculado con tus lecturas de kilometraje recientes.",
+      "fromRoutines": "Calculado con tus rutinas. Con dos lecturas de kilometraje será más exacto.",
+      "ask": "Agrega tus rutinas o actualiza el kilometraje dos veces con una semana de diferencia.",
+      "severe": "Tu uso cuenta como «severo» (mucho recorrido o viajes cortos). Si el fabricante tiene un plan para uso severo, lo aplicamos.",
+      "update": "Actualizar kilometraje"
+    },
+    "routines": {
+      "title": "Rutinas semanales",
+      "emptyHint": "¿Lo usas para ir al trabajo o a la universidad? Agrega esos recorridos y calcularemos mejor cuándo te toca cada mantenimiento.",
+      "roundTrip": "{{distance}} {{measure}} ida y vuelta",
+      "day_one": "día",
+      "day_other": "días",
+      "perWeek": "por semana",
+      "total": "Total de rutinas:",
+      "add": "Agregar rutina",
+      "formAdd": "Agregar Rutina",
+      "formEdit": "Editar Rutina",
+      "description": "Un recorrido que repites cada semana. Nos ayuda a calcular cuánto usas tu Vehículo.",
+      "name": "Nombre",
+      "namePlaceholder": "Trabajo",
+      "distance": "Distancia de ida y vuelta",
+      "distanceHint": "Si no la sabes, búscala en tu app de mapas y multiplícala por dos.",
+      "days": "Días por semana",
+      "save": "Guardar Rutina",
+      "saved": "Rutina guardada",
+      "delete": "Eliminar Rutina",
+      "deleteAsk": "¿Eliminar «{{name}}»? Deja de contar para el cálculo de uso.",
+      "deleted": "Rutina eliminada",
+      "discard": {
+        "title": "¿Descartar la rutina?",
+        "body": "Lo que escribiste se pierde.",
+        "confirm": "Descartar",
+        "cancel": "Seguir editando"
+      },
+      "cancel": "Cancelar"
+    },
+    "data": {
+      "edit": "Editar datos",
+      "sources": "Fuentes del plan de mantenimiento",
+      "openA11y": "Abrir «{{title}}» en el navegador",
+      "artNote": "La imagen es una ilustración generada a partir de la marca, el modelo, el año y el color. No es una foto de tu Vehículo.",
+      "withdraw": "Retirar de mi flota",
+      "rows": {
+        "brand": "Marca",
+        "model": "Modelo",
+        "year": "Año",
+        "trim": "Versión",
+        "engine": "Motor",
+        "color": "Color",
+        "plate": "Placa",
+        "measure": "Odómetro en",
+        "km": "Kilómetros",
+        "mi": "Millas",
+        "none": "Sin dato"
+      }
     },
     "services": {
       "title": "Servicios",
       "record": "Registrar un Servicio",
       "empty": "Todavía no hay Servicios en este Vehículo.",
       "repair": "Reparación"
+    },
+    "reminders": {
+      "generalBadge": "General"
     }
   },
   "mileage": {
