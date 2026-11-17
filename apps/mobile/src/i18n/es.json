@@ -25,7 +25,39 @@
     "close": "Cerrar"
   },
   "home": {
-    "activeVehicle": "Tu Vehículo"
+    "stage": {
+      "label": "Tus Vehículos",
+      "vehicle": "{{name}}, {{details}}",
+      "open": "Abre sus detalles",
+      "position": "{{name}}, {{index}} de {{count}}",
+      "previous": "Vehículo anterior",
+      "next": "Vehículo siguiente",
+      "poster": "{{name}} {{year}} (ilustración)"
+    },
+    "mileage": {
+      "label": "Kilometraje",
+      "none": "Sin lectura",
+      "spoken": "Kilometraje: {{value}} {{measure}}",
+      "update": "Actualizar",
+      "updateSpoken": "Actualizar Kilometraje",
+      "hintNoReadings": "Lo necesitamos para calcular tus próximos mantenimientos.",
+      "hintNoUsage": "Con otra lectura sabremos cuánto lo usas.",
+      "hintStale": "Tu último registro fue {{when}}."
+    },
+    "status": {
+      "title": "Estado",
+      "allClear": "Todo al día",
+      "attention": "{{count}} por atender",
+      "card": "{{task}}, {{status}}"
+    },
+    "empty": {
+      "title": "Sin Vehículos todavía",
+      "body": "Agrega tu Vehículo y te avisamos cuándo toca cada Servicio.",
+      "add": "Agregar mi Vehículo"
+    },
+    "fixture": {
+      "title": "Inicio de muestra"
+    }
   },
   "fleet": {
     "yearPlate": "{{year}} · {{plate}}",

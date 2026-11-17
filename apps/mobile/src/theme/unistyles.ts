@@ -1,8 +1,8 @@
 import { StyleSheet } from 'react-native-unistyles';
 
-import { art, palettes, shadows, type PaletteName } from './palettes';
+import { art, garageStage, palettes, shadows, type PaletteName } from './palettes';
 import { applyNativeScheme, getThemePreference, unistylesThemeFor } from './preference';
-import { displayTracking, fonts, heroType, largeTextScale, maxIconScale, opacity, radius, size, space, typeScale } from './tokens';
+import { displayTracking, fonts, garageType, heroType, largeTextScale, maxIconScale, opacity, radius, size, space, typeScale } from './tokens';
 
 /**
  * Seibi's Unistyles themes. Imported once, from the app entry (`index.ts`),
@@ -18,6 +18,8 @@ function themeFrom(palette: PaletteName) {
     colors: palettes[palette],
     shadow: shadows[palette],
     art: art[palette],
+    /** Inicio's stage colours (Garage v3). */
+    garage: garageStage[palette],
     space,
     radius,
     size,
@@ -26,6 +28,7 @@ function themeFrom(palette: PaletteName) {
     fonts,
     displayTracking,
     heroType,
+    garageType,
     largeTextScale,
     maxIconScale,
   };

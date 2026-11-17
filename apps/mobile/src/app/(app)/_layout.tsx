@@ -25,11 +25,15 @@ export default function AppLayout() {
       {/* Placeholders until the Service form (S7) and the Mileage form (S8) take these routes. */}
       <Stack.Screen name="record-service" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
       <Stack.Screen name="update-mileage" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
-      {/* The data check screen exists in Seibi Dev (the development variant) only. */}
+      {/* The data check and Inicio's sample screen exist in Seibi Dev (the development variant) only. */}
       <Stack.Protected guard={process.env.EXPO_PUBLIC_APP_VARIANT === 'development'}>
         <Stack.Screen
           name="data-check"
           options={{ headerShown: true, title: t('dataCheck.title'), headerBackButtonDisplayMode: 'minimal' }}
+        />
+        <Stack.Screen
+          name="garage-fixture"
+          options={{ headerShown: true, title: t('home.fixture.title'), headerBackButtonDisplayMode: 'minimal' }}
         />
       </Stack.Protected>
     </Stack>

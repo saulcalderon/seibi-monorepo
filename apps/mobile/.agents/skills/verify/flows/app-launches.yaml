@@ -19,10 +19,10 @@ name: The app launches to Inicio
 - assertVisible:
     id: open-actions
 # Data derived by @seibi/maintenance-engine reached the screen: the active
-# Vehicle (or the empty state for an account with none).
+# Vehicle on the stage (or the empty state for an account with none).
 - extendedWaitUntil:
     visible:
-      id: 'home-vehicle|home-empty'
+      id: 'home-stage-vehicle|home-empty'
     timeout: 30000
 - waitForAnimationToEnd
 - takeScreenshot: home
