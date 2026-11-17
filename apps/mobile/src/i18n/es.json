@@ -271,6 +271,14 @@
       "description": "Un recorrido que repites cada semana. Nos ayuda a calcular cuánto usas tu Vehículo.",
       "name": "Nombre",
       "namePlaceholder": "Trabajo",
+      "presets": {
+        "work": "Trabajo",
+        "university": "Universidad",
+        "school": "Colegio de los niños",
+        "groceries": "Supermercado",
+        "gym": "Gimnasio"
+      },
+      "missing": "Esta rutina ya no existe. Puede que la hayas eliminado.",
       "distance": "Distancia de ida y vuelta",
       "distanceHint": "Si no la sabes, búscala en tu app de mapas y multiplícala por dos.",
       "days": "Días por semana",

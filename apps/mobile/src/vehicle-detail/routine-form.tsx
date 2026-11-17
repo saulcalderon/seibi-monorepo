@@ -5,6 +5,7 @@ import { View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import { errorMessage, InputError } from '@/data/errors';
+import type { RoutineRecord, VehicleView } from '@/data/garage/types';
 import { useGarage } from '@/data/garage/use-garage';
 import { useDeleteRoutine, useSaveRoutine } from '@/data/routine/mutations';
 import { parseNumber } from '@/lib/number';
@@ -17,7 +18,8 @@ import { Text } from '@/ui/text';
 import { confirm, notify } from '@/ui/toast';
 import { useUnsavedGuard } from '@/ui/use-unsaved-guard';
 
-const PRESETS = ['Trabajo', 'Universidad', 'Colegio de los niños', 'Supermercado', 'Gimnasio'];
+/** The PWA's name presets, in the order it shows them (es.json `vehicleDetail.routines.presets`). */
+const PRESETS = ['work', 'university', 'school', 'groceries', 'gym'] as const;
 const DAYS = [1, 2, 3, 4, 5, 6, 7];
 
 /**
@@ -58,10 +60,19 @@ export function RoutineForm({ vehicleId, routineId }: { vehicleId?: string; rout
       </SheetMessage>
     );
   }
-  return <RoutineBody vehicleId={vehicle.id} measure={vehicle.measure} routine={vehicle.routines.find((r) => r.id === routineId) ?? null} />;
+  const routine = routineId ? vehicle.routines.find((r) => r.id === routineId) : undefined;
+  if (routineId && !routine) {
+    // A stale link (the Routine was deleted elsewhere) says so instead of quietly opening «Agregar Rutina».
+    return (
+      <SheetMessage testID="routine-gone" onClose={() => router.back()}>
+        <EmptyState icon="route" title={t('vehicleDetail.routines.formEdit')} body={t('vehicleDetail.routines.missing')} />
+      </SheetMessage>
+    );
+  }
+  return <RoutineBody vehicleId={vehicle.id} measure={vehicle.measure} routine={routine ?? null} />;
 }
 
-function RoutineBody({ vehicleId, measure, routine }: { vehicleId: string; measure: 'km' | 'mi'; routine: { id: string; name: string; roundTripDistance: number; daysPerWeek: number } | null }) {
+function RoutineBody({ vehicleId, measure, routine }: { vehicleId: string; measure: VehicleView['measure']; routine: RoutineRecord | null }) {
   const { t } = useTranslation();
   const router = useRouter();
   const save = useSaveRoutine();
@@ -158,9 +169,10 @@ function RoutineBody({ vehicleId, measure, routine }: { vehicleId: string; measu
       />
       {!routine ? (
         <View style={styles.presets} testID="routine-presets">
-          {PRESETS.map((preset) => (
-            <Chip key={preset} testID={`routine-preset-${preset}`} label={preset} onPress={() => setName(preset)} />
-          ))}
+          {PRESETS.map((preset) => {
+            const label = t(`vehicleDetail.routines.presets.${preset}`);
+            return <Chip key={preset} testID={`routine-preset-${preset}`} label={label} onPress={() => setName(label)} />;
+          })}
         </View>
       ) : null}
       <TextField
@@ -183,6 +195,7 @@ function RoutineBody({ vehicleId, measure, routine }: { vehicleId: string; measu
               key={d}
               testID={`routine-day-${d}`}
               label={String(d)}
+              radio
               selected={days === d}
               onPress={() => setDays(d)}
             />
