@@ -250,7 +250,11 @@ Proof standards for a PR (`AGENTS.md` → "Prove it works"):
   run a read-only `SELECT` against the hosted **seibi-dev** Supabase
   project (Supabase MCP `execute_sql`) that shows the saved row, and paste
   the query and result in the PR. Never write to seibi-dev by hand to make
-  a journey pass, and never touch production.
+  a journey pass, and never touch production. One setup write is allowed:
+  `flows/scripts/reset-first-run.js` puts the test account back to before
+  its first run (the profile fields a new account has empty), because no
+  user can undo a finished first run and the first-run flows need one to
+  prove. It writes nothing a journey then asserts.
 - Mocks only where a production boundary already isolates the outside
   system.
 - Prove it on both platforms when the change touches both. If one

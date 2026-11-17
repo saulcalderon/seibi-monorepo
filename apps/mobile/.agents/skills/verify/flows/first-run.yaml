@@ -59,7 +59,9 @@ name: The first-run questions save the profile, a first Vehicle, its Routine and
     id: home-screen
 
 # --- Tú: «Continuar» waits for a name.
-- assertVisible: '¡Bienvenido a Seibi!'
+- assertVisible:
+    id: first-run-name-title
+    text: '¡Bienvenido a Seibi!'
 - assertVisible:
     id: first-run-name-continue
     enabled: false
@@ -77,7 +79,8 @@ name: The first-run questions save the profile, a first Vehicle, its Routine and
 
 # --- Conocimiento: the self-assessment, three checks, the result.
 - extendedWaitUntil:
-    visible: '¿Cuánto sabes de carros?'
+    visible:
+      id: first-run-level-title
     timeout: 10000
 - waitForAnimationToEnd
 - takeScreenshot: first-run-02-level
@@ -97,15 +100,18 @@ name: The first-run questions save the profile, a first Vehicle, its Routine and
     id: first-run-check-1-checksAndDriving
 # The dashboard light sits beside the third question.
 - extendedWaitUntil:
-    visible: '¿Qué significa esta luz en el tablero?'
+    visible:
+      id: first-run-check-2-overheating
     timeout: 10000
 - waitForAnimationToEnd
 - takeScreenshot: first-run-03-coolant
 - tapOn:
     id: first-run-check-2-overheating
-# intermediate + 3 right → «Tengo experiencia» … calibrated to intermediate.
+# «Tengo experiencia» (intermediate) and three right answers stay intermediate.
 - extendedWaitUntil:
-    visible: 'Hablas el idioma del taller'
+    visible:
+      id: first-run-result-title
+      text: 'Hablas el idioma del taller'
     timeout: 10000
 - assertVisible: '.*Tu nivel.*Tengo experiencia.*'
 - tapOn:
@@ -119,7 +125,8 @@ name: The first-run questions save the profile, a first Vehicle, its Routine and
 
 # --- Ubicación: «Continuar» waits for a city of two letters.
 - extendedWaitUntil:
-    visible: '¿Dónde usas tu Vehículo?'
+    visible:
+      id: first-run-location-title
     timeout: 10000
 - tapOn:
     id: first-run-location-city
@@ -143,7 +150,9 @@ name: The first-run questions save the profile, a first Vehicle, its Routine and
     visible:
       id: first-run-vehicle-form-brand
     timeout: 15000
-- assertVisible: 'Agrega tu Vehículo'
+- assertVisible:
+    id: first-run-vehicle-title
+    text: 'Agrega tu Vehículo'
 - assertVisible:
     id: first-run-vehicle-later
 - waitForAnimationToEnd
@@ -214,7 +223,8 @@ name: The first-run questions save the profile, a first Vehicle, its Routine and
 
 # --- Uso (with a Vehicle only): a pattern, then the distance it needs.
 - extendedWaitUntil:
-    visible: '¿Cómo usas tu Vehículo?'
+    visible:
+      id: first-run-usage-title
     timeout: 20000
 - assertVisible:
     id: first-run-usage-continue
@@ -224,7 +234,9 @@ name: The first-run questions save the profile, a first Vehicle, its Routine and
 - tapOn:
     id: first-run-usage-continue
 - extendedWaitUntil:
-    visible: 'Escribe la distancia aproximada.'
+    visible:
+      id: first-run-usage-error
+      text: 'Escribe la distancia aproximada.'
     timeout: 10000
 - tapOn:
     id: first-run-usage-distance
@@ -237,7 +249,8 @@ name: The first-run questions save the profile, a first Vehicle, its Routine and
 
 # --- Mantenimiento: two answers, so the button reads «Calcular mis avisos».
 - extendedWaitUntil:
-    visible: 'Tu último mantenimiento'
+    visible:
+      id: first-run-history-title
     timeout: 15000
 - assertVisible:
     id: first-run-history-continue
@@ -256,7 +269,8 @@ name: The first-run questions save the profile, a first Vehicle, its Routine and
 
 # --- Avisos: saying no blocks nothing.
 - extendedWaitUntil:
-    visible: '¿Te avisamos a tiempo?'
+    visible:
+      id: first-run-notifications-title
     timeout: 15000
 - waitForAnimationToEnd
 - takeScreenshot: first-run-09-notifications
@@ -265,7 +279,9 @@ name: The first-run questions save the profile, a first Vehicle, its Routine and
 
 # --- The confirmation, then Inicio on its own.
 - extendedWaitUntil:
-    visible: 'Se guardó tu información'
+    visible:
+      id: first-run-done-title
+      text: 'Se guardó tu información'
     timeout: 10000
 - takeScreenshot: first-run-10-done
 - extendedWaitUntil:

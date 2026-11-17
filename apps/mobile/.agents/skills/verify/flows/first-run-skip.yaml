@@ -54,7 +54,8 @@ name: Skipping the Vehicle and avisos still finishes the first run
 - startRecording: first-run-skip
 - runFlow: first-run-finish.yaml
 # No Routine or history step was shown: Inicio came straight after avisos.
-- assertNotVisible: '¿Cómo usas tu Vehículo?'
+- assertNotVisible:
+    id: first-run-usage-title
 - waitForAnimationToEnd
 - takeScreenshot: first-run-skip-home
 - stopRecording
