@@ -65,13 +65,15 @@ export function UsageTab({ vehicle }: { vehicle: VehicleView }) {
           </Text>
         ) : (
           <Card>
-            {vehicle.routines.map((routine, index) => (
+            {vehicle.routines.map((routine, index) => {
+              const detail = `${t('vehicleDetail.routines.roundTrip', { distance: formatNumber(routine.roundTripDistance), measure: vehicle.measure })} · ${routine.daysPerWeek} ${t('vehicleDetail.routines.day', { count: routine.daysPerWeek })} ${t('vehicleDetail.routines.perWeek')}`;
+              return (
               <View key={routine.id}>
                 {index > 0 ? <RowDivider /> : null}
                 <Pressable
                   testID={`routine-${index}`}
                   accessibilityRole="button"
-                  accessibilityLabel={routine.name}
+                  accessibilityLabel={`${routine.name}, ${detail}`}
                   onPress={() => router.push({ pathname: '/routine', params: { vehicleId: vehicle.id, routineId: routine.id } })}
                   style={styles.routineRow}
                 >
@@ -81,14 +83,14 @@ export function UsageTab({ vehicle }: { vehicle: VehicleView }) {
                       {routine.name}
                     </Text>
                     <Text step="footnote" tone="muted">
-                      {t('vehicleDetail.routines.roundTrip', { distance: formatNumber(routine.roundTripDistance), measure: vehicle.measure })} ·{' '}
-                      {routine.daysPerWeek} {t('vehicleDetail.routines.day', { count: routine.daysPerWeek })} {t('vehicleDetail.routines.perWeek')}
+                      {detail}
                     </Text>
                   </View>
                   <Icon name="edit" size="xs" tone="subtle" />
                 </Pressable>
               </View>
-            ))}
+              );
+            })}
             <RowDivider />
             <View style={styles.totalRow} testID="routine-total">
               <Text step="footnote" tone="muted">
