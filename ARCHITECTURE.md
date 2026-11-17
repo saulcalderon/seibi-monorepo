@@ -667,7 +667,7 @@ The migration's order, scope and tickets are in
   and says what is missing, and `eas build` on a machine would offer to
   create a project: leave that to SEI-72. iOS internal builds install only
   on devices registered with `eas device:create`.
-- **Verification:** `apps/mobile/.claude/skills/verify/` (generated in
+- **Verification:** `apps/mobile/.agents/skills/verify/` (generated in
   SEI-41 with `create-verification-skill`) drives Seibi Dev on the iOS
   Simulator and the Android emulator (`seibi-pixel`) with Maestro, the way
   a user does: `scripts/verify.sh` launches, checks (`doctor`), drives a
@@ -724,8 +724,7 @@ versions match the SDK.
   no Docker). The hosted **seibi-dev** project is the dev environment.
 - **Changes go through PRs.** No direct pushes to `main` unless the owner
   says so. Merging to `main` deploys migrations and Edge Functions to
-  production. Devin runs each ticket and merges it (`AGENTS.md` → Ticket
-  loop).
+  production. Every ticket follows `AGENTS.md` → Ticket loop.
 - **Linear** (team Seibi, project «App móvil Seibi») is the tracker; all
   Linear content is Spanish. See
   [`docs/agents/issue-tracker.md`](./docs/agents/issue-tracker.md).

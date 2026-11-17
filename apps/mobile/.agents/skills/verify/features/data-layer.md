@@ -34,7 +34,7 @@ Preconditions:
 - `verify.sh launch <ios|android>` ended with `doctor: OK` and `supabase: … (seibi-dev)`, `test user: e2e@seibi.test (password set)`.
 - Seibi Dev is built from a branch that has SEI-53 (JavaScript only: any build since SEI-44 runs it; no rebuild needed).
 
-- **Sign in, then record.** `.claude/skills/verify/scripts/verify.sh drive ios data-layer` (then `android`). The flow signs in with `runFlow: sign-in.yaml` before `startRecording`, then cold-starts the app signed in, so the video never shows the password.
+- **Sign in, then record.** `.agents/skills/verify/scripts/verify.sh drive ios data-layer` (then `android`). The flow signs in with `runFlow: sign-in.yaml` before `startRecording`, then cold-starts the app signed in, so the video never shows the password.
 - **Vehicles listed.** Open Perfil (`open-profile.yaml`), scroll to and tap `id: open-data-check`; `id: data-check-vehicle-0` shows with `id: data-check-odometer` reading `Kilometraje actual: <n> km`. On a test account with no Vehicle, `id: data-check-empty` shows first and the flow taps `id: data-check-create-vehicle`. Screenshot `vehicles-listed`.
 - **Refused reading.** Type the current odometer into `id: data-check-reading-input`, tap `id: data-check-reading-save`: `id: data-check-reading-error` reads `Debe ser mayor que el último registro (<current> km).`. Screenshot `reading-refused`.
 - **Saved reading.** Erase, type current + 500, tap save: `id: data-check-reading-saved` reads `Kilometraje actualizado: <new> km` and `id: data-check-odometer` moves to it. Screenshot `reading-saved`.

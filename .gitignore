@@ -6,6 +6,9 @@ dist
 dev-dist
 *.local
 
+# Personal agent rules and workflow (AGENTS.local.md), never shared
+*.local.md
+
 # skill script caches
 .agents/skills/*/scripts/.cache/
 

@@ -33,7 +33,7 @@ Preconditions:
 - Seibi Dev is installed from the branch under test.
 - The seibi-dev test account exists and `doctor` shows `test user: … (password set)` (the flow signs in when it starts signed out).
 
-- **Cold start.** Run `.claude/skills/verify/scripts/verify.sh drive android app-launches` (then `ios`). The flow runs `stopApp`, then `openLink: ${DEV_URL}`. The splash shows the logo mark on `#F2F4F7` (dark ticks), or on `#0E0F11` with white ticks when the phone is in dark mode (`login-night`, [`auth.md`](./auth.md)).
+- **Cold start.** Run `.agents/skills/verify/scripts/verify.sh drive android app-launches` (then `ios`). The flow runs `stopApp`, then `openLink: ${DEV_URL}`. The splash shows the logo mark on `#F2F4F7` (dark ticks), or on `#0E0F11` with white ticks when the phone is in dark mode (`login-night`, [`auth.md`](./auth.md)).
 - **Inicio.** `runFlow: sign-in.yaml` waits up to 120 s for `id: sign-in-title` or `id: home-screen`, signs in with the test account if it is the sign-in screen, and waits for `id: home-screen`. The flow asserts `id: tab-home` and `id: open-actions`. The video shows the splash, then Inicio, with no frame in a fallback font. In a development build the dev client's own screens show between the two (see Gotchas).
 - **Engine and data.** The flow waits for `id: home-vehicle` (or `id: home-empty`). It never shows when the garage query or the shared package fails (an error state shows instead).
 - **Proof.** The flow takes `takeScreenshot: home` and stops the recording. The run folder holds `startRecording/app-launches.mp4` and `takeScreenshot/home.png`. `doctor.txt` shows the branch, commit and the installed app.
