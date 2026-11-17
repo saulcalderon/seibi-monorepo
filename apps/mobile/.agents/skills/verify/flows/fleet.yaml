@@ -103,6 +103,8 @@ name: Mi flota lists, searches, adds, edits, withdraws and restores a Vehicle
           id: pick-custom
 - runFlow:
     when:
+      visible:
+        id: pick-model
       notVisible:
         id: pick-custom
     commands:
