@@ -34,6 +34,11 @@ name: Withdraw the Services a failed service run left behind
     commands:
       # Other Services (a newer one from another flow) can sit above it, so the
       # expanded card's index is unknown: its withdraw button is the only one shown.
+      # Centre it first: near the bottom edge the tap lands on the tab bar.
+      - scrollUntilVisible:
+          element:
+            text: '.*Bombillo de freno.*'
+          centerElement: true
       - tapOn:
           text: '.*Bombillo de freno.*'
       - extendedWaitUntil:
