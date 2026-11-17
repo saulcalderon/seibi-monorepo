@@ -11,7 +11,7 @@ import {
   formatUsdRange,
   greeting,
   relativeDays,
-  todayIso,
+  isoDate,
   vehicleChoiceLabel,
   vehicleName,
 } from './format';
@@ -56,8 +56,8 @@ describe('numbers and distances', () => {
 
 describe('days', () => {
   it("is today's local calendar day, not the UTC one", () => {
-    expect(todayIso(new Date(2026, 10, 12, 23, 59))).toBe('2026-11-12');
-    expect(todayIso(new Date(2026, 0, 3, 0, 0))).toBe('2026-01-03');
+    expect(isoDate(new Date(2026, 10, 12, 23, 59))).toBe('2026-11-12');
+    expect(isoDate(new Date(2026, 0, 3, 0, 0))).toBe('2026-01-03');
   });
 
   it('prints a day, with the year only when it is not this year', () => {

@@ -22,7 +22,7 @@ import {
 } from '@/data/service/form';
 import { useSaveService, useWithdrawService } from '@/data/service/mutations';
 import { orderedTaskCodes, taskMap, type MaintenanceTask } from '@/data/task/catalog';
-import { formatDistance, formatUsd, todayIso, vehicleName } from '@/lib/format';
+import { formatDistance, formatUsd, isoDate, vehicleName } from '@/lib/format';
 import { knowledgeProfile, taskLabel, type KnowledgeProfile } from '@/lib/knowledge';
 import { taskIcon } from '@/lib/task-icon';
 import { Button, IconButton } from '@/ui/button';
@@ -153,7 +153,7 @@ function ServiceFormBody({
 
   const editing = service ?? null;
   const [initial] = useState(() =>
-    initialDraft({ vehicle: startVehicle, service, taskCodes, tasks: byCode, detailed: k.detailed, today: todayIso() }),
+    initialDraft({ vehicle: startVehicle, service, taskCodes, tasks: byCode, detailed: k.detailed, today: isoDate() }),
   );
   const [draft, setDraft] = useState<ServiceDraft>(initial);
   const [error, setError] = useState<FormError | null>(null);
@@ -230,7 +230,7 @@ function ServiceFormBody({
   const submit = async () => {
     setError(null);
     try {
-      const input = serviceInputFromDraft(draft, { serviceId: editing?.id, readingId: editing?.readingId, today: todayIso() });
+      const input = serviceInputFromDraft(draft, { serviceId: editing?.id, readingId: editing?.readingId, today: isoDate() });
       await save.mutateAsync(input);
       notify.success(t(editing ? 'serviceForm.updated' : 'serviceForm.saved'));
       setLeaving(true);
@@ -336,7 +336,7 @@ function ServiceFormBody({
                   label={label}
                   icon={taskIcon(code)}
                   selected={on}
-                  dot={due === 'overdue' || due === 'soon' ? due : undefined}
+                  dot={!on && (due === 'overdue' || due === 'soon') ? due : undefined}
                   accessibilityLabel={due && !on ? t('serviceForm.taskPending', { task: label }) : label}
                   onPress={() => toggleTask(code)}
                 />
@@ -404,7 +404,7 @@ function ServiceFormBody({
           value={dayToDate(draft.performedOn)}
           maximumDate={new Date()}
           error={fieldError('performedOn')}
-          onChange={(date) => patch({ performedOn: todayIso(date) })}
+          onChange={(date) => patch({ performedOn: isoDate(date) })}
         />
         <MileageField
           testID="service-mileage"

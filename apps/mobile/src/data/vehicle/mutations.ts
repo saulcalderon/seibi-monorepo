@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { todayIso } from '@/lib/format';
+import { isoDate } from '@/lib/format';
 
 import { invokeFunction } from '../functions';
 import { useGarageMutation } from '../garage/use-garage';
@@ -43,7 +43,7 @@ export function useCreateVehicle() {
       const { error: readingError } = await supabase.from('mileage_readings').insert({
         vehicle_id: data.id,
         reading: odometerNumber(input.odometer, 'odometer'),
-        recorded_on: todayIso(),
+        recorded_on: isoDate(),
       });
       if (readingError) throw readingError;
     }

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { todayIso } from '@/lib/format';
+import { isoDate } from '@/lib/format';
 
 import { useTasks } from '../task/queries';
 import { useUserId } from '../user';
@@ -31,7 +31,7 @@ export function useGarage() {
         : false,
   });
 
-  const today = todayIso();
+  const today = isoDate();
   const derived = useMemo(
     () => (query.data && tasks.data ? splitGarage(query.data, tasks.data, today) : null),
     [query.data, tasks.data, today],

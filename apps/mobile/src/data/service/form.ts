@@ -183,6 +183,7 @@ export function serviceInputFromDraft(
     throw new InputError(issue.path.join('.'), issue.message as InputCode);
   }
   const d = parsed.data;
+  if (d.reading === null) throw new InputError('reading', 'service_reading_required');
   const items = d.items
     .filter((i) => i.name.trim().length > 0)
     .map((i) => ({
@@ -199,7 +200,7 @@ export function serviceInputFromDraft(
     readingId,
     type: d.type,
     performedOn: d.performedOn,
-    reading: d.reading ?? 0,
+    reading: d.reading,
     shop: d.shop,
     notes: d.notes,
     totalCost: d.perItemCost ? (sum > 0 ? sum : null) : parseNumber(d.totalCost),

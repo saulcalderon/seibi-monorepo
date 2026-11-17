@@ -5,10 +5,10 @@ import type { OdometerMeasure } from '@seibi/maintenance-engine/odometer';
 import type { Reminder } from '@seibi/maintenance-engine/reminders';
 import type { TFunction } from 'i18next';
 
-import { formatNumber, relativeDays, relativeDaysLead, todayIso } from '@/lib/format';
+import { formatNumber, relativeDays, relativeDaysLead, isoDate } from '@/lib/format';
 
 /** Where a derived Reminder stands: «Vencido por 1,200 km», «En 450 km · aprox. en 20 días». */
-export function reminderDueText(r: Reminder, measure: OdometerMeasure, t: TFunction, today = todayIso()): string {
+export function reminderDueText(r: Reminder, measure: OdometerMeasure, t: TFunction, today = isoDate()): string {
   if (r.status === 'unknown') {
     return r.unknownReason === 'dont_know' ? t('reminderText.unknownDontKnow') : t('reminderText.unknownAsk');
   }

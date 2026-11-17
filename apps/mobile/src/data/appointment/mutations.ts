@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { todayIso } from '@/lib/format';
+import { isoDate } from '@/lib/format';
 
 import { InputError } from '../errors';
 import { useGarageMutation } from '../garage/use-garage';
@@ -24,7 +24,7 @@ export function validateAppointment(input: AppointmentInput, today: string) {
 
 export function useSaveAppointment() {
   return useGarageMutation(async (input: AppointmentInput) => {
-    validateAppointment(input, todayIso());
+    validateAppointment(input, isoDate());
     const row = {
       vehicle_id: input.vehicleId,
       scheduled_on: input.scheduledOn,
