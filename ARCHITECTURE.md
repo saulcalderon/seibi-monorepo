@@ -254,7 +254,8 @@ The migration's order, scope and tickets are in
 
   ```
   src/app/
-    _layout.tsx                  root Stack: Stack.Protected (app) · (auth)/… · ui-kit
+    _layout.tsx                  root Stack: Stack.Protected (app) · onboarding · (auth)/… · ui-kit
+    onboarding/                  the first-run questions (S3), a Stack: one screen per step · pick · done
     +native-intent.tsx           seibi-dev://vehicle/<id> → Mi flota (src/shell/links.ts)
     (app)/_layout.tsx            Stack, anchor (tabs): (tabs) · actions · record-service · update-mileage · vehicle · data-check · garage-fixture
     (app)/vehicle/               the Vehicle form, a modal with its own Stack: new · [id]/edit · pick
@@ -315,6 +316,47 @@ The migration's order, scope and tickets are in
     placeholders built from kit components over the data layer (Avisos:
     each Vehicle's Reminders). The S-tickets replace their content, not
     the routes. Inicio is the Garage, Mi flota the Fleet (below).
+- **First-run questions** (S3, SEI-58): the PWA's Onboarding
+  (`apps/app/src/screens/Onboarding.tsx`), in `src/app/onboarding/` (one
+  screen per step) and `src/onboarding/` (the decisions as plain functions
+  in `flow.ts`, with unit tests; the answers so far in `state.tsx`; the
+  step's frame in `step.tsx`; the answer card in `option.tsx`).
+  - **Steps.** In the PWA's `ORDER`: «¿Cómo te llamamos?»
+    (`display_name`); «¿Cuánto sabes de carros?», three check questions
+    (`?q=0|1|2`) and the result, which save `knowledge_level`
+    (`calibrateLevel`) and offer «Prefiero otro nivel»; country and city;
+    «Agrega tu Vehículo» (the Vehicle form) or «Lo agrego después»; with a
+    Vehicle only, «¿Cómo usas tu Vehículo?» (a `routines` row) and «Tu
+    último mantenimiento» (`reminder_states` through `rememberTasks`, the
+    oil filter with the oil); «¿Te avisamos a tiempo?»; then «Se guardó tu
+    información», which saves `onboarded_at` and after 2 s lets the root
+    layout open Inicio. Each answer is saved when given, as in the PWA (the
+    name and level in the background; the city, Routine and history
+    awaited). In the PWA since #30 both ways out of the Vehicle step jump
+    to the confirmation, so its Routine, history and push steps are never
+    shown; the port shows them, as SEI-58 asks.
+  - **Navigation.** A native stack, so the system's back (iOS's edge
+    swipe, Android's back) returns to the step before, as the PWA's swipe
+    right did; the PWA's slide between steps is the stack's own push.
+    Coming back to the Vehicle step after adding one shows «Vehículo
+    agregado». «Se guardó tu información» is a one-way door (no back swipe,
+    Android's back ignored). Its save is not optimistic: a failed save
+    shows the error and «Reintentar» there, where the PWA went on to Inicio
+    and was sent back to the start.
+  - **Look.** The `garage` palette in a `ScopedTheme`, light whatever the
+    theme, with a dark status bar (a first-run screen, as Login): the
+    lockup at the top, the step's category as an eyebrow (said with «paso
+    N de M»), the title in the first-run style (`heroType`), white answer
+    cards with a round mark, black pills (`Button` `inverse`), the dots
+    under the buttons, which ride on the keyboard (`FormLayout` with
+    `divider={false}`). The avisos bell wiggles as in the PWA (a Reanimated
+    CSS animation; still with Reduce Motion on).
+  - **Push** is stubbed until SEI-47: «Activar avisos» and «Ahora no» ask
+    the system nothing; the answer is kept on the phone
+    (`user.push-answer.v1` in the kv-store, `savePushAnswer` /
+    `pushAnswer` in `src/data/preferences/store.ts`, deleted on sign-out)
+    for SEI-47 to ask the permission and register the token. Nothing about
+    it is written to Supabase, as in the PWA's first run.
 - **Inicio** (S4, SEI-59): the PWA's Garage v3 without the 3D branch, in
   `src/home/` (`garage.tsx`, `stage.tsx`, `ticker.tsx`; the decisions as
   plain functions in `garage-logic.ts`, with unit tests). The route
@@ -388,7 +430,7 @@ The migration's order, scope and tickets are in
 
   | Route | Opens | Who opens it |
   | --- | --- | --- |
-  | `/vehicle/new` | «Agregar Vehículo», empty; saving closes it | Mi flota's «Agregar»; S3's first run can push it, or render `VehicleForm` in its own screen with `onSaved` |
+  | `/vehicle/new` | «Agregar Vehículo», empty; saving closes it | Mi flota's «Agregar» and Inicio's empty state |
   | `/vehicle/<id>/edit` | «Editar Vehículo» with «Retirar de mi flota»; saving or withdrawing closes it | Mi flota's menu; S6's Vehicle detail with the id alone |
   | `/vehicle/pick?kind=brand\|year\|model` | The make, year or model picker, pushed inside the modal | The form's fields only |
 
@@ -408,6 +450,11 @@ The migration's order, scope and tickets are in
   works in any screen. Paint is the 13 presets (`theme.art.paint`).
   The odometer measure can't change once the Vehicle has readings.
   `+native-intent.tsx` leaves `vehicle/new` and `vehicle/pick` alone.
+  The first-run questions render the same `VehicleForm` in their own step
+  (`firstRun`: their black pill, their heading and «Lo agrego después»
+  through `header` and `footerExtra`, and the pickers pushed at
+  `/onboarding/pick` inside their stack, since the Vehicle modal is in
+  `(app)`). Both picker routes re-export `src/vehicle/pick-screen.tsx`.
 - **Withdraw and restore.** `useWithdrawWithConfirm`
   (`src/vehicle/use-withdraw.ts`, for S6 too) asks with the native alert
   («Retirar <Vehículo>», how long its record is and how many Services it
@@ -547,14 +594,18 @@ The migration's order, scope and tickets are in
     URL cache only, cleared at launch. Every Supabase request also sends
     `Cache-Control: no-store` (`src/lib/supabase.ts`), which Android's
     OkHttp honours.
-  - **Routes.** `src/app/(app)/` needs a session; `(auth)/sign-in` and
-    `(auth)/account-deleted` are the only other screens. The root layout
-    opens exactly one with `Stack.Protected` guards on `useAuth()`
-    (`src/auth/session.ts`, fed only by `onAuthStateChange`); nothing
-    redirects by hand. The splash stays up until the saved session is read,
-    so a signed-in launch never shows Login. Where `(app)` lands first
-    (Inicio or the first-run questions, from `useProfile().onboardedAt`) is
-    `(app)`'s own routing (S3, SEI-58).
+  - **Routes.** `src/app/(app)/` and `src/app/onboarding/` need a
+    session; `(auth)/sign-in` and `(auth)/account-deleted` are the only
+    other screens. The root layout opens exactly one with `Stack.Protected`
+    guards on `useAuth()` (`src/auth/session.ts`, fed only by
+    `onAuthStateChange`) and, signed in, on the profile's `onboarded_at`
+    (`firstRunStatus` in `src/onboarding/flow.ts`, the PWA's
+    `homePathFor`): `onboarding` without one, `(app)` with one, and `(app)`
+    when the profile can't load (Inicio shows its own error). Nothing
+    redirects by hand. The splash stays up until the saved session is read
+    and, signed in, the profile has loaded, so a signed-in launch never
+    shows Login or flashes Inicio before the questions. Right after a
+    sign-in, sign-in stays up while the profile loads.
   - **Login** (`(auth)/sign-in.tsx`, S1, SEI-56): the PWA's Login on the
     `garage` theme in a `ScopedTheme`, light whatever the theme (a
     first-run screen), with a dark status bar. The lockup (`Logo` and the
