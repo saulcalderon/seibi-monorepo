@@ -1,6 +1,6 @@
 import { FlashList } from '@shopify/flash-list';
 import { Stack, useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 import type { SearchBarCommands } from 'react-native-screens';
@@ -39,22 +39,23 @@ export default function FleetScreen() {
   const [filter, setFilter] = useState<Filter>('all');
   const [showWithdrawn, setShowWithdrawn] = useState(false);
   const search = useRef<SearchBarCommands>(null);
-  /** Bumped when the search bar hides: the remounted one must be a fresh view
-   * (Android keeps the old native bar — text and a dead `onChangeText`). */
-  const [barKey, setBarKey] = useState(0);
+  /** Shown from the first time there are 2+ Vehicles, then kept for the screen's
+   * life: on Android a header search bar that is removed and added back keeps
+   * its text with a dead `onChangeText`. */
+  const [searchable, setSearchable] = useState(false);
   const add = () => router.push('/vehicle/new');
 
   const total = garage.vehicles.length;
   // Search and filters exist only with two or more Vehicles. When the fleet drops to one (a
-  // Vehicle withdrawn), the search bar goes away: so does what was typed in it.
+  // Vehicle withdrawn), the search text goes away with them.
   if (total <= 1 && (query !== '' || filter !== 'all')) {
     setQuery('');
     setFilter('all');
   }
-  // The native bar keeps its text and a dead `onChangeText` across remounts
-  // (Android) while the query was reset — it must never show text the list
-  // isn't filtering by, so the next bar mounts fresh under a new key.
-  if (total <= 1 && query !== '') setBarKey((key) => key + 1);
+  if (total > 1 && !searchable) setSearchable(true);
+  useEffect(() => {
+    if (total <= 1) search.current?.clearText();
+  }, [total]);
   const sorted = [...garage.vehicles].sort((a, b) => (a.id === active?.id ? -1 : b.id === active?.id ? 1 : byUrgency(a, b)));
   const attention = sorted.filter(needsAttention).length;
   const ok = sorted.filter((v) => v.health === 'ok').length;
@@ -158,9 +159,8 @@ export default function FleetScreen() {
         style={styles.list}
         contentContainerStyle={styles.content}
       />
-      {total > 1 ? (
+      {searchable ? (
         <Stack.SearchBar
-          key={barKey}
           ref={search}
           placeholder={t('fleet.search')}
           onChangeText={(event) => setQuery(event.nativeEvent.text)}

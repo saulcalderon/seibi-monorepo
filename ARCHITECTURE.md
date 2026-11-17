@@ -371,9 +371,12 @@ The migration's order, scope and tickets are in
   FlashList of cards (`src/vehicle/fleet-card.tsx`): the Model render or
   the silhouette in the Vehicle's paint, name and year, Plate and current
   odometer, health. The Vehicle Inicio shows comes first (a house icon),
-  then by urgency (`byUrgency`). With two or more Vehicles the header has
-  the system search bar (`Stack.SearchBar`; at the bottom on iOS 26) and
-  the list has the «Todos · Requiere atención · Al día» chips. Search
+  then by urgency (`byUrgency`). From the first time the fleet has two or
+  more Vehicles the header gets the system search bar (`Stack.SearchBar`;
+  at the bottom on iOS 26) and the list the «Todos · Requiere atención ·
+  Al día» chips; the bar then stays mounted (its text cleared) if the
+  fleet drops to one while the screen is open, because Android's native
+  SearchView loses its `onChangeText` when removed and re-added. Search
   matches every typed word against make, model, year, Plate (with or
   without its dashes) and trim, ignoring accents and capitals
   (`src/vehicle/search.ts`). «Tu flota está vacía» with no Vehicle, «Sin
