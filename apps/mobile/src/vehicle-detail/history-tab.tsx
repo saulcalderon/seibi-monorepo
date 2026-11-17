@@ -120,6 +120,8 @@ function ServiceCard({ vehicle, service, index }: { vehicle: VehicleView; servic
   const withdraw = useWithdrawService();
   const [open, setOpen] = useState(false);
   const first = service.items[0];
+  const title = service.items.map((i) => (i.taskCode ? taskLabel(byCode.get(i.taskCode), i.taskCode, k) : i.name)).join(', ');
+  const meta = `${formatDay(service.performedOn)}${service.reading != null ? ` · ${formatNumber(service.reading)} ${vehicle.measure}` : ''}${service.type === 'repair' ? ` · ${t('vehicleDetail.history.repair')}` : ''}`;
 
   const remove = async () => {
     const ok = await confirm({
@@ -144,19 +146,17 @@ function ServiceCard({ vehicle, service, index }: { vehicle: VehicleView; servic
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
-        accessibilityLabel={service.items.map((i) => (i.taskCode ? taskLabel(byCode.get(i.taskCode), i.taskCode, k) : i.name)).join(', ')}
+        accessibilityLabel={[title, meta, service.totalCost != null ? formatUsd(service.totalCost) : null].filter(Boolean).join(', ')}
         onPress={() => setOpen((o) => !o)}
         style={styles.serviceHead}
       >
         <IconTile icon={taskIcon(first?.taskCode)} />
         <View style={styles.serviceText}>
           <Text step="subhead" weight={600} numberOfLines={1}>
-            {service.items.map((i) => (i.taskCode ? taskLabel(byCode.get(i.taskCode), i.taskCode, k) : i.name)).join(', ')}
+            {title}
           </Text>
           <Text step="footnote" tone="muted" numberOfLines={1}>
-            {formatDay(service.performedOn)}
-            {service.reading != null ? ` · ${formatNumber(service.reading)} ${vehicle.measure}` : ''}
-            {service.type === 'repair' ? ` · ${t('vehicleDetail.history.repair')}` : ''}
+            {meta}
           </Text>
         </View>
         {service.totalCost != null ? (
