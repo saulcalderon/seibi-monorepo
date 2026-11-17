@@ -177,6 +177,10 @@ name: Tabs keep their place, the [+] opens the actions, a link opens a Vehicle
     timeout: 15000
 - waitForAnimationToEnd
 - takeScreenshot: shell-10-update-mileage
+# The reading field autofocuses: a tap on a neutral line drops the number
+# pad and lets the sheet settle, so the close tap lands (see mileage.yaml).
+- tapOn: '.*próximos mantenimientos con este dato.*'
+- waitForAnimationToEnd
 - tapOn:
     id: mileage-close
 - extendedWaitUntil:

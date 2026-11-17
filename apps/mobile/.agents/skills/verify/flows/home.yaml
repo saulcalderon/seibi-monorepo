@@ -64,6 +64,10 @@ name: Inicio shows the greeting, the active Vehicle, its Mileage and opens it
     timeout: 15000
 - waitForAnimationToEnd
 - takeScreenshot: home-03-update-mileage
+# The reading field autofocuses: a tap on a neutral line drops the number
+# pad and lets the sheet settle, so the close tap lands (see mileage.yaml).
+- tapOn: '.*próximos mantenimientos con este dato.*'
+- waitForAnimationToEnd
 - tapOn:
     id: mileage-close
 - extendedWaitUntil:
