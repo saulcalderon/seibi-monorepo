@@ -1,5 +1,5 @@
-import { usePreventRemove, useRouter } from 'expo-router';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useRouter } from 'expo-router';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
@@ -17,7 +17,8 @@ import { EmptyState, ErrorState, Skeleton, SkeletonGroup, TextSkeleton } from '@
 import { MileageField } from '@/ui/fields';
 import { FormLayout } from '@/ui/form';
 import { Text } from '@/ui/text';
-import { confirm, notify } from '@/ui/toast';
+import { notify } from '@/ui/toast';
+import { useUnsavedGuard } from '@/ui/use-unsaved-guard';
 
 import { bumpedReading, MILEAGE_BUMPS, mileageContext, mileageDigits } from './mileage-logic';
 
@@ -61,7 +62,7 @@ export function MileageForm({ vehicleId }: MileageFormProps) {
   if (!vehicle) {
     return (
       <SheetMessage testID="mileage-no-vehicles" onClose={() => router.back()}>
-        <EmptyState icon="vehicle" title={t('serviceForm.noVehicles.title')} body={t('serviceForm.noVehicles.body')} />
+        <EmptyState icon="vehicle" title={t('forms.noVehicles.title')} body={t('forms.noVehicles.body')} />
       </SheetMessage>
     );
   }
@@ -78,13 +79,6 @@ function MileageFormBody({ vehicles, vehicle: startVehicle }: { vehicles: Vehicl
   const [vehicleId, setVehicleId] = useState(startVehicle.id);
   const [digits, setDigits] = useState('');
   const [error, setError] = useState<FormError | null>(null);
-  /** Set once saved: the sheet closes without asking. */
-  const [leaving, setLeaving] = useState(false);
-  /** Set when the person chose «Descartar»: the close they asked for goes through. */
-  const [discarded, setDiscarded] = useState(false);
-  /** The discard question is on screen: a second close attempt doesn't stack another. */
-  const asking = useRef(false);
-
   const vehicle = vehicles.find((v) => v.id === vehicleId) ?? startVehicle;
   const reading = digits ? Number(digits) : null;
 
@@ -94,25 +88,12 @@ function MileageFormBody({ vehicles, vehicle: startVehicle }: { vehicles: Vehicl
   };
 
   // Unsaved changes are never lost to a swipe, Back or «Cerrar» without asking.
-  usePreventRemove(digits !== '' && !leaving && !discarded, ({ repeat }) => {
-    if (asking.current) return;
-    asking.current = true;
-    void confirm({
-      title: t('mileage.discard.title'),
-      message: t('mileage.discard.body'),
-      confirmLabel: t('mileage.discard.confirm'),
-      cancelLabel: t('mileage.discard.cancel'),
-      destructive: true,
-    }).then((discard) => {
-      asking.current = false;
-      if (!discard) return;
-      setDiscarded(true);
-      repeat();
-    });
+  const { leave } = useUnsavedGuard(digits !== '', {
+    title: t('mileage.discard.title'),
+    message: t('mileage.discard.body'),
+    confirmLabel: t('mileage.discard.confirm'),
+    cancelLabel: t('mileage.discard.cancel'),
   });
-  useEffect(() => {
-    if (leaving) router.back();
-  }, [leaving, router]);
 
   const show = (e: unknown) => {
     setError({ field: e instanceof InputError ? e.field : 'form', message: errorMessage(e, t) });
@@ -124,7 +105,7 @@ function MileageFormBody({ vehicles, vehicle: startVehicle }: { vehicles: Vehicl
       if (reading === null) throw new InputError('reading', 'reading_required');
       await add.mutateAsync({ vehicle, reading });
       notify.success(t('mileage.saved'));
-      setLeaving(true);
+      leave();
     } catch (e) {
       show(e);
     }
@@ -189,6 +170,7 @@ function MileageFormBody({ vehicles, vehicle: startVehicle }: { vehicles: Vehicl
         placeholder={formatNumber(vehicle.odometer ?? 0)}
         error={fieldError}
         errorTestID="mileage-error"
+        autoFocus
       />
 
       <View style={styles.bumps}>
@@ -199,7 +181,7 @@ function MileageFormBody({ vehicles, vehicle: startVehicle }: { vehicles: Vehicl
             label={`+${formatNumber(n)}`}
             onPress={() => {
               setError(null);
-              setDigits(String(bumpedReading(reading, vehicle.odometer, n)));
+              setDigits(mileageDigits(String(bumpedReading(reading, vehicle.odometer, n))));
             }}
           />
         ))}

@@ -168,7 +168,9 @@
     "missing": {
       "title": "No encontramos este Servicio",
       "body": "Puede que lo hayas quitado del historial o que el enlace no sea tuyo."
-    },
+    }
+  },
+  "forms": {
     "noVehicles": {
       "title": "Agrega un Vehículo primero",
       "body": "Cada Servicio pertenece a un Vehículo. Agrégalo en Mi flota."
