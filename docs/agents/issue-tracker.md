@@ -2,7 +2,7 @@
 
 Issues and PRDs for this repo live in Linear workspace **Seibi** (`https://linear.app/seibi`), team **Seibi** (key `SEI`). Use the Linear MCP for all operations — not GitHub Issues.
 
-**Which Linear server:** a Linear MCP connection is authorized for one workspace. Prefer the `linear-seibi` server (`mcp__linear-seibi__*`) when it is configured. Any other Linear server — such as the claude.ai connector — may point at a different workspace; confirm with `get_workspace` that it returns **Seibi** before reading or writing.
+**Which Linear server:** a Linear MCP connection is authorized for one workspace. Prefer the `linear-seibi` server when it is configured. Any other Linear server, such as a hosted connector, may point at a different workspace; confirm with `get_workspace` that it returns **Seibi** before reading or writing.
 
 Default product project: **[App móvil Seibi](https://linear.app/seibi/project/app-movil-seibi-69b2a870770c)**. Attach new product work to this project unless the user names another one.
 
@@ -25,6 +25,22 @@ Default product project: **[App móvil Seibi](https://linear.app/seibi/project/a
 - **Assign / claim**: `save_issue` with `assignee: "me"` (or a user name/email).
 
 Issue identifiers look like `SEI-123`. The GitHub repo is for code and PRs only.
+
+## Keep Linear current
+
+Linear is where the owner and other agents read where the project stands, so a ticket must never lag behind GitHub. Update it in the same turn as the change, not later. Comments are in Spanish, like everything else in Linear.
+
+| When | Do this on the ticket |
+|---|---|
+| You start work | `state: "In Progress"`, assignee set. |
+| You open a PR, draft or not | A comment with the PR link, what is done and what is left. |
+| Work pauses or is blocked | A comment saying why, what is left, and where the work lives (branch, worktree, PR). |
+| The PR merges | A closing comment (what shipped, the proof video, follow-ups), then `state: "Done"`. |
+| Scope changes or a follow-up appears | A comment, plus a new issue for the follow-up rather than a growing old one. |
+
+After something important for the whole project, such as a milestone merged, a new blocker, or a change of plan, also post a project status update on **App móvil Seibi** (`save_status_update`): its health (on track, at risk, off track) and a few lines on what changed and what's next.
+
+Leave test data and credentials out of comments. Proof videos go on the ticket as attachments: `prepare_attachment_upload`, then PUT the bytes to its signed URL with exactly its headers, then `create_attachment_from_upload`. One file at a time (the signed URL lasts 60 s), 10 MB at most per file. Comments and the PR link to the attachment.
 
 ## Pull requests as a triage surface
 

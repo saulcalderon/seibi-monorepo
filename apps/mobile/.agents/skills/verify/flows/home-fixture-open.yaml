@@ -1,0 +1,18 @@
+# Subflow, not driven alone: opens Seibi Dev's «Inicio de muestra»
+# (seibi-dev://garage-fixture, two sample Vehicles) and waits for its stage.
+# Signed in already (the route is behind the session). Feature:
+# features/home.md.
+appId: ${APP_ID}
+name: Open Inicio's sample screen
+---
+- openLink: ${APP_URL}garage-fixture
+- runFlow:
+    when:
+      platform: iOS
+      visible: 'Open|Abrir'
+    commands:
+      - tapOn: 'Open|Abrir'
+- extendedWaitUntil:
+    visible:
+      id: home-stage-vehicle
+    timeout: 30000

@@ -14,12 +14,12 @@ outside git.
 Everything goes through one helper, run from `apps/mobile`:
 
 ```bash
-.claude/skills/verify/scripts/verify.sh launch  ios|android [--rebuild]
-.claude/skills/verify/scripts/verify.sh doctor  ios|android
-.claude/skills/verify/scripts/verify.sh drive   ios|android <flow>
-.claude/skills/verify/scripts/verify.sh cleanup [ios|android|all]
-.claude/skills/verify/scripts/verify.sh a11y    ios|android large-text|reduce-motion|reset
-.claude/skills/verify/scripts/verify.sh where
+.agents/skills/verify/scripts/verify.sh launch  ios|android [--rebuild]
+.agents/skills/verify/scripts/verify.sh doctor  ios|android
+.agents/skills/verify/scripts/verify.sh drive   ios|android <flow>
+.agents/skills/verify/scripts/verify.sh cleanup [ios|android|all]
+.agents/skills/verify/scripts/verify.sh a11y    ios|android large-text|reduce-motion|reset
+.agents/skills/verify/scripts/verify.sh where
 ```
 
 `<flow>` is a file name in `flows/` without `.yaml`. The feature map in
@@ -30,31 +30,44 @@ feature.
 
 - Run `pnpm install` at the repo root first.
 - iOS: Xcode with an iOS Simulator runtime (`xcrun simctl list runtimes`
-  shows one; if not, `xcodebuild -downloadPlatform iOS`).
+  shows one; if not, `xcodebuild -downloadPlatform iOS`). Optional:
+  [simslim](https://github.com/MobAI-App/simslim) slims the simulator
+  (`brew install mobai-app/tap/simslim`); see Slim simulator.
 - Android: the SDK in `~/Library/Android/sdk` (or `ANDROID_HOME`), Java 17,
   and the AVD `seibi-pixel` (`emulator -list-avds`).
 - Maestro: `maestro` on `PATH`, or `~/.maestro/bin/maestro`, or
   `MAESTRO_BIN`.
+- Optional: `ffmpeg` on `PATH` (`brew install ffmpeg`) writes a small copy
+  of each recording for the Linear ticket; see Evidence.
 
 ## Launch
 
 ```bash
 cd apps/mobile
-.claude/skills/verify/scripts/verify.sh launch android   # or ios
+.agents/skills/verify/scripts/verify.sh launch android   # or ios
 ```
 
 What it does, in order:
 
 1. **Device.** iOS: finds the simulator named `Seibi Verify` (creates it as
-   an iPhone 17 on the newest iOS runtime if it is missing, and restarts it
+   an iPhone 17 on the newest iOS runtime that supports the device type if
+   it is missing — a single-device runtime like the iPhone-Air-only
+   `iOS-27-2-iPhone19-4` cannot host it — and restarts it
    once: a new iOS 27 simulator ignores dark-mode changes until its first
-   reboot), boots it and
-   opens Simulator.app. It pre-approves the dev client's `exp+seibi` scheme
+   reboot). With [simslim](https://github.com/MobAI-App/simslim) installed it
+   slims the simulator before driving it (`SEIBI_VERIFY_SLIM=0` keeps it
+   stock; see Slim simulator), boots it and opens the device window:
+   Simulator.app, or DeviceHub on Xcode 27. It pre-approves the dev
+   client's `exp+seibi` scheme
    so no "Open in Seibi Dev?" prompt appears. Android: boots the AVD
    `seibi-pixel` as `emulator-5560` if that serial is not already running,
    waits for `sys.boot_completed`, and maps the Metro port into the emulator
    with `adb reverse`.
-2. **App.** If Seibi Dev is not installed (or `--rebuild` is passed), it
+2. **App.** First a dependency guard: `launch` refuses to build when
+   `node_modules` doesn't match `pnpm-lock.yaml` (it compares pnpm's applied
+   `node_modules/.pnpm/lock.yaml`) — run `pnpm install` at the repo root,
+   then `launch <platform> --rebuild`. If Seibi Dev is not installed (or
+   `--rebuild` is passed), it
    builds and installs it with `EXPO_PUBLIC_APP_VARIANT=development`.
    Android: `expo run:android --no-bundler` (prebuild, native build,
    install). iOS: `expo prebuild -p ios` when `ios/` is missing, then
@@ -63,14 +76,15 @@ What it does, in order:
    for a signing certificate even for the Simulator, and the Simulator
    needs none. Build log: `$TMPDIR/seibi-verify-<port>/build-<platform>.log`.
    The first build takes 10+ minutes (Android ~18 on a cold Gradle cache);
-   later ones are incremental. After any change to native config
-   (`app.config.ts`, a package with native code, an Expo SDK change), or if
-   `ios/` / `android/` were last generated for the production variant,
-   regenerate first, then rebuild:
+   later ones are incremental. `launch ios --rebuild` regenerates `ios/`
+   itself (`expo prebuild -p ios --clean`, then the pod-install step), so a
+   newly added native module or config plugin gets linked. If `ios/` /
+   `android/` were last generated for the production variant, regenerate
+   first instead, then rebuild:
 
    ```bash
    EXPO_PUBLIC_APP_VARIANT=development npx expo prebuild --clean --no-install
-   .claude/skills/verify/scripts/verify.sh launch ios --rebuild
+   .agents/skills/verify/scripts/verify.sh launch ios --rebuild
    ```
 
    JavaScript changes need no rebuild.
@@ -90,7 +104,7 @@ Teardown is `cleanup` (below).
 ## Doctor
 
 ```bash
-.claude/skills/verify/scripts/verify.sh doctor android   # or ios
+.agents/skills/verify/scripts/verify.sh doctor android   # or ios
 ```
 
 Read-only. It prints and checks: the git branch and commit being served,
@@ -108,7 +122,7 @@ to another session: don't drive it unless it is yours.
 ## Drive
 
 ```bash
-.claude/skills/verify/scripts/verify.sh drive android app-launches   # or ios
+.agents/skills/verify/scripts/verify.sh drive android app-launches   # or ios
 ```
 
 `drive` runs `maestro test --device <udid|emulator-5560> flows/<flow>.yaml`
@@ -214,6 +228,11 @@ Each `drive` writes one run folder outside git:
 ```
 
 `verify.sh where` prints the root (`SEIBI_VERIFY_EVIDENCE` overrides it).
+With `ffmpeg` on `PATH`, `drive` also writes `<name>.linear.mp4` beside
+every recording: a small copy (1600 px high, re-encoded smaller at 1280 px
+when it would pass 10 MB) that fits Linear's upload limit, for attaching
+to the ticket. The original mp4 stays the evidence.
+
 `drive` fails if the flow fails, no video was recorded or a `round-*` crop
 has a square corner (`round-check.txt`), and lists the video and
 screenshots it wrote.
@@ -241,7 +260,7 @@ Proof standards for a PR (`AGENTS.md` → "Prove it works"):
 ## Cleanup
 
 ```bash
-.claude/skills/verify/scripts/verify.sh cleanup        # or: cleanup ios | cleanup android
+.agents/skills/verify/scripts/verify.sh cleanup        # or: cleanup ios | cleanup android
 ```
 
 It stops only what `launch` started, tracked in
@@ -259,7 +278,7 @@ run. Run cleanup after every failed attempt too.
 ## Accessibility settings
 
 ```bash
-.claude/skills/verify/scripts/verify.sh a11y ios large-text      # or: reduce-motion | reset
+.agents/skills/verify/scripts/verify.sh a11y ios large-text      # or: reduce-motion | reset
 ```
 
 Maestro can switch dark mode (`setDarkMode`) but not the text size or
@@ -283,9 +302,27 @@ shared: run `reset` after every such run, failed ones too.
   `MAESTRO_BIN`, and the test account (`SEIBI_TEST_EMAIL`,
   `SEIBI_TEST_PASSWORD`, `SEIBI_TEST_ACCOUNT_FILE`; see Sign-in).
 - `flows/*.yaml`: one Maestro flow per feature journey, named in the
-  feature's file. `flows/sign-in.yaml`, `flows/open-profile.yaml`, `flows/close-sheet.yaml` and `flows/ui-kit-open.yaml` are
-  subflows, not driven alone.
+  feature's file. `flows/sign-in.yaml`, `flows/open-profile.yaml`, `flows/close-sheet.yaml`, `flows/ui-kit-open.yaml` and
+  `flows/home-fixture-open.yaml` are subflows, not driven alone.
   `flows/scripts/` holds the JavaScript that flows run with `runScript`.
+
+## Slim simulator
+
+With [simslim](https://github.com/MobAI-App/simslim) installed,
+`launch ios` disables the background daemons a test simulator never needs
+(iCloud sync, App Store, media analysis and the like) and reboots it once.
+The disables persist until `simslim off <udid>` restores stock.
+
+Measured 2026-11-16 on iOS 27.2: 3.19 GB → 1.38 GB memory and 267 → 97
+processes per simulator. The auth, app-shell, theme and ui-kit flows pass
+identically on a slim simulator.
+
+Two features are off when slim and break flows that need them: push
+(`com.apple.apsd`) and the photo library (`photos`). After `launch`, turn
+one back on without a reboot — `simslim enable <udid> com.apple.apsd` or
+`simslim enable <udid> photos` — and check what a flow needs with
+`simslim doctor <udid> --requires push,photos`. `SEIBI_VERIFY_SLIM=0`
+keeps the simulator stock instead.
 
 ## Isolation
 

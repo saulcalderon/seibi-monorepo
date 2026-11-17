@@ -1,0 +1,161 @@
+# Feature: Inicio, the Garage (features/home.md), drawn from sample Vehicles
+# in Seibi Dev's «Inicio de muestra» (seibi-dev://garage-fixture). It proves
+# what the shared test account can't show: paging between two Vehicles by
+# swipe and by the arrows, the choice kept across a cold start, a Vehicle
+# with no poster (its silhouette), the «Estado» cards, and no Vehicles at
+# all. Run through scripts/verify.sh drive <ios|android> home-fixture. It
+# writes nothing to seibi-dev; it saves the active-Vehicle preference on the
+# device, as Inicio does.
+appId: ${APP_ID}
+name: Inicio pages between Vehicles, remembers the choice and shows its empty state
+---
+- stopApp
+- openLink: ${DEV_URL}
+- runFlow: sign-in.yaml
+- startRecording: home-fixture
+- runFlow:
+    file: home-fixture-open.yaml
+# Start from the Yaris whatever a previous run left chosen.
+- runFlow:
+    when:
+      visible:
+        id: home-stage-vehicle
+        text: 'Mazda 3,.*'
+    commands:
+      - tapOn:
+          id: home-stage-previous
+- extendedWaitUntil:
+    visible:
+      id: home-stage-vehicle
+      text: 'Toyota Yaris, 2015 · Negro'
+    timeout: 15000
+# The Yaris has a poster: the illustration, not the silhouette.
+- extendedWaitUntil:
+    visible:
+      id: home-vehicle-poster
+    timeout: 30000
+- assertVisible:
+    id: home-pager
+- assertVisible: 'Vehículo anterior'
+- assertVisible: 'Vehículo siguiente'
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: fixture-01-yaris-poster
+
+# --- A swipe on the stage pages to the next Vehicle.
+# A flick across the stage, right to left (its Vehicle sits at about 35 % of the screen's height).
+- swipe:
+    start: 85%, 35%
+    end: 10%, 35%
+    duration: 250
+- extendedWaitUntil:
+    visible:
+      id: home-stage-vehicle
+      text: 'Mazda 3, 2019 · Rojo'
+    timeout: 15000
+# No poster yet: its silhouette, and a reading old enough to ask for a new one.
+- assertVisible:
+    id: home-vehicle-silhouette
+- assertVisible:
+    id: home-mileage-hint
+    text: 'Tu último registro fue hace .*'
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: fixture-02-swiped-silhouette
+
+# --- The choice survives a cold start.
+- stopApp
+- openLink: ${DEV_URL}
+- extendedWaitUntil:
+    visible:
+      id: home-screen
+    timeout: 120000
+- runFlow:
+    file: home-fixture-open.yaml
+- extendedWaitUntil:
+    visible:
+      id: home-stage-vehicle
+      text: 'Mazda 3, 2019 · Rojo'
+    timeout: 15000
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: fixture-03-remembered
+
+# --- The arrow wraps from the last Vehicle to the first.
+- tapOn:
+    id: home-stage-next
+- extendedWaitUntil:
+    visible:
+      id: home-stage-vehicle
+      text: 'Toyota Yaris, 2015 · Negro'
+    timeout: 15000
+# Swipes don't wrap (the first page has nothing before it): left to the Mazda, then right back.
+- swipe:
+    start: 85%, 35%
+    end: 10%, 35%
+    duration: 250
+- extendedWaitUntil:
+    visible:
+      id: home-stage-vehicle
+      text: 'Mazda 3, 2019 · Rojo'
+    timeout: 15000
+- swipe:
+    start: 15%, 35%
+    end: 90%, 35%
+    duration: 250
+- extendedWaitUntil:
+    visible:
+      id: home-stage-vehicle
+      text: 'Toyota Yaris, 2015 · Negro'
+    timeout: 15000
+# And the previous arrow wraps from the first to the last.
+- tapOn:
+    id: home-stage-previous
+- extendedWaitUntil:
+    visible:
+      id: home-stage-vehicle
+      text: 'Mazda 3, 2019 · Rojo'
+    timeout: 15000
+- tapOn:
+    id: home-stage-next
+- extendedWaitUntil:
+    visible:
+      id: home-stage-vehicle
+      text: 'Toyota Yaris, 2015 · Negro'
+    timeout: 15000
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: fixture-04-arrows
+
+# --- «Estado»: the Yaris's cards and their summary.
+- scrollUntilVisible:
+    element:
+      id: home-status-summary
+    timeout: 20000
+    centerElement: true
+- assertVisible:
+    id: home-status-0
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: fixture-05-status
+
+# --- No Vehicles: «Sin Vehículos todavía» and a way to add one.
+- openLink: ${APP_URL}garage-fixture?case=empty
+- runFlow:
+    when:
+      platform: iOS
+      visible: 'Open|Abrir'
+    commands:
+      - tapOn: 'Open|Abrir'
+- extendedWaitUntil:
+    visible:
+      id: home-empty-title
+      text: 'Sin Vehículos todavía'
+    timeout: 15000
+- assertVisible: 'Agrega tu Vehículo y te avisamos cuándo toca cada Servicio.'
+- assertVisible:
+    id: home-add-vehicle
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: fixture-06-empty
+- stopRecording

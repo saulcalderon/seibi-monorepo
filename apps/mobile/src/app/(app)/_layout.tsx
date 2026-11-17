@@ -27,11 +27,15 @@ export default function AppLayout() {
       <Stack.Screen name="update-mileage" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
       {/* The Vehicle form (S5): a modal with its own stack, so its pickers push inside it. */}
       <Stack.Screen name="vehicle" options={{ presentation: 'modal', contentStyle: { backgroundColor: theme.colors.bg } }} />
-      {/* The data check screen exists in Seibi Dev (the development variant) only. */}
+      {/* The data check and Inicio's sample screen exist in Seibi Dev (the development variant) only. */}
       <Stack.Protected guard={process.env.EXPO_PUBLIC_APP_VARIANT === 'development'}>
         <Stack.Screen
           name="data-check"
           options={{ headerShown: true, title: t('dataCheck.title'), headerBackButtonDisplayMode: 'minimal' }}
+        />
+        <Stack.Screen
+          name="garage-fixture"
+          options={{ headerShown: true, title: t('home.fixture.title'), headerBackButtonDisplayMode: 'minimal' }}
         />
       </Stack.Protected>
     </Stack>

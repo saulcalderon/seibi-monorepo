@@ -36,8 +36,10 @@ matching feature file as the recipe. The commands come from
   `maestro.log`, `report.xml` and `doctor.txt`.
 - A journey that saves data also needs a read-only seibi-dev `SELECT`
   showing the saved row.
-- Prove on iOS and Android when the change touches both. Report a platform
-  that could not run, with the command tried and the unmet precondition.
+- Prove on the platforms the change's tier asks for (`AGENTS.md` → Prove
+  it works: Android for a new screen, a journey that saves data, or
+  platform-specific code). Report a platform that could not run, with the
+  command tried and the unmet precondition.
 - Do not report a skipped entry point as verified through a different path.
 
 ## Feature entry contract
@@ -65,6 +67,12 @@ handles, required state, commands and observable proof.
   place, the floating [+] and its actions sheet, Perfil from the header
   avatar, `seibi-dev://vehicle/<id>`. Flow: `app-shell`; subflows
   `open-profile.yaml`, `close-sheet.yaml`.
+- [Inicio: the Garage](./home.md): the greeting, the stage with the
+  active Vehicle (poster or silhouette), paging by swipe, arrows and an
+  adjustable pager, the choice kept across a cold start, Mileage with
+  «Actualizar», «Estado» and «Todo al día», «Sin Vehículos todavía», night.
+  Flows: `home` (the real account), `home-fixture` (Seibi Dev's sample
+  Vehicles), `home-night`; subflow `home-fixture-open.yaml`.
 - [The app speaks Spanish from es.json](./i18n.md): every word from
   `src/i18n/es.json`, no keys on screen, Spanish also on a device set to
   English. Flow: `i18n-shell`.

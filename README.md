@@ -43,7 +43,7 @@ secrets (OpenAI, fal, VAPID private key) live in Supabase, not here — see
 
 > Being retired: the hosted **seibi-dev** project is the dev environment and
 > agents must not run Supabase locally (see [`ARCHITECTURE.md`](./ARCHITECTURE.md),
-> SEI-50 / SEI-52). The commands below remain until E2E moves to seibi-dev.
+> SEI-50). The commands below remain until SEI-50 removes them.
 
 Docker must be running.
 
@@ -80,7 +80,7 @@ local cache in `.turbo/`.
 The native app uses development builds, not Expo Go. Its variants, EAS
 profiles and update flow are in [`ARCHITECTURE.md`](./ARCHITECTURE.md) →
 "Native app standards"; proving a change in it uses the `verify` skill in
-`apps/mobile/.claude/skills/verify/`.
+`apps/mobile/.agents/skills/verify/`.
 
 ## Structure
 
