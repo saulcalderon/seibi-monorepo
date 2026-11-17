@@ -110,6 +110,7 @@ name: Update Mileage opens from [+] and Inicio, validates and saves today's read
 - extendedWaitUntil:
     visible:
       text: '${output.nextText}'
-    timeout: 20000
+    # The refetch behind the sheet's close can take a while over the network.
+    timeout: 60000
 - takeScreenshot: mileage-04-saved
 - stopRecording
