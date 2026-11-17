@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { t } from '@/data/test-i18n';
 
-import { calibrateLevel, CHECK_QUESTIONS, KNOWLEDGE_LEVELS, knowledgeProfile, levelTitle, taskLabel } from './knowledge';
+import { calibrateLevel, CHECK_QUESTIONS, checkOptionText, KNOWLEDGE_LEVELS, knowledgeProfile, levelTitle, taskLabel } from './knowledge';
 
 // Expected levels are what the PWA's apps/app/src/lib/knowledge.ts gives.
 
@@ -74,5 +74,14 @@ describe('copy', () => {
   it('has three check questions with exactly one right answer each', () => {
     expect(CHECK_QUESTIONS).toHaveLength(3);
     for (const q of CHECK_QUESTIONS) expect(q.options.filter((o) => o.correct)).toHaveLength(1);
+  });
+});
+
+describe('checkOptionText', () => {
+  it('finds the copy of every option of every check question', () => {
+    for (const q of CHECK_QUESTIONS) {
+      for (const o of q.options) expect(checkOptionText(q, o.id as never, t)).not.toMatch(/^knowledge\./);
+    }
+    expect(checkOptionText(CHECK_QUESTIONS[2], 'overheating', t)).toBe('Que el motor está sobrecalentándose');
   });
 });
