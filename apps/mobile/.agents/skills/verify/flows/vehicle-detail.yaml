@@ -26,8 +26,13 @@ name: Detalle del Vehículo shows its four tabs and edits them
 - startRecording: vehicle-detail
 
 # --- From Mi flota to the detail: header, subtitle and the three tiles.
+# Inicio is still settling right after sign-in (the poster fades in), and a
+# tap then can miss the tab bar: wait for it, and tap again if nothing moved.
+- waitForAnimationToEnd:
+    timeout: 5000
 - tapOn:
     id: tab-fleet
+    retryTapIfNoChange: true
 - extendedWaitUntil:
     visible:
       id: fleet-vehicle-0
