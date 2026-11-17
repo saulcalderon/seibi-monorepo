@@ -20,7 +20,7 @@ import { confirm, notify } from '@/ui/toast';
 
 import { draftChanged, draftFrom, emptyDraft, FREE_TEXT_MAX, parseDraft, type VehicleDraft } from './form-schema';
 import { PaintPicker } from './paint-picker';
-import { awaitPick, type PickKind } from './picker-channel';
+import { awaitPick, forgetPick, type PickKind } from './picker-channel';
 import { useWithdrawWithConfirm } from './use-withdraw';
 
 export interface VehicleFormProps {
@@ -90,8 +90,21 @@ export function VehicleForm({ vehicle, onSaved, onWithdrawn, submitLabel, testID
   };
   const fieldError = (field: string) => (error?.field === field ? error.message : null);
 
+  // The pick callbacks the form leaves in the channel, so unmounting
+  // forgets them: a choice delivered after the form is gone reaches nobody.
+  const picks = useRef(new Map<PickKind, (value: string) => void>());
+  useEffect(() => {
+    const waiting = picks.current;
+    return () => {
+      for (const [kind, onPick] of waiting) forgetPick(kind, onPick);
+      waiting.clear();
+    };
+  }, []);
+
   const pick = (kind: PickKind) => {
-    awaitPick(kind, (value) => change(kind === 'year' ? { year: Number(value) } : { [kind]: value }));
+    const onPick = (value: string) => change(kind === 'year' ? { year: Number(value) } : { [kind]: value });
+    picks.current.set(kind, onPick);
+    awaitPick(kind, onPick);
     router.push({
       pathname: '/vehicle/pick',
       params: {
@@ -172,7 +185,9 @@ export function VehicleForm({ vehicle, onSaved, onWithdrawn, submitLabel, testID
         hint={t('vehicleForm.modelHint')}
         accessibilityHint={t('vehicleForm.pickHint')}
         error={fieldError('model')}
-        onPress={() => pick('model')}
+        onPress={() => {
+          if (modelReady) pick('model');
+        }}
       />
 
       <View style={styles.pair}>
