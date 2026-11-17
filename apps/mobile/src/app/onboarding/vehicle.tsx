@@ -4,9 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 
-import { useProfile } from '@/data/profile/queries';
-import { knowledgeProfile } from '@/lib/knowledge';
-import { useFirstRun, useStep } from '@/onboarding/state';
+import { nextStep } from '@/onboarding/flow';
+import { STEP_HREF, useExplain, useFirstRun, useStep } from '@/onboarding/state';
 import { FirstRunScreen, FirstRunStep, StepDots, StepHeading } from '@/onboarding/step';
 import { Button } from '@/ui/button';
 import { Icon } from '@/ui/icon';
@@ -21,18 +20,17 @@ import { VehicleForm } from '@/vehicle/vehicle-form';
 export default function VehicleStep() {
   const { t } = useTranslation();
   const router = useRouter();
-  const profile = useProfile();
-  const { level, vehicleId, setVehicleId } = useFirstRun();
+  const { vehicleId, setVehicleId } = useFirstRun();
   const { advance } = useStep('vehicle');
-  const explain = knowledgeProfile(level ?? profile.data?.knowledgeLevel).explain;
+  const explain = useExplain();
   const title = t('onboarding.vehicle.title');
   const body = t(explain ? 'onboarding.vehicle.bodyExplain' : 'onboarding.vehicle.body');
 
-  // With a Vehicle, how it is used comes next (`nextStep` with a Vehicle).
+  // `advance` would still see no Vehicle in this render: ask `nextStep` with one.
   const onSaved = useCallback(
     (id: string) => {
       setVehicleId(id);
-      router.push('/onboarding/usage');
+      router.push(STEP_HREF[nextStep('vehicle', { hasVehicle: true })]);
     },
     [router, setVehicleId],
   );

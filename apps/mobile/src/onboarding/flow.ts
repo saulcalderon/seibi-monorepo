@@ -111,7 +111,7 @@ export const HISTORY_TASKS = ['engine_oil', 'tire_rotation', 'battery'] as const
 export type HistoryTask = (typeof HISTORY_TASKS)[number];
 
 /** The answers, each a rough number of months ago (`null`: «No sé»). Labels: `onboarding.history.when.<id>`. */
-export const WHEN = [
+export const HISTORY_WHEN = [
   { id: 'under3', months: 1 },
   { id: '3to6', months: 4 },
   { id: '6to12', months: 9 },
@@ -119,7 +119,7 @@ export const WHEN = [
   { id: 'unknown', months: null },
 ] as const;
 
-export type WhenAnswer = (typeof WHEN)[number]['id'];
+export type WhenAnswer = (typeof HISTORY_WHEN)[number]['id'];
 
 function monthsAgo(months: number, today: Date) {
   const day = new Date(today);
@@ -137,7 +137,7 @@ export function rememberedFromHistory(answers: Partial<Record<HistoryTask, WhenA
   return HISTORY_TASKS.flatMap((task) => {
     const answer = answers[task];
     if (!answer) return [];
-    const months = WHEN.find((w) => w.id === answer)!.months;
+    const months = HISTORY_WHEN.find((w) => w.id === answer)!.months;
     const codes = task === 'engine_oil' ? ['engine_oil', 'oil_filter'] : [task];
     return codes.map((taskCode) => ({
       taskCode,

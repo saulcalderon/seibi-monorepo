@@ -3,13 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 
-import { useGarage } from '@/data/garage/use-garage';
-import { useProfile } from '@/data/profile/queries';
-import { rememberTasks } from '@/data/reminder/mutations';
-import { knowledgeProfile } from '@/lib/knowledge';
+import { useRememberTasks } from '@/data/reminder/mutations';
 import { taskIcon } from '@/lib/task-icon';
-import { HISTORY_TASKS, rememberedFromHistory, WHEN, type HistoryTask, type WhenAnswer } from '@/onboarding/flow';
-import { useFirstRun, useStep } from '@/onboarding/state';
+import { HISTORY_TASKS, rememberedFromHistory, HISTORY_WHEN, type HistoryTask, type WhenAnswer } from '@/onboarding/flow';
+import { useExplain, useFirstRun, useStep } from '@/onboarding/state';
 import { FirstRunStep } from '@/onboarding/step';
 import { Button } from '@/ui/button';
 import { Card } from '@/ui/card';
@@ -25,21 +22,19 @@ import { Text } from '@/ui/text';
  */
 export default function HistoryStep() {
   const { t } = useTranslation();
-  const { vehicleId, level } = useFirstRun();
+  const { vehicleId } = useFirstRun();
   const { advance } = useStep('history');
-  const profile = useProfile();
-  const garage = useGarage();
+  const remember = useRememberTasks();
   const [answers, setAnswers] = useState<Partial<Record<HistoryTask, WhenAnswer>>>({});
   const [busy, setBusy] = useState(false);
-  const explain = knowledgeProfile(level ?? profile.data?.knowledgeLevel).explain;
+  const explain = useExplain();
   const answered = Object.keys(answers).length;
 
   const next = async () => {
     if (busy) return;
     setBusy(true);
     try {
-      if (vehicleId) await rememberTasks(vehicleId, rememberedFromHistory(answers, new Date()));
-      garage.refetch();
+      if (vehicleId) await remember.mutateAsync({ vehicleId, answers: rememberedFromHistory(answers, new Date()) });
     } catch {
       // As the PWA: the answers are a nicety, never a wall.
     } finally {
@@ -75,7 +70,7 @@ export default function HistoryStep() {
             </Text>
           </View>
           <View accessibilityRole="radiogroup" accessibilityLabel={t(`onboarding.history.questions.${task}`)} style={styles.chips}>
-            {WHEN.map((when) => (
+            {HISTORY_WHEN.map((when) => (
               <Chip
                 key={when.id}
                 radio

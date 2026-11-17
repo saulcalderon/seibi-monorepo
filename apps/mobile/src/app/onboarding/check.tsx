@@ -68,10 +68,11 @@ export default function CheckStep() {
       }
       footer={null}
     >
-      <OptionGroup label={t(`knowledge.check.${question.id}.question`)}>
+      <OptionGroup>
         {question.options.map((option) => (
           <Option
             key={option.id}
+            role="button"
             testID={`first-run-check-${index}-${option.id}`}
             title={checkOptionText(question, option.id, t)}
             onPress={() => answer(option.correct)}

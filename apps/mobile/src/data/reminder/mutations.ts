@@ -87,6 +87,11 @@ export type RememberedTask = {
  * fue?»). Not a Service and no Mileage reading (CONTEXT.md → Reminder).
  * The caller refetches the garage.
  */
+/** `rememberTasks` as a garage write: the garage refetches when it settles. */
+export function useRememberTasks() {
+  return useGarageMutation(({ vehicleId, answers }: { vehicleId: string; answers: RememberedTask[] }) => rememberTasks(vehicleId, answers));
+}
+
 export async function rememberTasks(vehicleId: string, answers: RememberedTask[]) {
   if (answers.length === 0) return;
   const { error } = await supabase.from('reminder_states').upsert(

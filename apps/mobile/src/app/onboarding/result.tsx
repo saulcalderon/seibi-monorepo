@@ -11,6 +11,7 @@ import { FirstRunStep } from '@/onboarding/step';
 import { Button } from '@/ui/button';
 import { Card, IconTile } from '@/ui/card';
 import { Icon } from '@/ui/icon';
+import { PressScale, usePressed } from '@/ui/press';
 import { Text } from '@/ui/text';
 
 /** The calibrated Knowledge level, what it changes, and «Prefiero otro nivel» to pick another. */
@@ -21,6 +22,7 @@ export default function ResultStep() {
   const { advance } = useStep('result');
   const update = useUpdateProfile();
   const [other, setOther] = useState(false);
+  const { pressed, pressHandlers } = usePressed();
 
   return (
     <FirstRunStep
@@ -49,14 +51,16 @@ export default function ResultStep() {
           accessibilityLabel={t('onboarding.result.other')}
           accessibilityState={{ expanded: other }}
           onPress={() => setOther((open) => !open)}
-          style={styles.otherToggle}
+          {...pressHandlers}
         >
-          <Text step="subhead" weight={600} style={styles.otherLabel}>
-            {t('onboarding.result.other')}
-          </Text>
-          <View style={other ? styles.chevronOpen : undefined}>
-            <Icon name="expand" size="sm" tone="muted" />
-          </View>
+          <PressScale pressed={pressed} style={styles.otherToggle}>
+            <Text step="subhead" weight={600} style={styles.otherLabel}>
+              {t('onboarding.result.other')}
+            </Text>
+            <View style={other ? styles.chevronOpen : undefined}>
+              <Icon name="expand" size="sm" tone="muted" />
+            </View>
+          </PressScale>
         </Pressable>
         {other ? (
           <OptionGroup label={t('onboarding.level.group')}>

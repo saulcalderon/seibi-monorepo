@@ -9,17 +9,30 @@ import { Text } from '@/ui/text';
 /**
  * One answer of a first-run question, the PWA's Onboarding `Option`: a card
  * with the answer and a round mark on the right that fills when chosen. It
- * is a radio; put it in an `OptionGroup`.
+ * is a radio in an `OptionGroup`, or a button where the answer moves on at once.
  */
-export function Option({ title, selected = false, onPress, testID }: { title: string; selected?: boolean; onPress: () => void; testID?: string }) {
+export function Option({
+  title,
+  selected = false,
+  onPress,
+  role = 'radio',
+  testID,
+}: {
+  title: string;
+  selected?: boolean;
+  onPress: () => void;
+  /** `button` for an answer that moves on at once and is never shown chosen (the check questions). */
+  role?: 'radio' | 'button';
+  testID?: string;
+}) {
   const { pressed, pressHandlers } = usePressed();
   styles.useVariants({ selected });
   return (
     <Pressable
       testID={testID}
-      accessibilityRole="radio"
+      accessibilityRole={role}
       accessibilityLabel={title}
-      accessibilityState={{ checked: selected }}
+      accessibilityState={role === 'radio' ? { checked: selected } : undefined}
       onPress={onPress}
       {...pressHandlers}
     >

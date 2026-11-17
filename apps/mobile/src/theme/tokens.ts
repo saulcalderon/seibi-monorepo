@@ -206,6 +206,8 @@ export const motion = {
   skeleton: { duration: 900 },
   /** A progress bar filling to its value on mount (the PWA's 0.7 s). */
   progress: { duration: 700 },
+  /** The first run: the pause after choosing an answer before the next question, and the confirmation's entrance. */
+  firstRun: { chosen: 180, confirmFade: 350, checkDelay: 120 },
   /** The first run's «¿Te avisamos a tiempo?» bell: a 0.8 s wiggle every 2.4 s (the PWA's `repeatDelay: 1.6`). */
   bell: { duration: 2400, angle: 10, settle: 0.6 },
   /** Cubic-bézier control points: `cubicBezier(...motion.curve.out)`. */

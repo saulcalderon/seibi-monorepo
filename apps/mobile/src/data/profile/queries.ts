@@ -98,6 +98,8 @@ export function useFinishFirstRun() {
   return useMutation({
     mutationFn: async () => {
       if (!userId) throw new Error('signed-out');
+      // A refetch still running from an earlier answer must not land after this with the old profile.
+      await queryClient.cancelQueries({ queryKey: profileKeys.user(userId) });
       const onboardedAt = new Date().toISOString();
       const save = async () => {
         const { error } = await supabase.from('profiles').update({ onboarded_at: onboardedAt }).eq('user_id', userId);
@@ -108,7 +110,12 @@ export function useFinishFirstRun() {
     },
     onSuccess: (onboardedAt) => {
       if (!userId) return;
-      queryClient.setQueryData<Profile>(profileKeys.user(userId), (previous) => (previous ? { ...previous, onboardedAt } : previous));
+      const key = profileKeys.user(userId);
+      if (queryClient.getQueryData<Profile>(key)) {
+        queryClient.setQueryData<Profile>(key, (previous) => (previous ? { ...previous, onboardedAt } : previous));
+      } else {
+        return queryClient.invalidateQueries({ queryKey: key });
+      }
     },
   });
 }

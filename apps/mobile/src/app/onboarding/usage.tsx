@@ -2,13 +2,10 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useGarage } from '@/data/garage/use-garage';
-import { defaultMeasure } from '@/data/profile/countries';
-import { useProfile } from '@/data/profile/queries';
 import { useSaveRoutine } from '@/data/routine/mutations';
-import { knowledgeProfile } from '@/lib/knowledge';
 import { routineFromUsage, USAGE_PRESETS, type UsagePreset } from '@/onboarding/flow';
 import { Option, OptionGroup } from '@/onboarding/option';
-import { useFirstRun, useStep } from '@/onboarding/state';
+import { useExplain, useFirstRun, useStep } from '@/onboarding/state';
 import { FirstRunStep } from '@/onboarding/step';
 import { Button } from '@/ui/button';
 import { NumberField } from '@/ui/fields';
@@ -16,21 +13,20 @@ import { NumberField } from '@/ui/fields';
 /** «¿Cómo usas tu Vehículo?»: a Routine for the new Vehicle, so Reminders can be projected before any reading. */
 export default function UsageStep() {
   const { t } = useTranslation();
-  const { vehicleId, level, country } = useFirstRun();
+  const { vehicleId } = useFirstRun();
   const { advance } = useStep('usage');
-  const profile = useProfile();
   const garage = useGarage();
   const save = useSaveRoutine();
   const [preset, setPreset] = useState<UsagePreset | null>(null);
   const [distance, setDistance] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const explain = knowledgeProfile(level ?? profile.data?.knowledgeLevel).explain;
-  // The Vehicle's measure, from the garage once it has refetched; until then the country's.
-  const measure = garage.vehicles.find((v) => v.id === vehicleId)?.measure ?? defaultMeasure(country);
+  const explain = useExplain();
+  // The distance is in the Vehicle's measure, so it waits for the Vehicle (the PWA draws the step only then).
+  const vehicle = garage.vehicles.find((v) => v.id === vehicleId);
 
   const next = () => {
-    if (!preset || !vehicleId || save.isPending) return;
-    const result = routineFromUsage({ vehicleId, preset, distance }, t);
+    if (!preset || !vehicle || save.isPending) return;
+    const result = routineFromUsage({ vehicleId: vehicle.id, preset, distance }, t);
     if ('error' in result) {
       setError(result.error);
       return;
@@ -51,7 +47,7 @@ export default function UsageStep() {
             size="lg"
             variant="inverse"
             trailingIcon="next"
-            disabled={!preset}
+            disabled={!preset || !vehicle}
             loading={save.isPending}
             label={t('onboarding.continue')}
             onPress={next}
@@ -71,13 +67,13 @@ export default function UsageStep() {
           />
         ))}
       </OptionGroup>
-      {preset ? (
+      {preset && vehicle ? (
         <NumberField
           testID="first-run-usage-distance"
           errorTestID="first-run-usage-error"
           kind="decimal"
           label={t('onboarding.usage.distance')}
-          suffix={t(`units.${measure}`)}
+          suffix={t(`units.${vehicle.measure}`)}
           hint={explain ? t('onboarding.usage.distanceHint') : undefined}
           error={error}
           value={distance}

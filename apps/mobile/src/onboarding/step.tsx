@@ -118,6 +118,14 @@ function Dot({ active }: { active: boolean }) {
   return <View style={styles.dot} />;
 }
 
+/** The first-run headline: `title1` tracked and leaded as Login's (`heroType`). */
+export function firstRunTitle(theme: { type: { title1: { fontSize: number } }; heroType: { tracking: number; leading: number } }) {
+  return {
+    letterSpacing: theme.type.title1.fontSize * theme.heroType.tracking,
+    lineHeight: Math.round(theme.type.title1.fontSize * theme.heroType.leading),
+  };
+}
+
 const styles = StyleSheet.create((theme) => ({
   screen: {
     flex: 1,
@@ -146,8 +154,7 @@ const styles = StyleSheet.create((theme) => ({
   },
   title: {
     flexShrink: 1,
-    letterSpacing: theme.type.title1.fontSize * theme.heroType.tracking,
-    lineHeight: Math.round(theme.type.title1.fontSize * theme.heroType.leading),
+    ...firstRunTitle(theme),
   },
   body: {
     paddingTop: theme.space[1],

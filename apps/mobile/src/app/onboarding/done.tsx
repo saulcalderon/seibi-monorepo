@@ -4,9 +4,9 @@ import { AccessibilityInfo, BackHandler, View } from 'react-native';
 import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 import { StyleSheet } from 'react-native-unistyles';
 
-import { errorMessage } from '@/data/errors';
 import { useFinishFirstRun } from '@/data/profile/queries';
-import { FirstRunScreen } from '@/onboarding/step';
+import { FirstRunScreen, firstRunTitle } from '@/onboarding/step';
+import { motion } from '@/theme/tokens';
 import { Button } from '@/ui/button';
 import { Card } from '@/ui/card';
 import { Icon } from '@/ui/icon';
@@ -37,9 +37,9 @@ export default function DoneStep() {
   return (
     <FirstRunScreen testID="first-run-done">
       <View style={styles.center}>
-        <Animated.View entering={FadeIn.duration(350)}>
+        <Animated.View entering={FadeIn.duration(motion.firstRun.confirmFade)}>
           <Card style={styles.card} accessible accessibilityRole="summary" accessibilityLiveRegion="polite">
-            <Animated.View entering={ZoomIn.delay(120).springify()} style={styles.check}>
+            <Animated.View entering={ZoomIn.delay(motion.firstRun.checkDelay).springify()} style={styles.check}>
               <Icon name="check" size="xl" tone="onInverse" fixed />
             </Animated.View>
             <Text heading step="title1" weight={300} align="center" style={styles.title} testID="first-run-done-title">
@@ -53,7 +53,7 @@ export default function DoneStep() {
         {finish.isError ? (
           <View style={styles.failed}>
             <Text testID="first-run-done-error" step="subhead" weight={500} tone="overdue" align="center" accessibilityRole="alert">
-              {errorMessage(finish.error, t)}
+              {t('onboarding.done.failed')}
             </Text>
             <Button testID="first-run-done-retry" block size="lg" variant="inverse" label={t('onboarding.done.retry')} onPress={() => mutate()} />
           </View>
@@ -86,10 +86,7 @@ const styles = StyleSheet.create((theme) => ({
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.inverse,
   },
-  title: {
-    letterSpacing: theme.type.title1.fontSize * theme.heroType.tracking,
-    lineHeight: Math.round(theme.type.title1.fontSize * theme.heroType.leading),
-  },
+  title: firstRunTitle(theme),
   failed: {
     gap: theme.space[3],
   },

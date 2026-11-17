@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
 import { useAuth } from '@/auth/session';
 import type { Country } from '@/data/profile/countries';
 import { useProfile } from '@/data/profile/queries';
-import type { KnowledgeLevel } from '@/lib/knowledge';
+import { knowledgeProfile, type KnowledgeLevel } from '@/lib/knowledge';
 import { identityFromUser } from '@/shell/identity';
 
 import { initialName, nextStep, stepPosition, type Step } from './flow';
@@ -64,7 +64,7 @@ export function useFirstRun() {
 }
 
 /** Each step's screen in src/app/onboarding/. */
-const HREF: Record<Step | 'done', Href> = {
+export const STEP_HREF: Record<Step | 'done', Href> = {
   name: '/onboarding',
   level: '/onboarding/level',
   check: '/onboarding/check',
@@ -82,6 +82,13 @@ export function useStep(step: Step) {
   const router = useRouter();
   const { vehicleId } = useFirstRun();
   const hasVehicle = vehicleId !== null;
-  const advance = useCallback(() => router.push(HREF[nextStep(step, { hasVehicle })]), [router, step, hasVehicle]);
+  const advance = useCallback(() => router.push(STEP_HREF[nextStep(step, { hasVehicle })]), [router, step, hasVehicle]);
   return { ...stepPosition(step, { hasVehicle }), advance };
+}
+
+/** Whether to explain more (the Knowledge level chosen so far, else the saved one): `knowledgeProfile().explain`. */
+export function useExplain() {
+  const { level } = useFirstRun();
+  const profile = useProfile();
+  return knowledgeProfile(level ?? profile.data?.knowledgeLevel).explain;
 }

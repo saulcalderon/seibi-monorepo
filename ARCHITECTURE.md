@@ -327,7 +327,7 @@ The migration's order, scope and tickets are in
     (`calibrateLevel`) and offer «Prefiero otro nivel»; country and city;
     «Agrega tu Vehículo» (the Vehicle form) or «Lo agrego después»; with a
     Vehicle only, «¿Cómo usas tu Vehículo?» (a `routines` row) and «Tu
-    último mantenimiento» (`reminder_states` through `rememberTasks`, the
+    último mantenimiento» (`reminder_states` through `useRememberTasks`, the
     oil filter with the oil); «¿Te avisamos a tiempo?»; then «Se guardó tu
     información», which saves `onboarded_at` and after 2 s lets the root
     layout open Inicio. Each answer is saved when given, as in the PWA (the

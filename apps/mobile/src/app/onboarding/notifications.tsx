@@ -43,7 +43,7 @@ export default function NotificationsStep() {
   );
 }
 
-/** The PWA's ringing bell: a short wiggle, then a rest. Still with Reduce Motion. */
+/** The PWA's ringing bell: a short wiggle, then a rest. Still with Reduce Motion on. */
 function Bell() {
   const reduced = useReducedMotion();
   return (
@@ -54,13 +54,12 @@ function Bell() {
 }
 
 // The PWA's keyframes [0, -10°, 10°, -6°, 0] over the first 0.8 s of each 2.4 s.
-const a = motion.bell.angle;
 const wiggle = {
   animationName: {
     '0%': { transform: [{ rotate: '0deg' }] },
-    '8%': { transform: [{ rotate: `${-a}deg` }] },
-    '17%': { transform: [{ rotate: `${a}deg` }] },
-    '25%': { transform: [{ rotate: `${-a * motion.bell.settle}deg` }] },
+    '8%': { transform: [{ rotate: `${-motion.bell.angle}deg` }] },
+    '17%': { transform: [{ rotate: `${motion.bell.angle}deg` }] },
+    '25%': { transform: [{ rotate: `${-motion.bell.angle * motion.bell.settle}deg` }] },
     '33%': { transform: [{ rotate: '0deg' }] },
     '100%': { transform: [{ rotate: '0deg' }] },
   },

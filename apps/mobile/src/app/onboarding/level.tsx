@@ -6,9 +6,7 @@ import { KNOWLEDGE_LEVELS } from '@/lib/knowledge';
 import { Option, OptionGroup } from '@/onboarding/option';
 import { useFirstRun, useStep } from '@/onboarding/state';
 import { FirstRunStep } from '@/onboarding/step';
-
-/** The PWA's pause between a tap and the next question, so the chosen mark shows first. */
-const CHOSEN_MS = 180;
+import { motion } from '@/theme/tokens';
 
 /** «¿Cuánto sabes de carros?»: the self-assessment the check questions calibrate. */
 export default function LevelStep() {
@@ -16,10 +14,16 @@ export default function LevelStep() {
   const { selfLevel, setSelfLevel, setPicked } = useFirstRun();
   const { advance } = useStep('level');
   // One answer per visit: a second tap while the next question slides in does nothing.
+  // Leaving within the pause (a back swipe) drops the pending step.
   const answered = useRef(false);
+  const pending = useRef<ReturnType<typeof setTimeout> | null>(null);
   useFocusEffect(
     useCallback(() => {
       answered.current = false;
+      return () => {
+        if (pending.current) clearTimeout(pending.current);
+        pending.current = null;
+      };
     }, []),
   );
 
@@ -38,7 +42,8 @@ export default function LevelStep() {
               setSelfLevel(level);
               // A new self-assessment starts the check questions over.
               setPicked([]);
-              setTimeout(advance, CHOSEN_MS);
+              // The PWA's pause, so the chosen mark shows before the next question.
+              pending.current = setTimeout(advance, motion.firstRun.chosen);
             }}
           />
         ))}
