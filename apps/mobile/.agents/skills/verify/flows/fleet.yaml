@@ -107,6 +107,7 @@ name: Mi flota lists, searches, adds, edits, withdraws and restores a Vehicle
         id: pick-model
       notVisible:
         id: pick-custom
+      notVisible: 'Modelo, Rio.*' 
     commands:
       - waitForAnimationToEnd
       - takeScreenshot: fleet-05-models
@@ -208,6 +209,11 @@ name: Mi flota lists, searches, adds, edits, withdraws and restores a Vehicle
 - hideKeyboard
 
 # --- Edit from the card's menu: the form opens with its values.
+# Never open a card's menu without proving the card is an S5 test Vehicle
+# (the card's spoken label carries its Plate).
+- assertVisible:
+    id: fleet-vehicle-0
+    text: '.*S5-.*'
 - tapOn:
     id: fleet-vehicle-0-menu
 - tapOn: 'Editar Vehículo'
@@ -232,6 +238,11 @@ name: Mi flota lists, searches, adds, edits, withdraws and restores a Vehicle
 - extendedWaitUntil:
     visible: '.*Kia Rio.*S5-RIO-01.*'
     timeout: 10000
+# Never open a card's menu without proving the card is an S5 test Vehicle
+# (the card's spoken label carries its Plate).
+- assertVisible:
+    id: fleet-vehicle-0
+    text: '.*S5-.*'
 - tapOn:
     id: fleet-vehicle-0-menu
 - tapOn: 'Editar Vehículo'
@@ -284,6 +295,11 @@ name: Mi flota lists, searches, adds, edits, withdraws and restores a Vehicle
 - hideKeyboard
 
 # --- Clean up: withdraw it again from the card's menu.
+# Never open a card's menu without proving the card is an S5 test Vehicle
+# (the card's spoken label carries its Plate).
+- assertVisible:
+    id: fleet-vehicle-0
+    text: '.*S5-.*'
 - tapOn:
     id: fleet-vehicle-0-menu
 - tapOn: 'Retirar de mi flota'

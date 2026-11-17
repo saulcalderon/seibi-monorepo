@@ -31,6 +31,11 @@ name: Withdraw the S5 test Vehicles
               id: fleet-vehicle-0
           times: 10
           commands:
+            # Never open a card's menu unless the card is an S5 test Vehicle
+            # (the spoken label carries its Plate): the Yaris is never touched.
+            - assertVisible:
+                id: fleet-vehicle-0
+                text: '.*S5-.*'
             - tapOn:
                 id: fleet-vehicle-0-menu
             - tapOn: 'Retirar de mi flota'

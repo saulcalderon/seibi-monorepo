@@ -17,4 +17,14 @@ name: Focus the header search bar
       - tapOn:
           id: '.*search_button|.*action_search'
           optional: true
+      # The toolbar's input can still hold old text while the screen's query
+      # reset (the list shows everything): clear it so typing filters again.
+      - runFlow:
+          when:
+            visible:
+              id: '.*search_src_text'
+          commands:
+            - tapOn:
+                id: '.*search_src_text'
+            - eraseText: 30
       - tapOn: 'Search|Buscar.*'
