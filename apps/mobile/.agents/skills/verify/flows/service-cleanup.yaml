@@ -16,7 +16,7 @@ name: Withdraw the Services a failed service run left behind
       TEST_EMAIL: ${TEST_EMAIL}
       TEST_PASSWORD: ${TEST_PASSWORD}
 - startRecording: service-cleanup
-- openLink: ${APP_URL}vehicle/${output.vehicleId}
+- openLink: ${APP_URL}vehicle/${output.vehicleId}?tab=historial
 - runFlow:
     when:
       platform: iOS
@@ -25,7 +25,7 @@ name: Withdraw the Services a failed service run left behind
       - tapOn: 'Open|Abrir'
 - extendedWaitUntil:
     visible:
-      id: vehicle-services
+      id: detail-tabs
     timeout: 20000
 - repeat:
     while:
@@ -36,18 +36,18 @@ name: Withdraw the Services a failed service run left behind
           text: '.*Bombillo de freno.*'
       - extendedWaitUntil:
           visible:
-            id: service-form
+            id: service-card-withdraw-0
           timeout: 15000
       - scrollUntilVisible:
           element:
-            id: service-withdraw
+            id: service-card-withdraw-0
           centerElement: true
       - tapOn:
-          id: service-withdraw
+          id: service-card-withdraw-0
       - tapOn: 'Quitar'
       - extendedWaitUntil:
           notVisible:
-            id: service-form
+            id: service-card-withdraw-0
           timeout: 15000
 - takeScreenshot: service-cleanup-done
 - stopRecording

@@ -1,0 +1,18 @@
+# Feature: features/vehicle-detail.md. Removes what a failed
+# `vehicle-detail` run left on the test account — Services with notes
+# «verify SEI-61» (withdrawn) and Routines named «verify SEI-61 …»
+# (deleted) — so the next run starts clean. The notes sit inside an
+# expanded card, so the cleanup goes through Supabase's REST API under the
+# account's own RLS, scoped to the marker text. Run through
+# scripts/verify.sh drive <ios|android> vehicle-detail-cleanup.
+appId: ${APP_ID}
+name: Remove the Services and Routines a failed vehicle-detail run left
+---
+- runScript:
+    file: scripts/cleanup-sei61.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}
+- takeScreenshot: vehicle-detail-cleanup-done
