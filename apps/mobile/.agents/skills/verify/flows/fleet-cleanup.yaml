@@ -25,10 +25,12 @@ name: Withdraw the S5 test Vehicles
       - inputText: S5-
       - hideKeyboard
       - repeat:
-          # Not the text «S5-»: the search field holds it too.
+          # Not the text «S5-»: the search field holds it too. Done when the
+          # first card isn't an S5 test Vehicle — nothing left to clean.
           while:
             visible:
               id: fleet-vehicle-0
+              text: '.*S5-.*'
           times: 10
           commands:
             # Never open a card's menu unless the card is an S5 test Vehicle
@@ -46,5 +48,7 @@ name: Withdraw the S5 test Vehicles
             - waitForAnimationToEnd
       - assertNotVisible:
           id: fleet-vehicle-0
+          text: '.*S5-.*'
+
 - takeScreenshot: cleanup-done
 - stopRecording
