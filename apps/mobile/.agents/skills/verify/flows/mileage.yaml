@@ -109,7 +109,8 @@ name: Update Mileage opens from [+] and Inicio, validates and saves today's read
 # Inicio's odometer moved to the new number.
 - extendedWaitUntil:
     visible:
-      text: '${output.nextText}'
+      id: home-odometer
+      text: '.*${output.nextText}.*'
     # The refetch behind the sheet's close can take a while over the network.
     timeout: 60000
 - takeScreenshot: mileage-04-saved
