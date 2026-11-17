@@ -202,9 +202,10 @@ name: Detalle del Vehículo shows its four tabs and edits them
       - extendedWaitUntil:
           visible: 'Servicio quitado del historial'
           timeout: 10000
+# Its notes leave with it. (Not «no card 0»: another flow's Service can
+# sit on the same Vehicle and take the first place.)
 - extendedWaitUntil:
-    notVisible:
-      id: service-card-0
+    notVisible: 'verify SEI-61'
     timeout: 20000
 
 # --- The latest reading opens «Corregir lectura»; the same number corrects
