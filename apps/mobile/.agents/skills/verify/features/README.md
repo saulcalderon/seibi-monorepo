@@ -67,6 +67,11 @@ handles, required state, commands and observable proof.
   place, the floating [+] and its actions sheet, Perfil from the header
   avatar, `seibi-dev://vehicle/<id>`. Flow: `app-shell`; subflows
   `open-profile.yaml`, `close-sheet.yaml`.
+- [Perfil](./profile.md): the card with who is signed in, the name,
+  Knowledge level and location sheets (saved to the profile the PWA reads),
+  «¿Descartar los cambios?», notifications (off until native push), «Tema»,
+  the Terms, Privacy Policy and email, sign-out and deletion. Flow:
+  `profile`.
 - [Inicio: the Garage](./home.md): the greeting, the stage with the
   active Vehicle (poster or silhouette), paging by swipe, arrows and an
   adjustable pager, the choice kept across a cold start, Mileage with

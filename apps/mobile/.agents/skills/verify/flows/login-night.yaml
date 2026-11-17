@@ -21,6 +21,11 @@ name: Login in night (night splash, light Login, night app after sign-in)
         id: home-screen
     commands:
       - runFlow: open-profile.yaml
+      # Perfil scrolls: bring it on screen first.
+      - scrollUntilVisible:
+          element:
+            id: sign-out
+          direction: DOWN
       - tapOn:
           id: sign-out
       - extendedWaitUntil:
@@ -51,10 +56,20 @@ name: Login in night (night splash, light Login, night app after sign-in)
 - takeScreenshot: night-signed-in
 # Perfil reports the active theme; sign-out lives there too.
 - runFlow: open-profile.yaml
+# Perfil scrolls: bring it on screen first.
+- scrollUntilVisible:
+    element:
+      id: theme-check
+    direction: DOWN
 - assertVisible:
     id: theme-check
     text: 'theme: night.*'
 - takeScreenshot: night-signed-in-profile
+# Perfil scrolls: bring it on screen first.
+- scrollUntilVisible:
+    element:
+      id: sign-out
+    direction: DOWN
 - tapOn:
     id: sign-out
 - extendedWaitUntil:

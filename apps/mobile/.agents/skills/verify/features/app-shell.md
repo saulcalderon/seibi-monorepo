@@ -11,8 +11,10 @@ Servicio» and «Actualizar Kilometraje» (no Appointment action until S13);
 each opens its own sheet (S7’s Service form, S8’s Mileage sheet). The avatar on the
 right of each tab's header opens «Perfil» inside the current tab. A link to
 a Vehicle (`seibi-dev://vehicle/<id>`) opens its detail in «Mi flota» with
-the fleet list under it. Inicio is the Garage ([`home.md`](./home.md)); Mi flota, Avisos, the
-Vehicle detail and Perfil are placeholders that the S-tickets fill in.
+the fleet list under it. Inicio is the Garage ([`home.md`](./home.md)), Mi flota the fleet
+([`fleet.md`](./fleet.md)) and Perfil the PWA's Perfil
+([`profile.md`](./profile.md)); Avisos and the Vehicle detail are
+placeholders that the S-tickets fill in.
 
 ## Sub-features
 
@@ -23,7 +25,7 @@ Vehicle detail and Perfil are placeholders that the S-tickets fill in.
 - `fab-clear` the end of a long list scrolls clear of the [+]: nothing stays hidden under it.
 - `actions-sheet` the [+] opens «¿Qué quieres hacer?» with the two actions; no «Cita» action.
 - `action-sheets` each action replaces the actions sheet with its own («Registrar un Servicio», «Actualizar Kilometraje») and «Cerrar» closes it.
-- `profile` the header avatar (initials, or Google's picture) opens Perfil inside the current tab: who is signed in, «Tema», «Cerrar sesión», «Eliminar cuenta», and in Seibi Dev the links to «Revisar datos» and «Kit de UI».
+- `profile` the header avatar (initials, or Google's picture) opens Perfil inside the current tab ([`profile.md`](./profile.md)): who is signed in, «Tú», «Preferencias» with «Tema», «Legal y ayuda», «Cerrar sesión», «Eliminar mi cuenta», and in Seibi Dev the links to «Revisar datos» and «Kit de UI».
 - `deep-link-vehicle` `seibi-dev://vehicle/<id>` opens that Vehicle in «Mi flota»; back leads to the fleet list. Signed out, the link lands on sign-in.
 - `spoken-labels` each tab says its name; the [+] says «Acciones rápidas»; the avatar says «Perfil».
 
@@ -49,7 +51,7 @@ Preconditions:
 - **The [+] doesn't cover content.** Tap `tab-reminders` (`id: reminder-0-0`), swipe to the end: the last row and the card's bottom edge sit above the [+]. Screenshots `shell-04-reminders`, `shell-05-reminders-end`; look at the second one.
 - **Each tab keeps its place.** Tap `tab-fleet`: still `id: vehicle-name`. Screenshot `shell-06-fleet-kept-place`. Back (edge swipe on iOS, Back on Android) to `fleet-vehicle-0`.
 - **Actions from each tab root.** From Mi flota tap `open-actions`: `id: actions-sheet` with `action-record-service` and `action-update-mileage`, «¿Qué quieres hacer?», nothing matching `.*Cita.*`. Screenshot `shell-07-actions-from-fleet`; `close-sheet.yaml` closes it (a drag down on iOS, Back on Android). From Avisos, `shell-08-actions-from-reminders`; tap `action-record-service`: `id: record-service-sheet` replaces the actions sheet (`shell-09-record-service`), `record-service-sheet-close` closes it. From Inicio, `action-update-mileage` → `id: mileage-sheet` (`shell-10-update-mileage`), closed with `mileage-close`.
-- **Perfil.** `runFlow: open-profile.yaml` taps `id: open-profile`, waits for `id: profile-screen` and asserts `id: signed-in-as` has the test email; `tab-home` and `theme-check` are visible. Screenshot `shell-11-profile`.
+- **Perfil.** `runFlow: open-profile.yaml` taps `id: open-profile`, waits for `id: profile-screen` and asserts `id: signed-in-as` has the test email; `tab-home` is visible and, after scrolling to it, `theme-check`. Screenshot `shell-11-profile`.
 - **Deep link.** `openLink: ${APP_URL}vehicle/${output.vehicleId}` (taps iOS's «Open» if asked): `id: vehicle-name` reads the Vehicle's name, `tab-fleet` visible. Screenshot `shell-12-deep-link-vehicle`. Back: `fleet-vehicle-0` (`shell-13-deep-link-back`).
 - **Proof.** The run folder holds `startRecording/app-shell.mp4` and the 13 screenshots. The shell saves nothing; the read-only query for the PR is the Vehicle the link opened: `select id, brand, model, year, plate from vehicles where id = '<id>'` on seibi-dev.
 

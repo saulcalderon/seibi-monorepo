@@ -10,7 +10,7 @@ password form for the seibi-dev test account. Login stays light in night (a
 first-run screen). After signing in the person lands on Inicio, the first tab
 (Perfil, from the header avatar, shows their email), and the session survives
 killing and reopening the app. «Cerrar sesión» (in Perfil) returns to Login and
-leaves nothing of the person on the device. «Eliminar cuenta» (in Perfil) asks
+leaves nothing of the person on the device. «Eliminar mi cuenta» (in Perfil) asks
 first, deletes the account and
 everything in it, and shows «Cuenta eliminada»; the same screen shows on the
 next launch when the account was deleted somewhere else.
@@ -34,7 +34,7 @@ next launch when the account was deleted somewhere else.
 
 - Open the app signed out: the sign-in screen is the first screen after the splash.
 - Tap a sign-in button; in a development or preview build, type the test account in the form and tap «Entrar con correo».
-- Signed in, the avatar at the top right of a tab opens Perfil, with «Cerrar sesión» and «Eliminar cuenta».
+- Signed in, the avatar at the top right of a tab opens Perfil, with «Cerrar sesión» and «Eliminar mi cuenta» at the bottom ([`profile.md`](./profile.md)).
 - A deep link to any route (`seibi-dev://`, `seibi-dev://sign-in`, `seibi-dev://vehicle/<id>`) opens only what the session allows.
 
 ## Driving it with verify.sh
@@ -61,7 +61,7 @@ Preconditions:
 
 - The test account is `e2e@seibi.test` on seibi-dev; its password is never in git. `verify.sh` reads `SEIBI_TEST_EMAIL` / `SEIBI_TEST_PASSWORD` from the environment, else from `~/.config/seibi/test-account.env` (`SEIBI_TEST_ACCOUNT_FILE`), and scrubs the password from the run's logs. Do not use `prueba@seibi.test`: that is the «Ana» screenshot account.
 - The two destructive flows delete the test account. Recreate it on **seibi-dev only** before the next flow signs in, with the same email and password: the Supabase MCP `execute_sql` insert into `auth.users` and `auth.identities` used in SEI-44 (email provider, `email_confirmed_at = now()`, `encrypted_password` = the output of `htpasswd -bnBC 10 "" "$SEIBI_TEST_PASSWORD" | tr -d ':\n' | sed 's/^\$2y/$2a/'`, empty strings in the token columns). Never through the PWA's signup: seibi-dev sends a confirmation email.
-- A flow that waits on `id: home-screen` from a cold start passes through sign-in first; use `runFlow: sign-in.yaml`. Sign-out and account deletion are in Perfil: `runFlow: open-profile.yaml` first.
+- A flow that waits on `id: home-screen` from a cold start passes through sign-in first; use `runFlow: sign-in.yaml`. Sign-out and account deletion are at the bottom of Perfil: `runFlow: open-profile.yaml`, then `scrollUntilVisible` to `id: sign-out` or `id: delete-account`.
 - The email form only exists when Metro serves `EXPO_PUBLIC_TEST_SIGN_IN=1` (verify.sh and the pnpm scripts set it). A Metro started another way shows no form, and the flow times out on `id: test-sign-in-email`.
 - Google's button shows only when the bundle has `EXPO_PUBLIC_GOOGLE_*` ids, and on iOS the native build needs the iOS id too (its URL scheme). Until Saul's OAuth clients exist, put placeholders in your `.env.local` (`EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=000000000000-seibiverifyplaceholder.apps.googleusercontent.com`, the same for `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`) and rebuild: the button renders and opens Google's flow, which refuses the client. Never commit them.
 - The legal links are spans inside one sentence. iOS lists each link as its own element and Maestro taps it by text (`'.*Términos.*'`); Android's hierarchy has only the sentence, so `login` taps a screen point (`55%,93%`, the scrolled-to-the-end Login on `seibi-pixel`). On another device size, move the point.

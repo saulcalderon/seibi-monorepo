@@ -1,0 +1,200 @@
+# Feature: Perfil (features/profile.md), on the shared seibi-dev test
+# account. Run through scripts/verify.sh drive <ios|android> profile. It
+# renames the account in «¿Cómo te llamamos?» and puts the old name back,
+# opens the level and location sheets without changing them, switches
+# «Tema» to Oscuro and back to Auto, and checks «Legal y ayuda». It leaves
+# the account, the device's dark mode and the theme as it found them.
+appId: ${APP_ID}
+name: Perfil edits the name and restores it, switches the theme, and links the legal pages
+---
+- setDarkMode: disabled
+- stopApp
+- openLink: ${DEV_URL}
+- runFlow: sign-in.yaml
+- startRecording: profile
+- runFlow: open-profile.yaml
+- assertVisible:
+    id: profile-name-row
+- assertVisible:
+    id: profile-level-row
+- assertVisible:
+    id: profile-location-row
+- waitForAnimationToEnd
+- takeScreenshot: profile-01-top
+
+# --- «Cómo te llamamos»: the sheet starts from the saved name, which the flow keeps to put back.
+- tapOn:
+    id: profile-name-row
+- extendedWaitUntil:
+    visible:
+      id: profile-name-field
+    timeout: 15000
+- copyTextFrom:
+    id: profile-name-field
+- evalScript: ${output.original = maestro.copiedText || ''}
+- tapOn:
+    id: profile-name-field
+- eraseText: 70
+- inputText: Verify Perfil
+# Closing with a new name typed asks first; «Seguir editando» keeps the sheet.
+- tapOn:
+    id: profile-name-close
+- extendedWaitUntil:
+    visible:
+      text: '¿Descartar los cambios\?'
+    timeout: 10000
+- takeScreenshot: profile-02-discard
+- tapOn:
+    text: 'Seguir editando'
+- assertVisible:
+    id: profile-name-field
+    text: 'Verify Perfil'
+- tapOn:
+    id: profile-name-save
+- extendedWaitUntil:
+    notVisible:
+      id: profile-name-sheet
+    timeout: 15000
+# The row and the card show the new name (the PWA reads the same profiles row).
+- assertVisible:
+    id: profile-name-row
+    text: '.*Verify Perfil.*'
+- assertVisible:
+    id: signed-in-as
+    text: 'Verify Perfil.*'
+- waitForAnimationToEnd
+- takeScreenshot: profile-03-renamed
+# Put the old name back (an empty one saves as «Sin nombre»).
+- tapOn:
+    id: profile-name-row
+- extendedWaitUntil:
+    visible:
+      id: profile-name-field
+    timeout: 15000
+- tapOn:
+    id: profile-name-field
+- eraseText: 70
+- runFlow:
+    when:
+      true: ${output.original !== ''}
+    commands:
+      - inputText: ${output.original}
+- tapOn:
+    id: profile-name-save
+- extendedWaitUntil:
+    notVisible:
+      id: profile-name-sheet
+    timeout: 15000
+- assertNotVisible:
+    id: profile-name-row
+    text: '.*Verify Perfil.*'
+
+# --- «Nivel de conocimiento» and «Ubicación» open their sheets; closing them clean asks nothing.
+- tapOn:
+    id: profile-level-row
+- extendedWaitUntil:
+    visible:
+      id: profile-level-sheet
+    timeout: 15000
+- assertVisible:
+    id: profile-level-none
+- assertVisible:
+    id: profile-level-advanced
+- waitForAnimationToEnd
+- takeScreenshot: profile-04-level
+- tapOn:
+    id: profile-level-close
+- extendedWaitUntil:
+    notVisible:
+      id: profile-level-sheet
+    timeout: 15000
+- tapOn:
+    id: profile-location-row
+- extendedWaitUntil:
+    visible:
+      id: profile-location-city
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: profile-05-location
+- tapOn:
+    id: profile-location-close
+- extendedWaitUntil:
+    notVisible:
+      id: profile-location-sheet
+    timeout: 15000
+
+# --- «Preferencias»: notifications wait for native push (off, disabled); «Tema» switches in place.
+- scrollUntilVisible:
+    element:
+      id: theme-check
+    direction: DOWN
+- assertVisible:
+    id: profile-notifications
+- tapOn:
+    id: theme-system
+- extendedWaitUntil:
+    visible:
+      id: theme-check
+      text: 'theme: light \(system\)'
+    timeout: 10000
+- tapOn:
+    id: theme-night
+- extendedWaitUntil:
+    visible:
+      id: theme-check
+      text: 'theme: night \(preference\)'
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: profile-06-night
+- tapOn:
+    id: theme-system
+- extendedWaitUntil:
+    visible:
+      id: theme-check
+      text: 'theme: light \(system\)'
+    timeout: 10000
+
+# --- «Legal y ayuda»: the Terms, the Privacy Policy and the email, then sign-out and deletion below them.
+- scrollUntilVisible:
+    element:
+      id: profile-version
+    direction: DOWN
+- assertVisible:
+    id: profile-terms
+- assertVisible:
+    id: profile-privacy
+- assertVisible:
+    id: profile-contact
+    text: '.*hola@seibiapp\.com.*'
+- assertVisible:
+    id: sign-out
+- assertVisible:
+    id: delete-account
+- assertVisible:
+    id: profile-version
+    text: 'Seibi · .*'
+- waitForAnimationToEnd
+- takeScreenshot: profile-07-legal
+# The Privacy Policy opens in the in-app browser; closing it comes back to Perfil.
+- tapOn:
+    id: profile-privacy
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: profile-08-privacy
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: 'Listo|OK|Done|Cerrar|Close'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- extendedWaitUntil:
+    visible:
+      id: profile-screen
+    timeout: 15000
+- stopRecording

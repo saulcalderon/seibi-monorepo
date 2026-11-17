@@ -192,6 +192,11 @@ name: Tabs keep their place, the [+] opens the actions, a link opens a Vehicle
 - runFlow: open-profile.yaml
 - assertVisible:
     id: tab-home
+# Perfil scrolls: bring it on screen first.
+- scrollUntilVisible:
+    element:
+      id: theme-check
+    direction: DOWN
 - assertVisible:
     id: theme-check
 - waitForAnimationToEnd
