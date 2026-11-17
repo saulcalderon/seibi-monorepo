@@ -65,7 +65,7 @@ name: Inicio shows the greeting, the active Vehicle, its Mileage and opens it
 - waitForAnimationToEnd
 - takeScreenshot: home-03-update-mileage
 - tapOn:
-    id: mileage-sheet-close
+    id: mileage-close
 - extendedWaitUntil:
     notVisible:
       id: mileage-sheet
