@@ -34,7 +34,7 @@ Preconditions:
 - The seibi-dev test account is available to `verify.sh` (see [`auth.md`](./auth.md)): Perfil needs a session, so the flow signs in first when signed out (`sign-in.yaml`), then opens Perfil (`open-profile.yaml`).
 - On iOS, the simulator has rebooted at least once since it was created (`launch` does this for a simulator it creates; see Gotchas).
 
-- **Start in light.** Run `.claude/skills/verify/scripts/verify.sh drive ios theme` (then `android`). The flow sets the device to light (`setDarkMode: disabled`), cold-starts the app, signs in if needed, opens Perfil, taps `id: theme-system` and waits for `id: theme-check` to read `theme: light (system)`. Screenshot `system-light`: light palette.
+- **Start in light.** Run `.agents/skills/verify/scripts/verify.sh drive ios theme` (then `android`). The flow sets the device to light (`setDarkMode: disabled`), cold-starts the app, signs in if needed, opens Perfil, taps `id: theme-system` and waits for `id: theme-check` to read `theme: light (system)`. Screenshot `system-light`: light palette.
 - **Phone goes dark.** The flow runs `setDarkMode: enabled` and waits for `theme: night (system)`, then asserts `profile-screen` and `tab-home` are still on screen. Screenshot `system-night`: night palette. The video shows the screen recolour in place.
 - **Phone back to light.** `setDarkMode: disabled`; `theme-check` reads `theme: light (system)` again.
 - **Oscuro.** The flow taps `id: theme-night` and waits for `theme: night (preference)`, with the phone still light. Screenshot `preference-night`.

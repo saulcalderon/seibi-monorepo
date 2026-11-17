@@ -36,8 +36,10 @@ matching feature file as the recipe. The commands come from
   `maestro.log`, `report.xml` and `doctor.txt`.
 - A journey that saves data also needs a read-only seibi-dev `SELECT`
   showing the saved row.
-- Prove on iOS and Android when the change touches both. Report a platform
-  that could not run, with the command tried and the unmet precondition.
+- Prove on the platforms the change's tier asks for (`AGENTS.md` → Prove
+  it works: Android for a new screen, a journey that saves data, or
+  platform-specific code). Report a platform that could not run, with the
+  command tried and the unmet precondition.
 - Do not report a skipped entry point as verified through a different path.
 
 ## Feature entry contract
