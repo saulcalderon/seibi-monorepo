@@ -1,7 +1,7 @@
 # Feature: Mi flota and the Vehicle form (features/fleet.md). Run through
 # scripts/verify.sh drive <ios|android> fleet. It signs in before the
-# recording starts, then adds a Kia Rio 2020 plated S5-RIO-01 with vPIC's
-# make and model, finds it by Plate, edits it, withdraws and restores it, and
+# recording starts, then adds a Kia Rio 2020 plated S5-RIO-01 with a searched make and a
+# typed model, finds it by Plate, edits it, withdraws and restores it, and
 # withdraws it again at the end, so the next run starts from the same state.
 # It never touches any other Vehicle of the test account.
 appId: ${APP_ID}
@@ -81,12 +81,35 @@ name: Mi flota lists, searches, adds, edits, withdraws and restores a Vehicle
     id: vehicle-form-model
 - extendedWaitUntil:
     visible:
-      id: pick-option-Rio
-    timeout: 20000
-- waitForAnimationToEnd
-- takeScreenshot: fleet-05-models
-- tapOn:
-    id: pick-option-Rio
+      id: pick-model
+    timeout: 15000
+- runFlow: fleet-search-field.yaml
+- inputText: Rio
+# The model list comes from vPIC; when it's down the picker shows its error
+# note and the typed row «Usar "Rio"» still works. Either way Rio is picked.
+- runFlow:
+    when:
+      visible: 'No pudimos cargar la lista. Puedes escribirlo tú en la búsqueda.'
+    commands:
+      - hideKeyboard
+      - waitForAnimationToEnd
+      - takeScreenshot: fleet-05-models
+- runFlow:
+    when:
+      visible:
+        id: pick-custom
+    commands:
+      - tapOn:
+          id: pick-custom
+- runFlow:
+    when:
+      notVisible:
+        id: pick-custom
+    commands:
+      - waitForAnimationToEnd
+      - takeScreenshot: fleet-05-models
+      - tapOn:
+          id: pick-option-Rio
 - extendedWaitUntil:
     visible: 'Modelo, Rio.*'
     timeout: 10000

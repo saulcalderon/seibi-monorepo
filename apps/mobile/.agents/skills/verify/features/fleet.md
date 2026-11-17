@@ -73,8 +73,10 @@ Preconditions:
 - **List, add, search, edit, withdraw, restore.** `drive ios fleet`
   (then `android`). It signs in before `startRecording`, shows the list
   (`fleet-01-list`), opens the empty form and proves the first-field
-  error (`fleet-02`, `fleet-03`), picks make «Kia» and model «Rio» from
-  vPIC (`fleet-04-brand-search`, `fleet-05-models`), fills engine, Plate
+  error (`fleet-02`, `fleet-03`), picks make «Kia» from the popular list
+  (`fleet-04-brand-search`) and types model «Rio» — «Usar “Rio”» when
+  vPIC is down (its error note shows), the list option when it's up
+  (`fleet-05-models`), fills engine, Plate
   «S5-RIO-01», paint and Mileage 12,345 with the keyboard up and «Guardar»
   visible (`fleet-06`, `fleet-07`), saves (`fleet-08-added`), searches by
   Plate (`fleet-09`), «Sin resultados» + «Ver todos» (`fleet-10`), the
@@ -102,7 +104,8 @@ Preconditions:
 - The header search bar is a system control: the subflow taps its
   placeholder on iOS («Buscar…») and the toolbar search icon + field on
   Android; «Cancelar»/«Cancel» dismisses it.
-- vPIC data is remote and long: `pick-option-` waits are generous; a
-  slow network, not the app, is the usual failure.
+- vPIC data is remote and can be down: the flow picks the make from the
+  always-rendered popular list and takes the model's free-text «Usar …»
+  row when the list fails (the error note is asserted only then).
 - iOS and Android name the destructive button differently («Retirar» vs
   «RETIRAR»); the flows match `Retirar|RETIRAR`.
