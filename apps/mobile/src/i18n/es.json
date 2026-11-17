@@ -490,6 +490,121 @@
       }
     }
   },
+  "onboarding": {
+    "category": {
+      "name": "Tú",
+      "level": "Conocimiento",
+      "check": "Conocimiento",
+      "result": "Conocimiento",
+      "location": "Ubicación",
+      "vehicle": "Tu Vehículo",
+      "usage": "Uso",
+      "history": "Mantenimiento",
+      "notifications": "Avisos"
+    },
+    "step": "{{category}}, paso {{index}} de {{count}}",
+    "continue": "Continuar",
+    "name": {
+      "title": "¡Bienvenido a Seibi!",
+      "body": "Te haremos unas preguntas rápidas para adaptar Seibi a ti. Toma unos 2 minutos.",
+      "label": "¿Cómo te llamamos?",
+      "placeholder": "Tu nombre"
+    },
+    "level": {
+      "title": "¿Cuánto sabes de carros?",
+      "body": "Sé honesto: así te explicamos las cosas a tu medida. Lo puedes cambiar después.",
+      "group": "Nivel de conocimiento"
+    },
+    "check": {
+      "coolantMark": "Luz del tablero: un termómetro sobre unas ondas"
+    },
+    "result": {
+      "yourLevel": "Tu nivel",
+      "other": "Prefiero otro nivel",
+      "none": {
+        "title": "Te guiaremos paso a paso",
+        "body": "Usaremos palabras sencillas, te explicaremos cada pieza y te diremos exactamente qué pedir en el taller."
+      },
+      "basic": {
+        "title": "Vas bien encaminado",
+        "body": "Te explicaremos lo menos común y te recordaremos lo importante sin llenarte de términos técnicos."
+      },
+      "intermediate": {
+        "title": "Hablas el idioma del taller",
+        "body": "Verás nombres técnicos, costos por pieza y el detalle del plan de mantenimiento."
+      },
+      "advanced": {
+        "title": "Modo experto",
+        "body": "Te mostraremos especificaciones, planes de uso severo, números de parte y fuentes del fabricante."
+      }
+    },
+    "location": {
+      "title": "¿Dónde usas tu Vehículo?",
+      "body": "Lo usamos para estimar precios de tu zona y ajustar el plan del fabricante a tu país.",
+      "country": "País",
+      "countryOption": "{{flag}} {{name}}",
+      "city": "Ciudad",
+      "cityPlaceholderSV": "San Salvador, Santa Ana…",
+      "cityPlaceholderUS": "Houston, Los Ángeles…"
+    },
+    "vehicle": {
+      "title": "Agrega tu Vehículo",
+      "bodyExplain": "Con la marca, el modelo y el año buscamos qué mantenimiento necesita. Lo demás es opcional.",
+      "body": "Buscamos el plan del fabricante para tu marca, modelo, año y motor.",
+      "submit": "Agregar y continuar",
+      "later": "Lo agrego después",
+      "added": "Vehículo agregado"
+    },
+    "usage": {
+      "title": "¿Cómo usas tu Vehículo?",
+      "body": "Con esto calculamos cuándo te toca cada mantenimiento, incluso antes de que actualices el kilometraje.",
+      "presets": {
+        "daily": "Todos los días, al trabajo o a estudiar",
+        "some": "Algunos días a la semana",
+        "weekend": "Casi solo fines de semana"
+      },
+      "routineNames": {
+        "daily": "Trabajo o estudio",
+        "some": "Recorridos frecuentes",
+        "weekend": "Fines de semana"
+      },
+      "distance": "Distancia de ida y vuelta en un día normal",
+      "distanceHint": "Un cálculo aproximado está bien. Puedes verlo en tu app de mapas.",
+      "distanceRequired": "Escribe la distancia aproximada.",
+      "saveFailed": "No pudimos guardar. Intenta de nuevo.",
+      "skip": "Prefiero no decirlo"
+    },
+    "history": {
+      "title": "Tu último mantenimiento",
+      "bodyExplain": "No pasa nada si no te acuerdas exacto. Con una idea aproximada te avisamos a tiempo.",
+      "body": "Aproximado basta. Luego puedes registrar los Servicios con fecha y kilometraje exactos.",
+      "questions": {
+        "engine_oil": "¿Cuándo le cambiaron el aceite por última vez?",
+        "tire_rotation": "¿Y la última rotación de llantas?",
+        "battery": "¿Cuándo cambiaron la batería?"
+      },
+      "when": {
+        "under3": "< 3 meses",
+        "3to6": "3–6 meses",
+        "6to12": "6–12 meses",
+        "over12": "+1 año",
+        "unknown": "No sé"
+      },
+      "calculate": "Calcular mis avisos"
+    },
+    "notifications": {
+      "title": "¿Te avisamos a tiempo?",
+      "body": "Te mandamos una notificación cuando se acerque un mantenimiento o toque actualizar el kilometraje. Nada de publicidad.",
+      "enable": "Activar avisos",
+      "later": "Ahora no"
+    },
+    "done": {
+      "title": "Se guardó tu información",
+      "body": "Ya está todo listo.",
+      "failed": "No pudimos guardar. Intenta de nuevo.",
+      "retry": "Reintentar"
+    }
+  },
   "countries": {
     "SV": "El Salvador",
     "US": "Estados Unidos"
