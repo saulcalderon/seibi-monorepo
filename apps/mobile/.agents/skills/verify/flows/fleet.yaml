@@ -294,7 +294,14 @@ name: Mi flota lists, searches, adds, edits, withdraws and restores a Vehicle
     timeout: 10000
 - hideKeyboard
 
-# --- Clean up: withdraw it again from the card's menu.
+# --- Clean up: withdraw it again from the card's menu. The withdrawn
+# section below can leave the card clipped at the top: bring it (and its
+# menu) back into view first.
+- scrollUntilVisible:
+    element:
+      id: fleet-vehicle-0-menu
+    direction: UP
+    timeout: 10000
 # Never open a card's menu without proving the card is an S5 test Vehicle
 # (the card's spoken label carries its Plate).
 - assertVisible:
