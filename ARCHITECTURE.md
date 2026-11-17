@@ -421,8 +421,8 @@ The migration's order, scope and tickets are in
   `?tab=` param (`mantenimiento` default, `historial`, `uso`, `datos`)
   names the tab and switches with `router.setParams`. The header edits
   (`vehicle/<id>/edit`), the hero reuses the art Inicio's stage extracts
-  (`src/vehicle/vehicle-art.tsx`), and three tiles lead to
-  update-mileage, the Reminder groups and Uso. Mantenimiento carries the
+  (`src/vehicle/vehicle-art.tsx`), and of the three tiles Kilometraje
+  opens update-mileage, Salud only reads, and Uso switches to its tab. Mantenimiento carries the
   schedule banner («Buscar plan del fabricante» runs
   `useRefreshVehicleData`) and the Vencido/Pronto/Al día Reminder groups;
   the rows are read-only until the Reminder detail (S9), as are «Citas y
