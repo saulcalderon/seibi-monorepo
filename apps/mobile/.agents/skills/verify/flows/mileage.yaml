@@ -40,7 +40,17 @@ name: Update Mileage opens from [+] and Inicio, validates and saves today's read
 # bounds mid-animation, so a tap aimed at the header can miss. Tapping a
 # non-interactive line dismisses the number pad (keyboardShouldPersistTaps)
 # and lets the sheet settle.
-- tapOn: '.*próximos mantenimientos con este dato.*'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      # Back drops the number pad (and never the sheet, while it's up).
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: '.*próximos mantenimientos con este dato.*'
 - waitForAnimationToEnd
 - takeScreenshot: mileage-01-sheet
 - tapOn:
@@ -87,7 +97,17 @@ name: Update Mileage opens from [+] and Inicio, validates and saves today's read
 - eraseText: 12
 # The field autofocuses on open, so the number pad covers the bump chips:
 # dismiss it the same way before tapping or the key below eats the tap.
-- tapOn: '.*próximos mantenimientos con este dato.*'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      # Back drops the number pad (and never the sheet, while it's up).
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: '.*próximos mantenimientos con este dato.*'
 - waitForAnimationToEnd
 - tapOn:
     id: mileage-bump-100
