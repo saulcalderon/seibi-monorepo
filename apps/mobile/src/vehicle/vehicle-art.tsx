@@ -16,16 +16,17 @@ import { Silhouette } from '@/ui/silhouette';
  * The Vehicle's art, shared by Inicio's stage and the Vehicle detail hero
  * (the PWA's VehicleVisual): the fal poster when it exists, feathered into
  * the floor, else the paint-coloured silhouette standing on the floor with
- * its reflection. The caller shapes the box and the silhouette's width.
+ * its reflection. The caller shapes the box and the silhouette's width, and
+ * names the art: `testID` becomes `<testID>-poster` or `<testID>-silhouette`.
  */
-export function VehicleArt({ vehicle, paint, silhouetteWidth, testID }: { vehicle: VehicleView; paint: string; silhouetteWidth: number; testID?: string }) {
+export function VehicleArt({ vehicle, paint, silhouetteWidth, testID }: { vehicle: VehicleView; paint: string; silhouetteWidth: number; testID: string }) {
   const poster = useCachedPoster(vehicle.render?.posterUrl ?? null);
 
   if (vehicle.render?.posterUrl && !poster.failed) {
     return (
       <>
         <View style={[styles.glow, { backgroundImage: paintGlow(paint) }]} />
-        {poster.file ? <Poster vehicle={vehicle} file={poster.file} /> : null}
+        {poster.file ? <Poster vehicle={vehicle} file={poster.file} testID={`${testID}-poster`} /> : null}
       </>
     );
   }
@@ -40,7 +41,7 @@ export function VehicleArt({ vehicle, paint, silhouetteWidth, testID }: { vehicl
         <View style={styles.reflectionFade} />
       </View>
       <View style={styles.carBox}>
-        <Silhouette bodyType={vehicle.bodyType} paint={paint} width={silhouetteWidth} testID={testID} />
+        <Silhouette bodyType={vehicle.bodyType} paint={paint} width={silhouetteWidth} testID={`${testID}-silhouette`} />
       </View>
     </>
   );
@@ -83,7 +84,7 @@ export function useCachedPoster(url: string | null) {
  * masked; in light the masked poster multiplies into the floor, so its grey
  * sweep becomes the floor's shade. It fades in once, the first time it shows.
  */
-function Poster({ vehicle, file }: { vehicle: VehicleView; file: string }) {
+function Poster({ vehicle, file, testID }: { vehicle: VehicleView; file: string; testID: string }) {
   const { t } = useTranslation();
   const reduced = useReducedMotion();
   const mask = `feather-${useId().replace(/:/g, '')}`;
@@ -100,7 +101,7 @@ function Poster({ vehicle, file }: { vehicle: VehicleView; file: string }) {
             accessible
             accessibilityRole="image"
             accessibilityLabel={t('home.stage.poster', { name: vehicleName(vehicle), year: vehicle.year })}
-            testID="vehicle-poster"
+            testID={testID}
           >
             <Defs>
               <RadialGradient id={`${mask}-fade`} cx="50%" cy="50%" rx="50%" ry="50%">

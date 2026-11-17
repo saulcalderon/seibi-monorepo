@@ -206,7 +206,7 @@ function StagePage({
 function StageCar({ vehicle, pageWidth, paint }: { vehicle: VehicleView; pageWidth: number; paint: string }) {
   const { theme } = useUnistyles();
   const silhouetteWidth = Math.min(pageWidth * CAR_WIDTH, theme.size.stage.floor * CAR_HEIGHT * SILHOUETTE_RATIO);
-  return <VehicleArt vehicle={vehicle} paint={paint} silhouetteWidth={silhouetteWidth} testID="home-vehicle-silhouette" />;
+  return <VehicleArt vehicle={vehicle} paint={paint} silhouetteWidth={silhouetteWidth} testID="home-vehicle" />;
 }
 
 /** A pager dot: the active one is wider and takes the paint's accent; both change in 200 ms. */
