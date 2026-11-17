@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { TextInput, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import { errorMessage, InputError } from '@/data/errors';
@@ -80,6 +80,12 @@ function MileageFormBody({ vehicles, vehicle: startVehicle }: { vehicles: Vehicl
   const [digits, setDigits] = useState('');
   const [error, setError] = useState<FormError | null>(null);
   const vehicle = vehicles.find((v) => v.id === vehicleId) ?? startVehicle;
+  /** Focused after the sheet settles: `autoFocus` races the formSheet's presentation on iOS. */
+  const input = useRef<ComponentRef<typeof TextInput>>(null);
+  useEffect(() => {
+    const focus = setTimeout(() => input.current?.focus(), 350);
+    return () => clearTimeout(focus);
+  }, []);
   const reading = digits ? Number(digits) : null;
 
   const change = (next: string) => {
@@ -170,7 +176,7 @@ function MileageFormBody({ vehicles, vehicle: startVehicle }: { vehicles: Vehicl
         placeholder={formatNumber(vehicle.odometer ?? 0)}
         error={fieldError}
         errorTestID="mileage-error"
-        autoFocus
+        ref={input}
       />
 
       <View style={styles.bumps}>
