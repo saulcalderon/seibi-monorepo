@@ -413,6 +413,38 @@ The migration's order, scope and tickets are in
   stay restorable for 30 days (`withdrawnDaysLeft`, counted up); Mi
   flota lists them under «Ver Vehículos retirados (n)», the last
   withdrawn first, each with «Restaurar».
+- **Registrar un Servicio** (S7, SEI-62): the PWA's Service sheet as a
+  `formSheet` route, `record-service` (`src/service/service-form.tsx`,
+  the Vehicle's list in `src/service/vehicle-services.tsx`). Its params
+  are `?vehicleId=` (pre-picked Vehicle, no picker), `?serviceId=` (edit
+  that Service, which also offers «Quitar del historial») and `?tasks=` (pre-checked
+  Maintenance tasks). It opens from the [+] actions sheet and from the
+  Vehicle detail's «Servicios» list.
+  - **Rules.** The draft's Zod schema and the payload builder live in
+    `src/data/service/form.ts` (unit-tested in `form.test.ts`), the final
+    checks in `src/data/service/rules.ts` (`validateService`). The order,
+    as the PWA runs it: the reading first (`service_reading_required`),
+    then the cost texts (`cost_invalid`; per line when «Costo por línea»
+    is on, else the total), then `validateService`: the date, the
+    odometer, at least one task or named line (`service_items_required`),
+    the total. Two differences from the PWA: unreadable cost text fails
+    with `cost_invalid` where the PWA saved an empty cost, and a null
+    reading can never reach the payload (the builder throws, never a 0).
+  - **Saving.** `useSaveService` (`src/data/service/mutations.ts`) writes
+    the `mileage_readings` row first and then the `services` row pointing
+    at it — no trigger on `mileage_readings` — then the `service_items`.
+    Editing updates the same rows; withdrawing sets the Service's
+    `deleted_at` and always keeps its Mileage reading.
+  - **Unsaved changes.** Unlike the PWA, the sheet asks before closing
+    with unsaved input (the `FormLayout` rule in DESIGN.md): the guard is
+    `usePreventRemove`, driven by `repeat()` so a fast close after typing
+    still asks «¿Descartar los cambios?». A clean sheet closes with no
+    prompt.
+  - **The Vehicle's list.** The Vehicle detail's «Servicios» is a
+    stop-gap (`src/service/vehicle-services.tsx`): its rows open the edit
+    sheet. The PWA's expandable Service card — lines with part brand,
+    part number and cost, Taller, notas, «Quitar» — comes with S6
+    (SEI-61).
 - **Styling:** Unistyles 3 (`react-native-unistyles` on
   `react-native-nitro-modules`; SEI-42's spike proved it on SDK 58 on both
   platforms). The theme lives in `src/theme/`, values from

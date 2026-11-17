@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { errorMessage } from '@/data/errors';
 import type { VehicleView } from '@/data/garage/types';
 import { useRestoreVehicle, useWithdrawVehicle } from '@/data/vehicle/mutations';
-import { todayIso, vehicleName } from '@/lib/format';
+import { isoDate, vehicleName } from '@/lib/format';
 import { confirm, notify } from '@/ui/toast';
 
 import { withdrawMessage } from './withdraw-message';
@@ -19,7 +19,7 @@ export function useWithdrawWithConfirm() {
   const run = async (vehicle: VehicleView) => {
     const ok = await confirm({
       title: t('withdraw.title', { name: vehicleName(vehicle) }),
-      message: withdrawMessage(vehicle, todayIso(), t),
+      message: withdrawMessage(vehicle, isoDate(), t),
       confirmLabel: t('withdraw.confirm'),
       cancelLabel: t('withdraw.cancel'),
       destructive: true,

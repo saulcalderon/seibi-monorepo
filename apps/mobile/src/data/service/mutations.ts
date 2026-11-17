@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { todayIso } from '@/lib/format';
+import { isoDate } from '@/lib/format';
 
 import { useGarageMutation } from '../garage/use-garage';
 import { serviceReading } from '../mileage/rules';
@@ -20,7 +20,7 @@ const INVOICES = 'service-invoices';
  */
 export function useSaveService() {
   return useGarageMutation(async (input: ServiceInput) => {
-    validateService(input, todayIso());
+    validateService(input, isoDate());
     await currentUserId();
     const reading = serviceReading({ reading: input.reading, performedOn: input.performedOn });
     const fields = {
@@ -73,11 +73,12 @@ export function useSaveService() {
 
     const codes = input.items.map((i) => i.taskCode).filter((c): c is string => Boolean(c));
     if (codes.length > 0) {
-      await supabase
+      const { error } = await supabase
         .from('reminder_states')
         .update({ last_unknown: false, snoozed_until: null })
         .eq('vehicle_id', input.vehicleId)
         .in('task_code', codes);
+      if (error) throw error;
     }
 
     if (input.appointmentId) {

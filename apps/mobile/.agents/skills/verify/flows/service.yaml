@@ -1,0 +1,292 @@
+# Feature: record, edit and withdraw a Service (features/service.md). Run
+# through scripts/verify.sh drive <ios|android> service. It signs in before
+# the recording starts, records a Service with two lines on the test
+# account's first Vehicle (the Toyota Yaris 2015) from the [+], checks that
+# the Vehicle's Reminders moved, edits it from the Vehicle, then withdraws
+# it, so the run leaves no Service behind. Its notes say «verify SEI-62».
+appId: ${APP_ID}
+name: Record a Service from the [+], edit it and withdraw it
+---
+- setDarkMode: disabled
+- stopApp
+- openLink: ${DEV_URL}
+- runFlow: sign-in.yaml
+# The test account's first Vehicle, read the way another device would, to open it by link.
+- runScript:
+    file: scripts/first-vehicle.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}
+- startRecording: service
+
+# --- Before: the oil change has no Service yet, so Avisos asks when it was.
+- tapOn:
+    id: tab-reminders
+- extendedWaitUntil:
+    visible: 'Cambio de aceite, ¿Cuándo fue la última vez\?'
+    timeout: 20000
+- takeScreenshot: service-01-reminders-before
+
+# --- The [+] → «Registrar un Servicio» opens the form on the active Vehicle.
+- tapOn:
+    id: open-actions
+- extendedWaitUntil:
+    visible:
+      id: actions-sheet
+    timeout: 15000
+- tapOn:
+    id: action-record-service
+- extendedWaitUntil:
+    visible:
+      id: service-form
+    timeout: 20000
+- assertVisible:
+    id: service-form-title
+    text: Registrar Servicio
+# With more than one Vehicle (other tickets' test Vehicles), pick the Yaris.
+- runFlow:
+    when:
+      visible:
+        id: service-vehicle
+    commands:
+      - tapOn:
+          id: service-vehicle
+      - tapOn: '${output.vehicleName} 2015'
+- waitForAnimationToEnd
+- takeScreenshot: service-02-form
+
+# --- Guardar with nothing done: the form says what is missing and stays open.
+- tapOn:
+    id: service-save
+- extendedWaitUntil:
+    visible: 'Agrega al menos un trabajo o pieza.'
+    timeout: 5000
+- takeScreenshot: service-03-items-required
+
+# --- Two lines: a Maintenance task chip and a part of our own.
+- tapOn:
+    id: service-task-engine_oil
+- assertNotVisible: 'Agrega al menos un trabajo o pieza.'
+- scrollUntilVisible:
+    element:
+      id: service-add-item
+    centerElement: true
+- tapOn:
+    id: service-add-item
+- scrollUntilVisible:
+    element:
+      id: service-item-1-name
+    centerElement: true
+- tapOn:
+    id: service-item-1-name
+- inputText: Bombillo de freno
+- assertVisible:
+    id: service-save
+- takeScreenshot: service-04-keyboard-text
+# Costs per line: their sum is the total.
+- runFlow: service-hide-keyboard.yaml
+- scrollUntilVisible:
+    element:
+      id: service-per-item-cost
+    centerElement: true
+- tapOn:
+    id: service-per-item-cost
+- scrollUntilVisible:
+    element:
+      id: service-item-0-cost
+    centerElement: true
+- tapOn:
+    id: service-item-0-cost
+- inputText: '45.50'
+- assertVisible:
+    id: service-save
+- takeScreenshot: service-05-keyboard-number
+- runFlow: service-hide-keyboard.yaml
+- scrollUntilVisible:
+    element:
+      id: service-item-1-cost
+    centerElement: true
+- tapOn:
+    id: service-item-1-cost
+- inputText: '12'
+- runFlow: service-hide-keyboard.yaml
+- scrollUntilVisible:
+    element:
+      id: service-items-total
+    centerElement: true
+- assertVisible:
+    id: service-items-total
+    text: 'Total: \$57\.50'
+
+# --- The Mileage of that day is required. The flow types today's odometer
+# (52,000) so the shared Yaris's current Mileage doesn't move.
+- scrollUntilVisible:
+    element:
+      id: service-mileage
+    centerElement: true
+- tapOn:
+    id: service-mileage
+- eraseText: 12
+- runFlow: service-hide-keyboard.yaml
+- tapOn:
+    id: service-save
+- extendedWaitUntil:
+    visible: 'Escribe el kilometraje de ese día.'
+    timeout: 5000
+- takeScreenshot: service-06-mileage-required
+- tapOn:
+    id: service-mileage
+- inputText: '52000'
+- assertVisible:
+    id: service-mileage
+    text: '52,000'
+- runFlow: service-hide-keyboard.yaml
+
+# --- Shop and notes; Guardar stays above the keyboard on the last field.
+- scrollUntilVisible:
+    element:
+      id: service-shop
+    centerElement: true
+- tapOn:
+    id: service-shop
+- inputText: Taller Central
+- runFlow: service-hide-keyboard.yaml
+- scrollUntilVisible:
+    element:
+      id: service-notes
+    centerElement: true
+- tapOn:
+    id: service-notes
+- inputText: verify SEI-62
+- assertVisible:
+    id: service-save
+- takeScreenshot: service-07-keyboard-notes
+- tapOn:
+    id: service-save
+    waitToSettleTimeoutMs: 500
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: 'Servicio registrado'
+          timeout: 10000
+- extendedWaitUntil:
+    notVisible:
+      id: service-form
+    timeout: 15000
+- takeScreenshot: service-08-saved
+
+# --- After: the oil change's Reminder now counts from this Service; it
+# leaves the top of the list (unknown Reminders come first) for its place.
+- assertNotVisible: 'Cambio de aceite, ¿Cuándo fue la última vez\?'
+- scrollUntilVisible:
+    element:
+      text: 'Cambio de aceite, En .*'
+    timeout: 20000
+    centerElement: true
+- takeScreenshot: service-09-reminders-after
+
+# --- The Vehicle lists it; a tap opens it to edit.
+- openLink: ${APP_URL}vehicle/${output.vehicleId}
+- runFlow:
+    when:
+      platform: iOS
+      visible: 'Open|Abrir'
+    commands:
+      - tapOn: 'Open|Abrir'
+- extendedWaitUntil:
+    visible:
+      id: vehicle-name
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: vehicle-service-0
+    centerElement: true
+- assertVisible:
+    id: vehicle-service-0
+    text: 'Cambio de aceite, Bombillo de freno.*52,000 km.*'
+- takeScreenshot: service-10-vehicle-services
+- tapOn:
+    id: vehicle-service-0
+- extendedWaitUntil:
+    visible:
+      id: service-form-title
+      text: Editar Servicio
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: service-11-edit
+- tapOn:
+    id: service-type-repair
+- scrollUntilVisible:
+    element:
+      id: service-shop
+    centerElement: true
+- assertVisible:
+    id: service-shop
+    text: Taller Central
+- tapOn:
+    id: service-shop
+- eraseText: 20
+- inputText: Taller Norte
+- runFlow: service-hide-keyboard.yaml
+- tapOn:
+    id: service-save
+    waitToSettleTimeoutMs: 500
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: 'Servicio actualizado'
+          timeout: 10000
+- extendedWaitUntil:
+    notVisible:
+      id: service-form
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: vehicle-service-0
+      text: '.*Reparación.*'
+    timeout: 15000
+- takeScreenshot: service-12-edited
+
+# --- Withdraw: it asks first, then the Service leaves the history.
+- tapOn:
+    id: vehicle-service-0
+- extendedWaitUntil:
+    visible:
+      id: service-form-title
+      text: Editar Servicio
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: service-withdraw
+    centerElement: true
+- tapOn:
+    id: service-withdraw
+- extendedWaitUntil:
+    visible: '¿Quitar este Servicio del historial\?'
+    timeout: 5000
+- takeScreenshot: service-13-withdraw-confirm
+- tapOn: 'Quitar'
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: 'Servicio quitado del historial'
+          timeout: 10000
+- extendedWaitUntil:
+    notVisible:
+      id: service-form
+    timeout: 15000
+- extendedWaitUntil:
+    notVisible:
+      id: vehicle-service-0
+      text: '.*Bombillo de freno.*'
+    timeout: 15000
+- takeScreenshot: service-14-withdrawn
+- stopRecording

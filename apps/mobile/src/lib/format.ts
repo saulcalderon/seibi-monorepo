@@ -44,7 +44,7 @@ export function formatUsdRange(range: { min: number; max: number } | null | unde
 }
 
 /** The local calendar day as YYYY-MM-DD (a Mileage reading's or a Service's date). */
-export function todayIso(now = new Date()) {
+export function isoDate(now = new Date()) {
   const y = now.getFullYear();
   const m = String(now.getMonth() + 1).padStart(2, '0');
   const d = String(now.getDate()).padStart(2, '0');
