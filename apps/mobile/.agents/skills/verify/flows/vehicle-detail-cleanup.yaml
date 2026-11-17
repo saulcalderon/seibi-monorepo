@@ -8,6 +8,7 @@
 appId: ${APP_ID}
 name: Remove the Services and Routines a failed vehicle-detail run left
 ---
+- startRecording: vehicle-detail-cleanup
 - runScript:
     file: scripts/cleanup-sei61.js
     env:
@@ -16,3 +17,4 @@ name: Remove the Services and Routines a failed vehicle-detail run left
       TEST_EMAIL: ${TEST_EMAIL}
       TEST_PASSWORD: ${TEST_PASSWORD}
 - takeScreenshot: vehicle-detail-cleanup-done
+- stopRecording
