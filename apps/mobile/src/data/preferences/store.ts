@@ -3,7 +3,7 @@ import { useCallback, useSyncExternalStore } from 'react';
 
 import type { VehicleView } from '../garage/types';
 
-import { ACTIVE_VEHICLE_KEY, INTRO_DONE_KEY, PUSH_ANSWER_KEY } from './keys';
+import { ACTIVE_VEHICLE_KEY, INTRO_DONE_KEY } from './keys';
 
 // Read synchronously from the expo-sqlite kv-store (never AsyncStorage), so a
 // screen draws the right Vehicle on its first frame.
@@ -44,16 +44,4 @@ export function isIntroDone() {
 
 export function markIntroDone() {
   Storage.setItemSync(INTRO_DONE_KEY, '1');
-}
-
-export type PushAnswer = 'accepted' | 'declined';
-
-/** Keeps the first run's push answer on this phone, for SEI-47 to ask the system permission. */
-export function savePushAnswer(answer: PushAnswer) {
-  Storage.setItemSync(PUSH_ANSWER_KEY, answer);
-}
-
-export function pushAnswer(): PushAnswer | null {
-  const stored = Storage.getItemSync(PUSH_ANSWER_KEY);
-  return stored === 'accepted' || stored === 'declined' ? stored : null;
 }

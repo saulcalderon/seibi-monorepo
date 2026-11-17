@@ -168,8 +168,8 @@ export const size = {
   pagerDot: { side: 6, active: 18 },
   /** A status card's interval bar on Inicio (`h-1`). */
   bar: 4,
-  /** The first run's bell tile on «¿Te avisamos a tiempo?» (`size-24`), and the confirmation's check (`size-16`). */
-  firstRunArt: { bell: 96, check: 64 },
+  /** The first run's confirmation check (`size-16`). */
+  firstRunCheck: 64,
 } as const;
 
 /**
@@ -208,8 +208,6 @@ export const motion = {
   progress: { duration: 700 },
   /** The first run: the pause after choosing an answer before the next question, and the confirmation's entrance. */
   firstRun: { chosen: 180, confirmFade: 350, checkDelay: 120 },
-  /** The first run's «¿Te avisamos a tiempo?» bell: a 0.8 s wiggle every 2.4 s (the PWA's `repeatDelay: 1.6`). */
-  bell: { duration: 2400, angle: 10, settle: 0.6 },
   /** Cubic-bézier control points: `cubicBezier(...motion.curve.out)`. */
   curve: {
     /** Strong ease-out, for press feedback. */

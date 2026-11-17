@@ -30,9 +30,6 @@ interface FirstRunState {
   setCountry: (country: Country) => void;
   city: string;
   setCity: (city: string) => void;
-  /** The Vehicle added on «Agrega tu Vehículo», if any. */
-  vehicleId: string | null;
-  setVehicleId: (id: string) => void;
 }
 
 const FirstRunContext = createContext<FirstRunState | null>(null);
@@ -48,11 +45,10 @@ export function FirstRunProvider({ children }: { children: ReactNode }) {
   const [level, setLevel] = useState<KnowledgeLevel | null>(null);
   const [country, setCountry] = useState<Country>(profile.data?.country ?? 'SV');
   const [city, setCity] = useState(profile.data?.city ?? '');
-  const [vehicleId, setVehicleId] = useState<string | null>(null);
 
   const value = useMemo(
-    () => ({ name, setName, selfLevel, setSelfLevel, picked, setPicked, level, setLevel, country, setCountry, city, setCity, vehicleId, setVehicleId }),
-    [name, selfLevel, picked, level, country, city, vehicleId],
+    () => ({ name, setName, selfLevel, setSelfLevel, picked, setPicked, level, setLevel, country, setCountry, city, setCity }),
+    [name, selfLevel, picked, level, country, city],
   );
   return <FirstRunContext.Provider value={value}>{children}</FirstRunContext.Provider>;
 }
@@ -64,26 +60,21 @@ export function useFirstRun() {
 }
 
 /** Each step's screen in src/app/onboarding/. */
-export const STEP_HREF: Record<Step | 'done', Href> = {
+const STEP_HREF: Record<Step | 'done', Href> = {
   name: '/onboarding',
   level: '/onboarding/level',
   check: '/onboarding/check',
   result: '/onboarding/result',
   location: '/onboarding/location',
   vehicle: '/onboarding/vehicle',
-  usage: '/onboarding/usage',
-  history: '/onboarding/history',
-  notifications: '/onboarding/notifications',
   done: '/onboarding/done',
 };
 
 /** The step's place («Paso N de M») and a way to the next one, pushed so the system's back returns. */
 export function useStep(step: Step) {
   const router = useRouter();
-  const { vehicleId } = useFirstRun();
-  const hasVehicle = vehicleId !== null;
-  const advance = useCallback(() => router.push(STEP_HREF[nextStep(step, { hasVehicle })]), [router, step, hasVehicle]);
-  return { ...stepPosition(step, { hasVehicle }), advance };
+  const advance = useCallback(() => router.push(STEP_HREF[nextStep(step)]), [router, step]);
+  return { ...stepPosition(step), advance };
 }
 
 /** Whether to explain more (the Knowledge level chosen so far, else the saved one): `knowledgeProfile().explain`. */

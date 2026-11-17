@@ -80,8 +80,8 @@ const styles = StyleSheet.create((theme) => ({
   check: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: theme.size.firstRunArt.check,
-    height: theme.size.firstRunArt.check,
+    width: theme.size.firstRunCheck,
+    height: theme.size.firstRunCheck,
     marginBottom: theme.space[3],
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.inverse,

@@ -48,9 +48,6 @@ function FirstRunStack() {
           headerBackButtonMenuEnabled: false,
         }}
       />
-      <Stack.Screen name="usage" />
-      <Stack.Screen name="history" />
-      <Stack.Screen name="notifications" />
       {/* «Se guardó tu información»: a one-way door, Inicio follows on its own. */}
       <Stack.Screen name="done" options={{ gestureEnabled: false }} />
     </Stack>
