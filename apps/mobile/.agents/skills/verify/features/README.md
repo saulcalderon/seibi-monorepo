@@ -73,6 +73,10 @@ handles, required state, commands and observable proof.
   «Actualizar», «Estado» and «Todo al día», «Sin Vehículos todavía», night.
   Flows: `home` (the real account), `home-fixture` (Seibi Dev's sample
   Vehicles), `home-night`; subflow `home-fixture-open.yaml`.
+- [Mi flota and the Vehicle form](./fleet.md): the card list ordered by
+  urgency, header search and the status chips, add and edit in the modal
+  form, withdraw with the 30-day restore. Flows: `fleet`, `fleet-cleanup`;
+  subflow `fleet-search-field.yaml`.
 - [The app speaks Spanish from es.json](./i18n.md): every word from
   `src/i18n/es.json`, no keys on screen, Spanish also on a device set to
   English. Flow: `i18n-shell`.

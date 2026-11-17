@@ -217,6 +217,8 @@ lines fit its box (`text-fit.ts`).
 | `stage.height` / `stage.floor` | 316 / 220 | Inicio's stage (`h-[316px]`) and the floor under its text where the Vehicle stands; minimums, so the stage grows with its text |
 | `pagerDot.side` / `pagerDot.active` | 6 / 18 | The stage's pager dots; the active one is wider and takes the paint accent |
 | `bar` | 4 | A status card's interval bar on Inicio (`h-1`) |
+| `thumb.width` / `thumb.height` | 96 / 64 | A Vehicle card's thumbnail box: its render or silhouette |
+| `swatch` | 40 | A paint swatch in the Vehicle form (`hitSlop` to `target`) |
 
 - **Opacity** (`opacity`): `disabled` 0.5, `pressed` 0.85 (danger and
   inverse buttons, which have no pressed color), `skeleton` 0.55 (the low
@@ -263,7 +265,8 @@ it natively without a re-render.
 | `Silhouette` | `silhouette.tsx` | One per `BodyType` (`sedan`, `hatchback`, `suv`, `pickup`, `van`, `minivan`, `coupe`, `wagon`), `paint` (silver when unset), `width`; labelled «Silueta del Vehículo» | `components/VehicleVisual.tsx` |
 | `AppleSignInButton`, `GoogleSignInButton` | `src/auth/provider-buttons.tsx` (not in the kit: they belong to sign-in) | Apple's: Apple's own `AppleAuthenticationButton`, «Continuar con Apple», black, a pill, as tall as Google's (Apple's HIG: the system button, equal prominence). Google's: built to Google's branding guidelines: light style (white fill, 1 pt `#747775` stroke, `#1f1f1f` text), the standard four-colour «G» at 20 pt, Google's padding (iOS 16 · 12 · 16, Android 12 · 10 · 12), a pill, «Continuar con Google» in the platform font at 500, 14/20 (`Text` `family="system"`: Google asks for Google Sans, which apps can't embed); `minHeight` 44, grows with the text; a spinner replaces the «G» while Google opens | Login's pills |
 | `UIProvider` | `provider.tsx` | Wraps the root layout: gesture handler, keyboard controller, toaster | — |
-| Combobox (makes and models) | — | Not in the kit yet: it comes with the Vehicle form | `ui/Combobox.tsx` |
+| `PickerField`, `PickerList` | `picker.tsx` | `PickerField` is a `Field` that opens a pushed picker screen: a button showing the chosen value or the placeholder, with a forward chevron and the label spoken with them. `PickerList` is that screen's list (FlashList, the first view so the header's search bar and large title work; dragging it hides the keyboard): headers, notes and options in the inset-grouped style (`groupOptions` gives each option `first`/`middle`/`last`/`only` corners), the chosen one checked, a `custom` «Usar “…”» row that takes what was typed; each option's `spoken` can differ from its label. Replaces the PWA's Combobox for makes, years and models | `ui/Combobox.tsx` |
+| `PaintPicker` | `vehicle/paint-picker.tsx` (a form field, not kit) | The 13 paint presets as a row of `size.swatch` swatches in `theme.art.paint`, one of a group; a tap on the chosen one clears it, so the paint stays optional. Each swatch says its name | The PWA's paint picker |
 | `FloatingAction` | `floating-action.ios.tsx`, `floating-action.tsx` | The floating [+] (SEI-55), 56 pt (`size.fab`), `label` required (spoken alone). iOS: an interactive `GlassView` (`expo-glass-effect`) tinted `radiant` with an `onRadiant` [+], plus the kit's press scale; a solid `inverse` circle where Liquid Glass is missing. Android: Material 3's `FloatingActionButton` from `@expo/ui/jetpack-compose` (its own shape, elevation and ripple), `radiantStrong` with an `onRadiant` glyph (4.88:1). The app shell places it bottom right, `space[3]` above the tab bar | The Dock's centre [+] |
 
 **Native controls (`@expo/ui` 58).** Each was tried on both platforms in
