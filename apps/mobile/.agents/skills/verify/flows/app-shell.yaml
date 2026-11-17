@@ -173,15 +173,15 @@ name: Tabs keep their place, the [+] opens the actions, a link opens a Vehicle
     id: action-update-mileage
 - extendedWaitUntil:
     visible:
-      id: update-mileage-sheet
+      id: mileage-sheet
     timeout: 15000
 - waitForAnimationToEnd
 - takeScreenshot: shell-10-update-mileage
 - tapOn:
-    id: update-mileage-sheet-close
+    id: mileage-sheet-close
 - extendedWaitUntil:
     notVisible:
-      id: update-mileage-sheet
+      id: mileage-sheet
     timeout: 15000
 
 # --- The avatar opens Perfil inside the current tab, under its tab bar.
