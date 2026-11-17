@@ -23,7 +23,7 @@ export function DataTab({ vehicle }: { vehicle: VehicleView }) {
   const router = useRouter();
   const withdraw = useWithdrawWithConfirm();
 
-  const rows: Array<[string, string | null]> = [
+  const rows: [string, string | null][] = [
     [t('vehicleDetail.data.rows.brand'), vehicle.brand],
     [t('vehicleDetail.data.rows.model'), vehicle.model],
     [t('vehicleDetail.data.rows.year'), String(vehicle.year)],

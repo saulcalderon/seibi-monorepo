@@ -3,7 +3,6 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native-unistyles';
 
-import type { VehicleView } from '@/data/garage/types';
 import { useGarage } from '@/data/garage/use-garage';
 import { formatNumber, vehicleName } from '@/lib/format';
 import { TabScroll } from '@/shell/tab-scroll';

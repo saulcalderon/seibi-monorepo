@@ -11,7 +11,7 @@ import { parseNumber } from '@/lib/number';
 import { Button, IconButton } from '@/ui/button';
 import { Chip } from '@/ui/chip';
 import { EmptyState, ErrorState, Skeleton, SkeletonGroup, TextSkeleton } from '@/ui/feedback';
-import { Field, NumberField, TextField } from '@/ui/fields';
+import { Field, TextField } from '@/ui/fields';
 import { FormLayout } from '@/ui/form';
 import { Text } from '@/ui/text';
 import { confirm, notify } from '@/ui/toast';

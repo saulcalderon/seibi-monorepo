@@ -6,7 +6,7 @@ import type { UsageRate } from '@seibi/maintenance-engine/odometer';
 import type { MileageRecord, RoutineRecord, ServiceRecord, VehicleView } from '@/data/garage/types';
 
 /** Services grouped by «YYYY-MM», keeping the order they come from the garage (newest first). */
-export function servicesByMonth(services: readonly ServiceRecord[]): Array<[string, ServiceRecord[]]> {
+export function servicesByMonth(services: readonly ServiceRecord[]): [string, ServiceRecord[]][] {
   const map = new Map<string, ServiceRecord[]>();
   for (const service of services) {
     const key = service.performedOn.slice(0, 7);

@@ -209,9 +209,6 @@ function StageCar({ vehicle, pageWidth, paint }: { vehicle: VehicleView; pageWid
   return <VehicleArt vehicle={vehicle} paint={paint} silhouetteWidth={silhouetteWidth} testID="home-vehicle-silhouette" />;
 }
 
-/** A mask lets through what is white in it: the luminance that keeps the poster, not a colour on screen. */
-const FEATHER_OPAQUE = 'white';
-
 /** A pager dot: the active one is wider and takes the paint's accent; both change in 200 ms. */
 function Dot({ on, accent }: { on: boolean; accent: string }) {
   const reduced = useReducedMotion();
