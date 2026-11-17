@@ -415,13 +415,38 @@ The migration's order, scope and tickets are in
   stay restorable for 30 days (`withdrawnDaysLeft`, counted up); Mi
   flota lists them under «Ver Vehículos retirados (n)», the last
   withdrawn first, each with «Restaurar».
+- **Detalle del Vehículo** (S6, SEI-61): `vehicle/[id]` (in each tab's
+  stack, `src/vehicle-detail/vehicle-detail.tsx`) opens from Mi flota's
+  card, Inicio's stage and the `seibi-dev://vehicle/<id>` deep link. A
+  `?tab=` param (`mantenimiento` default, `historial`, `uso`, `datos`)
+  names the tab and switches with `router.setParams`. The header edits
+  (`vehicle/<id>/edit`), the hero reuses the art Inicio's stage extracts
+  (`src/vehicle/vehicle-art.tsx`), and of the three tiles Kilometraje
+  opens update-mileage, Salud only reads, and Uso switches to its tab. Mantenimiento carries the
+  schedule banner («Buscar plan del fabricante» runs
+  `useRefreshVehicleData`) and the Vencido/Pronto/Al día Reminder groups;
+  the rows are read-only until the Reminder detail (S9), as are «Citas y
+  recordatorios» (appointments and manual Reminders; marking and
+  scheduling wait for S13/S9). Historial groups the Services by month as
+  the PWA's expandable cards (lines, Taller, notes, «Editar», «Quitar»
+  with its confirm; «Factura» waits for S12), stats «Servicios» and
+  «Gastado este año», and the last 8 readings, each opening the
+  `correct-reading` sheet (`src/vehicle-detail/correct-reading-form.tsx`),
+  which fixes a reading's number without moving its date. Uso shows the
+  estimate and the weekly Routines, edited in the `routine` sheet
+  (`src/vehicle-detail/routine-form.tsx` on `useSaveRoutine`/
+  `useDeleteRoutine`). Datos lists the Vehicle's rows, the plan's sources
+  (opened with `expo-web-browser`) and «Retirar de mi flota»
+  (`useWithdrawWithConfirm`). A missing id explains itself and offers «Ir
+  a Mi flota». The pure logic — grouping, totals, sorts, banner variant —
+  lives in `src/vehicle-detail/detail-logic.ts`, unit-tested.
 - **Registrar un Servicio** (S7, SEI-62): the PWA's Service sheet as a
-  `formSheet` route, `record-service` (`src/service/service-form.tsx`,
-  the Vehicle's list in `src/service/vehicle-services.tsx`). Its params
+  `formSheet` route, `record-service` (`src/service/service-form.tsx`).
+  Its params
   are `?vehicleId=` (pre-picked Vehicle, no picker), `?serviceId=` (edit
-  that Service, which also offers «Quitar del historial») and `?tasks=` (pre-checked
+  that Service) and `?tasks=` (pre-checked
   Maintenance tasks). It opens from the [+] actions sheet and from the
-  Vehicle detail's «Servicios» list.
+  Vehicle detail's Historial.
   - **Rules.** The draft's Zod schema and the payload builder live in
     `src/data/service/form.ts` (unit-tested in `form.test.ts`), the final
     checks in `src/data/service/rules.ts` (`validateService`). The order,
@@ -442,11 +467,10 @@ The migration's order, scope and tickets are in
     `usePreventRemove`, driven by `repeat()` so a fast close after typing
     still asks «¿Descartar los cambios?». A clean sheet closes with no
     prompt.
-  - **The Vehicle's list.** The Vehicle detail's «Servicios» is a
-    stop-gap (`src/service/vehicle-services.tsx`): its rows open the edit
-    sheet. The PWA's expandable Service card — lines with part brand,
-    part number and cost, Taller, notas, «Quitar» — comes with S6
-    (SEI-61).
+  - **The Vehicle's list.** The PWA's expandable Service card — lines
+    with part brand, part number and cost, Taller, notas, «Quitar» —
+    lives in Detalle del Vehículo's Historial (S6, SEI-61), which
+    replaced the stop-gap `src/service/vehicle-services.tsx`.
 - **Actualizar Kilometraje** (S8, SEI-63): the PWA's Mileage sheet as a
   `formSheet` route, `update-mileage` (`src/mileage/mileage-form.tsx`,
   logic in `src/mileage/mileage-logic.ts`). Its only param is

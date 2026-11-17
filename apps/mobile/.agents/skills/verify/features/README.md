@@ -77,6 +77,11 @@ handles, required state, commands and observable proof.
   urgency, header search and the status chips, add and edit in the modal
   form, withdraw with the 30-day restore. Flows: `fleet`, `fleet-cleanup`;
   subflow `fleet-search-field.yaml`.
+- [Detalle del Vehículo](./vehicle-detail.md): the hero, the
+  Kilometraje/Salud/Uso tiles, Mantenimiento's banner and Reminder groups,
+  Historial's stats and expandable Service cards with «Corregir lectura»,
+  Uso's routines and Datos' sources and withdraw; the `?tab=` deep link and
+  the missing state. Flows: `vehicle-detail`, `vehicle-detail-cleanup`.
 - [Registrar un Servicio](./service.md): the form sheet from [+] and the
   Vehicle's «Servicios», tasks and lines, validation order, the Mileage
   reading it writes, edit and withdraw, «¿Descartar los cambios?».

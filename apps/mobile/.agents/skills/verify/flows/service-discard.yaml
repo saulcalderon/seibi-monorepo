@@ -20,7 +20,7 @@ name: Unsaved changes on the Service form ask before closing
       TEST_EMAIL: ${TEST_EMAIL}
       TEST_PASSWORD: ${TEST_PASSWORD}
 - startRecording: service-discard
-- openLink: ${APP_URL}vehicle/${output.vehicleId}
+- openLink: ${APP_URL}vehicle/${output.vehicleId}?tab=historial
 - runFlow:
     when:
       platform: iOS
@@ -29,18 +29,18 @@ name: Unsaved changes on the Service form ask before closing
       - tapOn: 'Open|Abrir'
 - extendedWaitUntil:
     visible:
-      id: vehicle-name
+      id: detail-tabs
     timeout: 20000
 - scrollUntilVisible:
     element:
-      id: vehicle-record-service
+      id: record-service
     centerElement: true
 - takeScreenshot: discard-01-vehicle-night
 
 # --- From the Vehicle, that Vehicle comes chosen (the field shows only with
 # more than one Vehicle). Untouched, Cerrar just closes.
 - tapOn:
-    id: vehicle-record-service
+    id: record-service
 - extendedWaitUntil:
     visible:
       id: service-form-title
@@ -62,7 +62,7 @@ name: Unsaved changes on the Service form ask before closing
 
 # --- With a line chosen, a swipe down (Back on Android) asks first.
 - tapOn:
-    id: vehicle-record-service
+    id: record-service
 - extendedWaitUntil:
     visible:
       id: service-form
@@ -120,9 +120,9 @@ name: Unsaved changes on the Service form ask before closing
       id: service-form
     timeout: 10000
 - assertVisible:
-    id: vehicle-services
+    id: detail-tabs
 - assertNotVisible:
-    id: vehicle-service-0
+    id: service-card-0
 - takeScreenshot: discard-05-discarded
 - stopRecording
 - setDarkMode: disabled
