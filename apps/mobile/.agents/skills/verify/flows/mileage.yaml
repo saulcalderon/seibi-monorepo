@@ -1,0 +1,157 @@
+# Feature: Actualizar Kilometraje (features/mileage.md), on the shared
+# seibi-dev test account. Run through scripts/verify.sh drive <ios|android>
+# mileage. Every run permanently raises the active Vehicle's Mileage by 100
+# (readings are corrected, never deleted), so nothing is hardcoded: the
+# current odometer is read from Inicio's `home-odometer` before opening.
+appId: ${APP_ID}
+name: Update Mileage opens from [+] and Inicio, validates and saves today's reading
+---
+- stopApp
+- openLink: ${DEV_URL}
+- runFlow: sign-in.yaml
+- startRecording: mileage
+- stopApp
+- openLink: ${DEV_URL}
+- extendedWaitUntil:
+    visible:
+      id: home-screen
+    timeout: 120000
+# The current odometer, as digits, to build what the flow expects next.
+- copyTextFrom:
+    id: home-odometer
+- evalScript: ${output.current = maestro.copiedText.replace(/[^0-9]/g, '')}
+- evalScript: ${output.next = String(Number(output.current) + 100)}
+- evalScript: ${output.currentText = output.current.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+- evalScript: ${output.nextText = output.next.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+# From the [+] actions sheet; closing with nothing typed asks nothing.
+- tapOn:
+    id: open-actions
+- extendedWaitUntil:
+    visible:
+      id: actions-sheet
+    timeout: 15000
+- tapOn:
+    id: action-update-mileage
+- extendedWaitUntil:
+    visible:
+      id: mileage-sheet
+    timeout: 15000
+# The field autofocuses on open: the keyboard's rise shifts the sheet's
+# bounds mid-animation, so a tap aimed at the header can miss. Tapping a
+# non-interactive line dismisses the number pad (keyboardShouldPersistTaps)
+# and lets the sheet settle.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      # Back drops the number pad (and never the sheet, while it's up).
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: '.*próximos mantenimientos con este dato.*'
+- waitForAnimationToEnd
+- takeScreenshot: mileage-01-sheet
+- tapOn:
+    id: mileage-close
+- extendedWaitUntil:
+    notVisible:
+      id: mileage-sheet
+    timeout: 15000
+# From Inicio's «Actualizar», straight onto this Vehicle.
+- tapOn:
+    id: home-update-mileage
+# Android: the autofocused field's number pad pushes the sheet's header off
+# the top. Wait for the field first (Back before it mounts would pop the
+# sheet), then drop the pad so the header comes back.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: mileage-reading
+          timeout: 15000
+      - back
+      - waitForAnimationToEnd
+# The container testID is intermittently invisible to XCUITest on a
+# re-presented formSheet (its children render fine): wait on a leaf instead.
+- extendedWaitUntil:
+    visible:
+      id: mileage-title
+    timeout: 15000
+- assertVisible:
+    id: mileage-context
+    text: '.*último: ${output.currentText} km.*'
+- assertVisible:
+    id: mileage-reading
+- assertVisible:
+    id: mileage-bump-100
+- assertVisible:
+    id: mileage-bump-500
+- assertVisible:
+    id: mileage-bump-1000
+# A number below the current odometer is refused, in es.json's words.
+- tapOn:
+    id: mileage-reading
+- inputText: '1'
+- tapOn:
+    id: mileage-save
+- extendedWaitUntil:
+    visible:
+      id: mileage-error
+      text: 'Debe ser mayor que el último registro \(${output.currentText} km\)\.'
+    # The refused write still round-trips seibi-dev before it answers.
+    timeout: 30000
+- takeScreenshot: mileage-02-refused
+# «+100» fills current+100 and the save button says so.
+- tapOn:
+    id: mileage-reading
+- eraseText: 12
+# The field autofocuses on open, so the number pad covers the bump chips:
+# dismiss it the same way before tapping or the key below eats the tap.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      # Back drops the number pad (and never the sheet, while it's up).
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: '.*próximos mantenimientos con este dato.*'
+- waitForAnimationToEnd
+- tapOn:
+    id: mileage-bump-100
+- extendedWaitUntil:
+    visible:
+      id: mileage-save
+      text: 'Guardar ${output.nextText} km'
+    timeout: 10000
+- takeScreenshot: mileage-03-bumped
+- tapOn:
+    id: mileage-save
+# The toast's custom view never enters Android's tree long enough to
+# catch; the save is proven by the closed sheet and the new odometer below.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: 'Kilometraje actualizado'
+          timeout: 20000
+- extendedWaitUntil:
+    notVisible:
+      id: mileage-sheet
+    timeout: 15000
+# Inicio's odometer moved to the new number.
+- extendedWaitUntil:
+    visible:
+      id: home-odometer
+      text: '.*${output.nextText}.*'
+    # The refetch behind the sheet's close can take a while over the network.
+    timeout: 60000
+- takeScreenshot: mileage-04-saved
+- stopRecording

@@ -55,20 +55,24 @@ name: Inicio shows the greeting, the active Vehicle, its Mileage and opens it
     start: 50%, 30%
     end: 50%, 80%
     duration: 800
-# «Actualizar» opens the Mileage sheet (a placeholder until S8).
+# «Actualizar» opens the Mileage sheet .
 - tapOn:
     id: home-update-mileage
 - extendedWaitUntil:
     visible:
-      id: update-mileage-sheet
+      id: mileage-sheet
     timeout: 15000
 - waitForAnimationToEnd
 - takeScreenshot: home-03-update-mileage
+# The reading field autofocuses: a tap on a neutral line drops the number
+# pad and lets the sheet settle, so the close tap lands (see mileage.yaml).
+- tapOn: '.*próximos mantenimientos con este dato.*'
+- waitForAnimationToEnd
 - tapOn:
-    id: update-mileage-sheet-close
+    id: mileage-close
 - extendedWaitUntil:
     notVisible:
-      id: update-mileage-sheet
+      id: mileage-sheet
     timeout: 15000
 # The Vehicle's name opens it inside Inicio's tab (a placeholder until S6).
 - tapOn:

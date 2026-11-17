@@ -144,17 +144,17 @@ name: Tabs keep their place, the [+] opens the actions, a link opens a Vehicle
     id: action-record-service
 - extendedWaitUntil:
     visible:
-      id: record-service-sheet
+      id: service-form
     timeout: 15000
 - assertNotVisible:
     id: actions-sheet
 - waitForAnimationToEnd
 - takeScreenshot: shell-09-record-service
 - tapOn:
-    id: record-service-sheet-close
+    id: service-close
 - extendedWaitUntil:
     notVisible:
-      id: record-service-sheet
+      id: service-form
     timeout: 15000
 - tapOn:
     id: tab-home
@@ -173,15 +173,19 @@ name: Tabs keep their place, the [+] opens the actions, a link opens a Vehicle
     id: action-update-mileage
 - extendedWaitUntil:
     visible:
-      id: update-mileage-sheet
+      id: mileage-sheet
     timeout: 15000
 - waitForAnimationToEnd
 - takeScreenshot: shell-10-update-mileage
+# The reading field autofocuses: a tap on a neutral line drops the number
+# pad and lets the sheet settle, so the close tap lands (see mileage.yaml).
+- tapOn: '.*próximos mantenimientos con este dato.*'
+- waitForAnimationToEnd
 - tapOn:
-    id: update-mileage-sheet-close
+    id: mileage-close
 - extendedWaitUntil:
     notVisible:
-      id: update-mileage-sheet
+      id: mileage-sheet
     timeout: 15000
 
 # --- The avatar opens Perfil inside the current tab, under its tab bar.
