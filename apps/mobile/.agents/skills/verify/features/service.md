@@ -6,14 +6,16 @@ applies to (a picker when the sheet wasn't opened for one), the date, a
 type («Mantenimiento» or «Reparación»), the Maintenance tasks it covers as
 chips, the lines of work and parts («trabajos y piezas») with a cost per
 line or one total, the odometer reading it was done at, the shop and free
-notes. «Guardar» validates in the PWA's order: at least one task or line
-(«Agrega al menos un trabajo o pieza.»), the reading («service_reading_required»),
-then the costs; each missing field is named and the sheet stays open.
-Saving writes the Mileage reading first and then the Service, so Inicio's
-«Estado», Avisos and the Vehicle's «Servicios» list move at once. Opening
-the same sheet for a Service (`?serviceId=`) edits it and offers
-«Retirar», which asks («Quitar») and removes it. Closing with typed input
-asks «¿Descartar los cambios?» first; a clean sheet just closes. In
+notes. «Guardar» validates in the PWA's order: the reading first
+(«Escribe el kilometraje de ese día.»), then the cost texts, then at
+least one task or named line («Agrega al menos un trabajo o pieza.»);
+each missing field is named and the sheet stays open. Saving writes the
+Mileage reading first and then the Service, so Inicio's «Estado»,
+Avisos and the Vehicle's «Servicios» list move at once. Opening the same
+sheet for a Service (`?serviceId=`) edits it and offers «Quitar del
+historial», which asks («Quitar» confirms) and withdraws it — the Mileage
+reading stays. Closing with typed input asks «¿Descartar los cambios?»
+first; a clean sheet just closes. In
 Avisos a Maintenance task with no Service yet asks «¿Cuándo fue la última
 vez?»; recording one for it answers that.
 
@@ -46,8 +48,9 @@ vez?»; recording one for it answers that.
   input it asks «¿Descartar los cambios?» («Descartar» leaves, staying is
   the default).
 - `edit` `?serviceId=` opens the same sheet pre-filled for editing.
-- `withdraw` the edit sheet's «Retirar» (`id: service-withdraw`) asks and
-  removes the Service («Quitar» confirms).
+- `withdraw` the edit sheet's «Quitar del historial» (`id:
+  service-withdraw`) asks («Quitar» confirms) and withdraws the Service;
+  its Mileage reading stays.
 
 ## How to get to it (user POV)
 
