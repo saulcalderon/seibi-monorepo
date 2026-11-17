@@ -102,7 +102,8 @@ name: Update Mileage opens from [+] and Inicio, validates and saves today's read
     visible:
       id: mileage-error
       text: 'Debe ser mayor que el último registro \(${output.currentText} km\)\.'
-    timeout: 10000
+    # The refused write still round-trips seibi-dev before it answers.
+    timeout: 30000
 - takeScreenshot: mileage-02-refused
 # «+100» fills current+100 and the save button says so.
 - tapOn:
