@@ -161,7 +161,8 @@ name: Detalle del Vehículo shows its four tabs and edits them
       id: service-card-body-0
     timeout: 15000
 - assertVisible: 'Cambio de aceite'
-- assertVisible: '\$46'
+# The card's head speaks as one label: tasks, date and Mileage, then the cost.
+- assertVisible: 'Cambio de aceite, .*\$46'
 - assertVisible: 'Taller: Taller Norte'
 - assertVisible: 'verify SEI-61'
 - waitForAnimationToEnd
