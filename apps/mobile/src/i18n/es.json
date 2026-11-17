@@ -229,7 +229,6 @@
       "repair": "Reparación",
       "edit": "Editar",
       "remove": "Quitar",
-      "removeAsk": "¿Quitar este Servicio del historial? El kilometraje registrado se conserva.",
       "removed": "Servicio quitado del historial",
       "shop": "Taller: {{shop}}",
       "cancel": "Cancelar"

@@ -122,7 +122,9 @@ function ServiceCard({ vehicle, service, index }: { vehicle: VehicleView; servic
 
   const remove = async () => {
     const ok = await confirm({
-      title: t('vehicleDetail.history.removeAsk'),
+      // Title and message apart, as the Service form asks it: Android cuts an alert's title at two lines.
+      title: t('serviceForm.withdraw.title'),
+      message: t('serviceForm.withdraw.body'),
       confirmLabel: t('vehicleDetail.history.remove'),
       cancelLabel: t('vehicleDetail.history.cancel'),
       destructive: true,
