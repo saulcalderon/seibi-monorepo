@@ -87,7 +87,8 @@ export function HistoryTab({ vehicle }: { vehicle: VehicleView }) {
                 <Pressable
                   testID={`reading-${index}`}
                   accessibilityRole="button"
-                  accessibilityLabel={t('vehicleDetail.correct.title')}
+                  accessibilityLabel={`${formatNumber(reading.reading)} ${vehicle.measure}, ${formatDay(reading.recordedOn)}`}
+                  accessibilityHint={t('vehicleDetail.correct.title')}
                   onPress={() => router.push({ pathname: '/correct-reading', params: { readingId: reading.id, vehicleId: vehicle.id } })}
                   style={styles.readingRow}
                 >
