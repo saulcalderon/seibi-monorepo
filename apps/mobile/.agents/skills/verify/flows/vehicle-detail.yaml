@@ -255,6 +255,18 @@ name: Detalle del Vehículo shows its four tabs and edits them
 - tapOn:
     id: correct-save
     waitToSettleTimeoutMs: 500
+# On iOS a tap while the number pad is still closing can land on a sheet
+# that is moving and only drop the pad. Still enabled and still there means
+# nothing was sent (a sent save shows the button busy), so press it again.
+- runFlow:
+    when:
+      visible:
+        id: correct-save
+        enabled: true
+    commands:
+      - tapOn:
+          id: correct-save
+          waitToSettleTimeoutMs: 500
 - runFlow:
     when:
       platform: iOS
