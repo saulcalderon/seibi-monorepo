@@ -52,7 +52,8 @@ export function FleetCard({ vehicle, home, testID }: { vehicle: VehicleView; hom
   return (
     <PressScale pressed={pressed}>
       <Card style={styles.card}>
-        <Pressable
+        <View style={styles.row}>
+          <Pressable
           testID={testID}
           accessibilityRole="button"
           accessibilityLabel={t(home ? 'fleet.card.spokenHome' : 'fleet.card.spoken', { name, year: vehicle.year, details, status })}
@@ -89,6 +90,19 @@ export function FleetCard({ vehicle, home, testID }: { vehicle: VehicleView; hom
             if (action === 'withdraw') void withdraw.run(vehicle);
           }}
         />
+        </View>
+        <Pressable
+          testID={`${testID}-more`}
+          accessibilityRole="button"
+          onPress={() => router.push(`/vehicle/${vehicle.id}`)}
+          style={styles.footer}
+          {...pressHandlers}
+        >
+          <Text step="footnote" weight={600} style={styles.footerText}>
+            {t('fleet.card.tapForMore')}
+          </Text>
+          <Icon name="forward" size="sm" tone="subtle" />
+        </Pressable>
       </Card>
     </PressScale>
   );
@@ -150,10 +164,23 @@ export function WithdrawnVehicles({ vehicles, open, onToggle }: { vehicles: Vehi
 }
 
 const styles = StyleSheet.create((theme, rt) => ({
-  card: {
+  card: {},
+  row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     paddingRight: theme.space[2],
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space[2],
+    paddingHorizontal: theme.space[4],
+    paddingVertical: theme.space[3],
+    borderTopWidth: theme.size.border.thin,
+    borderColor: theme.colors.line,
+  },
+  footerText: {
+    flex: 1,
   },
   main: {
     flex: 1,

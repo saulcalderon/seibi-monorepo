@@ -92,7 +92,8 @@
       "plateAndOdometer": "{{plate}} · {{odometer}}",
       "more": "Más acciones para {{name}}",
       "edit": "Editar Vehículo",
-      "withdraw": "Retirar de mi flota"
+      "withdraw": "Retirar de mi flota",
+      "tapForMore": "Toca para ver más de tu Vehículo"
     },
     "withdrawn": {
       "show": "Ver Vehículos retirados ({{count}})",
