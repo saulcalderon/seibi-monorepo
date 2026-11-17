@@ -132,9 +132,15 @@ name: Update Mileage opens from [+] and Inicio, validates and saves today's read
 - takeScreenshot: mileage-03-bumped
 - tapOn:
     id: mileage-save
-- extendedWaitUntil:
-    visible: 'Kilometraje actualizado'
-    timeout: 20000
+# The toast's custom view never enters Android's tree long enough to
+# catch; the save is proven by the closed sheet and the new odometer below.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: 'Kilometraje actualizado'
+          timeout: 20000
 - extendedWaitUntil:
     notVisible:
       id: mileage-sheet
