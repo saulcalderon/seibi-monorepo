@@ -252,16 +252,21 @@ name: Record a Service from the [+], edit it and withdraw it
     notVisible:
       id: service-form
     timeout: 15000
+# The card's head speaks as one label (tasks, date, Mileage, type, cost);
+# the card's own id carries no text.
 - extendedWaitUntil:
-    visible:
-      id: service-card-0
-      text: '.*Reparación.*'
+    visible: 'Cambio de aceite, Bombillo de freno, .*Reparación.*'
     timeout: 15000
 - takeScreenshot: service-12-edited
 
-# --- Withdraw: it asks first, then the Service leaves the history.
-- tapOn:
-    id: service-card-0
+# --- Withdraw: it asks first, then the Service leaves the history. The card
+# stays open after «Editar»; open it only if it closed.
+- runFlow:
+    when:
+      notVisible:
+        id: service-card-withdraw-0
+    commands:
+      - tapOn: 'Cambio de aceite, Bombillo de freno, .*'
 - extendedWaitUntil:
     visible:
       id: service-card-withdraw-0
