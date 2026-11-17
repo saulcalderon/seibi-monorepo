@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { TextInput, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
+import { errorMessage } from '@/data/errors';
 import { useGarage } from '@/data/garage/use-garage';
 import { useCorrectReading } from '@/data/mileage/mutations';
 import { formatNumber } from '@/lib/format';
@@ -87,7 +88,7 @@ function CorrectReadingBody({ readingId, reading, measure }: { vehicleId: string
       notify.success(t('vehicleDetail.correct.saved'));
       leave();
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errorMessage(e, t));
     }
   };
 
