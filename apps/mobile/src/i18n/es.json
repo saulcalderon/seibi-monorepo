@@ -84,6 +84,25 @@
       "repair": "Reparación"
     }
   },
+  "mileage": {
+    "title": "Actualizar kilometraje",
+    "close": "Cerrar",
+    "vehicle": "Vehículo",
+    "reading": "Kilometraje de hoy",
+    "contextNone": "{{name}} · sin registros todavía",
+    "contextLast": "{{name}} · último: {{last}}",
+    "contextWhen": "{{name}} · último: {{last}} · {{when}}",
+    "recalc": "Recalculamos tus próximos mantenimientos con este dato.",
+    "save": "Guardar",
+    "saveReading": "Guardar {{reading}}",
+    "saved": "Kilometraje actualizado",
+    "discard": {
+      "title": "¿Descartar los cambios?",
+      "body": "El número que escribiste no se guardará.",
+      "confirm": "Descartar",
+      "cancel": "Seguir escribiendo"
+    }
+  },
   "serviceForm": {
     "titleNew": "Registrar Servicio",
     "titleEdit": "Editar Servicio",
@@ -232,6 +251,7 @@
     "service_date_future": "Un Servicio ya realizado no puede tener fecha futura. Para una fecha futura crea una Cita.",
     "service_items_required": "Agrega al menos un trabajo o pieza.",
     "service_reading_required": "Escribe el kilometraje de ese día.",
+    "reading_required": "Escribe el número del odómetro.",
     "cost_invalid": "Escribe un costo válido.",
     "appointment_date_past": "Una Cita es para hoy o una fecha futura. Si ya lo hiciste, registra un Servicio.",
     "routine_name_required": "Ponle un nombre, por ejemplo “Trabajo”.",

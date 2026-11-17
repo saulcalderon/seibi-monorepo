@@ -1,9 +1,13 @@
-import { useTranslation } from 'react-i18next';
+import { useLocalSearchParams } from 'expo-router';
 
-import { PlaceholderSheet } from '@/shell/placeholder-sheet';
+import { MileageForm } from '@/mileage/mileage-form';
 
-/** «Actualizar Kilometraje» from the actions sheet. The Mileage form (S8) takes this route. */
+/**
+ * Update Mileage (S8), as a form sheet over the tabs. Params:
+ * - none: [+] → «Actualizar Kilometraje», on the active Vehicle;
+ * - `vehicleId`: that Vehicle (Inicio's «Actualizar»).
+ */
 export default function UpdateMileageSheet() {
-  const { t } = useTranslation();
-  return <PlaceholderSheet testID="update-mileage-sheet" icon="mileage" title={t('actions.mileage.title')} body={t('placeholder.mileage')} />;
+  const { vehicleId } = useLocalSearchParams<{ vehicleId?: string }>();
+  return <MileageForm vehicleId={vehicleId} />;
 }
