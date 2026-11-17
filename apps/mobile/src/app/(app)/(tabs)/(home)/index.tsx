@@ -27,8 +27,8 @@ export default function HomeScreen() {
       onOpenVehicle={(id) => router.push(`/vehicle/${id}`)}
       // The Mileage form (S8) takes this route and reads the Vehicle from it.
       onUpdateMileage={(id) => router.push({ pathname: '/update-mileage', params: { vehicleId: id } })}
-      // Mi flota is where Vehicles are added (S5 puts its form there).
-      onAddVehicle={() => router.navigate('/fleet')}
+      // The Vehicle form (S5) opens as a modal over the tabs.
+      onAddVehicle={() => router.push('/vehicle/new')}
       onRetry={garage.refetch}
     />
   );

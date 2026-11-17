@@ -358,8 +358,8 @@ The migration's order, scope and tickets are in
     first, with «Todo al día» or «N por atender»; the cards are not
     buttons until S9 has a Reminder detail. «Completa tu historial» (the
     unknown tasks) is S9's and joins Inicio with it.
-  - **Empty.** «Sin Vehículos todavía»; «Agregar mi Vehículo» opens Mi
-    flota, where S5 puts the Vehicle form. The button follows the line
+  - **Empty.** «Sin Vehículos todavía»; «Agregar mi Vehículo» opens
+    `/vehicle/new`, S5's Vehicle form. The button follows the line
     under the stage instead of sitting pinned above the tab bar as in the
     PWA, because the floating [+] holds that corner.
   - **Sample screen.** Seibi Dev only: `seibi-dev://garage-fixture`
