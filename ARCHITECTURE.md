@@ -222,7 +222,7 @@ The migration's order, scope and tickets are in
   `xcodebuild` directly (the Simulator needs no certificate).
 - **Builds:** `apps/mobile/eas.json`. Profiles `development` (dev client,
   Seibi Dev, internal), `development-simulator` (the same for the iOS
-  Simulator, for Maestro in CI), `preview` (internal, builds Seibi) and
+  Simulator), `preview` (internal, builds Seibi) and
   `production` (store, Seibi, `autoIncrement`). Each profile has the EAS
   Update channel and EAS environment of its name. `development` (and so
   `development-simulator`) and `preview` also set
@@ -256,7 +256,7 @@ The migration's order, scope and tickets are in
   src/app/
     _layout.tsx                  root Stack: Stack.Protected (app) · (auth)/… · ui-kit
     +native-intent.tsx           seibi-dev://vehicle/<id> → Mi flota (src/shell/links.ts)
-    (app)/_layout.tsx            Stack, anchor (tabs): (tabs) · actions · record-service · update-mileage · data-check
+    (app)/_layout.tsx            Stack, anchor (tabs): (tabs) · actions · record-service · update-mileage · data-check · garage-fixture
     (app)/(tabs)/_layout.tsx     NativeTabs + the floating [+] drawn over them
     (app)/(tabs)/(home)/index.tsx            Inicio  (/)
     (app)/(tabs)/(fleet)/fleet.tsx           Mi flota (/fleet)
@@ -311,11 +311,62 @@ The migration's order, scope and tickets are in
     sign-in). `vehicle/[id]` exists in all three tabs, so
     `+native-intent.tsx` sends `seibi-dev://vehicle/<id>` (or `seibi://`)
     to Mi flota, where a person would find it; other links pass through.
-  - **Placeholders.** The tab roots, the Vehicle detail and Perfil are
-    placeholders built from kit components over the data layer (Inicio:
-    greeting and active Vehicle; Mi flota: the Vehicles; Avisos: each
-    Vehicle's Reminders). The S-tickets replace their content, not the
-    routes.
+  - **Placeholders.** Mi flota, Avisos, the Vehicle detail and Perfil are
+    placeholders built from kit components over the data layer (Mi flota:
+    the Vehicles; Avisos: each Vehicle's Reminders). The S-tickets replace
+    their content, not the routes. Inicio is the Garage (below).
+- **Inicio** (S4, SEI-59): the PWA's Garage v3 without the 3D branch, in
+  `src/home/` (`garage.tsx`, `stage.tsx`, `ticker.tsx`; the decisions as
+  plain functions in `garage-logic.ts`, with unit tests). The route
+  (`(home)/index.tsx`) reads `useGarage`, `useProfile` and
+  `useActiveVehicle` and passes them to `Garage` as props.
+  - **Header.** The large title is the greeting for the time of day
+    (`greeting()`; the tab stays «Inicio»), with the avatar beside it.
+  - **Palette.** `garage` in a `ScopedTheme` in light; the night theme in
+    night (Garage is not art-directed for night). The stage's colours are
+    the theme's `garage` group (`palettes.ts` → `garageStage`), its
+    gradients `backgroundImage` strings built in `src/theme/garage.ts`
+    (React Native 0.88 draws CSS linear and radial gradients natively;
+    Unistyles converts them on a theme change). The paint presets and the
+    paint → accent rule (OKLCH, the PWA's maths) are there too, with a test
+    that pins every preset's accent to the PWA's.
+  - **Carousel.** The Vehicles are pages of a native horizontal paging
+    `ScrollView`: the page follows the finger and settles where the
+    platform settles it; `onMomentumScrollEnd` picks the active Vehicle.
+    The arrows step and wrap, as the PWA's. For VoiceOver and TalkBack the
+    pager is one `adjustable` element («Tus Vehículos», value «<Vehículo>,
+    N de M», increment and decrement), as a system page control is; the
+    current page's name is a button that opens the Vehicle; other pages
+    are hidden from the accessibility tree. No new native module.
+  - **The Vehicle.** The poster is downloaded once into `expo-image`'s
+    disk cache (`Image.prefetch`, then `Image.getCachePathAsync`) and
+    drawn from that file with `react-native-svg`, under the PWA's radial
+    mask (opaque to 72 % of the ellipse, clear at its edge): React Native
+    views can't be masked, and on iOS a blend mode on a parent doesn't
+    blend its children as one group, so painting the edges over failed on
+    the screenshots. In light the masked poster multiplies into the floor
+    (`mixBlendMode`). Without a poster (none, `pending`, or a failed load)
+    the paint-coloured `Silhouette` stands on the floor with its contact
+    shadow and a faded reflection.
+  - **Mileage and Estado.** The odometer is the screen's big number
+    (Archivo 300 at 52 pt, `garageType` in `tokens.ts`); its digits roll
+    to a new value with Reanimated layout animations (`Ticker`), never on
+    mount. The hint under it comes from the engine's `mileagePrompt`.
+    «Actualizar» opens `/update-mileage` with the Vehicle's id (S8 reads
+    it). «Estado» shows up to four known, unsnoozed Reminders, overdue
+    first, with «Todo al día» or «N por atender»; the cards are not
+    buttons until S9 has a Reminder detail. «Completa tu historial» (the
+    unknown tasks) is S9's and joins Inicio with it.
+  - **Empty.** «Sin Vehículos todavía»; «Agregar mi Vehículo» opens Mi
+    flota, where S5 puts the Vehicle form. The button follows the line
+    under the stage instead of sitting pinned above the tab bar as in the
+    PWA, because the floating [+] holds that corner.
+  - **Sample screen.** Seibi Dev only: `seibi-dev://garage-fixture`
+    (`?case=empty`), the same `Garage` drawn from two sample Vehicles
+    derived by the engine (`src/home/dev/`, required behind
+    `EXPO_PUBLIC_APP_VARIANT` like the data check). It shows what the
+    shared test account can't: paging, a missing poster, the cards and
+    the empty state. It writes nothing to seibi-dev.
 - **Styling:** Unistyles 3 (`react-native-unistyles` on
   `react-native-nitro-modules`; SEI-42's spike proved it on SDK 58 on both
   platforms). The theme lives in `src/theme/`, values from
@@ -643,8 +694,8 @@ The migration's order, scope and tickets are in
   over `src/**/*.test.ts`, plain TypeScript modules only, no React Native
   in Node. `@seibi/mobile` has no `build` script: native builds run on EAS.
   Typed-route declarations are generated by `expo start`, so CI's
-  typecheck does not check route hrefs. Maestro runs the `verify` skill's
-  journeys in CI once the first iOS build exists (SEI-52).
+  typecheck does not check route hrefs. CI never runs Maestro: the
+  `verify` skill's journeys run locally before merge (Verification below).
 - **Turbo cache in CI:** `actions/cache` keeps `.turbo/cache` between runs,
   one entry per commit (`turbo-<os>-<lockfile hash>-<sha>`). A run restores
   the newest entry from its own PR or from `main` (hence the push trigger on
@@ -667,15 +718,20 @@ The migration's order, scope and tickets are in
   and says what is missing, and `eas build` on a machine would offer to
   create a project: leave that to SEI-72. iOS internal builds install only
   on devices registered with `eas device:create`.
-- **Verification:** `apps/mobile/.claude/skills/verify/` (generated in
+- **Verification:** `apps/mobile/.agents/skills/verify/` (generated in
   SEI-41 with `create-verification-skill`) drives Seibi Dev on the iOS
   Simulator and the Android emulator (`seibi-pixel`) with Maestro, the way
   a user does: `scripts/verify.sh` launches, checks (`doctor`), drives a
   flow from `flows/` and cleans up. Each run keeps its video, screenshots
-  and report in `~/seibi-verify/`, outside git. Every PR that changes what
-  a user sees or does is proven with it before merge, with the saved data
-  read from seibi-dev; `maintain-verification-skill` keeps its feature map
-  (`features/`) current. Flows that need a session sign in with the
+  and report in `~/seibi-verify/`, outside git. Every PR is proven with it
+  locally before merge, at the change's tier (`AGENTS.md` → Prove it
+  works); `maintain-verification-skill` keeps its feature map
+  (`features/`) current, once per milestone. On iOS it slims the
+  simulator with simslim when that is installed (`brew install
+  mobai-app/tap/simslim`): on iOS 27.2 a slim simulator ran every flow a
+  stock one did with 1.38 GB instead of 3.19 GB. Slim turns push and the
+  photo library off; a flow that needs them turns them back on (the
+  skill's Slim simulator section). Flows that need a session sign in with the
   seibi-dev test account through the test sign-in (`flows/sign-in.yaml`);
   its password lives outside git (the skill's Sign-in section).
 - **Paid features** (RevenueCat, Superwall) start after the launch.
@@ -711,7 +767,7 @@ versions match the SDK.
 | Links, `mailto:` | `<a>` | `expo-web-browser`, `Linking` |
 | Haptics, splash, fonts | — | `expo-haptics`, `expo-splash-screen`, `expo-font` |
 | Glass surfaces | CSS blur | `expo-glass-effect` |
-| E2E | Playwright | Maestro: the `verify` skill locally, then CI after the first iOS build (SEI-52) |
+| E2E | Playwright | Maestro, through the `verify` skill, locally before merge |
 
 ## Working rules
 
@@ -719,7 +775,7 @@ versions match the SDK.
   no Docker). The hosted **seibi-dev** project is the dev environment.
 - **Changes go through PRs.** No direct pushes to `main` unless the owner
   says so. Merging to `main` deploys migrations and Edge Functions to
-  production.
+  production. Every ticket follows `AGENTS.md` → Ticket loop.
 - **Linear** (team Seibi, project «App móvil Seibi») is the tracker; all
   Linear content is Spanish. See
   [`docs/agents/issue-tracker.md`](./docs/agents/issue-tracker.md).

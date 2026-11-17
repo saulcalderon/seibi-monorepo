@@ -13,14 +13,35 @@ Reminders for what is due, and cost Estimates. Supabase backend; the PWA in
 
 Read [`docs/DESIGN.md`](./docs/DESIGN.md) before any UI work: tokens, components, accessibility rules.
 
+## Any agent, any tool
+
+The rules in this repo name roles and steps, never an AI tool: they hold for a person and for any agent, whatever runs it. Project rules live in vendor-neutral places: this file, `docs/`, and skills in `.agents/skills/` (the app's own in `apps/mobile/.agents/skills/`). New project rules go there, not into one tool's config folder. How you run the loop yourself (which agent orchestrates, who merges for you, how work is delegated) goes in an untracked `AGENTS.local.md` next to this file.
+
+## Ticket loop
+
+Every change starts from a Linear ticket and lands as one PR, whoever does the work.
+
+1. **Pick** the next ticket in `docs/PLAN.md` order. At most 3 tickets are In Progress; a new one starts only after one merges. Move it to In Progress and branch from its Linear branch name.
+2. **Plan.** Read the ticket's in/out and the PWA screen it ports, post a short plan as a Linear comment (what is ported, which files, the proof tier) and keep going. Ask Saul first only when the scope is unclear, the PWA behaviour looks wrong, the change needs a new native module (a new binary, not an OTA update) or a migration, or it contradicts `ARCHITECTURE.md`.
+3. **Build.** `tdd` for logic (form rules, Mileage rules, data transforms). Run `pnpm check` and the affected tests. Open a draft PR early; CI runs on every push.
+4. **Review** with `code-review`, once, on the full diff: Standards, and Spec against the ticket and the PWA screen.
+5. **Prove** it at its tier (below), on the final commit.
+6. **Merge:** squash into `main` when CI is green, the proof is in the PR and no review finding is open. Tell Saul after a merge that deploys migrations or Edge Functions; a destructive production change (dropping a column, deleting data) waits for his OK. Then close the ticket in Linear (`docs/agents/issue-tracker.md`).
+
 ## Prove it works
 
-A PR that changes what a user sees or does must be proven in the running app before it merges:
+Proof comes from the running app, driven locally with the `verify` skill (`apps/mobile/.agents/skills/verify/`) before merge. CI runs everything that needs no simulator; Maestro runs only locally. "It compiles" or "tests pass" proves only tier 0 (`principle-prove-it-works`).
 
-- Drive it with the `verify` skill in `apps/mobile/.claude/skills/verify/` (generated in SEI-41 with `create-verification-skill`). Until that exists, record the simulator yourself.
-- Evidence: a video of the journey, screenshots, and a read-only seibi-dev query showing the saved data. Attach the video to the Linear ticket and link it from the PR.
-- Add or update the feature's file in the `verify` skill's `features/` map in the same PR.
-- "It compiles" or "tests pass" is not proof (`principle-prove-it-works`).
+| Tier | Change | Proof |
+| --- | --- | --- |
+| 0 | Docs, CI, refactors covered by tests, engine logic | `pnpm check`, `pnpm test`, CI |
+| 1 | A small UI change or fix | One iOS run of an existing flow, or screenshots |
+| 2 | A new screen, or a journey that saves data | A Maestro flow for the happy path, an iOS video, one Android run, a read-only seibi-dev query showing the saved row, and the feature's file in the `verify` skill's `features/` map |
+| 3 | `supabase/`: migrations, Edge Functions, RLS | `deno test`, applied to seibi-dev first, and a read-only seibi-dev query |
+
+- **Android** runs for tier 2 and for any change to platform-specific code (`*.ios.tsx`, `@expo/ui`, glass, the floating [+]). Everything else is proven on iOS.
+- **Edge cases** (night, the largest text size, Reduce Motion, `break-ui`) get one pass in milestone «3 · Prueba en dispositivos», and the `features/` map one `maintain-verification-skill` pass per milestone.
+- **Every video goes to its ticket.** Upload each video a run records to the PR's Linear ticket, and link that copy from the PR's Verification section, which also names each run's evidence folder. Linear takes files up to 10 MB: upload the `<flow>.linear.mp4` copy that `verify.sh drive` writes next to the original. A PR without a ticket gets one first, docs and tooling included.
 
 ## No ADRs
 
