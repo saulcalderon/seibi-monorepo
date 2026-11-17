@@ -53,6 +53,9 @@ export function VehicleDetail({ vehicleId, tab }: { vehicleId: string; tab: Deta
       <Stack.Screen
         options={{
           title: vehicle ? vehicleName(vehicle) : '',
+          // The header is transparent on iOS and its two-line title sits over the scrolling hero and tabs: a hard edge
+          // keeps the content from showing through the title (iOS 26+; earlier versions ignore it).
+          scrollEdgeEffects: { top: 'hard' },
           headerTitle: vehicle
             ? () => (
                 <View style={styles.headerTitle} accessible accessibilityRole="header">
