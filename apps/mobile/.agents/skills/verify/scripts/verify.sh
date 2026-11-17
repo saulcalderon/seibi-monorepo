@@ -404,7 +404,33 @@ cmd_drive() {
   echo "evidence:  $run_dir"
   # Maestro nests artifacts as <run>/<timestamp>/<flow name>/{startRecording,takeScreenshot}/.
   find "$run_dir" \( -name '*.mp4' -o -name '*.png' \) -not -path "$run_dir/debug/*" -print | sed 's/^/  /'
-  find "$run_dir" -name '*.mp4' -not -path "$run_dir/debug/*" | grep -q . || { log "no video was recorded"; status=1; }
+  # A <name>.linear.mp4 copy of each video fits Linear's 10 MB upload limit;
+  # the original stays the evidence. A failed encode never fails the run.
+  if command -v ffmpeg >/dev/null 2>&1; then
+    local video out size
+    while IFS= read -r video; do
+      out="${video%.mp4}.linear.mp4"
+      # -nostdin: ffmpeg would otherwise read the loop's list of videos.
+      ffmpeg -nostdin -hide_banner -loglevel error -y -i "$video" -vf scale=-2:1600 \
+        -c:v libx264 -preset slow -crf 26 -pix_fmt yuv420p -an -movflags +faststart "$out" >/dev/null 2>&1 || true
+      if [[ ! -s "$out" ]]; then
+        log "WARN: ffmpeg could not encode $video"
+        rm -f "$out"
+        continue
+      fi
+      size="$(stat -f %z "$out")"
+      if [[ "$size" -gt 10000000 ]]; then
+        ffmpeg -nostdin -hide_banner -loglevel error -y -i "$video" -vf scale=-2:1280 \
+          -c:v libx264 -preset slow -crf 32 -pix_fmt yuv420p -an -movflags +faststart "$out" >/dev/null 2>&1 || true
+        size="$(stat -f %z "$out" 2>/dev/null || echo 0)"
+        [[ "$size" -gt 10000000 ]] && log "WARN: $out is still over 10 MB ($(awk -v s="$size" 'BEGIN{printf "%.1f", s/1000000}') MB)"
+      fi
+      printf '  %s (%s MB)\n' "$out" "$(awk -v s="$size" 'BEGIN{printf "%.1f", s/1000000}')"
+    done < <(find "$run_dir" -name '*.mp4' -not -name '*.linear.mp4' -not -path "$run_dir/debug/*" | sort)
+  else
+    log "ffmpeg not installed: no .linear.mp4 copies (optional: brew install ffmpeg)"
+  fi
+  find "$run_dir" -name '*.mp4' -not -name '*.linear.mp4' -not -path "$run_dir/debug/*" | grep -q . || { log "no video was recorded"; status=1; }
   # Crops named round-* are elements that must keep their rounded corners (SKILL.md → Pixel checks).
   local crops=()
   while IFS= read -r crop; do crops+=("$crop"); done < <(find "$run_dir" -name 'round-*.png' -not -path "$run_dir/debug/*" | sort)

@@ -80,7 +80,7 @@ local cache in `.turbo/`.
 The native app uses development builds, not Expo Go. Its variants, EAS
 profiles and update flow are in [`ARCHITECTURE.md`](./ARCHITECTURE.md) →
 "Native app standards"; proving a change in it uses the `verify` skill in
-`apps/mobile/.claude/skills/verify/`.
+`apps/mobile/.agents/skills/verify/`.
 
 ## Structure
 

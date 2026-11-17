@@ -14,12 +14,12 @@ outside git.
 Everything goes through one helper, run from `apps/mobile`:
 
 ```bash
-.claude/skills/verify/scripts/verify.sh launch  ios|android [--rebuild]
-.claude/skills/verify/scripts/verify.sh doctor  ios|android
-.claude/skills/verify/scripts/verify.sh drive   ios|android <flow>
-.claude/skills/verify/scripts/verify.sh cleanup [ios|android|all]
-.claude/skills/verify/scripts/verify.sh a11y    ios|android large-text|reduce-motion|reset
-.claude/skills/verify/scripts/verify.sh where
+.agents/skills/verify/scripts/verify.sh launch  ios|android [--rebuild]
+.agents/skills/verify/scripts/verify.sh doctor  ios|android
+.agents/skills/verify/scripts/verify.sh drive   ios|android <flow>
+.agents/skills/verify/scripts/verify.sh cleanup [ios|android|all]
+.agents/skills/verify/scripts/verify.sh a11y    ios|android large-text|reduce-motion|reset
+.agents/skills/verify/scripts/verify.sh where
 ```
 
 `<flow>` is a file name in `flows/` without `.yaml`. The feature map in
@@ -37,12 +37,14 @@ feature.
   and the AVD `seibi-pixel` (`emulator -list-avds`).
 - Maestro: `maestro` on `PATH`, or `~/.maestro/bin/maestro`, or
   `MAESTRO_BIN`.
+- Optional: `ffmpeg` on `PATH` (`brew install ffmpeg`) writes a small copy
+  of each recording for the Linear ticket; see Evidence.
 
 ## Launch
 
 ```bash
 cd apps/mobile
-.claude/skills/verify/scripts/verify.sh launch android   # or ios
+.agents/skills/verify/scripts/verify.sh launch android   # or ios
 ```
 
 What it does, in order:
@@ -82,7 +84,7 @@ What it does, in order:
 
    ```bash
    EXPO_PUBLIC_APP_VARIANT=development npx expo prebuild --clean --no-install
-   .claude/skills/verify/scripts/verify.sh launch ios --rebuild
+   .agents/skills/verify/scripts/verify.sh launch ios --rebuild
    ```
 
    JavaScript changes need no rebuild.
@@ -102,7 +104,7 @@ Teardown is `cleanup` (below).
 ## Doctor
 
 ```bash
-.claude/skills/verify/scripts/verify.sh doctor android   # or ios
+.agents/skills/verify/scripts/verify.sh doctor android   # or ios
 ```
 
 Read-only. It prints and checks: the git branch and commit being served,
@@ -120,7 +122,7 @@ to another session: don't drive it unless it is yours.
 ## Drive
 
 ```bash
-.claude/skills/verify/scripts/verify.sh drive android app-launches   # or ios
+.agents/skills/verify/scripts/verify.sh drive android app-launches   # or ios
 ```
 
 `drive` runs `maestro test --device <udid|emulator-5560> flows/<flow>.yaml`
@@ -226,6 +228,11 @@ Each `drive` writes one run folder outside git:
 ```
 
 `verify.sh where` prints the root (`SEIBI_VERIFY_EVIDENCE` overrides it).
+With `ffmpeg` on `PATH`, `drive` also writes `<name>.linear.mp4` beside
+every recording: a small copy (1600 px high, re-encoded smaller at 1280 px
+when it would pass 10 MB) that fits Linear's upload limit, for attaching
+to the ticket. The original mp4 stays the evidence.
+
 `drive` fails if the flow fails, no video was recorded or a `round-*` crop
 has a square corner (`round-check.txt`), and lists the video and
 screenshots it wrote.
@@ -253,7 +260,7 @@ Proof standards for a PR (`AGENTS.md` → "Prove it works"):
 ## Cleanup
 
 ```bash
-.claude/skills/verify/scripts/verify.sh cleanup        # or: cleanup ios | cleanup android
+.agents/skills/verify/scripts/verify.sh cleanup        # or: cleanup ios | cleanup android
 ```
 
 It stops only what `launch` started, tracked in
@@ -271,7 +278,7 @@ run. Run cleanup after every failed attempt too.
 ## Accessibility settings
 
 ```bash
-.claude/skills/verify/scripts/verify.sh a11y ios large-text      # or: reduce-motion | reset
+.agents/skills/verify/scripts/verify.sh a11y ios large-text      # or: reduce-motion | reset
 ```
 
 Maestro can switch dark mode (`setDarkMode`) but not the text size or

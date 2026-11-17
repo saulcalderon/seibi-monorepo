@@ -43,7 +43,7 @@ Preconditions:
 - The test account has at least one Vehicle (the `data-layer` flow creates the Toyota Yaris 2015 on a fresh account). `flows/scripts/first-vehicle.js` reads it the way another device would and fails with that hint when there is none.
 - Light mode, default text size (`verify.sh a11y <platform> reset`).
 
-- **Whole journey.** `.claude/skills/verify/scripts/verify.sh drive ios app-shell` (then `android`). It signs in before `startRecording`, reads the first Vehicle's id and name (`first-vehicle.js`, read-only), then cold-starts signed in.
+- **Whole journey.** `.agents/skills/verify/scripts/verify.sh drive ios app-shell` (then `android`). It signs in before `startRecording`, reads the first Vehicle's id and name (`first-vehicle.js`, read-only), then cold-starts signed in.
 - **Tabs and labels.** `id: home-screen` with `id: home-vehicle`; `id: tab-home`, `tab-fleet`, `tab-reminders` and `id: open-actions` visible; the texts «Inicio», «Mi flota», «Avisos», «Acciones rápidas» and «Perfil» are on screen (Maestro reads the accessibility labels). Screenshot `shell-01-home`.
 - **A Vehicle inside its tab.** Tap `tab-fleet`, then `id: fleet-vehicle-0`: `id: vehicle-name` shows with `tab-fleet` and `open-actions` still visible. Screenshots `shell-02-fleet`, `shell-03-fleet-vehicle`.
 - **The [+] doesn't cover content.** Tap `tab-reminders` (`id: reminder-0-0`), swipe to the end: the last row and the card's bottom edge sit above the [+]. Screenshots `shell-04-reminders`, `shell-05-reminders-end`; look at the second one.
