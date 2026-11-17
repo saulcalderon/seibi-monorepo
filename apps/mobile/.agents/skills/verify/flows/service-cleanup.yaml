@@ -32,22 +32,38 @@ name: Withdraw the Services a failed service run left behind
       visible:
         text: '.*Bombillo de freno.*'
     commands:
+      # Other Services (a newer one from another flow) can sit above it, so the
+      # expanded card's index is unknown: its withdraw button is the only one shown.
       - tapOn:
           text: '.*Bombillo de freno.*'
       - extendedWaitUntil:
           visible:
-            id: service-card-withdraw-0
+            id: 'service-card-withdraw-[0-9]+'
           timeout: 15000
       - scrollUntilVisible:
           element:
-            id: service-card-withdraw-0
+            id: 'service-card-withdraw-[0-9]+'
           centerElement: true
       - tapOn:
-          id: service-card-withdraw-0
-      - tapOn: 'Quitar'
+          id: 'service-card-withdraw-[0-9]+'
+      # iOS lists the card's «Quitar» behind the alert too: the alert's is the
+      # second match. Android's alert is its own window (button1 confirms).
+      - runFlow:
+          when:
+            platform: iOS
+          commands:
+            - tapOn:
+                text: 'Quitar'
+                index: 1
+      - runFlow:
+          when:
+            platform: Android
+          commands:
+            - tapOn:
+                id: 'android:id/button1'
       - extendedWaitUntil:
           notVisible:
-            id: service-card-withdraw-0
+            id: 'service-card-withdraw-[0-9]+'
           timeout: 15000
 - takeScreenshot: service-cleanup-done
 - stopRecording

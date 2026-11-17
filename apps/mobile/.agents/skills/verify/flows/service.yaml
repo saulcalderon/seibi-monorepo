@@ -276,7 +276,21 @@ name: Record a Service from the [+], edit it and withdraw it
     visible: '¿Quitar este Servicio del historial\?'
     timeout: 5000
 - takeScreenshot: service-13-withdraw-confirm
-- tapOn: 'Quitar'
+# iOS lists the card's «Quitar» behind the alert too: the alert's is the
+# second match. Android's alert is its own window (button1 confirms).
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: 'Quitar'
+          index: 1
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          id: 'android:id/button1'
 - runFlow:
     when:
       platform: iOS
