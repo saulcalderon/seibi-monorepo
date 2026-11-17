@@ -150,11 +150,12 @@ export function VehicleDetail({ vehicleId, tab }: { vehicleId: string; tab: Deta
   );
 }
 
-function TileBody({ icon, value, caption }: { icon: IconName; value: string; caption: string }) {
+/** A number tile sets its value in Geist Mono (DESIGN.md → Type); Salud's word stays in the sans. */
+function TileBody({ icon, value, caption, numeric = true }: { icon: IconName; value: string; caption: string; numeric?: boolean }) {
   return (
     <>
       <Icon name={icon} size="sm" tone="ink" />
-      <Text step="subhead" weight={700} family="mono" numberOfLines={1} adjustsFontSizeToFit>
+      <Text step="subhead" weight={700} family={numeric ? 'mono' : 'sans'} numberOfLines={1} adjustsFontSizeToFit>
         {value}
       </Text>
       <Text step="caption" tone="muted" numberOfLines={1}>
@@ -181,7 +182,7 @@ function PressableTile({ icon, value, caption, onPress, testID }: { icon: IconNa
 function StaticTile({ icon, value, caption, testID }: { icon: IconName; value: string; caption: string; testID: string }) {
   return (
     <View style={[styles.tile, styles.tileInner]} testID={testID} accessibilityLabel={`${value} ${caption}`}>
-      <TileBody icon={icon} value={value} caption={caption} />
+      <TileBody icon={icon} value={value} caption={caption} numeric={false} />
     </View>
   );
 }
