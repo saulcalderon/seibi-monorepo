@@ -256,7 +256,7 @@ The migration's order, scope and tickets are in
   src/app/
     _layout.tsx                  root Stack: Stack.Protected (app) · (auth)/… · ui-kit
     +native-intent.tsx           seibi-dev://vehicle/<id> → Mi flota (src/shell/links.ts)
-    (app)/_layout.tsx            Stack, anchor (tabs): (tabs) · actions · record-service · update-mileage · profile-name · profile-level · profile-location · vehicle · data-check · garage-fixture
+    (app)/_layout.tsx            Stack, anchor (tabs): (tabs) · actions · record-service · update-mileage · correct-reading · routine · profile-name · profile-level · profile-location · vehicle · data-check · garage-fixture
     (app)/vehicle/               the Vehicle form, a modal with its own Stack: new · [id]/edit · pick
     (app)/(tabs)/_layout.tsx     NativeTabs + the floating [+] drawn over them
     (app)/(tabs)/(home)/index.tsx            Inicio  (/)
@@ -309,10 +309,10 @@ The migration's order, scope and tickets are in
     sign-in). `vehicle/[id]` exists in all three tabs, so
     `+native-intent.tsx` sends `seibi-dev://vehicle/<id>` (or `seibi://`)
     to Mi flota, where a person would find it; other links pass through.
-  - **Placeholders.** Avisos and the Vehicle detail are placeholders
-    built from kit components over the data layer (Avisos: each Vehicle's
-    Reminders). The S-tickets replace their content, not
-    the routes. Inicio is the Garage, Mi flota the Fleet (below).
+  - **Placeholders.** Avisos is a placeholder built from kit components
+    over the data layer (each Vehicle's Reminders). Its S-ticket replaces
+    its content, not the route. Inicio is the Garage, Mi flota the Fleet,
+    `vehicle/[id]` the Vehicle detail and `profile` Perfil (below).
 - **Inicio** (S4, SEI-59): the PWA's Garage v3 without the 3D branch, in
   `src/home/` (`garage.tsx`, `stage.tsx`, `ticker.tsx`; the decisions as
   plain functions in `garage-logic.ts`, with unit tests). The route
