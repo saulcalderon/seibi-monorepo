@@ -37,13 +37,13 @@ Done when:
 | Test sign-in: email + password in the `development` and `preview` EAS builds only, never in `production` | Apple and Google sign-in can't be automated; a hidden production login breaks App Review guideline 2.3.1 |
 | Accessibility: Paradero's rules and check scripts, aiming at WCAG 2.2 AA. High-contrast palettes come after the redesign | Cheap from the first screen, expensive to retrofit; high contrast is a new feature |
 | Light palette: change only the text roles that fail AA (primary button on `radiantStrong`, new `radiantText`, `okText`, `soonText`, `overdueText`, darker `subtle`); fills, dots and icons keep their colors. Values in `docs/DESIGN.md` → Accessibility | Keeps both "the PWA's look" and AA with the smallest visible change; the redesign starts from passing tokens |
-| Pace: at most 3 tickets in progress. Claude (the orchestrator) reviews and merges PRs into `main` once CI is green; never a direct push. Saul is told after any merge that deploys migrations or Edge Functions, and approves destructive production changes (dropping a column, deleting data) first. Implementing agents never merge | Saul doesn't want to be the review bottleneck (2026-11-11); merging to `main` deploys to production, so production-affecting merges stay visible |
+| Pace: at most 3 tickets in progress, and a new one starts only after one merges. Devin (the orchestrator) runs each ticket and merges every PR into `main`, backend included, once CI is green and the proof is in; never a direct push. Saul is told after any merge that deploys migrations or Edge Functions, and approves destructive production changes (dropping a column, deleting data) first. The loop is in `AGENTS.md` → Ticket loop | Saul doesn't want to be the review bottleneck, for backend PRs either (2026-11-11, 2026-11-16); merging to `main` deploys to production, so production-affecting merges stay visible; three draft PRs sat for days with all 3 slots taken (2026-11-16) |
 | 3D is out of the port. SEI-48 removes the 3D step and keeps the `glb_path` column; whether 3D returns is a Backlog idea (SEI-11) | The frozen PWA still selects `glb_path` (`apps/app/src/lib/garage.ts`); 3D's future is undecided |
 | Launch: App Store by 2026-12-15 at the latest, with the full MVP. The date moves before the scope does | Ship the MVP whole, then the rest |
 | Styling: Unistyles 3. SEI-42 starts with a spike on SDK 58; on failure, fall back to plain `StyleSheet` + tokens | Same `StyleSheet.create` API plus themes and variants for the UI kit; neither reference app uses it |
 | Zod at three boundaries: Edge Function responses, NHTSA vPIC, forms. Table reads use the generated Supabase types | Validate only the data whose shape Seibi doesn't control |
 | Two app variants: Seibi Dev (`com.seibiapp.app.dev`) and Seibi (`com.seibiapp.app`). The `preview` EAS profile builds the production app | TestFlight and Play's closed test use the production app; one Apple app record fewer |
-| Verification: every PR proves itself in the real app with pstack's `verify` skill (generated in SEI-41 with `create-verification-skill`): a video of the journey, screenshots, and a read-only seibi-dev query for the saved data. Maestro in CI (SEI-52) starts as soon as the first iOS EAS build exists and becomes part of every PR's proof | No human reviews PRs (2026-11-11), so proof from the running app is the merge gate; CI-run Maestro needs an iOS build first |
+| Verification: every PR is proven at its tier (`AGENTS.md` → Prove it works) with pstack's `verify` skill, locally before merge, on a simulator slimmed by simslim. CI runs everything that needs no simulator; Maestro never runs in CI (SEI-52 canceled) | No human reviews PRs (2026-11-11), so proof from the running app is the merge gate; tiers keep small changes fast and full proof where a screen can show success over a wrong row (2026-11-16); Saul keeps simulator runs on his Mac (2026-11-16); a slim simulator passed every flow a stock one did, with 1.38 GB instead of 3.19 GB (2026-11-16) |
 | Expo SDK 58 | The latest SDK; Paradero ships on it |
 | References: Paradero (`~/Desktop/Personal/paradero`, MIT) for the native UI layer, check scripts and release script; Zagged for auth, variants and OTA (patterns only, previous-employer code) | Two apps that shipped |
 
@@ -102,9 +102,9 @@ ticket and keep its behaviour.
 | SEI-43 | i18n | i18next + expo-localization, typed keys, `es.json` | `en.json` | SEI-41 | yes | SEI-43 |
 | SEI-44 | Native auth | Apple + Google via `signInWithIdToken`; encrypted session store; `startAutoRefresh` / `stopAutoRefresh` on app state; full name on first Apple sign-in; `Stack.Protected`; email + password test sign-in in `development` / `preview` only; account-deleted screen | — | SEI-41 | yes | SEI-44 |
 | SEI-45 | Sentry | `@sentry/react-native`, source maps from EAS builds | — | SEI-41 | yes | SEI-45 |
-| SEI-46 | CI for the native app | Typecheck, lint, Paradero's 3 check scripts (tokens, contrast, strings) on every PR | Maestro (SEI-52) | SEI-41, SEI-42 | yes | SEI-46 |
+| SEI-46 | CI for the native app | Typecheck, lint, Paradero's 3 check scripts (tokens, contrast, strings) on every PR | Maestro (runs locally only) | SEI-41, SEI-42 | yes | SEI-46 |
 | SEI-47 | Native push | `push_tokens` table + RLS; register the token after sign-in, delete it on sign-out; `reminders-daily` also sends through Expo; a tap opens Avisos | Web Push removal (SEI-49) | SEI-44 | yes | SEI-47 |
-| SEI-52 | Maestro in CI | The `verify` map's journeys on every PR against seibi-dev, with the test sign-in and the recordings attached | — | SEI-41 (the first iOS EAS build) | yes | SEI-52 |
+| SEI-52 | Maestro in CI: canceled 2026-11-16 | — | Simulator proof stays local (`AGENTS.md` → Prove it works) | — | — | SEI-52 |
 
 ### 2 · Migración
 
@@ -150,20 +150,15 @@ ticket and keep its behaviour.
 
 Rules:
 
-- **At most 3 tickets in progress.** MVP tickets go first; after-launch
-  tickets wait in Backlog until the MVP ships.
-- **The orchestrator reviews and merges.** Every ticket is one PR from
-  its own branch, merged into `main` once CI is green and the change is
-  reviewed. Saul hears about every merge that deploys migrations or Edge
-  Functions, and approves destructive production changes first.
+- **At most 3 tickets in progress**, and a new one starts only after one
+  merges. MVP tickets go first; after-launch tickets wait in Backlog until
+  the MVP ships.
+- **Devin runs each ticket and merges it** (`AGENTS.md` → Ticket loop):
+  one PR per ticket, from its own branch.
 - A ticket that changes what is true updates `ARCHITECTURE.md` in the same
   PR.
-- **Every PR carries proof.** A PR that changes what a user sees or does
-  adds or updates its feature file in the `verify` skill's map
-  (`apps/mobile/.claude/skills/verify/features/`) and proves it: a video
-  of the journey, screenshots, and a read-only seibi-dev query for the
-  saved data. The video goes on the Linear ticket, linked from the PR. No
-  proof, no merge. Once SEI-52 lands, the same journeys also run in CI.
+- **Every PR carries proof at its tier** (`AGENTS.md` → Prove it works).
+  No proof, no merge.
 - Work nobody has tried in Seibi or the reference apps starts with a short
   spike before anything is built on it (see Gotchas).
 
