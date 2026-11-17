@@ -213,8 +213,8 @@ export function Chip({
       aria-pressed={selected}
       onClick={onClick}
       className={cx(
-        'inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[0.85rem] font-semibold transition-colors',
-        selected ? 'bg-inverse text-on-inverse' : 'bg-surface text-ink ring-1 ring-line',
+        'inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[14px] font-medium transition-colors',
+        selected ? 'bg-inverse text-on-inverse' : 'bg-[var(--g-control)] text-ink',
       )}
     >
       {Icon ? <Icon className="size-4" aria-hidden /> : null}

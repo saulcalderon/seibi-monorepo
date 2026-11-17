@@ -177,7 +177,8 @@ function Segment({ label, selected, onPress, testID }: { label: string; selected
   styles.useVariants({ selected });
   return (
     <Pressable testID={testID} accessibilityRole="radio" accessibilityLabel={label} accessibilityState={{ checked: selected }} onPress={onPress} style={styles.segment}>
-      <Text step="subhead" weight={600} tone={selected ? 'ink' : 'muted'} align="center">
+      {/* One line, as in the PWA: on a narrow phone a long label («Mantenimiento») shrinks a little instead of breaking mid-word. */}
+      <Text step="subhead" weight={600} tone={selected ? 'ink' : 'muted'} align="center" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
         {label}
       </Text>
     </Pressable>
@@ -232,7 +233,11 @@ const styles = StyleSheet.create((theme) => ({
     backgroundColor: theme.colors.surface3,
   },
   segment: {
-    flex: 1,
+    // Each segment starts at its label's width and shares what is left, as the PWA's `flex-1` buttons do: a long
+    // label («Mantenimiento») gets its room instead of a quarter of the track.
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 'auto',
     minHeight: theme.size.target,
     alignItems: 'center',
     justifyContent: 'center',

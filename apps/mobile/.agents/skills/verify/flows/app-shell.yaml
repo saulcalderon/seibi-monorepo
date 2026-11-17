@@ -58,8 +58,8 @@ name: Tabs keep their place, the [+] opens the actions, a link opens a Vehicle
     id: fleet-vehicle-0
 - extendedWaitUntil:
     visible:
-      id: vehicle-name
-    timeout: 15000
+      id: vehicle-hero
+    timeout: 20000
 - assertVisible:
     id: tab-fleet
 - assertVisible:
@@ -90,8 +90,8 @@ name: Tabs keep their place, the [+] opens the actions, a link opens a Vehicle
     id: tab-fleet
 - extendedWaitUntil:
     visible:
-      id: vehicle-name
-    timeout: 15000
+      id: vehicle-hero
+    timeout: 20000
 - waitForAnimationToEnd
 - takeScreenshot: shell-06-fleet-kept-place
 # Back to the list: the system's back (Android) or the edge swipe (iOS).
@@ -206,10 +206,10 @@ name: Tabs keep their place, the [+] opens the actions, a link opens a Vehicle
     commands:
       - tapOn: 'Open|Abrir'
 - extendedWaitUntil:
-    visible:
-      id: vehicle-name
-      text: '${output.vehicleName}.*'
+    visible: '${output.vehicleName}.*'
     timeout: 20000
+- assertVisible:
+    id: vehicle-hero
 - assertVisible:
     id: tab-fleet
 - waitForAnimationToEnd

@@ -1,8 +1,8 @@
 // Where a link from outside the app opens (src/app/+native-intent.tsx).
 // After Paradero's src/app/+native-intent.tsx (MIT).
 
-/** `vehicle/<id>`, with or without a scheme or a leading slash, then an optional query or fragment. */
-const VEHICLE = /^\/vehicle\/([^/?#]+)\/?(?:[?#].*)?$/;
+/** `vehicle/<id>`, with or without a scheme or a leading slash, then an optional query (kept) and fragment (dropped). */
+const VEHICLE = /^\/vehicle\/([^/?#]+)\/?(\?[^#]*)?(?:#.*)?$/;
 
 /**
  * The Vehicle form's own routes under `vehicle/` (`src/app/(app)/vehicle/`):
@@ -18,7 +18,9 @@ const FORM_ROUTES = new Set(['new', 'pick']);
  */
 export function vehicleLinkTarget(path: string): string | null {
   const at = `/${path.replace(/^[a-z][a-z0-9+.-]*:\/\//i, '')}`.replace(/^\/+/, '/');
-  const id = VEHICLE.exec(at)?.[1];
+  const match = VEHICLE.exec(at);
+  const id = match?.[1];
   if (!id || FORM_ROUTES.has(id)) return null;
-  return `/(app)/(tabs)/(fleet)/vehicle/${id}`;
+  // The query carries the detail's `?tab=` (src/vehicle-detail/vehicle-detail.tsx).
+  return `/(app)/(tabs)/(fleet)/vehicle/${id}${match[2] ?? ''}`;
 }

@@ -72,7 +72,7 @@ export function ReminderDetail({
       onClose={onClose}
       title={title}
       description={vehicleName(vehicle)}
-      panelClassName="bg-[#f7f2ee]"
+      look="v3"
     >
       {reminder ? (
         <div className="flex flex-col gap-3 pb-2 text-ink">
@@ -100,7 +100,7 @@ export function ReminderDetail({
                 aria-label="Intervalo usado"
               >
                 <div
-                  className="h-full rounded-full bg-ink/30"
+                  className={`h-full rounded-full ${STATUS_META[reminder.status].bar}`}
                   style={{ width: `${Math.max(4, Math.min(100, Math.round(reminder.used * 100)))}%` }}
                 />
               </div>

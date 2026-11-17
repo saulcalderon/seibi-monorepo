@@ -190,7 +190,7 @@ name: Record a Service from the [+], edit it and withdraw it
 - takeScreenshot: service-09-reminders-after
 
 # --- The Vehicle lists it; a tap opens it to edit.
-- openLink: ${APP_URL}vehicle/${output.vehicleId}
+- openLink: ${APP_URL}vehicle/${output.vehicleId}?tab=historial
 - runFlow:
     when:
       platform: iOS
@@ -199,18 +199,24 @@ name: Record a Service from the [+], edit it and withdraw it
       - tapOn: 'Open|Abrir'
 - extendedWaitUntil:
     visible:
-      id: vehicle-name
+      id: detail-tabs
     timeout: 20000
 - scrollUntilVisible:
     element:
-      id: vehicle-service-0
+      id: service-card-0
     centerElement: true
 - assertVisible:
-    id: vehicle-service-0
-    text: 'Cambio de aceite, Bombillo de freno.*52,000 km.*'
+    id: service-card-0
+- assertVisible: 'Cambio de aceite, Bombillo de freno.*52,000 km.*'
 - takeScreenshot: service-10-vehicle-services
 - tapOn:
-    id: vehicle-service-0
+    id: service-card-0
+- extendedWaitUntil:
+    visible:
+      id: service-card-edit-0
+    timeout: 15000
+- tapOn:
+    id: service-card-edit-0
 - extendedWaitUntil:
     visible:
       id: service-form-title
@@ -246,32 +252,50 @@ name: Record a Service from the [+], edit it and withdraw it
     notVisible:
       id: service-form
     timeout: 15000
+# The card's head speaks as one label (tasks, date, Mileage, type, cost);
+# the card's own id carries no text.
 - extendedWaitUntil:
-    visible:
-      id: vehicle-service-0
-      text: '.*Reparación.*'
+    visible: 'Cambio de aceite, Bombillo de freno, .*Reparación.*'
     timeout: 15000
 - takeScreenshot: service-12-edited
 
-# --- Withdraw: it asks first, then the Service leaves the history.
-- tapOn:
-    id: vehicle-service-0
+# --- Withdraw: it asks first, then the Service leaves the history. The card
+# stays open after «Editar»; open it only if it closed.
+- runFlow:
+    when:
+      notVisible:
+        id: service-card-withdraw-0
+    commands:
+      - tapOn: 'Cambio de aceite, Bombillo de freno, .*'
 - extendedWaitUntil:
     visible:
-      id: service-form-title
-      text: Editar Servicio
+      id: service-card-withdraw-0
     timeout: 15000
 - scrollUntilVisible:
     element:
-      id: service-withdraw
+      id: service-card-withdraw-0
     centerElement: true
 - tapOn:
-    id: service-withdraw
+    id: service-card-withdraw-0
 - extendedWaitUntil:
     visible: '¿Quitar este Servicio del historial\?'
     timeout: 5000
 - takeScreenshot: service-13-withdraw-confirm
-- tapOn: 'Quitar'
+# iOS lists the card's «Quitar» behind the alert too: the alert's is the
+# second match. Android's alert is its own window (button1 confirms).
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: 'Quitar'
+          index: 1
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          id: 'android:id/button1'
 - runFlow:
     when:
       platform: iOS
@@ -284,9 +308,7 @@ name: Record a Service from the [+], edit it and withdraw it
       id: service-form
     timeout: 15000
 - extendedWaitUntil:
-    notVisible:
-      id: vehicle-service-0
-      text: '.*Bombillo de freno.*'
+    notVisible: '.*Bombillo de freno.*'
     timeout: 15000
 - takeScreenshot: service-14-withdrawn
 - stopRecording

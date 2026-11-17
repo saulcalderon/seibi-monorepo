@@ -24,8 +24,11 @@ export default function AppLayout() {
       <Stack.Screen name="actions" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
       {/* The Service form (S7): tall, as the PWA's sheet; record-service?vehicleId= | serviceId= | tasks=. */}
       <Stack.Screen name="record-service" options={{ ...sheet, sheetAllowedDetents: [0.92] }} />
-      {/* A placeholder until the Mileage form (S8) takes this route. */}
       <Stack.Screen name="update-mileage" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
+      {/* «Corregir lectura» (S6): a reading row in the Vehicle's Historial. */}
+      <Stack.Screen name="correct-reading" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
+      {/* The Routine sheet (S6): a row in Uso's «Rutinas semanales» or its «Agregar rutina». */}
+      <Stack.Screen name="routine" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
       {/* The Vehicle form (S5): a modal with its own stack, so its pickers push inside it. */}
       <Stack.Screen name="vehicle" options={{ presentation: 'modal', contentStyle: { backgroundColor: theme.colors.bg } }} />
       {/* The data check and Inicio's sample screen exist in Seibi Dev (the development variant) only. */}

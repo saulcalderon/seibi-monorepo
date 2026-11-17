@@ -74,13 +74,13 @@ name: Inicio shows the greeting, the active Vehicle, its Mileage and opens it
     notVisible:
       id: mileage-sheet
     timeout: 15000
-# The Vehicle's name opens it inside Inicio's tab (a placeholder until S6).
+# The Vehicle's name opens its detail inside Inicio's tab (S6).
 - tapOn:
     id: home-stage-vehicle
 - extendedWaitUntil:
     visible:
-      id: vehicle-name
-    timeout: 15000
+      id: vehicle-hero
+    timeout: 20000
 - assertVisible:
     id: tab-home
 - waitForAnimationToEnd

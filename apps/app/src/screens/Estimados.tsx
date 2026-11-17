@@ -4,6 +4,7 @@ import { motion } from 'motion/react'
 import {
   ArrowUp,
   Building2,
+  Calculator,
   CalendarPlus,
   CarFront,
   ChevronDown,
@@ -32,7 +33,7 @@ import { Button, IconButton } from '../ui/Button'
 import { Card, IconTile, SectionHeader } from '../ui/Card'
 import { cx } from '../ui/cx'
 import { EmptyState, ErrorState, ScreenSkeleton } from '../ui/feedback'
-import { Segmented, SelectField, TextField } from '../ui/fields'
+import { SelectField, TextField } from '../ui/fields'
 
 type Mode = 'estimate' | 'chat'
 
@@ -48,7 +49,7 @@ export function Estimados({ vehicleParam, taskParam }: { vehicleParam?: string; 
   const vehicle = garage.vehicles.find((v) => v.id === (vehicleId ?? active?.id)) ?? null
 
   return (
-    <Screen title="Estimados" subtitle="Rangos de precio para tu Vehículo, en tu ciudad." className="flex min-h-full flex-col bg-[#f7f2ee]">
+    <Screen title="Estimados" subtitle="Rangos de precio para tu Vehículo, en tu ciudad." className="garage v3 flex min-h-full flex-col">
       {garage.isLoading ? (
         <ScreenSkeleton />
       ) : garage.isError ? (
@@ -78,15 +79,33 @@ export function Estimados({ vehicleParam, taskParam }: { vehicleParam?: string; 
                 setShowVehicles(false)
               }}
             />
-            <Segmented
-              label="Modo"
-              value={mode}
-              onChange={setMode}
-              options={[
-                { value: 'estimate', label: 'Estimar precio' },
-                { value: 'chat', label: 'Chat de Seibi' },
-              ]}
-            />
+            <div role="radiogroup" aria-label="Modo" className="flex rounded-2xl bg-[var(--g-control)] p-1">
+              {(
+                [
+                  { value: 'estimate' as const, label: 'Estimar precio', icon: Calculator },
+                  { value: 'chat' as const, label: 'Chat de Seibi', icon: MessageCircle },
+                ] as const
+              ).map((option) => {
+                const on = mode === option.value
+                const Icon = option.icon
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    onClick={() => setMode(option.value)}
+                    className={cx(
+                      'inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl px-3 text-[14px] font-medium transition-transform duration-200 active:scale-[0.97]',
+                      on ? 'bg-inverse text-on-inverse' : 'text-muted',
+                    )}
+                  >
+                    <Icon className="size-[18px]" aria-hidden />
+                    {option.label}
+                  </button>
+                )
+              })}
+            </div>
           </div>
           <LocationGate>
             {mode === 'estimate' ? (
@@ -122,7 +141,7 @@ function VehicleSwitcher({
   const others = vehicles.filter((v) => v.id !== vehicle.id).sort(byUrgency)
   const label = vehicleChoiceLabel(vehicle, vehicles)
   return (
-    <div className="overflow-hidden rounded-2xl bg-surface ring-1 ring-line">
+    <div className="overflow-hidden rounded-3xl bg-surface shadow-card">
       <button
         type="button"
         aria-expanded={others.length > 0 ? open : undefined}

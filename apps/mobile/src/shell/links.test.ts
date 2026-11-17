@@ -13,10 +13,15 @@ describe('vehicleLinkTarget', () => {
     expect(vehicleLinkTarget(`vehicle/${ID}`)).toBe(FLEET);
   });
 
-  it('ignores a trailing slash, a query and a fragment', () => {
+  it('ignores a trailing slash and a fragment', () => {
     expect(vehicleLinkTarget(`seibi-dev://vehicle/${ID}/`)).toBe(FLEET);
-    expect(vehicleLinkTarget(`seibi-dev://vehicle/${ID}?from=push`)).toBe(FLEET);
     expect(vehicleLinkTarget(`seibi-dev://vehicle/${ID}#top`)).toBe(FLEET);
+  });
+
+  it('keeps the query, so `?tab=` opens that tab of the detail', () => {
+    expect(vehicleLinkTarget(`seibi-dev://vehicle/${ID}?tab=historial`)).toBe(`${FLEET}?tab=historial`);
+    expect(vehicleLinkTarget(`seibi-dev://vehicle/${ID}/?tab=datos#top`)).toBe(`${FLEET}?tab=datos`);
+    expect(vehicleLinkTarget(`seibi-dev://vehicle/${ID}?from=push`)).toBe(`${FLEET}?from=push`);
   });
 
   it('leaves every other link alone', () => {

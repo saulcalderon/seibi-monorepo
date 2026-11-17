@@ -11,9 +11,10 @@ notes. «Guardar» validates in the PWA's order: the reading first
 least one task or named line («Agrega al menos un trabajo o pieza.»);
 each missing field is named and the sheet stays open. Saving writes the
 Mileage reading first and then the Service, so Inicio's «Estado»,
-Avisos and the Vehicle's «Servicios» list move at once. Opening the same
-sheet for a Service (`?serviceId=`) edits it and offers «Quitar del
-historial», which asks («Quitar» confirms) and withdraws it — the Mileage
+Avisos and the Vehicle's Historial move at once. Opening the same
+sheet for a Service (`?serviceId=`) edits it; Historial's card also
+offers «Quitar», which asks («¿Quitar este Servicio del historial? El
+kilometraje registrado se conserva.») and withdraws it — the Mileage
 reading stays. Closing with typed input asks «¿Descartar los cambios?»
 first; a clean sheet just closes. In
 Avisos a Maintenance task with no Service yet asks «¿Cuándo fue la última
@@ -23,10 +24,11 @@ vez?»; recording one for it answers that.
 
 - `open-actions` the [+] actions sheet's «Registrar un Servicio»
   (`id: action-record-service`) opens the form on the active Vehicle.
-- `open-vehicle` the Vehicle detail's «Servicios» list (`id:
-  vehicle-services`, `id: vehicle-service-<n>`) holds «Registrar un
-  Servicio» (`id: vehicle-record-service`), which opens the form for that
-  Vehicle — no picker.
+- `open-vehicle` the Vehicle detail's Historial holds «Registrar
+  Servicio» (`id: record-service`), which opens the form for that Vehicle
+  — no picker; each month's card (`id: service-card-<n>`) expands to
+  «Editar» (`id: service-card-edit-<n>`) and «Quitar» (`id:
+  service-card-withdraw-<n>`).
 - `title` the sheet is `id: service-form` titled «Registrar Servicio»
   (`id: service-form-title`).
 - `vehicle` when the form needs a Vehicle it shows the picker (`id:
@@ -55,9 +57,9 @@ vez?»; recording one for it answers that.
 ## How to get to it (user POV)
 
 - Tap the floating [+] in the tab bar → «Registrar un Servicio».
-- Open a Vehicle in Mi flota (or from Inicio's stage), scroll to
-  «Servicios», tap «Registrar un Servicio».
-- Tap an existing Service in that list to edit or withdraw it.
+- Open a Vehicle in Mi flota (or from Inicio's stage) → Historial →
+  «Registrar Servicio».
+- Tap a Service's card to expand it → «Editar» or «Quitar».
 - Deep links: `seibi-dev://record-service?vehicleId=<id>`,
   `?serviceId=<id>`, `?tasks=<codes>`.
 
@@ -74,7 +76,7 @@ Preconditions:
   text size.
 
 - **Clean slate first.** `drive ios service-cleanup` opens the Vehicle's
-  «Servicios» and withdraws any leftover Service whose line says
+  Historial and withdraws any leftover Service whose line says
   «Bombillo de freno» (what `service` records). Run it before `service`
   whenever a previous run died mid-way.
 - **Record, edit, withdraw.** `drive ios service` (then `android`). It

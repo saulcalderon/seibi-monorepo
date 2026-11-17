@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from 'motion/react'
 import {
   ArchiveRestore,
   CarFront,
-  ChevronRight,
   Home,
   Plus,
   Search,
@@ -19,6 +18,7 @@ import { formatNumber, vehicleName } from '../lib/format'
 import { byUrgency, useGarage, withdrawnDaysLeft, type VehicleView } from '../lib/garage'
 import { useRestoreVehicle } from '../lib/mutations'
 import { Button, IconButton } from '../ui/Button'
+import { cx } from '../ui/cx'
 import { Card } from '../ui/Card'
 import { Chip } from '../ui/fields'
 import { EmptyState, ErrorState, Skeleton, STATUS_META, useToast } from '../ui/feedback'
@@ -69,7 +69,7 @@ export function Fleet() {
 
   return (
     <Screen
-      className="min-h-full bg-[#f7f2ee]"
+      className="garage v3 min-h-full"
       title="Mi flota"
       subtitle={
         total === 0
@@ -110,7 +110,7 @@ export function Fleet() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Buscar por marca, modelo, año o placa"
-                  className="h-12 w-full rounded-2xl bg-surface pl-11 pr-11 text-[0.95rem] text-ink ring-1 ring-line placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-ink"
+                  className="h-12 w-full rounded-xl bg-[var(--g-control)] pl-11 pr-11 text-[15px] text-ink placeholder:text-subtle focus:outline-none"
                 />
                 {query ? (
                   <IconButton
@@ -199,6 +199,22 @@ export function Fleet() {
   )
 }
 
+function FleetHealth({ health }: { health: VehicleView['health'] }) {
+  const urgent = health === 'overdue' || health === 'soon'
+  const label = health === 'unknown' ? 'Sin datos' : STATUS_META[health].label
+  return (
+    <span
+      className={cx(
+        'inline-flex shrink-0 items-center gap-1.5 text-[12px] font-medium',
+        urgent ? 'text-[var(--g-alert)]' : 'text-muted',
+      )}
+    >
+      {urgent ? <span className="size-1.5 rounded-full bg-[var(--g-alert)]" aria-hidden /> : null}
+      {label}
+    </span>
+  )
+}
+
 function FleetCard({ vehicle, selected }: { vehicle: VehicleView; selected: boolean }) {
   const navigate = useNavigate()
   return (
@@ -209,7 +225,7 @@ function FleetCard({ vehicle, selected }: { vehicle: VehicleView; selected: bool
         className="flex w-full flex-col text-left transition-transform active:scale-[0.99]"
       >
         <div className="flex items-center gap-3 p-3.5">
-          <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-2xl bg-linear-to-b from-surface-2 to-surface-3 ring-1 ring-line">
+          <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-2xl bg-[var(--g-control)]">
             <VehicleVisual
               render={vehicle.render}
               bodyType={vehicle.bodyType}
@@ -222,25 +238,19 @@ function FleetCard({ vehicle, selected }: { vehicle: VehicleView; selected: bool
           <div className="min-w-0 flex-1">
             <p className="flex min-w-0 items-center gap-1.5">
               {selected ? <Home className="size-3.5 shrink-0 text-ink" aria-hidden /> : null}
-              <span className="truncate text-[1.02rem] font-bold leading-tight">{vehicleName(vehicle)}</span>
-              <span className="shrink-0 text-[0.8rem] font-semibold text-muted tabular">{vehicle.year}</span>
+              <span className="truncate text-[15px] font-medium leading-tight">{vehicleName(vehicle)}</span>
+              <span className="shrink-0 text-[13px] font-medium text-muted tabular">{vehicle.year}</span>
             </p>
             <div className="mt-1.5 flex items-center justify-between gap-2">
-              <p className="min-w-0 truncate text-[0.8rem] text-muted">
+              <p className="min-w-0 truncate text-[13px] text-muted">
                 {vehicle.plate ? <span>{vehicle.plate} · </span> : null}
-                <span className="font-semibold text-ink tabular">
+                <span className="font-medium text-ink tabular">
                   {vehicle.odometer != null ? `${formatNumber(vehicle.odometer)} ${vehicle.measure}` : 'Sin km'}
                 </span>
               </p>
-              <span className="inline-flex h-7 shrink-0 items-center rounded-full bg-surface-2 px-2.5 text-[0.72rem] font-semibold">
-                {vehicle.health === 'unknown' ? 'Sin datos' : STATUS_META[vehicle.health].label}
-              </span>
+              <FleetHealth health={vehicle.health} />
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2 border-t border-line px-4 py-3 text-[0.82rem] font-semibold">
-          <span className="min-w-0 flex-1 truncate">Toca para ver más de tu Vehículo</span>
-          <ChevronRight className="size-4 shrink-0" aria-hidden />
         </div>
       </button>
     </Card>
