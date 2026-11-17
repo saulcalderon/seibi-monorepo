@@ -23,7 +23,10 @@ flota».
 
 - `header` the title is `id: vehicle-name`; the subtitle `id:
   vehicle-subtitle`; the pencil `id: vehicle-edit` opens the edit form.
-- `hero` `id: vehicle-hero` shares the art with Inicio's stage.
+- `hero` `id: vehicle-hero` shares the art with Inicio's stage
+  (`src/vehicle/vehicle-art.tsx`): `id: vehicle-hero-art-poster` when the
+  Vehicle has a render, else `id: vehicle-hero-art-silhouette` (Inicio's
+  are `home-vehicle-poster` / `home-vehicle-silhouette`).
 - `tiles` `id: tile-odometer`, `id: tile-health`, `id: tile-usage`; the
   first opens «Actualizar Kilometraje» for this Vehicle, the last jumps to
   Uso.
@@ -34,7 +37,8 @@ flota».
   `-general`; the last's «Buscar plan del fabricante» refreshes the
   Vehicle's data (`id: schedule-fetch`).
 - `reminders` the groups are `id: reminder-group-<status>` with rows `id:
-  reminder-<n>` — read-only until the Reminder detail (S9).
+  reminder-<taskCode>` — read-only until the Reminder detail (S9), with no
+  status badge (the group names it; a snoozed row says «Pospuesto»).
 - `agenda` «Citas y recordatorios» (`id:
   detail-appointments`) lists appointments (`id: detail-appointment`)
   and open manual Reminders (`id: detail-manual-reminder`) read-only; hidden when empty.
@@ -52,8 +56,11 @@ flota».
 - `usage` `id: usage-estimate` carries `id: usage-update-mileage`; `id:
   routine-add` and the rows `id: routine-<n>` open the Routine sheet (`id:
   routine-sheet`, `id: routine-title`, `id: routine-name`, `id:
-  routine-distance`, day chips `id: routine-day-<n>`, `id: routine-save`,
-  `id: routine-delete` when editing); `id: routine-total` sums the week.
+  routine-distance`, name presets `id: routine-preset-<key>` on create,
+  day chips `id: routine-day-<n>` (radios), `id: routine-save`, `id:
+  routine-delete` when editing); `id: routine-total` sums the week. A
+  `routineId` that no longer exists shows `id: routine-gone` instead of
+  the create form.
 - `data` `id: data-rows`, `id: data-edit` opens the edit form, `id:
   data-source-<n>` opens a plan source in the browser, `id: data-withdraw`
   is the danger row — flows never tap it.
@@ -74,9 +81,11 @@ flota».
 
 Preconditions: the baseline, and the test account's first Vehicle on
 seibi-dev (the Toyota Yaris). `vehicle-detail` walks every tab and saves
-and removes a Service and a Routine with the `verify SEI-61` marker;
-`vehicle-detail-cleanup` removes leftovers of an interrupted run through
-REST (the marker text only shows inside an expanded card). `service`
+and removes a Service and a Routine with the `verify SEI-61` marker. It
+starts by running `scripts/cleanup-sei61.js` (before the recording), so
+an interrupted earlier run can't change the totals it asserts;
+`vehicle-detail-cleanup` runs the same cleanup alone, through REST under
+the account's RLS (the marker text only shows inside an expanded card). `service`
 exercises edit and withdraw from Historial's card. Commands as in
 `../SKILL.md`: `scripts/verify.sh drive <ios|android> vehicle-detail`.
 
@@ -92,5 +101,13 @@ exercises edit and withdraw from Historial's card. Commands as in
   «Rutina guardada», «Rutina eliminada») announce for accessibility only;
   assert them on iOS and prove Android by the closed sheet and the changed
   list.
-- On Android the number pad over the Routine sheet needs `back` before the
-  next chip is reachable.
+- On Android the number pad covers the formSheet's content (SEI-76): the
+  flow presses `back` after each `inputText` in «Corregir lectura» and the
+  Routine sheet, which drops the pad and never the sheet, before it
+  reaches the next field, chip or save.
+- The confirm alerts differ by platform, so the taps split with `runFlow:
+  when: platform`. On iOS «Quitar» and «Eliminar Rutina» also name the
+  card's or sheet's button behind the alert, so the flow picks the
+  alert's own («Quitar» by `index: 1`, «Eliminar Rutina» between the
+  alert's message and «Cancelar»); on Android the alert is its own window
+  and the flow taps `android:id/button1`.
