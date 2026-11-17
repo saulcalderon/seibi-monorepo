@@ -17,6 +17,8 @@
 #   SEIBI_VERIFY_AVD       Android Virtual Device (default seibi-pixel)
 #   SEIBI_VERIFY_EMU_PORT  emulator console port (default 5560 -> serial emulator-5560)
 #   SEIBI_VERIFY_SIM       iOS Simulator name (default "Seibi Verify"), created if missing
+#   SEIBI_VERIFY_SLIM      set to 0 to keep the iOS Simulator stock; by default
+#                          launch slims it with simslim when it is installed
 #   MAESTRO_BIN            Maestro CLI (default: maestro on PATH, else ~/.maestro/bin/maestro)
 #   SEIBI_TEST_EMAIL       the seibi-dev test account, for flows that sign in; with
 #   SEIBI_TEST_PASSWORD    SEIBI_TEST_PASSWORD. Unset: read from SEIBI_TEST_ACCOUNT_FILE
@@ -41,6 +43,9 @@ EMU_PORT="${SEIBI_VERIFY_EMU_PORT:-5560}"
 SERIAL="emulator-$EMU_PORT"
 SIM_NAME="${SEIBI_VERIFY_SIM:-Seibi Verify}"
 SIM_TYPE="iPhone 17"
+# Slimming cuts the simulator's memory roughly in half (SKILL.md → Slim simulator).
+SLIM="${SEIBI_VERIFY_SLIM:-1}"
+SIMSLIM="$(command -v simslim 2>/dev/null || true)"
 ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
 ADB="$ANDROID_HOME/platform-tools/adb"
 EMULATOR="$ANDROID_HOME/emulator/emulator"
@@ -92,11 +97,16 @@ ensure_sim() {
   local udid runtime
   udid="$(sim_udid || true)"
   if [[ -z "$udid" ]]; then
+    # The newest available runtime that can host an $SIM_TYPE: a single-device
+    # runtime (e.g. the iPhone-Air-only iOS-27-2-iPhone19-4) sorts last but
+    # cannot create other device types.
     runtime="$(xcrun simctl list runtimes available -j | python3 -c '
 import json, sys
+sim_type = sys.argv[1]
 ios = [r for r in json.load(sys.stdin)["runtimes"] if r["platform"] == "iOS" and r["isAvailable"]]
-print(ios[-1]["identifier"] if ios else "")')"
-    [[ -n "$runtime" ]] || die "no iOS Simulator runtime installed. Run: xcodebuild -downloadPlatform iOS"
+fit = [r for r in ios if any(d["name"] == sim_type for d in r.get("supportedDeviceTypes", []))]
+print(fit[-1]["identifier"] if fit else "")' "$SIM_TYPE")"
+    [[ -n "$runtime" ]] || die "no iOS Simulator runtime can host $SIM_TYPE. Run: xcodebuild -downloadPlatform iOS"
     log "creating simulator \"$SIM_NAME\" ($SIM_TYPE, $runtime)"
     udid="$(xcrun simctl create "$SIM_NAME" "$SIM_TYPE" "$runtime")"
     # A new iOS 27 simulator ignores dark-mode changes until it has rebooted once.
@@ -105,6 +115,21 @@ print(ios[-1]["identifier"] if ios else "")')"
     xcrun simctl bootstatus "$udid" -b >/dev/null
     xcrun simctl shutdown "$udid" >&2
   fi
+  if [[ "$SLIM" != 0 ]]; then
+    if [[ -z "$SIMSLIM" ]]; then
+      log "simslim not installed: simulator stays stock (optional: brew install mobai-app/tap/simslim)"
+    elif [[ "$(sim_state "$udid")" == Booted ]]; then
+      if ! "$SIMSLIM" verify "$udid" >/dev/null 2>&1; then
+        log "slimming simulator $udid (simslim on; it reboots)"
+        "$SIMSLIM" on "$udid" >&2
+        xcrun simctl bootstatus "$udid" -b >/dev/null
+      fi
+    elif "$SIMSLIM" on "$udid" --preserve-boot-state >/dev/null 2>&1; then
+      log "simulator $udid slimmed"
+    else
+      log "simslim on --preserve-boot-state failed; continuing stock"
+    fi
+  fi
   if [[ "$(sim_state "$udid")" != "Booted" ]]; then
     log "booting simulator $udid"
     xcrun simctl boot "$udid" >&2
@@ -112,7 +137,16 @@ print(ios[-1]["identifier"] if ios else "")')"
   fi
   xcrun simctl bootstatus "$udid" -b >/dev/null
   # Show the device for anyone watching; Maestro does not need the window.
-  open -a "$(xcode-select -p)/Applications/Simulator.app" --args -CurrentDeviceUDID "$udid" >&2 2>/dev/null || true
+  # Xcode 27 replaced Simulator.app with DeviceHub.
+  local sim_app="$(xcode-select -p)/Applications/Simulator.app"
+  local hub_app="$(xcode-select -p)/../Applications/DeviceHub.app"
+  if [[ -d "$sim_app" ]]; then
+    open -a "$sim_app" --args -CurrentDeviceUDID "$udid" >&2 2>/dev/null || true
+  elif [[ -d "$hub_app" ]]; then
+    open -a "$hub_app" >&2 2>/dev/null || true
+  else
+    log "no Simulator.app or DeviceHub.app found; Maestro does not need the window"
+  fi
   # Pre-approve the dev client's and the app's schemes, so opening them shows no "Open in Seibi Dev?" prompt.
   local plist="$HOME/Library/Developer/CoreSimulator/Devices/$udid/data/Library/Preferences/com.apple.launchservices.schemeapproval.plist"
   local scheme key
@@ -201,6 +235,14 @@ dev_url() {
   echo "$DEV_CLIENT_SCHEME://?__expo_url=$enc&__expo_disable_fab=1&__expo_disable_auto_launch=1&__expo_disable_onboarding=1"
 }
 
+# node_modules is current when pnpm's applied lockfile is byte-identical to the
+# repo's; a stale install builds an app that can't resolve new modules.
+deps_current() {
+  local root
+  root="$(git -C "$APP_DIR" rev-parse --show-toplevel 2>/dev/null)" || return 1
+  [[ -f "$root/node_modules/.pnpm/lock.yaml" ]] && cmp -s "$root/node_modules/.pnpm/lock.yaml" "$root/pnpm-lock.yaml"
+}
+
 # --- Backend and test account --------------------------------------------------
 
 # A value the app's bundle gets: the environment first, else apps/mobile/.env.local (what Expo loads).
@@ -261,8 +303,15 @@ build_ios() {
 cmd_launch() {
   local platform rebuild="" udid
   platform="$(platform_arg "${1:-}")"; [[ "${2:-}" == "--rebuild" ]] && rebuild=1
+  deps_current || die "node_modules doesn't match pnpm-lock.yaml: run pnpm install at the repo root, then launch $platform --rebuild"
   if [[ "$platform" == ios ]]; then
     udid="$(ensure_sim)"
+    if [[ -n "$rebuild" ]]; then
+      # Regenerate so a new native module or config plugin gets linked.
+      # --no-install: build_ios runs pod install itself.
+      ( cd "$APP_DIR" && ./node_modules/.bin/expo prebuild -p ios --clean --no-install ) \
+        || die "expo prebuild failed"
+    fi
     if [[ -n "$rebuild" ]] || ! xcrun simctl get_app_container "$udid" "$APP_ID" >/dev/null 2>&1; then
       log "building and installing Seibi Dev on $udid (first build takes several minutes)"
       build_ios "$udid" > "$STATE_DIR/build-ios.log" 2>&1 || die "iOS build failed; see $STATE_DIR/build-ios.log"
@@ -285,6 +334,8 @@ cmd_doctor() {
   platform="$(platform_arg "${1:-}")"
   echo "app dir:   $APP_DIR"
   echo "git:       $(git -C "$APP_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null) @ $(git -C "$APP_DIR" rev-parse --short HEAD 2>/dev/null)"
+  if deps_current; then echo "deps:      node_modules matches pnpm-lock.yaml"
+  else echo "deps:      node_modules doesn't match pnpm-lock.yaml: run pnpm install at the repo root"; ok=0; fi
   if [[ -x "$MAESTRO" ]]; then echo "maestro:   $("$MAESTRO" --version 2>/dev/null | tail -1) ($MAESTRO)"
   else echo "maestro:   MISSING ($MAESTRO)"; ok=0; fi
   if [[ "$(metro_status)" == "packager-status:running" ]]; then
@@ -304,6 +355,16 @@ cmd_doctor() {
     udid="$(sim_udid || true)"
     if [[ -n "$udid" && "$(sim_state "$udid")" == "Booted" ]]; then
       echo "simulator: \"$SIM_NAME\" $udid booted"
+      # Informational only: whether the sim is slim never gates a run.
+      if [[ "$SLIM" == 0 ]]; then echo "slim:      stock (SEIBI_VERIFY_SLIM=0)"
+      elif [[ -z "$SIMSLIM" ]]; then echo "slim:      stock (simslim not installed)"
+      else echo "slim:      $("$SIMSLIM" status "$udid" --json 2>/dev/null | python3 -c '
+import json, sys
+try:
+    s = json.load(sys.stdin)
+    print("%s/%s %s (simslim)" % (s["managedDisabled"], s["managedTotal"], s["verdict"]))
+except Exception:
+    print("unknown")')" || echo "slim:      unknown"; fi
       if xcrun simctl get_app_container "$udid" "$APP_ID" >/dev/null 2>&1; then
         echo "app:       $APP_ID installed ($(/usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "$(xcrun simctl get_app_container "$udid" "$APP_ID")/Info.plist"))"
       else echo "app:       $APP_ID NOT installed"; ok=0; fi
