@@ -1,0 +1,60 @@
+# Subflow, not driven alone: answers the first-run questions the shortest
+# way, without a Vehicle, starting on «¡Bienvenido a Seibi!» (id:
+# first-run-name) and ending on Inicio. sign-in.yaml runs it when the test
+# account hasn't finished its first run (a new or reset account), and
+# first-run-skip.yaml proves it. It saves the profile a person would:
+# name «E2E», level, El Salvador · San Salvador. Feature:
+# features/first-run.md.
+appId: ${APP_ID}
+name: Finish the first-run questions without a Vehicle
+---
+- extendedWaitUntil:
+    visible:
+      id: first-run-name-field
+    timeout: 30000
+- tapOn:
+    id: first-run-name-field
+- eraseText: 60
+- inputText: E2E
+- tapOn:
+    id: first-run-name-continue
+# «¿Cuánto sabes de carros?», then the three check questions.
+- tapOn:
+    id: first-run-level-basic
+- tapOn:
+    id: first-run-check-0-prevent
+- tapOn:
+    id: first-run-check-1-checksAndDriving
+- tapOn:
+    id: first-run-check-2-dontKnow
+- extendedWaitUntil:
+    visible:
+      id: first-run-result-level
+    timeout: 10000
+- tapOn:
+    id: first-run-result-continue
+# «¿Dónde usas tu Vehículo?»: El Salvador is the default.
+- tapOn:
+    id: first-run-location-city
+- eraseText: 80
+- inputText: San Salvador
+- tapOn:
+    id: first-run-location-continue
+# «Agrega tu Vehículo» → «Lo agrego después».
+- extendedWaitUntil:
+    visible:
+      id: first-run-vehicle-later
+    timeout: 15000
+- tapOn:
+    id: first-run-vehicle-later
+# «¿Te avisamos a tiempo?» → «Ahora no».
+- tapOn:
+    id: first-run-notifications-later
+- extendedWaitUntil:
+    visible:
+      id: first-run-done-title
+    timeout: 10000
+- extendedWaitUntil:
+    visible:
+      id: home-screen
+    timeout: 30000

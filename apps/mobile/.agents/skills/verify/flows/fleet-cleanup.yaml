@@ -1,10 +1,11 @@
 # Feature: Mi flota (features/fleet.md). Run through scripts/verify.sh drive
 # <ios|android> fleet-cleanup after a `fleet` run that failed half-way: it
 # withdraws, through the app, every Vehicle of the test account whose Plate
-# starts with «S5-», so the next run starts from the same state. Vehicles
+# starts with «S5-» (or «S3-», left by a failed `first-run` run), so the next
+# run starts from the same state. Vehicles
 # without that Plate (the Toyota Yaris other flows use) are never touched.
 appId: ${APP_ID}
-name: Withdraw the S5 test Vehicles
+name: Withdraw the S5 and S3 test Vehicles
 ---
 - stopApp
 - openLink: ${DEV_URL}
@@ -49,6 +50,48 @@ name: Withdraw the S5 test Vehicles
       - assertNotVisible:
           id: fleet-vehicle-0
           text: '.*S5-.*'
+
+# The first-run flow's Vehicle (S3-RUN-01), the same way. Cancel the search
+# first, so the subflow finds the empty bar's placeholder again.
+- runFlow:
+    when:
+      platform: iOS
+      visible: 'Cancelar|Cancel'
+    commands:
+      - tapOn: 'Cancelar|Cancel'
+- runFlow:
+    when:
+      visible:
+        id: fleet-filter-all
+    commands:
+      - runFlow: fleet-search-field.yaml
+      - inputText: S3-
+      - hideKeyboard
+      - repeat:
+          # Not the text «S3-»: the search field holds it too. Done when the
+          # first card isn't an S3 test Vehicle — nothing left to clean.
+          while:
+            visible:
+              id: fleet-vehicle-0
+              text: '.*S3-.*'
+          times: 10
+          commands:
+            # Never open a card's menu unless the card is an S3 test Vehicle
+            # (the spoken label carries its Plate): the Yaris is never touched.
+            - assertVisible:
+                id: fleet-vehicle-0
+                text: '.*S3-.*'
+            - tapOn:
+                id: fleet-vehicle-0-menu
+            - tapOn: 'Retirar de mi flota'
+            - extendedWaitUntil:
+                visible: 'Retirar .*'
+                timeout: 10000
+            - tapOn: 'Retirar|RETIRAR'
+            - waitForAnimationToEnd
+      - assertNotVisible:
+          id: fleet-vehicle-0
+          text: '.*S3-.*'
 
 - takeScreenshot: cleanup-done
 - stopRecording

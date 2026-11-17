@@ -1,0 +1,60 @@
+# Feature: the first-run questions (features/first-run.md). Run through
+# scripts/verify.sh drive <ios|android> first-run-skip. It resets the test
+# account's first run (scripts/reset-first-run.js), then answers the
+# questions the shortest way: «Lo agrego después» skips the Vehicle and
+# its two questions, and «Ahora no» declines avisos without blocking
+# anything (first-run-finish.yaml). It ends on Inicio, which shows the
+# account's existing Vehicles: the shared test account keeps the Toyota
+# Yaris, so «Sin Vehículos todavía» isn't proven here (see Gotchas).
+appId: ${APP_ID}
+name: Skipping the Vehicle and avisos still finishes the first run
+---
+- runScript:
+    file: scripts/reset-first-run.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}
+- stopApp
+- openLink: ${DEV_URL}
+- extendedWaitUntil:
+    visible:
+      id: 'sign-in-title|first-run-name-field'
+    timeout: 120000
+- runFlow:
+    when:
+      visible:
+        id: sign-in-title
+    commands:
+      - tapOn:
+          id: test-sign-in-email
+      - inputText: ${TEST_EMAIL}
+      - pressKey: Enter
+      - inputText:
+          text: ${TEST_PASSWORD}
+          label: Type the test account's password
+      - pressKey: Enter
+      - runFlow:
+          when:
+            platform: iOS
+          commands:
+            - extendedWaitUntil:
+                visible:
+                  text: 'Not Now|Ahora no'
+                timeout: 10000
+                optional: true
+            - tapOn:
+                text: 'Not Now|Ahora no'
+                optional: true
+- extendedWaitUntil:
+    visible:
+      id: first-run-name-field
+    timeout: 30000
+- startRecording: first-run-skip
+- runFlow: first-run-finish.yaml
+# No Routine or history step was shown: Inicio came straight after avisos.
+- assertNotVisible: '¿Cómo usas tu Vehículo?'
+- waitForAnimationToEnd
+- takeScreenshot: first-run-skip-home
+- stopRecording
