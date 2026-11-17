@@ -367,6 +367,28 @@ The migration's order, scope and tickets are in
     `EXPO_PUBLIC_APP_VARIANT` like the data check). It shows what the
     shared test account can't: paging, a missing poster, the cards and
     the empty state. It writes nothing to seibi-dev.
+- **Registrar un Servicio** (S7, SEI-62): the PWA's Service sheet as a
+  `formSheet` route, `record-service` (`src/service/service-form.tsx`,
+  the Vehicle's list in `src/service/vehicle-services.tsx`). Its params
+  are `?vehicleId=` (pre-picked Vehicle, no picker), `?serviceId=` (edit
+  that Service, which also offers «Retirar») and `?tasks=` (pre-checked
+  Maintenance tasks). It opens from the [+] actions sheet and from the
+  Vehicle detail's «Servicios» list.
+  - **Rules.** The draft's Zod schema and the payload builder live in
+    `src/data/service/form.ts` (unit-tested in `form.test.ts`): at least
+    one task or named line, the reading (`service_reading_required`,
+    checked first in the PWA's order), then the costs — per line when
+    «Costo por línea» is on and their sum becomes the total, else one
+    total.
+  - **Saving.** `useSaveService` (`src/data/service/mutations.ts`) writes
+    the `mileage_readings` row first and then the `services` row pointing
+    at it — no trigger on `mileage_readings` — then the `service_items`.
+    Editing updates the same rows; withdrawing deletes the Service (and
+    its reading when nothing else uses it).
+  - **Unsaved changes.** The sheet guards closing with
+    `usePreventRemove`; the confirmation is driven by `repeat()` so a
+    fast close after typing still asks «¿Descartar los cambios?». A clean
+    sheet closes with no prompt.
 - **Styling:** Unistyles 3 (`react-native-unistyles` on
   `react-native-nitro-modules`; SEI-42's spike proved it on SDK 58 on both
   platforms). The theme lives in `src/theme/`, values from
