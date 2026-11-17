@@ -22,6 +22,10 @@ describe('bumpedReading', () => {
     expect(bumpedReading(null, 52000, 100)).toBe(52100);
     expect(bumpedReading(null, null, 1000)).toBe(1000);
   });
+
+  it('stays inside the 7-digit cap once sanitised, as the form routes it', () => {
+    expect(mileageDigits(String(bumpedReading(9999999, 9999999, 1000)))).toBe('1000099');
+  });
 });
 
 describe('mileageContext', () => {
