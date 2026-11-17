@@ -78,6 +78,10 @@ name: Update Mileage opens from [+] and Inicio, validates and saves today's read
 - tapOn:
     id: mileage-reading
 - eraseText: 12
+# The field autofocuses on open, so the number pad covers the bump chips:
+# dismiss it before tapping or the key below the chip eats the tap.
+- hideKeyboard
+- waitForAnimationToEnd
 - tapOn:
     id: mileage-bump-100
 - extendedWaitUntil:
