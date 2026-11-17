@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { BellPlus, CalendarPlus, CarFront, Gauge, Wrench, type LucideIcon } from 'lucide-react'
 import { ServiceForm, type ServiceFormInit } from '../forms/ServiceForm'
@@ -15,6 +15,7 @@ import { useActiveVehicle } from '../lib/activeVehicle'
 import type { RoutineRecord, VehicleView } from '../lib/garage'
 import { useGarage } from '../lib/garage'
 import { invokeFunction } from '../lib/functions'
+import { cx } from '../ui/cx'
 import { Sheet } from '../ui/Sheet'
 
 type Open =
@@ -44,6 +45,8 @@ type Actions = {
 
 const ActionsContext = createContext<Actions | null>(null)
 
+type QuickKind = 'service' | 'mileage' | 'appointment' | 'reminder' | 'vehicle'
+
 export function useActions() {
   const value = useContext(ActionsContext)
   if (!value) throw new Error('useActions must be used within ActionsProvider')
@@ -55,6 +58,7 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
   const { active } = useActiveVehicle(vehicles)
   const [open, setOpen] = useState<Open>({ kind: 'none' })
   const close = useCallback(() => setOpen({ kind: 'none' }), [])
+  const pendingPick = useRef<QuickKind | null>(null)
   const navigate = useNavigate()
 
   const fallbackId = active?.id ?? vehicles[0]?.id ?? null
@@ -109,6 +113,13 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
         onClose={close}
         hasVehicles={vehicles.length > 0}
         onPick={(kind) => {
+          pendingPick.current = kind
+          close()
+        }}
+        onExited={() => {
+          const kind = pendingPick.current
+          if (!kind) return
+          pendingPick.current = null
           if (kind === 'vehicle') actions.addVehicle()
           else if (kind === 'service') actions.logService()
           else if (kind === 'mileage') actions.updateMileage()
@@ -188,8 +199,6 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
   )
 }
 
-type QuickKind = 'service' | 'mileage' | 'appointment' | 'reminder' | 'vehicle'
-
 const QUICK: Array<{ kind: QuickKind; icon: LucideIcon; title: string; body: string }> = [
   { kind: 'service', icon: Wrench, title: 'Registrar Servicio', body: 'Mantenimiento, reparación o piezas' },
   { kind: 'mileage', icon: Gauge, title: 'Actualizar kilometraje', body: 'El número del odómetro hoy' },
@@ -202,41 +211,57 @@ function QuickActions({
   open,
   onClose,
   onPick,
+  onExited,
   hasVehicles,
 }: {
   open: boolean
   onClose: () => void
   onPick: (kind: QuickKind) => void
+  onExited: () => void
   hasVehicles: boolean
 }) {
   const items = hasVehicles ? QUICK : QUICK.filter((q) => q.kind === 'vehicle')
   return (
-    <Sheet open={open} onClose={onClose} title="¿Qué quieres hacer?">
+    <Sheet
+      open={open}
+      onClose={onClose}
+      onExited={onExited}
+      look="v3"
+      title="¿Qué quieres hacer?"
+      panelClassName="garage v3 bg-[var(--g-bg)]"
+    >
       <div className="grid grid-cols-2 gap-2.5 pb-2">
-        {items.map(({ kind, icon: Icon, title, body }, i) => (
-          <button
-            key={kind}
-            type="button"
-            onClick={() => onPick(kind)}
-            className={`flex gap-2 rounded-[1.25rem] p-4 text-left shadow-card transition-transform active:scale-[0.98] ${
-              i === 0
-                ? 'col-span-2 flex-row items-center bg-inverse text-on-inverse'
-                : 'min-h-28 flex-col items-start bg-surface'
-            }`}
-          >
-            <span
-              className={`inline-flex size-10 shrink-0 items-center justify-center rounded-xl ${
-                i === 0 ? 'bg-radiant text-white' : 'bg-radiant-soft text-radiant'
-              }`}
+        {items.map(({ kind, icon: Icon, title, body }, i) => {
+          const lead = i === 0
+          return (
+            <button
+              key={kind}
+              type="button"
+              onClick={() => onPick(kind)}
+              className={cx(
+                'flex text-left transition-transform duration-200 ease-[cubic-bezier(0.2,0.7,0.2,1)] active:scale-[0.97]',
+                lead
+                  ? 'col-span-2 flex-row items-center gap-3 rounded-3xl bg-inverse p-3.5 text-on-inverse'
+                  : 'min-h-28 flex-col items-start gap-3 rounded-3xl bg-surface p-3.5 text-ink shadow-card',
+              )}
             >
-              <Icon className="size-5" aria-hidden />
-            </span>
-            <span>
-              <span className="block text-[0.95rem] font-bold">{title}</span>
-              <span className={`block text-[0.8rem] ${i === 0 ? 'opacity-70' : 'text-muted'}`}>{body}</span>
-            </span>
-          </button>
-        ))}
+              <span
+                className={cx(
+                  'inline-flex size-11 shrink-0 items-center justify-center rounded-full',
+                  lead ? 'bg-on-inverse/15 text-on-inverse' : 'bg-[var(--g-control)] text-ink',
+                )}
+              >
+                <Icon className="size-[18px]" aria-hidden />
+              </span>
+              <span>
+                <span className="block text-[14px] font-medium leading-[18px]">{title}</span>
+                <span className={cx('mt-0.5 block text-[13px] leading-[17px]', lead ? 'text-on-inverse/70' : 'text-muted')}>
+                  {body}
+                </span>
+              </span>
+            </button>
+          )
+        })}
       </div>
     </Sheet>
   )
