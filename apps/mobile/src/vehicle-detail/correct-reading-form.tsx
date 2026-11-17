@@ -5,6 +5,7 @@ import { TextInput, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import { errorMessage } from '@/data/errors';
+import type { VehicleView } from '@/data/garage/types';
 import { useGarage } from '@/data/garage/use-garage';
 import { useCorrectReading } from '@/data/mileage/mutations';
 import { formatNumber } from '@/lib/format';
@@ -54,10 +55,10 @@ export function CorrectReadingForm({ readingId, vehicleId }: { readingId?: strin
       </SheetMessage>
     );
   }
-  return <CorrectReadingBody vehicleId={vehicle.id} measure={vehicle.measure} reading={reading.reading} readingId={reading.id} />;
+  return <CorrectReadingBody measure={vehicle.measure} reading={reading.reading} readingId={reading.id} />;
 }
 
-function CorrectReadingBody({ readingId, reading, measure }: { vehicleId: string; measure: 'km' | 'mi'; reading: number; readingId: string }) {
+function CorrectReadingBody({ readingId, reading, measure }: { measure: VehicleView['measure']; reading: number; readingId: string }) {
   const { t } = useTranslation();
   const router = useRouter();
   const correct = useCorrectReading();
@@ -111,7 +112,7 @@ function CorrectReadingBody({ readingId, reading, measure }: { vehicleId: string
           <Text testID="correct-title" step="title3" family="display" heading>
             {t('vehicleDetail.correct.title')}
           </Text>
-          <Text step="footnote" tone="muted" style={styles.description}>
+          <Text step="footnote" tone="muted">
             {t('vehicleDetail.correct.description')}
           </Text>
         </View>
@@ -158,7 +159,6 @@ const styles = StyleSheet.create((theme) => ({
     flex: 1,
     gap: theme.space[1.5],
   },
-  description: {},
   message: {
     flex: 1,
     justifyContent: 'center',
