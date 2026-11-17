@@ -12,9 +12,10 @@ each opens its own sheet (S7’s Service form, S8’s Mileage sheet). The avatar
 right of each tab's header opens «Perfil» inside the current tab. A link to
 a Vehicle (`seibi-dev://vehicle/<id>`) opens its detail in «Mi flota» with
 the fleet list under it. Inicio is the Garage ([`home.md`](./home.md)), Mi flota the fleet
-([`fleet.md`](./fleet.md)) and Perfil the PWA's Perfil
-([`profile.md`](./profile.md)); Avisos and the Vehicle detail are
-placeholders that the S-tickets fill in.
+([`fleet.md`](./fleet.md)), the Vehicle detail
+([`vehicle-detail.md`](./vehicle-detail.md)) and Perfil the PWA's Perfil
+([`profile.md`](./profile.md)); Avisos is a placeholder that its S-ticket
+fills in.
 
 ## Sub-features
 
