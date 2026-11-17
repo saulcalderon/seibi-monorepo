@@ -248,6 +248,16 @@ name: Mi flota lists, searches, adds, edits, withdraws and restores a Vehicle
 - waitForAnimationToEnd
 - takeScreenshot: fleet-15-restored
 
+# --- Narrow the list to the S5 Vehicle again: after the restore the urgency
+# order can put another of the shared account's Vehicles first, so the menu
+# tap below must reach a card that is provably the Kia's.
+- runFlow: fleet-search-field.yaml
+- inputText: S5-RIO
+- extendedWaitUntil:
+    visible: '.*Kia Rio.*S5-RIO-01.*'
+    timeout: 10000
+- hideKeyboard
+
 # --- Clean up: withdraw it again from the card's menu.
 - tapOn:
     id: fleet-vehicle-0-menu
