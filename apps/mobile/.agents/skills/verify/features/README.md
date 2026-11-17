@@ -73,6 +73,11 @@ handles, required state, commands and observable proof.
   «Actualizar», «Estado» and «Todo al día», «Sin Vehículos todavía», night.
   Flows: `home` (the real account), `home-fixture` (Seibi Dev's sample
   Vehicles), `home-night`; subflow `home-fixture-open.yaml`.
+- [Registrar un Servicio](./service.md): the form sheet from [+] and the
+  Vehicle's «Servicios», tasks and lines, validation order, the Mileage
+  reading it writes, edit and withdraw, «¿Descartar los cambios?».
+  Flows: `service`, `service-discard`, `service-cleanup`; subflow
+  `service-hide-keyboard.yaml`.
 - [The app speaks Spanish from es.json](./i18n.md): every word from
   `src/i18n/es.json`, no keys on screen, Spanish also on a device set to
   English. Flow: `i18n-shell`.

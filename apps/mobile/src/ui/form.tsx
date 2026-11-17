@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from 'react';
-import { View } from 'react-native';
+import { useState, type ReactNode, type RefObject } from 'react';
+import { View, type ScrollViewInstance } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
@@ -18,13 +18,26 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
  */
 export const KEYBOARD_DISMISS = 'on-drag';
 
-export function FormLayout({ children, footer, testID }: { children: ReactNode; footer: ReactNode; testID?: string }) {
+export function FormLayout({
+  children,
+  footer,
+  testID,
+  scrollRef,
+}: {
+  children: ReactNode;
+  footer: ReactNode;
+  testID?: string;
+  /** The scroll view, to bring a field with an error into view. */
+  scrollRef?: RefObject<ScrollViewInstance | null>;
+}) {
   const { theme } = useUnistyles();
   const insets = useSafeAreaInsets();
   const [footerHeight, setFooterHeight] = useState(0);
   return (
     <View style={styles.screen} testID={testID}>
       <KeyboardAwareScrollView
+        // Its ref is a ScrollView; the library's own ref type resolves against a second copy of React's types.
+        ref={scrollRef as never}
         bottomOffset={footerHeight + theme.space[4]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode={KEYBOARD_DISMISS}

@@ -1,0 +1,53 @@
+# Feature: features/service.md. Withdraws, through the app, every Service a
+# failed `service` run left on the test account's first Vehicle (the ones
+# with a «Bombillo de freno» line), so the next run starts from no Service.
+# Run through scripts/verify.sh drive <ios|android> service-cleanup.
+appId: ${APP_ID}
+name: Withdraw the Services a failed service run left behind
+---
+- stopApp
+- openLink: ${DEV_URL}
+- runFlow: sign-in.yaml
+- runScript:
+    file: scripts/first-vehicle.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}
+- startRecording: service-cleanup
+- openLink: ${APP_URL}vehicle/${output.vehicleId}
+- runFlow:
+    when:
+      platform: iOS
+      visible: 'Open|Abrir'
+    commands:
+      - tapOn: 'Open|Abrir'
+- extendedWaitUntil:
+    visible:
+      id: vehicle-services
+    timeout: 20000
+- repeat:
+    while:
+      visible:
+        text: '.*Bombillo de freno.*'
+    commands:
+      - tapOn:
+          text: '.*Bombillo de freno.*'
+      - extendedWaitUntil:
+          visible:
+            id: service-form
+          timeout: 15000
+      - scrollUntilVisible:
+          element:
+            id: service-withdraw
+          centerElement: true
+      - tapOn:
+          id: service-withdraw
+      - tapOn: 'Quitar'
+      - extendedWaitUntil:
+          notVisible:
+            id: service-form
+          timeout: 15000
+- takeScreenshot: service-cleanup-done
+- stopRecording

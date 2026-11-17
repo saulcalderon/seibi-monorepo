@@ -1,9 +1,15 @@
-import { useTranslation } from 'react-i18next';
+import { useLocalSearchParams } from 'expo-router';
 
-import { PlaceholderSheet } from '@/shell/placeholder-sheet';
+import { ServiceForm } from '@/service/service-form';
 
-/** «Registrar un Servicio» from the actions sheet. The Service form (S7) takes this route. */
+/**
+ * Record or edit a Service (S7), as a form sheet over the tabs. Params:
+ * - none: the [+] → «Registrar un Servicio», on the active Vehicle;
+ * - `vehicleId`: record on that Vehicle (the Vehicle detail);
+ * - `serviceId`: edit that Service, which also offers to withdraw it;
+ * - `tasks`: Maintenance task codes, comma-separated, to start with a line each.
+ */
 export default function RecordServiceSheet() {
-  const { t } = useTranslation();
-  return <PlaceholderSheet testID="record-service-sheet" icon="service" title={t('actions.service.title')} body={t('placeholder.service')} />;
+  const { vehicleId, serviceId, tasks } = useLocalSearchParams<{ vehicleId?: string; serviceId?: string; tasks?: string }>();
+  return <ServiceForm vehicleId={vehicleId} serviceId={serviceId} taskCodes={tasks ? tasks.split(',').filter(Boolean) : undefined} />;
 }

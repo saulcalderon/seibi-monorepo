@@ -14,7 +14,7 @@ import { deriveVehicle } from '@/data/garage/derive';
 import type { VehicleRecord, VehicleView } from '@/data/garage/types';
 import { useActiveVehicle } from '@/data/preferences/store';
 import { useTasks } from '@/data/task/queries';
-import { todayIso } from '@/lib/format';
+import { isoDate } from '@/lib/format';
 import type { PaintCode } from '@/lib/paint';
 
 import { Garage } from '../garage';
@@ -104,7 +104,7 @@ function fixtureRecords(today: string): VehicleRecord[] {
 export function GarageFixtureScreen() {
   const { case: which } = useLocalSearchParams<{ case?: FixtureCase }>();
   const tasks = useTasks();
-  const today = todayIso();
+  const today = isoDate();
   const vehicles: VehicleView[] =
     which === 'empty' || !tasks.data ? [] : fixtureRecords(today).map((v) => deriveVehicle(v, tasks.data, today));
   const { active, select } = useActiveVehicle(vehicles);

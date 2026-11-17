@@ -1,0 +1,20 @@
+# Subflow, not driven alone: puts the keyboard away the way a person does
+# on the Service form. On iOS a short drag on the form (the number pad has no
+# return key); on Android Back, since a drag there moves the sheet itself.
+# Feature: features/service.md.
+appId: ${APP_ID}
+name: Put the keyboard away on the Service form
+---
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 50%, 40%
+          end: 50%, 50%
+          duration: 800
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
