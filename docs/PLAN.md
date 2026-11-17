@@ -37,7 +37,7 @@ Done when:
 | Test sign-in: email + password in the `development` and `preview` EAS builds only, never in `production` | Apple and Google sign-in can't be automated; a hidden production login breaks App Review guideline 2.3.1 |
 | Accessibility: Paradero's rules and check scripts, aiming at WCAG 2.2 AA. High-contrast palettes come after the redesign | Cheap from the first screen, expensive to retrofit; high contrast is a new feature |
 | Light palette: change only the text roles that fail AA (primary button on `radiantStrong`, new `radiantText`, `okText`, `soonText`, `overdueText`, darker `subtle`); fills, dots and icons keep their colors. Values in `docs/DESIGN.md` → Accessibility | Keeps both "the PWA's look" and AA with the smallest visible change; the redesign starts from passing tokens |
-| Pace: at most 3 tickets in progress, and a new one starts only after one merges. Devin (the orchestrator) runs each ticket and merges every PR into `main`, backend included, once CI is green and the proof is in; never a direct push. Saul is told after any merge that deploys migrations or Edge Functions, and approves destructive production changes (dropping a column, deleting data) first. The loop is in `AGENTS.md` → Ticket loop | Saul doesn't want to be the review bottleneck, for backend PRs either (2026-11-11, 2026-11-16); merging to `main` deploys to production, so production-affecting merges stay visible; three draft PRs sat for days with all 3 slots taken (2026-11-16) |
+| Pace: at most 3 tickets in progress, and a new one starts only after one merges. Every PR merges into `main` without a human review, backend included, once CI is green and the proof is in; never a direct push. Saul is told after any merge that deploys migrations or Edge Functions, and approves destructive production changes (dropping a column, deleting data) first. The loop is in `AGENTS.md` → Ticket loop | Saul doesn't want to be the review bottleneck, for backend PRs either (2026-11-11, 2026-11-16); merging to `main` deploys to production, so production-affecting merges stay visible; three draft PRs sat for days with all 3 slots taken (2026-11-16) |
 | 3D is out of the port. SEI-48 removes the 3D step and keeps the `glb_path` column; whether 3D returns is a Backlog idea (SEI-11) | The frozen PWA still selects `glb_path` (`apps/app/src/lib/garage.ts`); 3D's future is undecided |
 | Launch: App Store by 2026-12-15 at the latest, with the full MVP. The date moves before the scope does | Ship the MVP whole, then the rest |
 | Styling: Unistyles 3. SEI-42 starts with a spike on SDK 58; on failure, fall back to plain `StyleSheet` + tokens | Same `StyleSheet.create` API plus themes and variants for the UI kit; neither reference app uses it |
@@ -97,7 +97,7 @@ ticket and keep its behaviour.
 | Id | Title | In | Out | Depends on | MVP | Linear |
 | --- | --- | --- | --- | --- | --- | --- |
 | SEI-40 | Turborepo | `turbo.json`, root scripts and CI through `turbo` | Remote cache | — | yes | SEI-40 |
-| SEI-41 | `apps/mobile` with Expo SDK 58, Expo Router, EAS | `app.config.ts` with `EXPO_PUBLIC_APP_VARIANT` (2 variants), one slug, `eas.json` with `development` / `preview` / `production`, Metro + pnpm config, `expo-updates` with `fingerprint` and the OTA hook, splash + font gate, `ITSAppUsesNonExemptEncryption`, `react-native-svg`, the native modules after-launch tickets need (`expo-image-picker`); the `verify` skill in `apps/mobile/.claude/skills/verify/` generated with `create-verification-skill` (Maestro on the iOS Simulator and Android emulator, test sign-in, video evidence), proven on one feature | Screens | SEI-40 | yes | SEI-41 |
+| SEI-41 | `apps/mobile` with Expo SDK 58, Expo Router, EAS | `app.config.ts` with `EXPO_PUBLIC_APP_VARIANT` (2 variants), one slug, `eas.json` with `development` / `preview` / `production`, Metro + pnpm config, `expo-updates` with `fingerprint` and the OTA hook, splash + font gate, `ITSAppUsesNonExemptEncryption`, `react-native-svg`, the native modules after-launch tickets need (`expo-image-picker`); the `verify` skill in `apps/mobile/.agents/skills/verify/` generated with `create-verification-skill` (Maestro on the iOS Simulator and Android emulator, test sign-in, video evidence), proven on one feature | Screens | SEI-40 | yes | SEI-41 |
 | SEI-42 | Unistyles 3 theme | Spike on SDK 58 first; `light` / `night` themes from `docs/DESIGN.md`; fonts | High contrast | SEI-41 | yes | SEI-42 |
 | SEI-43 | i18n | i18next + expo-localization, typed keys, `es.json` | `en.json` | SEI-41 | yes | SEI-43 |
 | SEI-44 | Native auth | Apple + Google via `signInWithIdToken`; encrypted session store; `startAutoRefresh` / `stopAutoRefresh` on app state; full name on first Apple sign-in; `Stack.Protected`; email + password test sign-in in `development` / `preview` only; account-deleted screen | — | SEI-41 | yes | SEI-44 |
@@ -153,8 +153,8 @@ Rules:
 - **At most 3 tickets in progress**, and a new one starts only after one
   merges. MVP tickets go first; after-launch tickets wait in Backlog until
   the MVP ships.
-- **Devin runs each ticket and merges it** (`AGENTS.md` → Ticket loop):
-  one PR per ticket, from its own branch.
+- **Every ticket follows the Ticket loop** (`AGENTS.md`): one PR from its
+  own branch, merged without a human review once its gates pass.
 - A ticket that changes what is true updates `ARCHITECTURE.md` in the same
   PR.
 - **Every PR carries proof at its tier** (`AGENTS.md` → Prove it works).
