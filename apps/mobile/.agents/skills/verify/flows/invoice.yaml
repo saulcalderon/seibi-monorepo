@@ -60,6 +60,10 @@ name: Attach an invoice photo to a Service, see it and remove it
     centerElement: true
 - tapOn:
     id: service-add-item
+- scrollUntilVisible:
+    element:
+      id: service-item-0-name
+    centerElement: true
 - tapOn:
     id: service-item-0-name
 - inputText: Revisión con factura
