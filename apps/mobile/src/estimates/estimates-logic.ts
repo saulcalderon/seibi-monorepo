@@ -111,3 +111,17 @@ export type WaitingStep = 0 | 1 | 2;
 export function waitingStep(elapsed: number): WaitingStep {
   return Math.min(Math.floor(elapsed / WAITING_STEP_MS), 2) as WaitingStep;
 }
+
+/** Estimados' two modes: the price form, or the chat (the PWA's «Modo» switch). */
+export type EstimatesMode = 'estimate' | 'chat';
+
+/** The mode Estimados opens on, as the PWA's: the price form. */
+export const INITIAL_MODE: EstimatesMode = 'estimate';
+
+/** The switch's two options, in the PWA's order. */
+export function modeOptions(t: TFunction): { value: EstimatesMode; label: string }[] {
+  return [
+    { value: 'estimate', label: t('estimates.mode.estimate') },
+    { value: 'chat', label: t('estimates.mode.chat') },
+  ];
+}

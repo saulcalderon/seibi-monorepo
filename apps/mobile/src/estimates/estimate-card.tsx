@@ -7,6 +7,7 @@ import type { EstimateResponse } from '@/data/estimate/schemas';
 import type { VehicleView } from '@/data/garage/types';
 import { vehicleName } from '@/lib/format';
 import { plainText } from '@/lib/text';
+import { Button } from '@/ui/button';
 import { Card, RowDivider } from '@/ui/card';
 import { Icon, type IconName } from '@/ui/icon';
 import { Text } from '@/ui/text';
@@ -22,10 +23,18 @@ const SOURCES_MAX = 5;
  * incluir» and «Qué mueve el precio» when a price was found, else only the
  * summary of what is missing; the confidence, the sources (in the in-app
  * browser, as the Vehicle detail's) and the «Estimado, no presupuesto» note.
- * The PWA's «Preguntar» (chat, SEI-69) and «Agendar» (Appointments, SEI-68)
- * join with their screens.
+ * «Preguntar» switches to the chat (SEI-69). The PWA's «Agendar» is left
+ * out: the Reminder detail has one.
  */
-export function EstimateCard({ estimate, vehicle }: { estimate: Pick<EstimateResponse, 'query' | 'city' | 'country' | 'result'>; vehicle: VehicleView }) {
+export function EstimateCard({
+  estimate,
+  vehicle,
+  onAsk,
+}: {
+  estimate: Pick<EstimateResponse, 'query' | 'city' | 'country' | 'result'>;
+  vehicle: VehicleView;
+  onAsk: () => void;
+}) {
   const { t } = useTranslation();
   const r = estimate.result;
   const total = totals(r);
@@ -113,6 +122,8 @@ export function EstimateCard({ estimate, vehicle }: { estimate: Pick<EstimateRes
             {t('estimates.result.disclaimer')}
           </Text>
         </View>
+
+        <Button testID="estimates-result-ask" variant="secondary" icon="chat" block label={t('estimates.result.ask')} accessibilityHint={t('estimates.result.askHint')} onPress={onAsk} />
       </View>
     </Card>
   );

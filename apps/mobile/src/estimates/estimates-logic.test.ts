@@ -8,7 +8,7 @@ import { estimateResult } from '@/data/estimate/schemas';
 import type { Estimate } from '@/data/estimate/queries';
 import { t } from '@/data/test-i18n';
 
-import { canAsk, confidenceBars, estimatePlace, estimateRequest, estimateTitle, pastQueries, pastQuerySubtitle, priceRows, suggestedTasks, totals, waitingStep } from './estimates-logic';
+import { canAsk, confidenceBars, estimatePlace, estimateRequest, estimateTitle, INITIAL_MODE, modeOptions, pastQueries, pastQuerySubtitle, priceRows, suggestedTasks, totals, waitingStep } from './estimates-logic';
 
 const reminder = (taskCode: string, status: Reminder['status']) => ({ taskCode, status });
 
@@ -139,5 +139,15 @@ describe('estimatePlace', () => {
 describe('waitingStep', () => {
   it('moves to the next of the three lines every 4.5 s and stays on the last', () => {
     expect([0, 4499, 4500, 9000, 60000].map(waitingStep)).toEqual([0, 0, 1, 2, 2]);
+  });
+});
+
+describe('the switch', () => {
+  it('offers «Estimar precio» then «Chat de Seibi», and Estimados opens on the first', () => {
+    expect(modeOptions(t)).toEqual([
+      { value: 'estimate', label: 'Estimar precio' },
+      { value: 'chat', label: 'Chat de Seibi' },
+    ]);
+    expect(INITIAL_MODE).toBe('estimate');
   });
 });

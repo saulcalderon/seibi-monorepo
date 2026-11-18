@@ -341,6 +341,11 @@
       "noMileage": "Sin Kilometraje",
       "row": "{{name}}, {{detail}}, {{status}}"
     },
+    "mode": {
+      "label": "Modo",
+      "estimate": "Estimar precio",
+      "chat": "Chat de Seibi"
+    },
     "location": {
       "title": "¿Dónde está tu Vehículo?",
       "body": "Los precios cambian mucho de una ciudad a otra.",
@@ -385,12 +390,39 @@
       },
       "sources": "Fuentes",
       "openSource": "Abrir «{{title}}» en el navegador",
-      "disclaimer": "Estimado, no presupuesto. Los precios cambian según la ciudad, el año y el motor, la calidad y el origen de la pieza, el tipo de taller, la mano de obra y la disponibilidad. Pide una cotización antes de hacer el trabajo."
+      "disclaimer": "Estimado, no presupuesto. Los precios cambian según la ciudad, el año y el motor, la calidad y el origen de la pieza, el tipo de taller, la mano de obra y la disponibilidad. Pide una cotización antes de hacer el trabajo.",
+      "ask": "Preguntar",
+      "askHint": "Abre el Chat de Seibi para preguntar sobre este trabajo"
     },
     "past": {
       "title": "Consultas anteriores",
       "noRange": "Sin rango",
       "subtitle": "{{range}} · {{day}}"
+    },
+    "chat": {
+      "intro": "Pregunta sobre tu {{vehicle}}: mantenimiento, fallas, piezas o precios. Las respuestas citan sus fuentes y los precios son estimados.",
+      "starters": {
+        "guided": {
+          "q1": "¿Qué pasa si no cambio el aceite a tiempo?",
+          "q2": "Hace un ruido al frenar, ¿es grave?",
+          "q3": "¿Qué le debo pedir al mecánico en mi próximo Servicio?"
+        },
+        "expert": {
+          "q1": "¿Qué aceite y cuántos litros lleva mi motor?",
+          "q2": "¿Cuándo toca la banda de distribución en mi modelo?",
+          "q3": "¿Pastillas cerámicas o semimetálicas para mi uso?"
+        }
+      },
+      "starterHint": "Envía esta pregunta a Seibi",
+      "label": "Tu pregunta",
+      "placeholder": "Escribe tu pregunta",
+      "send": "Enviar",
+      "typing": "Seibi está escribiendo",
+      "mine": "Tú: {{text}}",
+      "seibi": "Seibi: {{text}}",
+      "reply": "Seibi respondió: {{text}}",
+      "openSource": "{{title}}, se abre en el navegador",
+      "aiUse": "Cómo usamos la IA"
     }
   },
   "vehicleDetail": {
