@@ -272,11 +272,12 @@ it natively without a re-render.
 
 **Native controls (`@expo/ui` 58).** Each was tried on both platforms in
 the sample screen (SEI-54); none needed a React Native fallback, and only
-iOS's select uses another `@expo/ui` control than the first one tried.
+the select uses another `@expo/ui` control than the first one tried, on
+both platforms.
 
 | Control | iOS | Android |
 | --- | --- | --- |
-| Select | `MenuView` over Seibi's field box: the system menu with a checkmark on the current option. SwiftUI's menu `Picker` (the universal one) was tried first: it opens only from its label, and at the largest text size its label runs past the box, so it is not used | Universal `Picker`: Material's exposed dropdown, which draws its own filled box at Material's width (280 dp), not the field's full width |
+| Select | `MenuView` over Seibi's field box: the system menu with a checkmark on the current option. SwiftUI's menu `Picker` (the universal one) was tried first: it opens only from its label, and at the largest text size its label runs past the box, so it is not used | Seibi's field box as the anchor of `@expo/ui/jetpack-compose`'s `DropdownMenu` (the box is React Native in an `RNHostView`): Material's dropdown menu with a check on the current option. The universal `Picker` (Material's exposed dropdown) was tried first: it draws its own tinted box at Material's width (280 dp) with no chevron, so it is not used (SEI-78) |
 | Switch | Universal `Switch`, tinted `radiant`, label hidden and given to VoiceOver | Universal `Switch` (Compose), `radiant` seed color, TalkBack label through `semantics` |
 | Menu | `MenuView` (`@expo/ui/community/menu`): SwiftUI menu with SF Symbols and a red destructive item | `MenuView`: Material dropdown menu, text only |
 | Date | SwiftUI `DatePicker`, compact: a pill that opens the calendar in a popover, Spanish month and weekday names | `DateTimePicker` (`@expo/ui/community/datetime-picker`), Material's date dialog with «Aceptar» and «Cancelar». Its header and day names follow the phone's language, not the app's: English on an English phone |

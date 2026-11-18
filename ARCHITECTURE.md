@@ -1044,7 +1044,7 @@ versions match the SDK.
 | Icons | `lucide-react` | `expo-symbols` (SF Symbols / Material Symbols) |
 | Vector art | Inline SVG | `react-native-svg` |
 | Sheets | Custom `Sheet` | Expo Router `formSheet` |
-| Pickers, toggles, menus, date picker | Custom fields, `Combobox` | `@expo/ui` (universal `Picker` and `Switch`; `community/menu` and `community/datetime-picker`; SwiftUI `DatePicker` on iOS) |
+| Pickers, toggles, menus, date picker | Custom fields, `Combobox` | `@expo/ui` (universal `Switch`; `community/menu` and `community/datetime-picker`; SwiftUI `DatePicker` on iOS; Compose `DropdownMenu` for Android's select, over Seibi's field box) |
 | Toasts | `ToastProvider` | `sonner-native` |
 | Confirmations | Custom dialogs | The native alert |
 | Local preferences | `localStorage` | `expo-sqlite` kv-store (never AsyncStorage) |

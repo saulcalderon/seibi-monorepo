@@ -941,7 +941,8 @@
   },
   "field": {
     "optional": "opcional",
-    "optionalSuffix": " · opcional"
+    "optionalSuffix": " · opcional",
+    "selected": "seleccionado"
   },
   "units": {
     "km": "km",

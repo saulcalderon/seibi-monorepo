@@ -23,8 +23,8 @@ export interface SelectFieldProps<T extends string | number> extends FieldShellP
 }
 
 /**
- * One choice from a short list, in a field: the system menu over Seibi's
- * field box on iOS, Material's exposed dropdown on Android.
+ * One choice from a short list, in a field: Seibi's field box opens the
+ * system menu on iOS and Material's dropdown menu on Android.
  */
 export function SelectField<T extends string | number>({ label, hint, error, optional, value, onChange, options, testID }: SelectFieldProps<T>) {
   return (
