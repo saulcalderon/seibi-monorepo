@@ -514,7 +514,10 @@ The migration's order, scope and tickets are in
     representation on iOS, so no HEIC); no image library is added. The
     camera asks for its permission; denied, a native alert explains it and
     offers «Elegir de la galería» and «Abrir Ajustes». The library is the
-    system photo picker, which needs no permission. The draft holds the
+    system photo picker, which needs no permission; if it fails while the
+    phone reports photo access denied, the same alert offers the camera.
+    Which picture the form shows (the new photo's file, a signed link to the
+    saved one, a PDF icon) is `invoicePreview`. The draft holds the
     invoice as `none`, `saved` (the Service's) or `new` (a photo), and
     `invoiceWrite` (`src/data/service/invoice.ts`, unit-tested) turns it
     into what saving does: upload, clear, or both. Files go where the PWA
@@ -523,10 +526,11 @@ The migration's order, scope and tickets are in
     (`invoicePath`; the bucket's RLS checks the first folder), at most
     10 MB (`invoice_too_large`). `useSaveService` uploads first, giving a
     new Service its id in the app (`expo-crypto`'s `randomUUID`), so a
-    failed upload saves nothing and «Guardar» again can't record it twice;
-    `services.invoice_path` is written with the Service's other fields, and
-    the file it stops pointing at (replaced or removed) is deleted last,
-    where the PWA left replaced files behind. Historial's «Factura» opens
+    failed upload saves nothing and «Guardar» again can't record it twice
+    for it. `services.invoice_path` is written with the Service's other
+    fields; if that write fails, the new file is deleted again. The file the
+    Service stops pointing at (replaced or removed) is deleted last, where
+    the PWA left replaced files behind. Historial's «Factura» opens
     the `invoice?serviceId=` modal (`src/service/invoice-viewer.tsx`): the
     photo fitted to the screen (pinch to zoom on iOS) from a signed link
     that lasts five minutes (`useInvoiceUrl`, `src/data/service/queries.ts`),
@@ -920,6 +924,8 @@ The migration's order, scope and tickets are in
   - **Query keys** come from a factory in each domain's `keys.ts`, never a
     loose string: `garageKeys.user(id)` (`['garage', id]`),
     `profileKeys.user(id)`, `estimateKeys.user(id)`, `taskKeys.catalog`,
+    `invoiceKeys.url(path)` (a signed invoice link; the path starts with
+    the owner's user id),
     `vpicKeys.makes()` / `vpicKeys.models(make, year)`. Keys for the
     person's data carry their user id; each nests under its domain's
     `all`, so invalidating the domain reaches every entry.

@@ -1,16 +1,18 @@
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { openBrowserAsync } from 'expo-web-browser';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import { useGarage } from '@/data/garage/use-garage';
 import { invoiceKind } from '@/data/service/invoice';
 import { useInvoiceUrl } from '@/data/service/queries';
 import { Button, IconButton } from '@/ui/button';
-import { EmptyState, ErrorState } from '@/ui/feedback';
+import { EmptyState, ErrorState, Skeleton, SkeletonGroup } from '@/ui/feedback';
 import { Text } from '@/ui/text';
+
+import { InvoiceImage } from './invoice-field';
+import { findService } from './service-form';
 
 /** How far the photo zooms with a pinch (iOS's scroll view; Android shows it fitted). */
 const MAX_ZOOM = 4;
@@ -26,13 +28,19 @@ export function InvoiceViewer({ serviceId }: { serviceId?: string }) {
   const { theme } = useUnistyles();
   const router = useRouter();
   const garage = useGarage();
-  const path = garage.vehicles.flatMap((v) => v.services).find((s) => s.id === serviceId)?.invoicePath ?? null;
+  const path = (serviceId && findService(garage.vehicles, serviceId)?.service.invoicePath) || null;
   const pdf = path !== null && invoiceKind(path) === 'pdf';
   const url = useInvoiceUrl(path);
 
   let body;
   if (garage.isLoading || (path && url.isPending)) {
-    body = <ActivityIndicator testID="invoice-loading" color={theme.colors.muted} style={styles.center} />;
+    body = (
+      <View style={styles.loading}>
+        <SkeletonGroup testID="invoice-loading">
+          <Skeleton width="100%" height={theme.size.stage.height} round="xl" />
+        </SkeletonGroup>
+      </View>
+    );
   } else if (garage.isError || url.isError) {
     body = <ErrorState testID="invoice-error" onRetry={() => void (garage.isError ? garage.refetch() : url.refetch())} />;
   } else if (!path || !url.data) {
@@ -57,17 +65,7 @@ export function InvoiceViewer({ serviceId }: { serviceId?: string }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.zoom}
       >
-        <Image
-          testID="invoice-image"
-          source={{ uri: url.data }}
-          // Invoices are personal: kept in memory only, never in expo-image's disk cache.
-          cachePolicy="memory"
-          contentFit="contain"
-          accessible
-          accessibilityRole="image"
-          accessibilityLabel={t('invoice.photo')}
-          style={styles.image}
-        />
+        <InvoiceImage testID="invoice-image" uri={url.data} fit="contain" label={t('invoice.photo')} style={styles.image} />
       </ScrollView>
     );
   }
@@ -101,8 +99,9 @@ const styles = StyleSheet.create((theme, rt) => ({
   title: {
     flex: 1,
   },
-  center: {
+  loading: {
     flex: 1,
+    paddingHorizontal: theme.space[5],
   },
   zoom: {
     flexGrow: 1,

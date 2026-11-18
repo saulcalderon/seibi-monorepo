@@ -18,9 +18,9 @@ galería» and «Abrir Ajustes».
 - `attach` «Adjuntar foto» (`id: service-invoice-attach`) → «Elegir de la
   galería» or «Tomar foto» puts the photo in the form (`id:
   service-invoice`, «Foto lista. Se sube al guardar.»).
-- `save` «Guardar» / «Guardar cambios» (`id: service-save`) uploads it;
-  the Service's `invoice_path` is `<user id>/<service id>/factura-<ms>.jpg`
-  in the `service-invoices` bucket.
+- `save` «Guardar» / «Guardar cambios» (`id: service-save`) uploads it
+  where the PWA reads invoices (`scripts/invoice-check.js` checks it as
+  another device would).
 - `view` the expanded card's «Factura» (`id: service-card-invoice-<n>`)
   opens the viewer (`id: invoice-viewer`) with the photo (`id:
   invoice-image`); `id: invoice-close` closes it. A PDF shows «Abrir PDF»
@@ -50,12 +50,9 @@ Preconditions:
 - The test account has at least one Vehicle (`scripts/first-vehicle.js`
   reads the first one, read-only).
 - The photo: `flows/media/invoice.jpg`, a receipt that reads «verify
-  SEI-67». The flow's header line `# Photos: media/invoice.jpg` makes
-  `drive` add it to the device's library before the flow starts: on iOS
-  `xcrun simctl addmedia <udid> flows/media/invoice.jpg`, after `simslim
-  enable <udid> photos` on a slim simulator; on Android `adb push` to
-  `/sdcard/Pictures/` and a media scan. By hand, the same `simctl
-  addmedia` command does it.
+  SEI-67». `drive` adds it to the device's library before the flow
+  (SKILL.md → Photos). By hand: `xcrun simctl addmedia <udid>
+  flows/media/invoice.jpg`.
 
 - **Attach, see, remove.** `drive ios invoice`. It signs in and runs
   `scripts/cleanup-sei67.js` before `startRecording` (withdraws the Service
@@ -71,7 +68,9 @@ Preconditions:
   brings back «Adjuntar foto» (`invoice-07-removed-in-form`), and after
   saving the check confirms no invoice and the old file gone; «Factura»
   leaves the card (`invoice-08-removed`).
-- **Proof query.** The Service stays (without invoice) until the next run:
+- **Clean up.** `drive ios invoice-cleanup` withdraws the run's Service
+  and deletes its files; `invoice` also does it at its start.
+- **Proof query.** The Service stays (without invoice) until a cleanup:
 
   ```sql
   select s.id, s.invoice_path, s.updated_at, i.name

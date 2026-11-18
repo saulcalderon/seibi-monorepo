@@ -577,6 +577,7 @@
       "saved": "Factura guardada",
       "remove": "Quitar factura",
       "cameraFailed": "No pudimos abrir la cámara. Puedes elegir la foto de tu galería.",
+      "libraryFailed": "No pudimos abrir tu galería. Intenta de nuevo o toma la foto con la cámara.",
       "denied": {
         "camera": {
           "title": "Seibi no puede usar la cámara",

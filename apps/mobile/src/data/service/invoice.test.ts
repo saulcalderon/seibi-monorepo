@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { InputError } from '../errors';
 
-import { INVOICE_MAX_BYTES, checkInvoiceSize, initialInvoice, invoiceFile, invoiceKind, invoicePath, invoiceWrite, type InvoiceDraft } from './invoice';
+import { INVOICE_MAX_BYTES, checkInvoiceSize, initialInvoice, invoiceFile, invoicePreview, invoiceKind, invoicePath, invoiceWrite, type InvoiceDraft } from './invoice';
 
 // The invoice photo on a Service, as the PWA stores it (apps/app/src/lib/
 // mutations.ts at 6e3b818, uploadInvoice), so an invoice the app uploads
@@ -99,5 +99,28 @@ describe('how big an invoice photo can be', () => {
     }
     expect(refused).toBeInstanceOf(InputError);
     expect(refused).toMatchObject({ field: 'invoice', code: 'invoice_too_large' });
+  });
+});
+
+describe('which picture the form shows for its invoice', () => {
+  const SAVED = `${USER}/${SERVICE}/factura-1.jpg`;
+
+  it('a new photo shows from the phone, before it is uploaded', () => {
+    expect(invoicePreview({ kind: 'new', photo: { uri: 'file:///tmp/a.jpg', mimeType: null, fileName: null } })).toEqual({
+      source: 'local',
+      uri: 'file:///tmp/a.jpg',
+    });
+  });
+
+  it('a saved photo shows through a signed link to its path', () => {
+    expect(invoicePreview({ kind: 'saved', path: SAVED })).toEqual({ source: 'signed', path: SAVED });
+  });
+
+  it('a saved PDF shows as a document, with no link to sign', () => {
+    expect(invoicePreview({ kind: 'saved', path: `${USER}/${SERVICE}/factura-1.pdf` })).toEqual({ source: 'pdf' });
+  });
+
+  it('no invoice shows nothing', () => {
+    expect(invoicePreview({ kind: 'none' })).toBeNull();
   });
 });

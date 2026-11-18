@@ -100,3 +100,16 @@ export function invoiceWrite(saved: string | null, draft: InvoiceDraft): Invoice
 export function checkInvoiceSize(bytes: number) {
   if (bytes > INVOICE_MAX_BYTES) throw new InputError('invoice', 'invoice_too_large');
 }
+
+/**
+ * Which picture the form shows for its invoice: a new photo from its file on
+ * the phone (it isn't uploaded yet), a saved photo through a signed link to
+ * its path, a saved PDF as a document icon, and nothing without one.
+ */
+export type InvoicePreview = { source: 'local'; uri: string } | { source: 'signed'; path: string } | { source: 'pdf' };
+
+export function invoicePreview(draft: InvoiceDraft): InvoicePreview | null {
+  if (draft.kind === 'new') return { source: 'local', uri: draft.photo.uri };
+  if (draft.kind === 'saved') return invoiceKind(draft.path) === 'pdf' ? { source: 'pdf' } : { source: 'signed', path: draft.path };
+  return null;
+}

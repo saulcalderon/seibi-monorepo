@@ -132,7 +132,8 @@ export function ServiceForm({ vehicleId, serviceId, taskCodes, appointmentId, sh
   );
 }
 
-function findService(vehicles: readonly VehicleView[], id: string) {
+/** A Service and its Vehicle, from the garage. */
+export function findService(vehicles: readonly VehicleView[], id: string) {
   for (const vehicle of vehicles) {
     const service = vehicle.services.find((s) => s.id === id);
     if (service) return { vehicle, service };

@@ -91,16 +91,25 @@ export function MenuButton({
   actions,
   onAction,
   testID,
-}: {
-  /** Spoken. Required: without `text` the trigger has no visible words. */
-  label: string;
-  /** Visible words beside the icon. */
-  text?: string;
+}: (
+  | {
+      /** Spoken: the trigger has no visible words. */
+      label: string;
+      text?: undefined;
+    }
+  | {
+      /** Visible words beside the icon, also spoken unless `label` says more. */
+      text: string;
+      label?: string;
+    }
+) & {
   icon?: IconName;
   actions: MenuAction[];
   onAction: (id: string) => void;
   testID?: string;
 }) {
+  const withText = text !== undefined;
+  styles.useVariants({ withText });
   return (
     <MenuView
       testID={testID}
@@ -112,9 +121,9 @@ export function MenuButton({
       }))}
       onPressAction={({ nativeEvent }) => onAction(nativeEvent.event)}
     >
-      <View accessible accessibilityRole="button" accessibilityLabel={label} style={[styles.menuTrigger, text ? styles.menuTriggerText : undefined]}>
-        <Icon name={icon} size={text ? 'sm' : 'md'} fixed={!text} />
-        {text ? (
+      <View accessible accessibilityRole="button" accessibilityLabel={label ?? text} style={styles.menuTrigger}>
+        <Icon name={icon} size={withText ? 'sm' : 'md'} fixed={!withText} />
+        {withText ? (
           <Text step="subhead" weight={600} style={styles.menuText}>
             {text}
           </Text>
@@ -163,13 +172,13 @@ const styles = StyleSheet.create((theme, rt) => ({
     // Android's MenuView clips its child to the trigger's square bounds, so a shadow there shows as
     // a grey square behind the rounded button: the border alone carries it on Android.
     boxShadow: process.env.EXPO_OS === 'ios' ? theme.shadow.card : undefined,
-  },
-  // A secondary Button's `md` size (button.tsx), for a trigger with words.
-  menuTriggerText: {
-    flexDirection: 'row',
-    gap: theme.space[2],
-    paddingHorizontal: theme.space[4.5],
-    alignSelf: 'flex-start',
+    variants: {
+      // With words it takes a secondary Button's `md` padding and gap (button.tsx).
+      withText: {
+        true: { flexDirection: 'row', gap: theme.space[2], paddingHorizontal: theme.space[4.5], alignSelf: 'flex-start' },
+        false: {},
+      },
+    },
   },
   menuText: {
     flexShrink: 1,

@@ -1,10 +1,10 @@
-import { Image } from 'expo-image';
+import { Image, type ImageStyle } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { Alert, Linking, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 
-import { invoiceKind, type InvoiceDraft, type InvoicePhoto } from '@/data/service/invoice';
+import { invoicePreview, type InvoiceDraft, type InvoicePhoto } from '@/data/service/invoice';
 import { useInvoiceUrl } from '@/data/service/queries';
 import { IconButton } from '@/ui/button';
 import { MenuButton } from '@/ui/controls';
@@ -54,10 +54,10 @@ export function InvoiceField({ value, onChange, error }: { value: InvoiceDraft; 
       const photo = photoOf(result);
       if (photo) onChange({ kind: 'new', photo });
     } catch {
-      // No camera (the Simulator) says so and leaves the library; a library the system refused
-      // (the photo picker needs no permission, so it is rare) explains, as a denied camera does.
-      if (source === 'camera') notify.error(t('serviceForm.invoice.cameraFailed'));
-      else explainDenied('library');
+      // No camera (the Simulator) says so and leaves the library. The library is the system's photo
+      // picker, which needs no permission; only when the phone says access was denied does it explain.
+      if (source === 'library' && (await ImagePicker.getMediaLibraryPermissionsAsync()).status === 'denied') explainDenied('library');
+      else notify.error(t(source === 'camera' ? 'serviceForm.invoice.cameraFailed' : 'serviceForm.invoice.libraryFailed'));
     }
   };
 
@@ -74,7 +74,6 @@ export function InvoiceField({ value, onChange, error }: { value: InvoiceDraft; 
   const menu = (text: string, testID: string) => (
     <MenuButton
       testID={testID}
-      label={text}
       text={text}
       icon="camera"
       actions={[
@@ -92,7 +91,7 @@ export function InvoiceField({ value, onChange, error }: { value: InvoiceDraft; 
       ) : (
         <View style={styles.stack}>
           <View testID="service-invoice" style={styles.row}>
-            {value.kind === 'new' ? <Thumbnail uri={value.photo.uri} /> : <SavedThumbnail path={value.path} />}
+            <Thumbnail invoice={value} />
             <Text step="subhead" weight={500} style={styles.rowText}>
               {t(value.kind === 'new' ? 'serviceForm.invoice.new' : 'serviceForm.invoice.saved')}
             </Text>
@@ -105,29 +104,38 @@ export function InvoiceField({ value, onChange, error }: { value: InvoiceDraft; 
   );
 }
 
-/** The Service's invoice: the photo behind a signed link, or a document icon for a PDF. */
-function SavedThumbnail({ path }: { path: string }) {
-  const pdf = invoiceKind(path) === 'pdf';
-  const url = useInvoiceUrl(pdf ? null : path);
-  if (pdf || !url.data) {
+/** The invoice's picture: a new photo from the phone, a saved one through a signed link, a PDF as an icon. */
+function Thumbnail({ invoice }: { invoice: InvoiceDraft }) {
+  const preview = invoicePreview(invoice);
+  const url = useInvoiceUrl(preview?.source === 'signed' ? preview.path : null);
+  const uri = preview?.source === 'local' ? preview.uri : url.data;
+  if (!uri) {
     return (
       <View style={styles.thumb}>
-        <Icon name={pdf ? 'document' : 'receipt'} size="md" tone="muted" />
+        <Icon name={preview?.source === 'pdf' ? 'document' : 'receipt'} size="md" tone="muted" />
       </View>
     );
   }
-  return <Thumbnail uri={url.data} />;
+  return <InvoiceImage uri={uri} fit="cover" style={styles.thumb} />;
 }
 
-function Thumbnail({ uri }: { uri: string }) {
+/**
+ * An invoice photo. Invoices are personal, so `expo-image` keeps them in
+ * memory only, never in its disk cache. Silent for VoiceOver and TalkBack
+ * unless it has a label.
+ */
+export function InvoiceImage({ uri, fit, label, style, testID }: { uri: string; fit: 'cover' | 'contain'; label?: string; style?: ImageStyle; testID?: string }) {
   return (
     <Image
+      testID={testID}
       source={{ uri }}
-      // Invoices are personal: kept in memory only, never in expo-image's disk cache.
       cachePolicy="memory"
-      contentFit="cover"
+      contentFit={fit}
+      accessible={Boolean(label)}
+      accessibilityRole={label ? 'image' : undefined}
+      accessibilityLabel={label}
       accessibilityIgnoresInvertColors
-      style={styles.thumb}
+      style={style}
     />
   );
 }
