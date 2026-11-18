@@ -793,6 +793,7 @@
       "secondary": "Cancelar",
       "ghost": "Ver detalle",
       "danger": "Eliminar",
+      "ghostDanger": "Eliminar mi cuenta",
       "inverse": "Continuar",
       "small": "Pequeño",
       "medium": "Mediano",

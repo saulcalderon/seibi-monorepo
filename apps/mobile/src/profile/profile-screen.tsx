@@ -221,7 +221,7 @@ function Account() {
   return (
     <View style={styles.account}>
       <Button testID="sign-out" variant="secondary" icon="signOut" label={t('account.signOut.action')} onPress={signOutOrSay} block />
-      <Button testID="delete-account" variant="danger" icon="delete" label={t('account.delete.action')} onPress={confirmDeleteAccount} block />
+      <Button testID="delete-account" variant="ghostDanger" icon="delete" label={t('account.delete.action')} onPress={confirmDeleteAccount} block />
       <Text testID="profile-version" step="caption" tone="subtle" align="center" style={styles.version}>
         {t('profile.version', { version: Constants.expoConfig?.version ?? '' })}
       </Text>

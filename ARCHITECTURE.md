@@ -521,7 +521,9 @@ The migration's order, scope and tickets are in
     address when no mail app answers (the iOS Simulator has none).
   - **Account.** «Cerrar sesión» and «Eliminar mi cuenta» are SEI-44's
     `signOut()` and `deleteAccount()` (Auth below), the deletion behind
-    the native alert, where the PWA asked to type «ELIMINAR». Under them,
+    the native alert, where the PWA asked to type «ELIMINAR» (decided
+    2026-11-17, `docs/PLAN.md` → Decisions). «Eliminar mi cuenta» is the
+    kit's `ghostDanger` button, the PWA's ghost button with red text. Under them,
     «Seibi · <version>» (`expoConfig.version`), and in Seibi Dev the
     «Desarrollo» links to the data check and the UI kit.
 - **Styling:** Unistyles 3 (`react-native-unistyles` on
