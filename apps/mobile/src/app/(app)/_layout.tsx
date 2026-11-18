@@ -2,13 +2,16 @@ import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useUnistyles } from 'react-native-unistyles';
 
+import { sheetScreenLayout } from '@/ui/form';
+
 /** A link straight to a sheet still opens it over the tabs, so closing it leaves you in the app. */
 export const unstable_settings = { anchor: '(tabs)' };
 
 // Everything that needs a session. The root layout opens this group only
 // while signed in (Stack.Protected). The tabs are its first screen; the
 // actions sheet and the forms it opens are presented over them as native
-// form sheets.
+// form sheets. `sheetScreenLayout` tells a form in a sheet that it is one,
+// so on Android it leaves the keyboard to the sheet, which rises by itself.
 export default function AppLayout() {
   const { t } = useTranslation();
   const { theme } = useUnistyles();
@@ -19,7 +22,7 @@ export default function AppLayout() {
     contentStyle: { backgroundColor: theme.colors.bg },
   } as const;
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={{ headerShown: false }} screenLayout={sheetScreenLayout}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="actions" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
       {/* The Service form (S7): tall, as the PWA's sheet; record-service?vehicleId= | serviceId= | tasks=. */}
