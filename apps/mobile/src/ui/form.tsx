@@ -5,7 +5,9 @@ import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
-import { keyboardCover, sheetBottomOffset, sheetRoom } from './sheet-keyboard';
+import { keyboardCover, sheetBottomOffset, sheetRoom, type SheetPlatform } from './sheet-keyboard';
+
+const platform: SheetPlatform = Platform.OS === 'android' ? 'android' : 'ios';
 
 /**
  * Scrolling a form puts the keyboard away: the number pad has no return
@@ -19,9 +21,9 @@ const InSheet = createContext(false);
 
 /**
  * A stack's `screenLayout` that tells each `formSheet` route it is one, so
- * its `FormLayout` leaves the keyboard to the sheet where the sheet rises by
- * itself (Android). For a stack that fills the window, as `(app)`'s does:
- * the sheet's room above it is measured against the window.
+ * its `FormLayout` leaves to the sheet what the sheet does by itself: rise
+ * above the keyboard. For a stack that fills the window, as `(app)`'s does:
+ * the room above a sheet is measured against the window.
  */
 export function sheetScreenLayout({ children, options }: { children: ReactNode; options: { presentation?: string } }) {
   return <InSheet value={options.presentation === 'formSheet'}>{children}</InSheet>;
@@ -34,8 +36,8 @@ export function sheetScreenLayout({ children, options }: { children: ReactNode; 
  * focused field scrolls into view above the bar. Use it as the content of a
  * `formSheet` route or a full-screen form.
  *
- * On Android a form sheet rises above the keyboard by itself
- * (react-native-screens), so there the bar and the scroll make up only what
+ * A form sheet rises above the keyboard by itself (react-native-screens on
+ * Android, UIKit on iOS), so in one the bar and the scroll make up only what
  * the sheet couldn't (`sheet-keyboard.ts`, SEI-76).
  */
 export function FormLayout({
@@ -56,10 +58,10 @@ export function FormLayout({
   const { theme } = useUnistyles();
   const insets = useSafeAreaInsets();
   const window = useWindowDimensions();
-  const risingSheet = use(InSheet) && Platform.OS === 'android';
+  const inSheet = use(InSheet);
   const [footerHeight, setFooterHeight] = useState(0);
   const [sheetHeight, setSheetHeight] = useState(0);
-  const room = risingSheet ? sheetRoom({ windowHeight: window.height, topInset: insets.top, sheetHeight }) : 0;
+  const room = inSheet ? sheetRoom({ windowHeight: window.height, topInset: insets.top, sheetHeight }) : 0;
   const clearance = footerHeight + theme.space[4];
   styles.useVariants({ divider });
   const bar = (
@@ -71,12 +73,12 @@ export function FormLayout({
     <View
       style={styles.screen}
       testID={testID}
-      onLayout={risingSheet ? (event) => setSheetHeight(event.nativeEvent.layout.height) : undefined}
+      onLayout={inSheet ? (event) => setSheetHeight(event.nativeEvent.layout.height) : undefined}
     >
       <KeyboardAwareScrollView
         // Its ref is a ScrollView; the library's own ref type resolves against a second copy of React's types.
         ref={scrollRef as never}
-        bottomOffset={risingSheet ? sheetBottomOffset({ clearance, room, bottomInset: insets.bottom }) : clearance}
+        bottomOffset={inSheet ? sheetBottomOffset({ clearance, room, bottomInset: insets.bottom, platform }) : clearance}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode={KEYBOARD_DISMISS}
         contentInsetAdjustmentBehavior="automatic"
@@ -84,7 +86,7 @@ export function FormLayout({
       >
         {children}
       </KeyboardAwareScrollView>
-      {risingSheet ? (
+      {inSheet ? (
         <SheetActionBar room={room} bottomInset={insets.bottom}>
           {bar}
         </SheetActionBar>
@@ -96,11 +98,11 @@ export function FormLayout({
   );
 }
 
-/** The action bar of a sheet that rises: it rises only by what the keyboard still covers. */
+/** The action bar in a sheet: it rises only by what the keyboard still covers. */
 function SheetActionBar({ room, bottomInset, children }: { room: number; bottomInset: number; children: ReactNode }) {
   const { height } = useReanimatedKeyboardAnimation();
   const rise = useAnimatedStyle(() => ({
-    transform: [{ translateY: -keyboardCover({ keyboard: -height.value, room, bottomInset }) }],
+    transform: [{ translateY: -keyboardCover({ keyboard: -height.value, room, bottomInset, platform }) }],
   }));
   return <Animated.View style={rise}>{children}</Animated.View>;
 }
