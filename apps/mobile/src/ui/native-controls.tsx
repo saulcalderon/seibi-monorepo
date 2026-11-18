@@ -1,8 +1,9 @@
 // Android half of the native controls: Jetpack Compose through @expo/ui.
 // iOS's half is native-controls.ios.tsx; both export the same names and props.
-import { Host, Picker, type SwitchProps } from '@expo/ui';
+import type { SwitchProps } from '@expo/ui';
 import { DateTimePicker } from '@expo/ui/community/datetime-picker';
-import { semantics } from '@expo/ui/jetpack-compose/modifiers';
+import { DropdownMenu, DropdownMenuItem, Host, RNHostView, Text as ComposeText } from '@expo/ui/jetpack-compose';
+import { fillMaxWidth, semantics } from '@expo/ui/jetpack-compose/modifiers';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
@@ -15,20 +16,65 @@ import type { DateControlProps, SelectControlProps } from './native-controls.typ
 import { Text } from './text';
 
 /**
- * Material's exposed dropdown through @expo/ui's Picker: it draws its own
- * box and grows with the text size. It ignores `testID`, so the wrapping
- * view carries it; a tap anywhere on the box opens it.
+ * Seibi's field box with the chosen option and a chevron, as on iOS; a tap
+ * anywhere on it opens Material's dropdown menu under it, with a check on
+ * the current option. Not the universal `Picker`: on Android that is
+ * Material's exposed dropdown, which draws its own tinted box at Material's
+ * width (280 dp) with no chevron. The box is React Native inside the menu's
+ * anchor: the host takes the field's width and grows with the text.
  */
 export function SelectControl<T extends string | number>({ label, value, onChange, options, testID }: SelectControlProps<T>) {
   const { theme } = useUnistyles();
+  const [open, setOpen] = useState(false);
+  const chosen = options.find((option) => option.value === value);
   return (
     <View testID={testID}>
       <Host matchContents={{ vertical: true }} seedColor={theme.colors.radiant}>
-        <Picker selectedValue={value} onValueChange={onChange} accessibilityLabel={label}>
-          {options.map((option) => (
-            <Picker.Item key={String(option.value)} label={option.label} value={option.value} />
-          ))}
-        </Picker>
+        <DropdownMenu
+          expanded={open}
+          onDismissRequest={() => setOpen(false)}
+          // Unclipped, as in @expo/ui's MenuView: a clipped popup loses the status bar offset and
+          // detaches from a field near the bottom of an edge-to-edge screen.
+          properties={{ clippingEnabled: false }}
+          modifiers={[fillMaxWidth()]}
+        >
+          <DropdownMenu.Trigger>
+            <RNHostView matchContents={{ vertical: true }}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={chosen ? `${label}, ${chosen.label}` : label}
+                accessibilityState={{ expanded: open }}
+                onPress={() => setOpen(true)}
+                style={({ pressed }) => [styles.control, pressed && styles.pressed]}
+              >
+                <Text step="callout" style={styles.value}>
+                  {chosen?.label}
+                </Text>
+                <Icon name="expand" size="sm" tone="muted" />
+              </Pressable>
+            </RNHostView>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Items>
+            {options.map((option) => (
+              <DropdownMenuItem
+                key={String(option.value)}
+                onClick={() => {
+                  setOpen(false);
+                  onChange(option.value);
+                }}
+              >
+                <DropdownMenuItem.Text>
+                  <ComposeText>{option.label}</ComposeText>
+                </DropdownMenuItem.Text>
+                {option.value === value ? (
+                  <DropdownMenuItem.TrailingIcon>
+                    <ComposeText>✓</ComposeText>
+                  </DropdownMenuItem.TrailingIcon>
+                ) : null}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenu.Items>
+        </DropdownMenu>
       </Host>
     </View>
   );
