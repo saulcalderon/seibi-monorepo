@@ -571,8 +571,10 @@ The migration's order, scope and tickets are in
   `development`, the same bundle-time fold as the data check, so Metro
   leaves them out of every other bundle. The layout also redirects home
   outside development, so Seibi, preview builds and updates published
-  without the variant never mount the route. The root stack lists it
-  outside the `Stack.Protected` groups: it opens signed in or signed out.
+  without the variant never mount the route. It opens signed in or signed
+  out, but is closed while the first-run questions are due: a closed
+  route falls back to the first open one in route order, and `ui-kit`
+  sorts before `onboarding`.
   The `verify` skill drives it (`features/ui-kit.md`).
 - **Theme preference:** `system` (default), `light` or `night` (the PWA's
   Auto · Claro · Oscuro), under `theme.v1` in the expo-sqlite kv-store
