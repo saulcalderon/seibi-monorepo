@@ -24,6 +24,7 @@ import { Text } from './text';
  * anchor: the host takes the field's width and grows with the text.
  */
 export function SelectControl<T extends string | number>({ label, value, onChange, options, testID }: SelectControlProps<T>) {
+  const { t } = useTranslation();
   const { theme } = useUnistyles();
   const [open, setOpen] = useState(false);
   const chosen = options.find((option) => option.value === value);
@@ -68,7 +69,8 @@ export function SelectControl<T extends string | number>({ label, value, onChang
                 </DropdownMenuItem.Text>
                 {option.value === value ? (
                   <DropdownMenuItem.TrailingIcon>
-                    <ComposeText>✓</ComposeText>
+                    {/* TalkBack says «seleccionado», not the glyph's name. */}
+                    <ComposeText modifiers={[semantics({ contentDescription: t('field.selected') })]}>✓</ComposeText>
                   </DropdownMenuItem.TrailingIcon>
                 ) : null}
               </DropdownMenuItem>

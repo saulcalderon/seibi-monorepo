@@ -59,3 +59,4 @@ Preconditions:
 - The notifications switch stays off and disabled until SEI-47 ships native push; nothing taps it.
 - «Nombre» focuses itself once the sheet settles and the keyboard's rise moves the sheet: a tap aimed at the field mid-move lands on the backdrop and closes the clean sheet. The flow waits for the animation and types into the focused field instead of tapping it.
 - The in-app browser keeps Perfil's hierarchy behind it, so text like «Política de privacidad» matches Perfil's own row; the flow waits for the page's «Actualizado el …» line.
+- While iOS's country menu is open, the sheet drops out of the hierarchy: no `testID` under it is reachable. The flow closes the menu with a tap on a point (`75%, 72%`, the empty sheet beside «Ciudad», outside the menu), the one coordinate tap in the flow, then waits for `profile-location-title`. Android closes it with Back.
