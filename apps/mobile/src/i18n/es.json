@@ -666,6 +666,74 @@
       }
     }
   },
+  "onboarding": {
+    "category": {
+      "name": "Tú",
+      "level": "Conocimiento",
+      "check": "Conocimiento",
+      "result": "Conocimiento",
+      "location": "Ubicación",
+      "vehicle": "Tu Vehículo"
+    },
+    "step": "{{category}}, paso {{index}} de {{count}}",
+    "continue": "Continuar",
+    "name": {
+      "title": "¡Bienvenido a Seibi!",
+      "body": "Te haremos unas preguntas rápidas para adaptar Seibi a ti. Toma unos 2 minutos.",
+      "label": "¿Cómo te llamamos?",
+      "placeholder": "Tu nombre"
+    },
+    "level": {
+      "title": "¿Cuánto sabes de carros?",
+      "body": "Sé honesto: así te explicamos las cosas a tu medida. Lo puedes cambiar después.",
+      "group": "Nivel de conocimiento"
+    },
+    "check": {
+      "coolantMark": "Luz del tablero: un termómetro sobre unas ondas"
+    },
+    "result": {
+      "yourLevel": "Tu nivel",
+      "other": "Prefiero otro nivel",
+      "none": {
+        "title": "Te guiaremos paso a paso",
+        "body": "Usaremos palabras sencillas, te explicaremos cada pieza y te diremos exactamente qué pedir en el taller."
+      },
+      "basic": {
+        "title": "Vas bien encaminado",
+        "body": "Te explicaremos lo menos común y te recordaremos lo importante sin llenarte de términos técnicos."
+      },
+      "intermediate": {
+        "title": "Hablas el idioma del taller",
+        "body": "Verás nombres técnicos, costos por pieza y el detalle del plan de mantenimiento."
+      },
+      "advanced": {
+        "title": "Modo experto",
+        "body": "Te mostraremos especificaciones, planes de uso severo, números de parte y fuentes del fabricante."
+      }
+    },
+    "location": {
+      "title": "¿Dónde usas tu Vehículo?",
+      "body": "Lo usamos para estimar precios de tu zona y ajustar el plan del fabricante a tu país.",
+      "country": "País",
+      "countryOption": "{{flag}} {{name}}",
+      "city": "Ciudad",
+      "cityPlaceholderSV": "San Salvador, Santa Ana…",
+      "cityPlaceholderUS": "Houston, Los Ángeles…"
+    },
+    "vehicle": {
+      "title": "Agrega tu Vehículo",
+      "bodyExplain": "Con la marca, el modelo y el año buscamos qué mantenimiento necesita. Lo demás es opcional.",
+      "body": "Buscamos el plan del fabricante para tu marca, modelo, año y motor.",
+      "submit": "Agregar y continuar",
+      "later": "Lo agrego después"
+    },
+    "done": {
+      "title": "Se guardó tu información",
+      "body": "Ya está todo listo.",
+      "failed": "No pudimos guardar. Intenta de nuevo.",
+      "retry": "Reintentar"
+    }
+  },
   "countries": {
     "SV": "El Salvador",
     "US": "Estados Unidos"

@@ -8,6 +8,7 @@ import { errorMessage } from '@/data/errors';
 import { COUNTRIES, countryName, type Country } from '@/data/profile/countries';
 import { useProfile, useUpdateProfile, type Profile } from '@/data/profile/queries';
 import { KNOWLEDGE_LEVELS, levelDescription, levelTitle, type KnowledgeLevel } from '@/lib/knowledge';
+import { CITY_MAX, NAME_MAX } from '@/onboarding/flow';
 import { Button, IconButton } from '@/ui/button';
 import { SelectField } from '@/ui/controls';
 import { ErrorState, Skeleton, SkeletonGroup, TextSkeleton } from '@/ui/feedback';
@@ -18,7 +19,7 @@ import { usePressed } from '@/ui/press';
 import { Text } from '@/ui/text';
 import { useUnsavedGuard } from '@/ui/use-unsaved-guard';
 
-import { CITY_MAX, locationDraft, NAME_MAX, nameDraft, unsaved } from './profile-logic';
+import { locationDraft, nameDraft, unsaved } from './profile-logic';
 
 /*
  * Perfil's three sheets (S11), the PWA's NameSheet, LevelSheet and

@@ -9,18 +9,22 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-import { useAuth } from '@/auth/session';
+import { useAuth, type AuthState } from '@/auth/session';
+import { useProfile } from '@/data/profile/queries';
 import { queryClient } from '@/data/query-client';
 import { useOTAUpdate } from '@/hooks/use-ota-update';
 // Initialises i18next synchronously, before the first render.
 import '@/i18n';
+import { firstRunStatus } from '@/onboarding/flow';
 import { UIProvider } from '@/ui/provider';
 
-// The native splash stays up until the fonts are ready and the saved
-// session has been read, so no screen renders in a fallback font and a
-// signed-in person never sees the sign-in screen flash.
+// The native splash stays up until the fonts are ready, the saved session
+// has been read and, when signed in, the profile says whether the first-run
+// questions are done (as the PWA's Splash waits for `homePathFor`), so no
+// screen renders in a fallback font and a signed-in person never sees the
+// sign-in screen or Inicio flash before the questions.
 void SplashScreen.preventAutoHideAsync();
 SplashScreen.setOptions({ fade: true, duration: 250 });
 
@@ -39,36 +43,60 @@ export default function RootLayout() {
     GeistMono_400Regular,
   });
   // A font that fails to load must not keep the app on the splash forever.
-  const ready = (loaded || error !== null) && auth.status !== 'loading';
+  if (!(loaded || error !== null) || auth.status === 'loading') return null;
 
-  useEffect(() => {
-    if (ready) void SplashScreen.hideAsync();
-  }, [ready]);
-
-  if (!ready) return null;
-
-  // Exactly one group is open at a time; when the auth state changes, the
-  // router leaves the closed screens on its own (no redirects by hand).
   // Screens read and write data only through the hooks in src/data/, which
   // share this one query cache.
   return (
     <QueryClientProvider client={queryClient}>
       <UIProvider>
         <StatusBar style="auto" />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Protected guard={auth.status === 'signed-in'}>
-            <Stack.Screen name="(app)" />
-          </Stack.Protected>
-          <Stack.Protected guard={auth.status === 'signed-out'}>
-            <Stack.Screen name="(auth)/sign-in" />
-          </Stack.Protected>
-          <Stack.Protected guard={auth.status === 'account-deleted'}>
-            <Stack.Screen name="(auth)/account-deleted" />
-          </Stack.Protected>
-          {/* The UI kit's samples (development builds only) open whatever the session. */}
-          <Stack.Screen name="ui-kit" />
-        </Stack>
+        <RootStack auth={auth} />
       </UIProvider>
     </QueryClientProvider>
+  );
+}
+
+function RootStack({ auth }: { auth: Exclude<AuthState, { status: 'loading' }> }) {
+  const profile = useProfile();
+  const firstRun = firstRunStatus({ signedIn: auth.status === 'signed-in', profile: profile.data, failed: profile.isError });
+  // Launched once the first screen is known; it stays launched after (a sign-in later waits on the sign-in screen).
+  const [launched, setLaunched] = useState(false);
+  if (!launched && firstRun !== 'unknown') setLaunched(true);
+
+  useEffect(() => {
+    if (launched) void SplashScreen.hideAsync();
+  }, [launched]);
+
+  // At launch, the splash covers the wait for the profile.
+  if (!launched && firstRun === 'unknown') return null;
+
+  const signedIn = auth.status === 'signed-in';
+  // Exactly one group is open at a time; when the auth state or the profile
+  // changes, the router leaves the closed screens on its own (no redirects
+  // by hand). Right after signing in, while the profile loads, sign-in stays
+  // up rather than open Inicio or the questions too early.
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Protected guard={signedIn && firstRun === 'done'}>
+        <Stack.Screen name="(app)" />
+      </Stack.Protected>
+      <Stack.Protected guard={signedIn && firstRun === 'due'}>
+        {/* The first-run questions (S3): no going back to sign-in from them. */}
+        <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
+      </Stack.Protected>
+      <Stack.Protected guard={auth.status === 'signed-out' || (signedIn && firstRun === 'unknown')}>
+        <Stack.Screen name="(auth)/sign-in" />
+      </Stack.Protected>
+      <Stack.Protected guard={auth.status === 'account-deleted'}>
+        <Stack.Screen name="(auth)/account-deleted" />
+      </Stack.Protected>
+      {/* The UI kit's samples (development builds only) open whatever the session,
+          except during the first-run questions: a closed screen falls back to the
+          first open one in route order, and ui-kit sorts before onboarding. */}
+      <Stack.Protected guard={firstRun !== 'due'}>
+        <Stack.Screen name="ui-kit" />
+      </Stack.Protected>
+    </Stack>
   );
 }

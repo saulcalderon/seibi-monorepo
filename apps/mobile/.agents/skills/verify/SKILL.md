@@ -17,6 +17,7 @@ Everything goes through one helper, run from `apps/mobile`:
 .agents/skills/verify/scripts/verify.sh launch  ios|android [--rebuild]
 .agents/skills/verify/scripts/verify.sh doctor  ios|android
 .agents/skills/verify/scripts/verify.sh drive   ios|android <flow>
+.agents/skills/verify/scripts/verify.sh batch   ios|android
 .agents/skills/verify/scripts/verify.sh cleanup [ios|android|all]
 .agents/skills/verify/scripts/verify.sh a11y    ios|android large-text|reduce-motion|reset
 .agents/skills/verify/scripts/verify.sh where
@@ -192,8 +193,10 @@ Android only (`runFlow` `when: platform: Android`).
 
 Every route but sign-in needs a session. A flow that goes past the sign-in
 screen runs `runFlow: sign-in.yaml` right after opening the app: it signs
-in with the email + password test sign-in when the sign-in screen shows
-and ends on Inicio (`id: home-screen`) either way. That form exists only in development and
+in with the email + password test sign-in when the sign-in screen shows,
+answers the first-run questions the short way when the account hasn't
+finished them (`first-run-finish.yaml`), and ends on Inicio (`id:
+home-screen`) either way. That form exists only in development and
 preview builds; `verify.sh` starts Metro with `EXPO_PUBLIC_TEST_SIGN_IN=1`.
 
 - **Account:** `e2e@seibi.test` on seibi-dev, dedicated to these flows
@@ -248,14 +251,47 @@ Proof standards for a PR (`AGENTS.md` → "Prove it works"):
   run a read-only `SELECT` against the hosted **seibi-dev** Supabase
   project (Supabase MCP `execute_sql`) that shows the saved row, and paste
   the query and result in the PR. Never write to seibi-dev by hand to make
-  a journey pass, and never touch production.
+  a journey pass, and never touch production. One setup write is allowed:
+  `flows/scripts/reset-first-run.js` puts the test account back to before
+  its first run (the profile fields a new account has empty), because no
+  user can undo a finished first run and the first-run flows need one to
+  prove. It writes nothing a journey then asserts.
 - Mocks only where a production boundary already isolates the outside
   system.
-- Prove it on both platforms when the change touches both. If one
-  platform can't run, say so in the PR as an unchecked box; never report
-  it as verified through the other.
+- Drive only the ticket's own flow, on its main path, on iOS, on the
+  final commit. Leave other screens' flows to the full run (below), and
+  edge cases and rules to unit tests (vitest, in CI).
+- Add an Android run only when the change touches platform-specific code:
+  `*.ios.tsx` / `*.android.tsx`, `@expo/ui`, glass, the floating [+], or
+  an Android-only workaround. If a required platform can't run, say so in
+  the PR as an unchecked box; never report it as verified through the
+  other.
 - Attach the video to the Linear ticket and link it from the PR. Update
   the feature's file in `features/` in the same PR.
+
+## Full run
+
+```bash
+.agents/skills/verify/scripts/verify.sh batch ios      # then: batch android
+```
+
+Only when Saul asks for it. After `launch` and `doctor: OK`, `batch`
+drives every flow the feature map ([`features/README.md`](features/README.md)
+→ Features) names, one after another in map order, through `drive`, and
+keeps going after a failure. It leaves out subflows (named there as
+`<name>.yaml`; they record no video) and the destructive flows
+(`delete-account`, `account-deleted-elsewhere`). A `<flow>-cleanup` runs
+right before its `<flow>`, and again when that flow fails. A flow whose
+header asks for large text or Reduce Motion gets that `a11y` setting
+first and `a11y reset` after.
+
+It ends with a table, one row per run: flow, PASS or FAIL, time and the
+run's evidence folder, also kept in
+`~/seibi-verify/<YYYYMMDD-HHMMSS>-batch-<platform>/summary.txt` beside
+each drive's console log and `doctor.txt`. It exits non-zero when any run
+failed. Give each failure its own small fix PR that links its ticket, or
+a Linear ticket when it is bigger, and put the table in the PR or ticket
+that asked for the run.
 
 ## Cleanup
 
@@ -293,7 +329,7 @@ shared: run `reset` after every such run, failed ones too.
 
 ## Helpers
 
-- `scripts/verify.sh`: the launch, doctor, drive, cleanup and a11y
+- `scripts/verify.sh`: the launch, doctor, drive, batch, cleanup and a11y
   commands above. Run it with no arguments for usage. Settings, all optional:
   `SEIBI_VERIFY_PORT` (Metro port, default 8081; use another to run beside
   a Metro you don't own), `SEIBI_VERIFY_EVIDENCE` (evidence root),
@@ -303,7 +339,7 @@ shared: run `reset` after every such run, failed ones too.
   `SEIBI_TEST_PASSWORD`, `SEIBI_TEST_ACCOUNT_FILE`; see Sign-in).
 - `flows/*.yaml`: one Maestro flow per feature journey, named in the
   feature's file. `flows/sign-in.yaml`, `flows/open-profile.yaml`, `flows/close-sheet.yaml`, `flows/ui-kit-open.yaml` and
-  `flows/home-fixture-open.yaml` are subflows, not driven alone.
+  `flows/home-fixture-open.yaml` and `flows/first-run-finish.yaml` are subflows, not driven alone.
   `flows/scripts/` holds the JavaScript that flows run with `runScript`.
 
 ## Slim simulator

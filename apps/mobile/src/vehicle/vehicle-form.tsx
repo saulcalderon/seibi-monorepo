@@ -1,5 +1,5 @@
 import { useNavigation, usePreventRemove, useRouter } from 'expo-router';
-import { useEffect, useRef, useState, type ComponentRef } from 'react';
+import { useEffect, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TextInput } from 'react-native';
 import { View } from 'react-native';
@@ -32,6 +32,16 @@ export interface VehicleFormProps {
   onWithdrawn?: () => void;
   /** The save button's words; «Agregar Vehículo» or «Guardar cambios» by default. */
   submitLabel?: string;
+  /** Drawn above the fields in place of the form's own intro (S3's step heading). */
+  header?: ReactNode;
+  /** Drawn under the save button (S3's «Lo agrego después» and dots). */
+  footerExtra?: ReactNode;
+  /**
+   * Inside the first-run questions (S3): their black pill for «Guardar» (the
+   * PWA's `appearance="intro"`), no line over the bar, and the pickers pushed
+   * in the first run's stack (`/onboarding/pick`) instead of the Vehicle modal's.
+   */
+  firstRun?: boolean;
   testID?: string;
 }
 
@@ -46,7 +56,16 @@ export interface VehicleFormProps {
  * make, year and model fields push `/vehicle/pick`, which hands the choice
  * back. Leaving with unsaved input asks first.
  */
-export function VehicleForm({ vehicle, onSaved, onWithdrawn, submitLabel, testID = 'vehicle-form' }: VehicleFormProps) {
+export function VehicleForm({
+  vehicle,
+  onSaved,
+  onWithdrawn,
+  submitLabel,
+  header,
+  footerExtra,
+  firstRun = false,
+  testID = 'vehicle-form',
+}: VehicleFormProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const navigation = useNavigation();
@@ -106,7 +125,7 @@ export function VehicleForm({ vehicle, onSaved, onWithdrawn, submitLabel, testID
     picks.current.set(kind, onPick);
     awaitPick(kind, onPick);
     router.push({
-      pathname: '/vehicle/pick',
+      pathname: firstRun ? '/onboarding/pick' : '/vehicle/pick',
       params: {
         kind,
         value: kind === 'year' ? (draft.year?.toString() ?? '') : draft[kind],
@@ -142,18 +161,25 @@ export function VehicleForm({ vehicle, onSaved, onWithdrawn, submitLabel, testID
   return (
     <FormLayout
       testID={testID}
+      divider={!firstRun}
       footer={
-        <Button
-          testID={`${testID}-save`}
-          block
-          size="lg"
-          loading={busy}
-          label={submitLabel ?? (vehicle ? t('vehicleForm.submitEdit') : t('vehicleForm.submitAdd'))}
-          onPress={() => void save()}
-        />
+        <>
+          <Button
+            testID={`${testID}-save`}
+            block
+            size="lg"
+            variant={firstRun ? 'inverse' : 'primary'}
+            trailingIcon={firstRun ? 'next' : undefined}
+            loading={busy}
+            label={submitLabel ?? (vehicle ? t('vehicleForm.submitEdit') : t('vehicleForm.submitAdd'))}
+            onPress={() => void save()}
+          />
+          {footerExtra}
+        </>
       }
     >
-      {vehicle ? null : (
+      {header}
+      {vehicle || header ? null : (
         <Text step="subhead" tone="muted" style={styles.intro}>
           {t('vehicleForm.intro')}
         </Text>

@@ -23,12 +23,6 @@ export function locationSummary(profile: Pick<Profile, 'country' | 'city'> | und
   return profile?.city ? t('profile.location.summary', { city: profile.city, country: name }) : name;
 }
 
-/** The longest name the profile keeps (`profiles_display_name_length`). */
-export const NAME_MAX = 60;
-
-/** The longest city the profile keeps (`profiles_city_length`). */
-export const CITY_MAX = 80;
-
 /** «¿Cómo te llamamos?» starts from the saved name. */
 export function nameDraft(profile: Pick<Profile, 'displayName'> | undefined) {
   return profile?.displayName ?? '';

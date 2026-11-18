@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { t } from '@/data/test-i18n';
 
-import { CITY_MAX, headerName, locationDraft, locationSummary, NAME_MAX, nameDraft, unsaved } from './profile-logic';
+import { headerName, locationDraft, locationSummary, nameDraft, unsaved } from './profile-logic';
 
 const ANA = { fullName: 'Ana López', email: 'ana@example.com' };
 
@@ -56,12 +56,5 @@ describe('unsaved', () => {
   it('ignores spaces at the ends, which the save drops anyway', () => {
     expect(unsaved({ name: 'Anita' }, { name: ' Anita ' })).toBe(false);
     expect(unsaved({ country: 'SV', city: '' }, { country: 'SV', city: '   ' })).toBe(false);
-  });
-});
-
-describe('limits', () => {
-  it('match the profile columns: 60 for the name, 80 for the city', () => {
-    expect(NAME_MAX).toBe(60);
-    expect(CITY_MAX).toBe(80);
   });
 });

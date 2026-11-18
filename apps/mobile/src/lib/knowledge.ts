@@ -101,3 +101,15 @@ export function calibrateLevel(self: KnowledgeLevel, correct: number): Knowledge
   const checkIndex = total === 0 ? 0 : Math.floor((answered / total) * span);
   return KNOWLEDGE_LEVELS[Math.floor((selfIndex + checkIndex) / 2)];
 }
+
+type CheckQuestionEntry = (typeof CHECK_QUESTIONS)[number];
+
+/**
+ * A check option's words. Each question types its own option ids, but over
+ * the union of questions TypeScript can't pair a question with its options,
+ * so the key is narrowed by hand; `knowledge.test.ts` checks every pair has
+ * its copy.
+ */
+export function checkOptionText<Q extends CheckQuestionEntry>(question: Q, option: Q['options'][number]['id'], t: TFunction): string {
+  return t(`knowledge.check.${question.id}.options.${option}.text` as `knowledge.check.preventive.options.${'prevent'}.text`);
+}

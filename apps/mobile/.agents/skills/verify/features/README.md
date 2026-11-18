@@ -27,7 +27,8 @@ matching feature file as the recipe. The commands come from
   remove it after the run, but keep the evidence.
 - Inicio (the home, inside the tabs) needs a session. A flow that starts there runs
   `runFlow: sign-in.yaml` after opening the app; it signs in with the
-  seibi-dev test account when the sign-in screen shows.
+  seibi-dev test account when the sign-in screen shows, and answers the
+  first-run questions when the account hasn't finished them.
 
 ## Proof and skip reporting
 
@@ -37,9 +38,12 @@ matching feature file as the recipe. The commands come from
 - A journey that saves data also needs a read-only seibi-dev `SELECT`
   showing the saved row.
 - Prove on the platforms the change's tier asks for (`AGENTS.md` → Prove
-  it works: Android for a new screen, a journey that saves data, or
-  platform-specific code). Report a platform that could not run, with the
-  command tried and the unmet precondition.
+  it works: iOS, plus Android for platform-specific code). Report a
+  platform that could not run, with the command tried and the unmet
+  precondition.
+- `verify.sh batch` drives every runnable flow this map names, in the
+  order of the Features list below. Name a new flow there, and a subflow
+  as `<name>.yaml`, so the full run drives the one and skips the other.
 - Do not report a skipped entry point as verified through a different path.
 
 ## Feature entry contract
@@ -67,6 +71,12 @@ handles, required state, commands and observable proof.
   place, the floating [+] and its actions sheet, Perfil from the header
   avatar, `seibi-dev://vehicle/<id>`. Flow: `app-shell`; subflows
   `open-profile.yaml`, `close-sheet.yaml`.
+- [The first-run questions](./first-run.md): an account without
+  `onboarded_at` opens the questions instead of Inicio: name, Knowledge
+  level and its check, country and city, the first Vehicle or «Lo agrego
+  después», «Se guardó tu información», Inicio. Flows: `first-run`, `first-run-skip`;
+  subflow `first-run-finish.yaml` (run by `sign-in.yaml`); script
+  `scripts/reset-first-run.js`.
 - [Perfil](./profile.md): the card with who is signed in, the name,
   Knowledge level and location sheets (saved to the profile the PWA reads),
   «¿Descartar los cambios?», notifications (off until native push), «Tema»,
