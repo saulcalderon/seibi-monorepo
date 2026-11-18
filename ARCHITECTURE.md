@@ -299,7 +299,7 @@ The migration's order, scope and tickets are in
     `/actions`.
   - **Actions sheet** (`(app)/actions.tsx`): a `formSheet` sized to its
     content, «¿Qué quieres hacer?» with «Registrar un Servicio»,
-    «Actualizar Kilometraje» and «Agendar una Cita». An action replaces
+    «Actualizar Kilometraje» and «Agendar Cita». An action replaces
     the sheet with its own (`router.replace`): `record-service` (S7),
     `update-mileage` (S8) and `schedule-appointment` (S13).
   - **Perfil** opens from the header avatar (`ProfileButton`: Google's

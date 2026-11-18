@@ -113,7 +113,7 @@ name: Tabs keep their place, the [+] opens the actions, a link opens a Vehicle
       id: fleet-vehicle-0
     timeout: 15000
 
-# --- The [+] from each tab root opens the actions, «Agendar una Cita» among them (S13).
+# --- The [+] from each tab root opens the actions, «Agendar Cita» among them (S13).
 - tapOn:
     id: open-actions
 - extendedWaitUntil:

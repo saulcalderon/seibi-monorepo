@@ -5,7 +5,7 @@ Vehicle (a picker with two or more), the day (the native date picker, from
 today on; it opens on today), «¿Para qué es?» (up to 14 Maintenance task
 chips, the form's own task and the Vehicle's overdue and soon ones first),
 «Taller» and «Notas», both optional, and «Guardar Cita» (toast «Cita
-guardada»). It opens from the [+]'s «Agendar una Cita», the Vehicle
+guardada»). It opens from the [+]'s «Agendar Cita», the Vehicle
 detail's «Agendar Cita» and a Reminder detail's «Agendar» (with that task's
 chip on). The upcoming Appointments (today on, not canceled or done) show
 in Avisos' first card as «Cita · <Taller>» with the day and «Hecho», and in
@@ -47,7 +47,7 @@ changes asks «¿Descartar la Cita?».
 
 ## How to get to it (user POV)
 
-- The [+] (`id: open-actions`) → «Agendar una Cita» (`id:
+- The [+] (`id: open-actions`) → «Agendar Cita» (`id:
   action-schedule-appointment`), on Inicio's Vehicle.
 - The Vehicle detail's Mantenimiento → «Agendar Cita» (`id:
   detail-add-appointment`), on that Vehicle.
@@ -64,7 +64,7 @@ the recording and again at the end: it cancels any open Appointment whose
 notes start «verify SEI-68». `appointments-cleanup` runs the same alone.
 
 - **Schedule.** `scripts/verify.sh drive ios appointments` (then
-  `android`): the [+] shows «Agendar una Cita» (`appointments-01-actions`);
+  `android`): the [+] shows «Agendar Cita» (`appointments-01-actions`);
   it replaces the actions sheet with «Agendar Cita» (`appointments-02-form`);
   «Cambio de aceite», Shop «verify SEI-68 taller» and notes «verify SEI-68»,
   with title and «Guardar Cita» above the keyboard

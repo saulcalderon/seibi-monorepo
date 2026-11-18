@@ -22,7 +22,7 @@ name: Schedule an Appointment, see it in Avisos and the Vehicle detail, cancel i
 - runFlow: sign-in.yaml
 - startRecording: appointments
 
-# --- The [+] → «Agendar una Cita» on Inicio's Vehicle.
+# --- The [+] → «Agendar Cita» on Inicio's Vehicle.
 - waitForAnimationToEnd:
     timeout: 5000
 - extendedWaitUntil:
@@ -35,7 +35,9 @@ name: Schedule an Appointment, see it in Avisos and the Vehicle detail, cancel i
     visible:
       id: action-schedule-appointment
     timeout: 15000
-- assertVisible: Agendar una Cita
+- assertVisible:
+    id: action-schedule-appointment
+    text: '.*Agendar Cita.*'
 - waitForAnimationToEnd
 - takeScreenshot: appointments-01-actions
 - tapOn:

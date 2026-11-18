@@ -7,7 +7,7 @@ bar, and switching tabs and back finds each one where it was left. A
 floating [+] sits bottom right, just above the bar, on every screen of every
 tab: glass tinted orange on iOS, Material's floating action button on
 Android. It opens a native sheet, «¿Qué quieres hacer?», with «Registrar un
-Servicio», «Actualizar Kilometraje» and «Agendar una Cita»; each opens its
+Servicio», «Actualizar Kilometraje» and «Agendar Cita»; each opens its
 own sheet (S7’s Service form, S8’s Mileage sheet, S13’s «Agendar Cita»). The avatar on the
 right of each tab's header opens «Perfil» inside the current tab. A link to
 a Vehicle (`seibi-dev://vehicle/<id>`) opens its detail in «Mi flota» with
