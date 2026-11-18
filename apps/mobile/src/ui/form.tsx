@@ -36,7 +36,7 @@ export function sheetScreenLayout({ children, options }: { children: ReactNode; 
  * focused field scrolls into view above the bar. Use it as the content of a
  * `formSheet` route or a full-screen form.
  *
- * A form sheet rises above the keyboard by itself (react-native-screens on
+ * A form sheet makes room for the keyboard by itself (react-native-screens on
  * Android, UIKit on iOS), so in one the bar and the scroll make up only what
  * the sheet couldn't (`sheet-keyboard.ts`, SEI-76).
  */

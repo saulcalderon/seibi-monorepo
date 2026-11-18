@@ -1,7 +1,7 @@
 /**
  * The keyboard over a form sheet. The native sheet keeps its content above
  * the keyboard by itself, as far as the space above the sheet (its `room`)
- * allows: on Android react-native-screens rises the whole sheet and lets the
+ * allows: on Android react-native-screens raises the whole sheet and lets the
  * navigation-bar inset slide behind the keyboard; on iOS the sheet grows to
  * full height with the content at its top. So a form in a sheet moves only
  * by what the keyboard still covers, never by the whole keyboard: moving by
@@ -69,5 +69,6 @@ export function sheetBottomOffset({
   bottomInset: number;
   platform: SheetPlatform;
 }): number {
-  return platform === 'android' ? clearance - Math.max(room, bottomInset) : clearance - room - bottomInset;
+  // The rise once the keyboard is taller than the room, whatever its height.
+  return clearance - bottomInset - sheetRise(Number.POSITIVE_INFINITY, room, bottomInset, platform);
 }

@@ -42,6 +42,14 @@ name: Perfil edits the name and restores it, switches the theme, and links the l
     timeout: 3000
 - eraseText: 70
 - inputText: Verify Perfil
+# The sheet fits its content and rises above the keyboard with its title,
+# field and save in view (SEI-76).
+- waitForAnimationToEnd
+- assertVisible:
+    id: profile-name-title
+- assertVisible:
+    id: profile-name-save
+- takeScreenshot: profile-02-name-keyboard
 # Closing with a new name typed asks first; «Seguir editando» keeps the sheet.
 - tapOn:
     id: profile-name-close
@@ -122,6 +130,15 @@ name: Perfil edits the name and restores it, switches the theme, and links the l
     timeout: 15000
 - waitForAnimationToEnd
 - takeScreenshot: profile-05-location
+# With the keyboard up on the city, title and save stay in view (SEI-76).
+- tapOn:
+    id: profile-location-city
+- waitForAnimationToEnd
+- assertVisible:
+    id: profile-location-title
+- assertVisible:
+    id: profile-location-save
+- takeScreenshot: profile-05-location-keyboard
 - tapOn:
     id: profile-location-close
 - extendedWaitUntil:

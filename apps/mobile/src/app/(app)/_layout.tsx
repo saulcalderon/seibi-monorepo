@@ -11,7 +11,8 @@ export const unstable_settings = { anchor: '(tabs)' };
 // while signed in (Stack.Protected). The tabs are its first screen; the
 // actions sheet and the forms it opens are presented over them as native
 // form sheets. `sheetScreenLayout` tells a form in a sheet that it is one,
-// so on Android it leaves the keyboard to the sheet, which rises by itself.
+// so it leaves to the sheet the keyboard room the sheet makes by itself
+// (ARCHITECTURE.md → Sheets and the keyboard).
 export default function AppLayout() {
   const { t } = useTranslation();
   const { theme } = useUnistyles();

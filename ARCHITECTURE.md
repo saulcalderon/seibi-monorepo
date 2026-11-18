@@ -611,7 +611,7 @@ The migration's order, scope and tickets are in
     (`sheetAllowedDetents: 'fitToContents'`); only the Service form, longer
     than the screen, takes a fixed `[0.92]`. The native sheet keeps its
     content above the keyboard by itself: on Android react-native-screens
-    rises the whole sheet, on iOS UIKit grows it to full height with the
+    raises the whole sheet, on iOS UIKit grows it to full height with the
     content at its top. So `FormLayout` must not move by the whole keyboard
     as well; doing both pushed the content out of the sheet (Android) or
     left it blank with «Guardar» gone (iOS). `(app)`'s stack passes
