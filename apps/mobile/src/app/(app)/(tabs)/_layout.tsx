@@ -6,9 +6,9 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { ActionsButton } from '@/shell/actions-button';
 
 /**
- * The app's three tabs: Inicio · Mi flota · Avisos (Estimados joins with
- * S10, by OTA). The system draws the bar: Liquid Glass on iOS 26, Material 3
- * on Android. Each tab is a stack of its own, in `(home,fleet,reminders)/`.
+ * The app's four tabs: Inicio · Mi flota · Avisos · Estimados. The system
+ * draws the bar: Liquid Glass on iOS 26, Material 3 on Android. Each tab is
+ * a stack of its own, in `(home,fleet,reminders,estimates)/`.
  * Tabs are static: adding one is a code change, never a runtime toggle (it
  * would remount the navigator and lose every tab's place).
  *
@@ -46,6 +46,11 @@ export default function TabsLayout() {
         <NativeTabs.Trigger name="(reminders)" testID="tab-reminders">
           <NativeTabs.Trigger.Icon sf={{ default: 'bell', selected: 'bell.fill' }} md="notifications" />
           <NativeTabs.Trigger.Label>{t('tabs.reminders')}</NativeTabs.Trigger.Label>
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger name="(estimates)" testID="tab-estimates">
+          {/* The PWA's Calculator; SF Symbols has no calculator, so the same glyph as the kit's `estimates` icon. */}
+          <NativeTabs.Trigger.Icon sf="minus.forwardslash.plus" md="calculate" />
+          <NativeTabs.Trigger.Label>{t('tabs.estimates')}</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
       </NativeTabs>
       <ActionsButton />

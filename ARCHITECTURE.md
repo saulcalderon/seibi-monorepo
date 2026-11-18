@@ -197,9 +197,9 @@ The migration's order, scope and tickets are in
   in git), Expo Router with routes in `src/app/`, React Compiler, New
   Architecture (the only architecture since SDK 55), typed routes.
   Development builds (no Expo Go). Add packages with `npx expo install`.
-  The first binary already carries the native modules that after-launch
-  tickets need (`expo-image-picker` for S12, `react-native-svg`,
-  Reanimated), so those tickets can ship by OTA.
+  The first binary carries every native module the launch needs
+  (`expo-image-picker` for S12, `react-native-svg`, Reanimated), so later
+  JavaScript fixes can ship by OTA.
 - **Variants:** one dynamic `app.config.ts`, selected by
   `EXPO_PUBLIC_APP_VARIANT` (`development` | `production`; unset means
   `production`, so an update published without it can't ship development
@@ -264,19 +264,20 @@ The migration's order, scope and tickets are in
     (app)/(tabs)/(home)/index.tsx            Inicio  (/)
     (app)/(tabs)/(fleet)/fleet.tsx           Mi flota (/fleet)
     (app)/(tabs)/(reminders)/reminders.tsx   Avisos (/reminders)
-    (app)/(tabs)/(home,fleet,reminders)/     one Stack per tab: _layout · vehicle/[id] · profile
+    (app)/(tabs)/(estimates)/estimates.tsx   Estimados (/estimates)
+    (app)/(tabs)/(home,fleet,reminders,estimates)/   one Stack per tab: _layout · vehicle/[id] · profile
   ```
 
-  - **Tabs.** Three `NativeTabs` (`expo-router/native-tabs`): Inicio ·
-    Mi flota · Avisos. Liquid Glass on iOS 26 (the system draws it),
+  - **Tabs.** Four `NativeTabs` (`expo-router/native-tabs`): Inicio ·
+    Mi flota · Avisos · Estimados (S10 added the fourth; Estimados ships at
+    launch since 2026-11-17). Liquid Glass on iOS 26 (the system draws it),
     Material 3 on Android (`surface` bar, `radiantSoft` indicator). The
     selected label and icon use `radiantText` (text contrast), the rest
-    `muted`. Estimados has no tab until S10 adds one by OTA (decided
-    2026-11-11: no «pronto» screen). Tabs are static; adding one is a code
+    `muted`. Tabs are static; adding one is a code
     change, never a runtime toggle (it would remount the navigator). The
     bar never minimizes on scroll (`minimizeBehavior="never"`), so the [+]
     always sits right above it.
-  - **A stack per tab.** The array group `(home,fleet,reminders)/` gives
+  - **A stack per tab.** The array group `(home,fleet,reminders,estimates)/` gives
     each tab its own copy of the same stack (`TabStack`,
     `src/shell/tab-stack.tsx`, after Paradero): the root under a large
     title with the avatar on the right, then `vehicle/[id]` and `profile`.
@@ -299,16 +300,16 @@ The migration's order, scope and tickets are in
     `assets/icons/add.xml`). Spoken label «Acciones rápidas». It pushes
     `/actions`.
   - **Actions sheet** (`(app)/actions.tsx`): a `formSheet` sized to its
-    content, «¿Qué quieres hacer?» with «Registrar un Servicio» and
-    «Actualizar Kilometraje». No Appointment action until S13 ships it.
-    An action replaces the sheet with its own (`router.replace`):
-    `record-service` (S7) and `update-mileage` (S8).
+    content, «¿Qué quieres hacer?» with «Registrar un Servicio»,
+    «Actualizar Kilometraje» and «Agendar Cita». An action replaces
+    the sheet with its own (`router.replace`): `record-service` (S7),
+    `update-mileage` (S8) and `schedule-appointment` (S13).
   - **Perfil** opens from the header avatar (`ProfileButton`: Google's
     picture, else initials; on iOS 26 the header seats it on its own glass
     circle) inside the current tab (S11, below).
   - **Deep links.** Everything in `(app)` is behind `Stack.Protected`:
     signed out, a link lands on sign-in (and is not replayed after
-    sign-in). `vehicle/[id]` exists in all three tabs, so
+    sign-in). `vehicle/[id]` exists in all four tabs, so
     `+native-intent.tsx` sends `seibi-dev://vehicle/<id>` (or `seibi://`)
     to Mi flota, where a person would find it; other links pass through.
   - **Screens.** Inicio is the Garage, Mi flota the Fleet, Avisos the
@@ -461,9 +462,11 @@ The migration's order, scope and tickets are in
   schedule banner («Buscar plan del fabricante» runs
   `useRefreshVehicleData`) and the Vencido/Pronto/Al día Reminder groups;
   «Completa tu historial» above them; a row opens the Reminder's detail
-  (S9). «Citas y recordatorios» lists the Appointments (read-only until
-  S13) and the hand-written Reminders with «Hecho» and the bin (a native
-  confirm), and «Recordatorio» opens `new-reminder` for this Vehicle. Historial groups the Services by month as
+  (S9). «Citas y recordatorios» lists the Appointments with «Marcar
+  hecho» and «Cancelar» (S13, below) and the hand-written Reminders with
+  «Hecho» and the bin (a native confirm); «Agendar Cita» opens
+  `schedule-appointment` and «Recordatorio» `new-reminder`, both for this
+  Vehicle. Historial groups the Services by month as
   the PWA's expandable cards (lines, Taller, notes, «Editar», «Quitar»
   with its confirm; «Factura» waits for S12), stats «Servicios» and
   «Gastado este año», and the last 8 readings, each opening the
@@ -480,9 +483,11 @@ The migration's order, scope and tickets are in
   `formSheet` route, `record-service` (`src/service/service-form.tsx`).
   Its params
   are `?vehicleId=` (pre-picked Vehicle, no picker), `?serviceId=` (edit
-  that Service) and `?tasks=` (pre-checked
-  Maintenance tasks). It opens from the [+] actions sheet and from the
-  Vehicle detail's Historial.
+  that Service), `?tasks=` (pre-checked
+  Maintenance tasks) and `?appointmentId=&shop=` (the Appointment it
+  completes, with its Shop filled in). It opens from the [+] actions
+  sheet, the Vehicle detail's Historial, a Reminder's «Ya lo hice» and an
+  Appointment's «Hecho».
   - **Rules.** The draft's Zod schema and the payload builder live in
     `src/data/service/form.ts` (unit-tested in `form.test.ts`), the final
     checks in `src/data/service/rules.ts` (`validateService`). The order,
@@ -528,7 +533,7 @@ The migration's order, scope and tickets are in
   (the paywall replaces it after launch), in `src/profile/`
   (`profile-screen.tsx`, `profile-sheets.tsx`; the decisions as plain
   functions in `profile-logic.ts`, with unit tests). The route
-  (`(home,fleet,reminders)/profile.tsx`) renders `ProfileScreen`.
+  (`(home,fleet,reminders,estimates)/profile.tsx`) renders `ProfileScreen`.
   - **Card.** Google's picture or the initials on `inverse`
     (`size.profileAvatar`), the name (`profiles.display_name`, else the
     account's name, else the email; `headerName`) and the email; spoken as
@@ -580,7 +585,7 @@ The migration's order, scope and tickets are in
   - **Groups.** `groupReminders` splits the engine's Reminders: overdue,
     soon and ok (not snoozed, soonest expected first), «Pospuestos»
     (snoozed, unknown ones aside) and unknown. The first card holds the
-    overdue ones, the upcoming Appointments (read-only until S13), the open
+    overdue ones, the upcoming Appointments with «Hecho» (S13, below), the open
     hand-written Reminders with «Hecho», and «N tareas sin fecha», which
     unfolds «Completa tu historial» under the groups; with none of those
     due it says «Nada pendiente». «Por vencer» (always), «Al día» and
@@ -591,7 +596,7 @@ The migration's order, scope and tickets are in
 
     | Route | Opens | Who opens it |
     | --- | --- | --- |
-    | `/reminder?vehicleId=&task=` | The Reminder's detail: status in words and the share of the interval used, the task's description (when the Knowledge level explains, or nothing is known), «Frecuencia», «Última vez», «Toca a los», «Fuente» with up to three links (`expo-web-browser`); «Ya lo hice: registrar Servicio» (replaces it with `record-service?tasks=`), «Decir cuándo fue la última vez» (unknown), «Posponer 7/30 días» (overdue or soon) or «Reactivar aviso» (snoozed). Sized to its content | Any Reminder row, Inicio's «Estado» cards |
+    | `/reminder?vehicleId=&task=` | The Reminder's detail: status in words and the share of the interval used, the task's description (when the Knowledge level explains, or nothing is known), «Frecuencia», «Última vez», «Toca a los», «Fuente» with up to three links (`expo-web-browser`); «Ya lo hice: registrar Servicio» (replaces it with `record-service?tasks=`), «Decir cuándo fue la última vez» (unknown), «Agendar» (replaces it with `schedule-appointment?tasks=`), «Posponer 7/30 días» (overdue or soon) or «Reactivar aviso» (snoozed). Sized to its content | Any Reminder row, Inicio's «Estado» cards |
     | `/last-done?vehicleId=&task=` | «¿Cuándo fue “…”?»: five rough ranges (months back from today, `addMonths`), the exact day with the odometer then, «Tengo la factura» (`record-service`) or «No sé». It writes `reminder_states` (`rememberedPatch`, `DONT_KNOW_PATCH`), not a Service. Sized to its content | «Completa tu historial»'s chips, the detail |
     | `/new-reminder?vehicleId=` | «Nuevo Recordatorio»: a Vehicle picker with two or more, what to remember, the day (today to start: a native picker has no empty value), notes. The rules are `manualReminderRow` (`src/data/reminder/rules.ts`). Sized to its content | Avisos' «Nuevo», the Vehicle detail's «Recordatorio» |
 
@@ -604,9 +609,88 @@ The migration's order, scope and tickets are in
     and the card says «Pronto podrás recibirlas en este teléfono.», as
     Perfil's switch does. As in the PWA it hides once
     `profiles.notifications_enabled` is off.
-  - **Not here yet.** The detail's «Agendar» (S13) and «¿Cuánto cuesta?»
-    (S10), and «Hecho» on an Appointment (S13), join with their screens.
+  - **«¿Cuánto cuesta?»** in the detail closes it and opens Estimados on
+    that Vehicle and task (`router.dismissTo('/estimates?vehicle=&task=')`),
+    which asks for the Estimate on arrival, as the PWA. It sits beside
+    «Agendar», as in the PWA.
     Unlike the PWA, deleting a hand-written Reminder asks first.
+- **Agendar una Cita** (S13, SEI-68): the PWA's AppointmentForm (as of
+  `6e3b818`) as the `formSheet` route `schedule-appointment?vehicleId=&tasks=`
+  (`src/appointments/appointment-form.tsx`), tall (`[0.92]`) as the PWA's:
+  its chips make it longer than the screen. It
+  opens from the [+], the Vehicle detail's «Agendar Cita» and a Reminder's
+  «Agendar». The Vehicle (a picker with two or more; else the one Inicio
+  shows), the day (the native picker from today on; it opens on today,
+  since a native picker has no empty value), «¿Para qué es?» (14 task
+  chips, `taskChoices` in `appointment-logic.ts`: the tasks it was opened
+  for, then the Vehicle's overdue and soon ones, then the common ones;
+  unlike the PWA the opened-for task always shows), «Taller» and «Notas».
+  The rules are `appointmentRow` (`src/data/appointment/rules.ts`): a day
+  is required, a new Appointment is today or later, blank Shop and notes
+  save as null. «Upcoming» is `deriveVehicle`'s `upcomingAppointments`:
+  today on, not canceled, no Service. The rows live in
+  `src/appointments/appointment-row.tsx`: Avisos' «Cita · <Taller>» with
+  «Hecho», the Vehicle detail's tasks · day · Shop with «Marcar hecho» and
+  «Cancelar». «Hecho» opens `record-service?appointmentId=` with the
+  Appointment's tasks and Shop; `useSaveService` sets the Appointment's
+  `service_id`. «Cancelar» sets `canceled_at`; unlike the PWA it asks
+  first with the native alert, as deleting a hand-written Reminder does.
+  Closing the form with changes asks «¿Descartar la Cita?». Editing an
+  Appointment has no screen, as in the PWA; Inicio's «Agenda» (#54) is
+  not ported.
+- **Estimados** (S10, SEI-65): the PWA's Estimados (as of `6e3b818`)
+  without its chat, in `src/estimates/` (`estimates-screen.tsx`,
+  `estimate-panel.tsx`, `estimate-card.tsx`; the decisions as plain
+  functions in `estimates-logic.ts`, with unit tests). The route
+  (`(estimates)/estimates.tsx`) renders `EstimatesScreen`. Data:
+  `useRequestEstimate` and `useEstimateHistory` (`src/data/estimate/`).
+  - **Which Vehicle.** The one Inicio shows (`useActiveVehicle`), unless
+    `?vehicle=` names another. The line over the form names it with «N por
+    atender» or «Al día»; with two or more it unfolds the others, most
+    urgent first, and a tap switches Estimados and Inicio. No Vehicle:
+    «Agrega un Vehículo» (`/vehicle/new`). A new `?vehicle=`/`?task=`
+    starts the screen over, as the PWA's route key did.
+  - **Location.** The `estimates` function prices in the profile's country
+    and city (`profile_location` without them), so with no country the form
+    is replaced by «¿Dónde está tu Vehículo?» (country, city, «Guardar
+    ubicación» through `useUpdateProfile`). A profile that failed to load
+    shows «Reintentar» instead, so the card never saves over a location.
+  - **Asking.** «¿Qué quieres cotizar?» (three characters at least,
+    `canAsk`) or a task chip: the Vehicle's overdue and «Por vencer» tasks
+    first, with their dot (spoken «vencido» or «por vencer»), then the
+    PWA's popular ones, eight at most (`suggestedTasks`); the chips are
+    disabled while a request runs. It sends `{ vehicleId, taskCode }` or
+    `{ vehicleId, query }` (`estimateRequest`). Unlike the PWA, the field
+    sits at the top: pinned above the tab bar, the floating [+] would cover
+    its button. `?task=` asks for that task once on arrival («¿Cuánto
+    cuesta?» in a Reminder's detail), and not again when the Vehicle
+    changes.
+  - **Waiting and errors.** The question shows as a bubble, then a line
+    with a spinner that moves through «Buscando precios en tu zona…»,
+    «Comparando fuentes…» and «Ordenando los resultados…», one every 4.5 s
+    (`waitingStep`), announced as busy. A failure shows its `errors.<code>`
+    message: `ai_limit` (429, the per-user `AI_DAILY_LIMIT`) says
+    «Llegaste al límite de consultas de hoy. Vuelve mañana.».
+  - **Result.** The Vehicle and place, the job, then either the summary of
+    what is missing (`found: false`) or the independent shop and dealership
+    totals («Sin datos» when null), the economy parts, original parts and
+    labour that have a range (`priceRows`), the summary, «Suele incluir»
+    and «Qué mueve el precio». Then the confidence (three bars and its
+    words), up to five sources in the in-app browser (`expo-web-browser`,
+    as the Vehicle detail's) and «Estimado, no presupuesto». Dollars come
+    from `formatUsdRange` (no `currencyDisplay`: Hermes ignores it). The
+    card rises in (`motion.estimate`; still with Reduce Motion).
+  - **«Consultas anteriores».** The chosen Vehicle's last six (from the
+    person's last 20 requests, once per Estimate and Vehicle, the same
+    `estimate_requests` the PWA lists), with the independent total or «Sin
+    rango» and the day; a tap shows that result again without a new call.
+    Hidden while a request runs.
+  - **Cost.** Each new Estimate spends one of the day's AI calls; the
+    function caches an Estimate 30 days per model, engine, job and city, and
+    a cached one costs nothing (it still records the request).
+  - **Not here.** The PWA's «Estimar precio / Chat de Seibi» switch and the
+    chat (SEI-69 mounts them above the form), «Preguntar» (chat) and
+    the card's «Agendar» (the Reminder detail has one).
 - **Styling:** Unistyles 3 (`react-native-unistyles` on
   `react-native-nitro-modules`; SEI-42's spike proved it on SDK 58 on both
   platforms). The theme lives in `src/theme/`, values from
@@ -649,8 +733,9 @@ The migration's order, scope and tickets are in
   view from mount). Both are in `docs/DESIGN.md`
   (Type → Text that fits; Spacing and radius → Corners on Android).
   - **Sheets and the keyboard** (SEI-76). A form sheet fits its content
-    (`sheetAllowedDetents: 'fitToContents'`); only the Service form, longer
-    than the screen, takes a fixed `[0.92]`. The native sheet keeps its
+    (`sheetAllowedDetents: 'fitToContents'`); only the Service form and
+    «Agendar Cita», longer than the screen (the PWA's `tall` sheets), take
+    a fixed `[0.92]`. The native sheet keeps its
     content above the keyboard by itself: on Android react-native-screens
     raises the whole sheet, on iOS UIKit grows it to full height with the
     content at its top. So `FormLayout` must not move by the whole keyboard

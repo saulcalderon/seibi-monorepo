@@ -1,22 +1,21 @@
-import { daysBetween } from '@seibi/maintenance-engine/days';
 import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native-unistyles';
 
+import { AppointmentDetailRow } from '@/appointments/appointment-row';
 import type { VehicleView } from '@/data/garage/types';
 import { useGarage } from '@/data/garage/use-garage';
 import { useProfile } from '@/data/profile/queries';
 import { taskMap } from '@/data/task/catalog';
 import { useRefreshVehicleData } from '@/data/vehicle/mutations';
-import { formatDay, isoDate, relativeDays } from '@/lib/format';
-import { knowledgeProfile, taskLabel } from '@/lib/knowledge';
+import { knowledgeProfile } from '@/lib/knowledge';
 import { plainText } from '@/lib/text';
 import { HistoryCard } from '@/reminders/history-card';
 import { ManualReminderRow } from '@/reminders/manual-reminder-row';
 import { ReminderRow } from '@/reminders/reminder-row';
 import { Button } from '@/ui/button';
-import { Card, IconTile, RowDivider, SectionHeader } from '@/ui/card';
+import { Card, RowDivider, SectionHeader } from '@/ui/card';
 import { Icon } from '@/ui/icon';
 import { Text } from '@/ui/text';
 
@@ -25,9 +24,9 @@ import { scheduleBanner, scheduleGeneralBody } from './detail-logic';
 /**
  * Mantenimiento: the schedule banner, «Completa tu historial», the Reminder
  * groups and «Citas y recordatorios», as the PWA's MaintenanceTab. A
- * Reminder opens its detail (S9); a hand-written Reminder has «Hecho» and
- * the bin, and «Recordatorio» writes a new one. Appointments are read-only
- * and «Agendar Cita» is missing until S13 ships them.
+ * Reminder opens its detail (S9); an Appointment has «Marcar hecho» and
+ * «Cancelar» (S13); a hand-written Reminder has «Hecho» and the bin.
+ * «Agendar Cita» and «Recordatorio» write new ones for this Vehicle.
  */
 export function MaintenanceTab({ vehicle }: { vehicle: VehicleView }) {
   const { t } = useTranslation();
@@ -36,7 +35,6 @@ export function MaintenanceTab({ vehicle }: { vehicle: VehicleView }) {
   const profile = useProfile();
   const byCode = taskMap(garage.tasks);
   const k = knowledgeProfile(profile.data?.knowledgeLevel);
-  const today = isoDate();
 
   const groups = (['overdue', 'soon', 'ok'] as const)
     .map((status) => ({ status, items: vehicle.reminders.filter((r) => r.status === status) }))
@@ -77,18 +75,7 @@ export function MaintenanceTab({ vehicle }: { vehicle: VehicleView }) {
             {vehicle.upcomingAppointments.map((a, index) => (
               <View key={`a-${a.id}`}>
                 {index > 0 ? <RowDivider /> : null}
-                <View style={styles.row} testID="detail-appointment">
-                  <IconTile icon="appointment" />
-                  <View style={styles.rowText}>
-                    <Text step="subhead" weight={600} numberOfLines={1}>
-                      {a.taskCodes.length > 0 ? a.taskCodes.map((c) => taskLabel(byCode.get(c), c, k)).join(', ') : t('vehicleDetail.appointments.workshop')}
-                    </Text>
-                    <Text step="footnote" tone="muted">
-                      {formatDay(a.scheduledOn, 'long')} · {relativeDays(daysBetween(today, a.scheduledOn), t)}
-                      {a.shop ? ` · ${a.shop}` : ''}
-                    </Text>
-                  </View>
-                </View>
+                <AppointmentDetailRow appointment={a} vehicleId={vehicle.id} tasks={byCode} k={k} testID={`detail-appointment-${index}`} />
               </View>
             ))}
             {vehicle.openManualReminders.map((m, index) => (
@@ -99,14 +86,29 @@ export function MaintenanceTab({ vehicle }: { vehicle: VehicleView }) {
             ))}
           </Card>
         )}
-        <Button
-          testID="detail-add-reminder"
-          variant="secondary"
-          icon="addReminder"
-          label={t('vehicleDetail.appointments.addReminder')}
-          accessibilityLabel={t('vehicleDetail.appointments.addReminderSpoken')}
-          onPress={() => router.push({ pathname: '/new-reminder', params: { vehicleId: vehicle.id } })}
-        />
+        <View style={styles.pair}>
+          <View style={styles.half}>
+            <Button
+              testID="detail-add-appointment"
+              variant="secondary"
+              icon="addAppointment"
+              block
+              label={t('vehicleDetail.appointments.add')}
+              onPress={() => router.push({ pathname: '/schedule-appointment', params: { vehicleId: vehicle.id } })}
+            />
+          </View>
+          <View style={styles.half}>
+            <Button
+              testID="detail-add-reminder"
+              variant="secondary"
+              icon="addReminder"
+              block
+              label={t('vehicleDetail.appointments.addReminder')}
+              accessibilityLabel={t('vehicleDetail.appointments.addReminderSpoken')}
+              onPress={() => router.push({ pathname: '/new-reminder', params: { vehicleId: vehicle.id } })}
+            />
+          </View>
+        </View>
       </View>
     </View>
   );
@@ -175,17 +177,12 @@ const styles = StyleSheet.create((theme) => ({
   section: {
     gap: theme.space[3],
   },
-  row: {
+  pair: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.space[3],
-    paddingHorizontal: theme.space[4],
-    paddingVertical: theme.space[3.5],
+    gap: theme.space[2],
   },
-  rowText: {
+  half: {
     flex: 1,
-    gap: theme.space[0.5],
-    minWidth: 0,
   },
   emptyHint: {
     paddingHorizontal: theme.space[1],

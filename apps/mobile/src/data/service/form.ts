@@ -57,14 +57,16 @@ export function customItem(): ItemDraft {
 
 /**
  * The draft a form opens with. Editing: the Service as saved. Recording:
- * today, maintenance, the Vehicle's current odometer, and a line for each
- * task the form was opened for. Costs go per line when the Service already
+ * today, maintenance, the Vehicle's current odometer, a line for each task
+ * the form was opened for, and the Shop it was opened with (an
+ * Appointment's «Hecho»). Costs go per line when the Service already
  * has them, or when the Knowledge level asks for detail.
  */
 export function initialDraft({
   vehicle,
   service,
   taskCodes = [],
+  shop = '',
   tasks,
   detailed,
   today,
@@ -72,6 +74,7 @@ export function initialDraft({
   vehicle: VehicleView;
   service?: ServiceRecord;
   taskCodes?: readonly string[];
+  shop?: string;
   tasks: ReadonlyMap<string, MaintenanceTask>;
   detailed: boolean;
   today: string;
@@ -104,7 +107,7 @@ export function initialDraft({
     items: taskCodes.filter((code) => tasks.has(code)).map((code) => taskItem(code, tasks)),
     perItemCost: detailed,
     totalCost: '',
-    shop: '',
+    shop,
     notes: '',
   };
 }

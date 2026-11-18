@@ -1,0 +1,137 @@
+# Feature: Estimados (features/estimates.md), S10 / SEI-65, on the shared
+# seibi-dev test account. Open the Estimados tab, ask for ONE Estimate («Cambio
+# de aceite», by its task chip), see the waiting line, the result and the new
+# row in «Consultas anteriores», and open a source. Run through
+# scripts/verify.sh drive <ios|android> estimates.
+#
+# Each run asks the `estimates` Edge Function once. A new Estimate spends one
+# of the test account's AI calls for the day (AI_DAILY_LIMIT, 20 by default); the same
+# task on the same Yaris and city is cached for 30 days and costs nothing.
+# Never add a second request to this flow.
+appId: ${APP_ID}
+name: Estimados asks for one Estimate and lists it in the past queries
+---
+- stopApp
+- openLink: ${DEV_URL}
+- runFlow: sign-in.yaml
+- startRecording: estimates
+
+# --- The tab: the Vehicle Inicio shows, the question and the task chips.
+# Inicio is still settling right after sign-in: tap again if nothing moved.
+- waitForAnimationToEnd:
+    timeout: 5000
+- tapOn:
+    id: tab-estimates
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    visible:
+      id: estimates-vehicle-name
+    timeout: 30000
+- assertVisible:
+    id: estimates-query
+- assertVisible:
+    id: estimates-send
+- extendedWaitUntil:
+    visible:
+      id: estimates-task-engine_oil
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: estimates-01-form
+
+# --- The one request: «Cambio de aceite» by its chip.
+- tapOn:
+    id: estimates-task-engine_oil
+- extendedWaitUntil:
+    visible:
+      id: estimates-asked
+    timeout: 10000
+# A cached Estimate answers in about a second, before the line can be seen.
+- extendedWaitUntil:
+    visible:
+      id: estimates-waiting
+    timeout: 5000
+    optional: true
+- takeScreenshot: estimates-02-waiting
+# The research runs a web search: a new Estimate can take a couple of minutes.
+- extendedWaitUntil:
+    visible:
+      id: estimates-result
+    timeout: 240000
+- assertNotVisible:
+    id: estimates-request-error
+- assertVisible:
+    id: estimates-result-title
+- copyTextFrom:
+    id: estimates-result-title
+- evalScript: ${output.title = maestro.copiedText.trim()}
+# The card starts below the chips: its body is under the fold until scrolled.
+- scrollUntilVisible:
+    element:
+      id: estimates-result-summary
+    centerElement: true
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: estimates-03-result
+
+# --- The rest of the card: confidence, the sources and the note.
+- scrollUntilVisible:
+    element:
+      id: estimates-result-confidence
+    centerElement: true
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: estimates-04-confidence
+
+# --- «Consultas anteriores»: the request just made is the first row.
+- scrollUntilVisible:
+    element:
+      id: estimates-past-0
+    centerElement: true
+    timeout: 20000
+- copyTextFrom:
+    id: estimates-past-0
+- evalScript: ${output.pastFirst = maestro.copiedText.indexOf(output.title) === 0}
+- assertTrue: ${output.pastFirst}
+- waitForAnimationToEnd
+- takeScreenshot: estimates-05-past
+
+# --- A source opens in the in-app browser (only when the research found one).
+- scrollUntilVisible:
+    element:
+      id: estimates-result-source-0
+    direction: UP
+    centerElement: true
+    timeout: 20000
+    optional: true
+- runFlow:
+    when:
+      visible:
+        id: estimates-result-source-0
+    commands:
+      - tapOn:
+          id: estimates-result-source-0
+      - extendedWaitUntil:
+          notVisible:
+            id: estimates-result-source-0
+          timeout: 15000
+      - waitForAnimationToEnd:
+          timeout: 10000
+      - takeScreenshot: estimates-06-source
+      # Back to Seibi: Safari View Controller's «Done» (or «Listo») on iOS, the back key on Android.
+      - runFlow:
+          when:
+            platform: iOS
+          commands:
+            - tapOn:
+                text: '(Done|Listo|OK)'
+      - runFlow:
+          when:
+            platform: Android
+          commands:
+            - back
+      - extendedWaitUntil:
+          visible:
+            id: estimates-result
+          timeout: 15000
+- takeScreenshot: estimates-07-end
+- stopRecording
