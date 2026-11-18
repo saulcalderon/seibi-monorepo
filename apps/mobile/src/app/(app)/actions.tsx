@@ -8,9 +8,8 @@ import { Text } from '@/ui/text';
 
 /**
  * The actions sheet the [+] opens (the PWA's quick actions): what you can
- * record from anywhere. Scheduling an Appointment joins with S13; until then
- * it is not offered (decided 2026-11-11). Picking an action swaps this sheet
- * for that action's own.
+ * record or plan from anywhere. Picking an action swaps this sheet for that
+ * action's own.
  */
 export default function ActionsSheet() {
   const { t } = useTranslation();
@@ -36,6 +35,14 @@ export default function ActionsSheet() {
           title={t('actions.mileage.title')}
           subtitle={t('actions.mileage.body')}
           onPress={() => open('/update-mileage')}
+        />
+        <RowDivider />
+        <ListRow
+          testID="action-schedule-appointment"
+          leading={<IconTile icon="addAppointment" tone="radiant" />}
+          title={t('actions.appointment.title')}
+          subtitle={t('actions.appointment.body')}
+          onPress={() => open('/schedule-appointment')}
         />
       </Card>
     </View>

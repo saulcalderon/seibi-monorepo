@@ -6,13 +6,13 @@ A line over it names another Vehicle with something pending and unfolds to
 switch to any other. The «Recibe los avisos en tu teléfono» card has
 «Activar» disabled with «Pronto podrás recibirlas en este teléfono.» until
 native push. The first card holds the overdue Reminders, the upcoming
-Appointments, the open hand-written Reminders with «Hecho», and «N tareas
+Appointments with «Hecho», the open hand-written Reminders with «Hecho», and «N tareas
 sin fecha», which unfolds «Completa tu historial»; with nothing due it says
 «Nada pendiente». «Por vencer», «Al día» and «Pospuestos» fold under it
 with their counts. A Reminder opens its detail as a sheet: its status in
 words, the interval used, «Frecuencia», «Última vez», «Toca a los»,
 «Fuente» and its links, «Ya lo hice: registrar Servicio», «Decir cuándo fue
-la última vez» for an unknown task, «¿Cuánto cuesta?», «Posponer 7 días» / «Posponer 30 días»
+la última vez» for an unknown task, «Agendar» (an Appointment for it) and «¿Cuánto cuesta?» side by side, «Posponer 7 días» / «Posponer 30 días»
 for a due one, and «Reactivar aviso» for a snoozed one. «Completa tu
 historial»'s chips open «¿Cuándo fue “…”?» (rough ranges, the exact day and
 Mileage, «No sé», or the full Service). «Nuevo» opens «Nuevo Recordatorio»
@@ -30,7 +30,8 @@ Mileage, «No sé», or the full Service). «Nuevo» opens «Nuevo Recordatorio�
 - `push` `id: avisos-push` with `id: avisos-push-enable` disabled and `id:
   avisos-push-unavailable`; hidden when the profile has notifications off.
 - `main` `id: avisos-main`: overdue rows `id: avisos-overdue-<n>`,
-  appointments `id: avisos-appointment-<n>`, hand-written Reminders `id:
+  appointments `id: avisos-appointment-<n>` with «Hecho» `-done`
+  ([appointments.md](./appointments.md)), hand-written Reminders `id:
   avisos-manual-<n>` with «Hecho» `id: avisos-manual-<n>-done` (spoken
   «Hecho: <title>», toast «Hecho»), «Nada pendiente» `id: avisos-nothing`,
   `id: avisos-unknown-toggle` → `id: avisos-history`.
@@ -41,6 +42,7 @@ Mileage, «No sé», or the full Service). «Nuevo» opens «Nuevo Recordatorio�
   (badge with its word), `-due`, `-facts` with `-frequency`, `-last`,
   `-due-at`, `-source` and links `-link-<n>`; `-record` (replaces it with
   «Registrar Servicio» for the task), `-ask-last` (unknown only),
+  `-schedule` («Agendar»: replaces it with «Agendar Cita» for the task),
   `-estimate` («¿Cuánto cuesta?»: closes it and opens Estimados, which asks
   for that task's Estimate; [`estimates.md`](./estimates.md)),
   `-snooze-7` / `-snooze-30` (overdue or soon; toast «Pospuesto N días»),

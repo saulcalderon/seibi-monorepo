@@ -37,8 +37,7 @@ const HERO_WIDTH = 390;
  * Detalle del Vehículo (S6, SEI-61), ported from the PWA's VehicleDetail.tsx:
  * the hero, the three tiles and the Mantenimiento · Historial · Uso · Datos
  * tabs. The tab is the `tab` route param so `vehicle/<id>?tab=historial`
- * opens it directly. Reminder rows and «Citas y recordatorios» are read-only
- * until S9/S13; «Factura» waits for S12.
+ * opens it directly. «Factura» waits for S12.
  */
 export function VehicleDetail({ vehicleId, tab }: { vehicleId: string; tab: DetailTab }) {
   const { t } = useTranslation();

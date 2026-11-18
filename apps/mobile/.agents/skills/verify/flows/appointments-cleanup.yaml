@@ -1,0 +1,18 @@
+# Feature: features/appointments.md. Cancels what a failed `appointments`
+# run left on the test account — open Appointments whose notes start
+# «verify SEI-68» — so the next run starts clean. It goes through Supabase's
+# REST API under the account's own RLS. Run through
+# scripts/verify.sh drive <ios|android> appointments-cleanup.
+appId: ${APP_ID}
+name: Cancel the Appointments a failed appointments run left
+---
+- startRecording: appointments-cleanup
+- runScript:
+    file: scripts/cleanup-sei68.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}
+- takeScreenshot: appointments-cleanup-done
+- stopRecording

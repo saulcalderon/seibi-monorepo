@@ -130,6 +130,35 @@ name: Perfil edits the name and restores it, switches the theme, and links the l
     timeout: 15000
 - waitForAnimationToEnd
 - takeScreenshot: profile-05-location
+# A tap on the country select opens the menu over the sheet with both
+# countries; the screenshot shows the field box (SEI-78). The menu closes
+# without a choice, so nothing changes.
+- tapOn:
+    id: profile-location-country
+- extendedWaitUntil:
+    visible: '.*Estados Unidos.*'
+    timeout: 5000
+- assertVisible: '.*El Salvador.*'
+- takeScreenshot: profile-05-location-country
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - pressKey: back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      # The open menu hides the sheet from the hierarchy: tap an empty spot of
+      # the sheet beside «Ciudad», outside the menu, which closes it.
+      - tapOn:
+          point: 75%, 72%
+- waitForAnimationToEnd
+# Closed: the sheet is back in the hierarchy and still shows its title.
+- extendedWaitUntil:
+    visible:
+      id: profile-location-title
+    timeout: 5000
 # With the keyboard up on the city, title and save stay in view (SEI-76).
 - tapOn:
     id: profile-location-city

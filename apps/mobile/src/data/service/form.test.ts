@@ -74,6 +74,12 @@ describe('the draft a form opens with', () => {
       ['Bombillo', '25.5', '', 'H4'],
     ]);
   });
+
+  it('completing an Appointment starts with its tasks and its Shop', () => {
+    const d = initialDraft({ vehicle: yaris, taskCodes: ['engine_oil', 'oil_filter'], shop: 'Taller Don Beto', tasks, detailed: false, today: TODAY });
+    expect(d.shop).toBe('Taller Don Beto');
+    expect(d.items.map((i) => i.taskCode)).toEqual(['engine_oil', 'oil_filter']);
+  });
 });
 
 describe('unsaved changes', () => {
@@ -146,5 +152,9 @@ describe('saving a draft', () => {
   it('keeps the ids it edits', () => {
     const input = serviceInputFromDraft(draft(), { serviceId: 's1', readingId: 'r1', today: TODAY });
     expect(input).toMatchObject({ serviceId: 's1', readingId: 'r1', appointmentId: null, vehicleId: 'v1' });
+  });
+
+  it('completes the Appointment it was opened from', () => {
+    expect(serviceInputFromDraft(draft(), { appointmentId: 'a1', today: TODAY }).appointmentId).toBe('a1');
   });
 });
