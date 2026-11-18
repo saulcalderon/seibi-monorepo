@@ -22,14 +22,14 @@ import { Logo } from '@/ui/logo';
 import { Text } from '@/ui/text';
 import { Wordmark } from '@/ui/wordmark';
 
-import { EstadoArt, ProblemArt, VehicleArt } from './art';
+import { ProblemArt, StatusArt, VehicleArt } from './art';
 import { slideControls } from './flow';
 
 /** The PWA's three slides, in its order, each with its picture (src/intro/art.tsx). */
 const SLIDES: readonly { key: 'what' | 'problem' | 'help'; Art: ComponentType }[] = [
   { key: 'what', Art: VehicleArt },
   { key: 'problem', Art: ProblemArt },
-  { key: 'help', Art: EstadoArt },
+  { key: 'help', Art: StatusArt },
 ];
 
 /**
@@ -39,8 +39,9 @@ const SLIDES: readonly { key: 'what' | 'problem' | 'help'; Art: ComponentType }[
  * root layout's guards then open Login, nothing here navigates.
  *
  * The slides are pages of a native paging scroll view, so a swipe follows
- * the finger as on Inicio; the button and the dots move through the same
- * pages, without animation under Reduce Motion. For VoiceOver and TalkBack
+ * the finger as on Inicio; «Siguiente» moves through the same pages, without
+ * animation under Reduce Motion. The dots show the slide, as Inicio's pager
+ * does: too small to be touch targets of their own. For VoiceOver and TalkBack
  * only the current slide is in the tree, its eyebrow says which slide it is,
  * the dots are one adjustable control (swipe up or down), and a change of
  * slide is announced, since the focus stays on the control that made it.
@@ -145,9 +146,7 @@ export function IntroScreen({ onFinish }: { onFinish: () => void }) {
           style={styles.dots}
         >
           {SLIDES.map((slide, i) => (
-            <Pressable key={slide.key} testID={`intro-dot-${i}`} onPress={() => go(i)} hitSlop={(theme.size.target - theme.space[8]) / 2} style={styles.dotTarget}>
-              <Dot on={i === index} />
-            </Pressable>
+            <Dot key={slide.key} on={i === index} />
           ))}
         </View>
       </View>
@@ -279,16 +278,14 @@ const styles = StyleSheet.create((theme) => ({
     paddingTop: theme.space[2],
     paddingBottom: theme.space[3],
   },
+  // As tall as a touch target, so the adjustable control is easy to find by touch (Inicio's pager).
   dots: {
     flexDirection: 'row',
     alignSelf: 'center',
     alignItems: 'center',
-    minHeight: theme.space[8],
-  },
-  dotTarget: {
-    justifyContent: 'center',
-    minHeight: theme.space[8],
-    paddingHorizontal: theme.space[0.5],
+    gap: theme.space[1],
+    minHeight: theme.size.target,
+    paddingHorizontal: theme.space[2],
   },
   dot: {
     height: theme.size.pagerDot.side,

@@ -7,8 +7,8 @@ picture, an eyebrow, a title and a line; «Siguiente» and the dots at the
 bottom. «Qué es Seibi» · «Tu Vehículo, siempre en orden» (the white 370Z);
 «El problema» · «Se acabó el “¿cuándo fue el último cambio?”» (three cards:
 «Último cambio», «Factura del taller», «Precio»); «Cómo te ayuda» · «Avisos
-según tu modelo y tu uso» (the 370Z's «Estado», four tasks). A swipe, the
-button or a dot moves between slides; the last one says «Empezar» and has no
+según tu modelo y tu uso» (the 370Z's «Estado», four tasks). A swipe or the
+button moves between slides (the dots show which); the last one says «Empezar» and has no
 «Saltar». «Saltar» or «Empezar» opens Login, and the Intro never shows on
 that phone again: not after a relaunch, not after a sign-out. A phone that
 opens signed in never shows it either.
@@ -18,7 +18,7 @@ opens signed in never shows it either.
 - `gate` signed out on a first launch: `id: intro-title` instead of `id: sign-in-title`.
 - `slides` the current slide's eyebrow `id: intro-eyebrow`, title `id: intro-title`, line `id: intro-body`; the pages `id: intro-pages`.
 - `next` «Siguiente» / «Empezar» `id: intro-next`.
-- `swipe` a horizontal swipe moves one slide; the dots `id: intro-dots` follow.
+- `swipe` a horizontal swipe moves one slide; the dots `id: intro-dots` follow (they show the slide; VoiceOver and TalkBack adjust them).
 - `skip` «Saltar» `id: intro-skip` on the first two slides; Login follows.
 - `once` after «Saltar» or «Empezar», a cold start opens Login (`id: sign-in-title`), never the Intro.
 - `a11y` VoiceOver and TalkBack: the eyebrow says «…, diapositiva N de 3»; the dots are one adjustable control («Diapositivas», «N de 3», swipe up or down); a change of slide is announced; the pictures are skipped.
@@ -35,13 +35,13 @@ Preconditions:
 - `verify.sh launch <ios|android>` ended with `doctor: OK`.
 - Light mode, default text size.
 
-- **First launch.** Run `.agents/skills/verify/scripts/verify.sh drive ios intro` (then `android`). The flow runs `stopApp` and `clearState` (a fresh install's state), then `openLink: ${DEV_URL}`, and waits up to 120 s for `id: intro-title`: «Tu Vehículo, siempre en orden», eyebrow «Qué es Seibi», `id: intro-skip` and «Siguiente» visible, no `id: sign-in-title`. Screenshot `intro-1-what`.
+- **First launch.** Run `.agents/skills/verify/scripts/verify.sh drive ios intro` (then `android`). The flow runs `stopApp` and `clearState` (a fresh install's state), then `openLink: ${DEV_URL}`, and waits up to 120 s for `id: intro-title`: «Tu Vehículo, siempre en orden», eyebrow «Qué es Seibi» (iOS reports its spoken label, «Qué es Seibi, diapositiva 1 de 3», so the flow matches the start), `id: intro-skip` and «Siguiente» visible, no `id: sign-in-title`. Screenshot `intro-1-what`.
 - **Siguiente.** `tapOn: id: intro-next` → the title starts «Se acabó el», eyebrow «El problema». Screenshot `intro-2-problem`.
 - **Swipe.** `swipe: direction: LEFT` → «Avisos según tu modelo y tu uso», `id: intro-next` reads «Empezar», `id: intro-skip` is gone. Screenshot `intro-3-help`. `swipe: direction: RIGHT` → «El problema» and «Siguiente» again.
 - **Saltar.** `tapOn: id: intro-skip` → `id: sign-in-title` within 15 s. Screenshot `intro-skipped-login`.
 - **Never again.** `stopApp`, `openLink: ${DEV_URL}` → `id: sign-in-title`, no `id: intro-skip`. Screenshot `intro-relaunch-login`.
-- **Proof.** The run folder holds `startRecording/intro.mp4` and the five screenshots. The Intro saves nothing to seibi-dev: its «done» mark lives on the phone (`intro-done.v1`), so there is no `SELECT` to run.
-- **VoiceOver / TalkBack** (by hand, once per milestone): the eyebrow reads «Qué es Seibi, diapositiva 1 de 3»; «Siguiente» announces the next slide; the dots adjust up and down; «Saltar» opens Login.
+- **Proof.** The run folder holds `startRecording/intro.mp4` and the five screenshots. The Intro saves nothing to seibi-dev (its «done» mark lives on the phone), so there is no `SELECT` to run.
+- **VoiceOver / TalkBack** (by hand, once per milestone): the eyebrow reads «Qué es Seibi, diapositiva 1 de 3»; «Siguiente» announces the next slide; the dots (one adjustable control) move with a swipe up or down; «Saltar» opens Login.
 
 ## Gotchas
 

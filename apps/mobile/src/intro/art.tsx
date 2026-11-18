@@ -77,7 +77,7 @@ function ArtRow({ icon, tone, title, sub, children }: { icon: IconName; tone?: '
   );
 }
 
-const ESTADO: { icon: IconName; name: 'oil' | 'brakes' | 'tires' | 'battery'; status: 'overdue' | 'soon' | 'ok'; used: `${number}%` }[] = [
+const STATUS_TASKS: { icon: IconName; name: 'oil' | 'brakes' | 'tires' | 'battery'; status: 'overdue' | 'soon' | 'ok'; used: `${number}%` }[] = [
   { icon: 'engineOil', name: 'oil', status: 'overdue', used: '100%' },
   { icon: 'brakePads', name: 'brakes', status: 'soon', used: '82%' },
   { icon: 'tireRotation', name: 'tires', status: 'ok', used: '45%' },
@@ -85,19 +85,19 @@ const ESTADO: { icon: IconName; name: 'oil' | 'brakes' | 'tires' | 'battery'; st
 ];
 
 /** «Cómo te ayuda»: the 370Z's «Estado» on Inicio, four tasks and how much of each interval is used. */
-export function EstadoArt() {
+export function StatusArt() {
   const { t } = useTranslation();
   // The 370Z's paint (Blanco perla) gives the bars their accent, as on Inicio.
   const accent = paintAccent(paintHex('white'));
   return (
-    <View style={styles.estado}>
+    <View style={styles.status}>
       <View>
         <ArtText step="footnote" weight={500} tone="muted">
           {t('intro.art.vehicle')}
         </ArtText>
-        <View style={styles.estadoTitle}>
+        <View style={styles.statusTitle}>
           <ArtText step="title2" weight={300}>
-            {t('intro.art.estado')}
+            {t('intro.art.status')}
           </ArtText>
           <View style={styles.summary}>
             <View style={styles.alertDot} />
@@ -108,7 +108,7 @@ export function EstadoArt() {
         </View>
       </View>
       <View style={styles.grid}>
-        {[ESTADO.slice(0, 2), ESTADO.slice(2)].map((pair, r) => (
+        {[STATUS_TASKS.slice(0, 2), STATUS_TASKS.slice(2)].map((pair, r) => (
           <View key={r} style={styles.gridRow}>
             {pair.map((task) => {
               const over = task.status === 'overdue';
@@ -186,10 +186,10 @@ const styles = StyleSheet.create((theme) => ({
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.overdue,
   },
-  estado: {
+  status: {
     gap: theme.space[3],
   },
-  estadoTitle: {
+  statusTitle: {
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'space-between',

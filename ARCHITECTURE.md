@@ -747,8 +747,9 @@ The migration's order, scope and tickets are in
       don't grow with the text size; the slide's own words do, and a slide
       scrolls when they don't fit.
     - **Paging.** A native horizontal paging scroll view, as Inicio's
-      carousel: a swipe follows the finger; «Siguiente» and the dots move
-      to a slide with an animated scroll, none under Reduce Motion. Only
+      carousel: a swipe follows the finger; «Siguiente» moves to the next
+      slide with an animated scroll, none under Reduce Motion. The dots
+      only show the slide (too small to be touch targets). Only
       the current slide is in the accessibility tree; its eyebrow says
       «…, diapositiva N de 3»; the dots are one adjustable control
       («Diapositivas», swipe up or down), as a system page control is; a
