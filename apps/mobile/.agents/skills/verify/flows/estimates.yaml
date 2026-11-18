@@ -61,11 +61,15 @@ name: Estimados asks for one Estimate and lists it in the past queries
     id: estimates-request-error
 - assertVisible:
     id: estimates-result-title
-- assertVisible:
-    id: estimates-result-summary
 - copyTextFrom:
     id: estimates-result-title
 - evalScript: ${output.title = maestro.copiedText.trim()}
+# The card starts below the chips: its body is under the fold until scrolled.
+- scrollUntilVisible:
+    element:
+      id: estimates-result-summary
+    centerElement: true
+    timeout: 20000
 - waitForAnimationToEnd
 - takeScreenshot: estimates-03-result
 
