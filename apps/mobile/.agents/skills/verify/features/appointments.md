@@ -61,7 +61,7 @@ Preconditions: the baseline, and the test account's Vehicle on Inicio (the
 Toyota Yaris) with «Cambio de aceite» among the first 14 chips (it is the
 first common task). `appointments` runs `scripts/cleanup-sei68.js` before
 the recording and again at the end: it cancels any open Appointment whose
-notes start «verify SEI-68». `appointments-cleanup` runs the same alone.
+notes or Shop start «verify SEI-68». `appointments-cleanup` runs the same alone.
 
 - **Schedule.** `scripts/verify.sh drive ios appointments` (then
   `android`): the [+] shows «Agendar Cita» (`appointments-01-actions`);
@@ -101,6 +101,10 @@ notes start «verify SEI-68». `appointments-cleanup` runs the same alone.
 - «Hecho» is not driven here: saving a Service moves the test Yaris'
   Reminders and Mileage, which other flows assert. `service` covers the
   Service form.
+- With the keyboard up, «Notas» sits under the «Guardar Cita» bar, where
+  Maestro still counts it visible: a tap on it lands on «Guardar Cita» and
+  saves. The flow puts the keyboard away (`service-hide-keyboard.yaml`)
+  before scrolling to «Notas».
 - On iOS the row's «Cancelar» and the alert's «Cancelar Cita» differ, so
   `text: Cancelar Cita` hits the alert; on Android the alert is its own
   window and the flow taps `android:id/button1`.

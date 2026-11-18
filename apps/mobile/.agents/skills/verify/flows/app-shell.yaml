@@ -70,9 +70,10 @@ name: Tabs keep their place, the [+] opens the actions, a link opens a Vehicle
 # --- Avisos: a long list; its end scrolls clear of the [+].
 - tapOn:
     id: tab-reminders
+# Avisos (S9) names its Vehicle at the top; the placeholder's rows are gone.
 - extendedWaitUntil:
     visible:
-      id: reminder-0-0
+      id: avisos-vehicle-name
     timeout: 15000
 - takeScreenshot: shell-04-reminders
 - repeat:

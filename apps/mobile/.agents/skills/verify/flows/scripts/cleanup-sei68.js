@@ -1,7 +1,8 @@
 // Maestro runScript (appointments.yaml, before and after;
 // appointments-cleanup.yaml): cancels every open Appointment an
-// `appointments` run left on the test account — those whose notes start
-// «verify SEI-68» — the way the app cancels one (`canceled_at`; RLS has no
+// `appointments` run left on the test account — those whose notes or Shop
+// start «verify SEI-68» (a run cut short may have saved the Shop alone) —
+// the way the app cancels one (`canceled_at`; RLS has no
 // delete on `appointments`), so each run starts with none of its own in
 // Avisos or the Vehicle detail. GraalJsHttp has no PATCH, so each row is
 // read and PUT back whole. Only ever points at SUPABASE_URL, which
@@ -21,7 +22,7 @@ const auth = {
   'Content-Type': 'application/json',
 };
 
-const found = http.get(SUPABASE_URL + '/rest/v1/appointments?select=*&notes=like.verify%20SEI-68*&canceled_at=is.null', { headers: auth });
+const found = http.get(SUPABASE_URL + '/rest/v1/appointments?select=*&or=(notes.like.verify%20SEI-68*,shop.like.verify%20SEI-68*)&canceled_at=is.null', { headers: auth });
 if (!found.ok) throw new Error('reading the verify SEI-68 Appointments failed: HTTP ' + found.status);
 const appointments = json(found.body);
 for (const appointment of appointments) {

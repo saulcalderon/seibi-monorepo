@@ -611,7 +611,8 @@ The migration's order, scope and tickets are in
     screen. Unlike the PWA, deleting a hand-written Reminder asks first.
 - **Agendar una Cita** (S13, SEI-68): the PWA's AppointmentForm (as of
   `6e3b818`) as the `formSheet` route `schedule-appointment?vehicleId=&tasks=`
-  (`src/appointments/appointment-form.tsx`), sized to its content. It
+  (`src/appointments/appointment-form.tsx`), tall (`[0.92]`) as the PWA's:
+  its chips make it longer than the screen. It
   opens from the [+], the Vehicle detail's «Agendar Cita» and a Reminder's
   «Agendar». The Vehicle (a picker with two or more; else the one Inicio
   shows), the day (the native picker from today on; it opens on today,
@@ -674,8 +675,9 @@ The migration's order, scope and tickets are in
   view from mount). Both are in `docs/DESIGN.md`
   (Type → Text that fits; Spacing and radius → Corners on Android).
   - **Sheets and the keyboard** (SEI-76). A form sheet fits its content
-    (`sheetAllowedDetents: 'fitToContents'`); only the Service form, longer
-    than the screen, takes a fixed `[0.92]`. The native sheet keeps its
+    (`sheetAllowedDetents: 'fitToContents'`); only the Service form and
+    «Agendar Cita», longer than the screen (the PWA's `tall` sheets), take
+    a fixed `[0.92]`. The native sheet keeps its
     content above the keyboard by itself: on Android react-native-screens
     raises the whole sheet, on iOS UIKit grows it to full height with the
     content at its top. So `FormLayout` must not move by the whole keyboard

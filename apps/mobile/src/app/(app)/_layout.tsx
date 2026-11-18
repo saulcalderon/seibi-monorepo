@@ -41,8 +41,9 @@ export default function AppLayout() {
       <Stack.Screen name="reminder" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
       <Stack.Screen name="last-done" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
       <Stack.Screen name="new-reminder" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
-      {/* «Agendar Cita» (S13): the [+], the Vehicle detail and a Reminder's «Agendar». */}
-      <Stack.Screen name="schedule-appointment" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
+      {/* «Agendar Cita» (S13): the [+], the Vehicle detail and a Reminder's «Agendar». Tall, as the PWA's
+          sheet: its 14 task chips make it longer than a phone's screen, where a fitted sheet hid «Guardar Cita». */}
+      <Stack.Screen name="schedule-appointment" options={{ ...sheet, sheetAllowedDetents: [0.92] }} />
       {/* The Vehicle form (S5): a modal with its own stack, so its pickers push inside it. */}
       <Stack.Screen name="vehicle" options={{ presentation: 'modal', contentStyle: { backgroundColor: theme.colors.bg } }} />
       {/* The data check and Inicio's sample screen exist in Seibi Dev (the development variant) only. */}
