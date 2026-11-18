@@ -24,7 +24,7 @@ import { latestReadings, servicesByMonth, yearSpend } from './detail-logic';
 
 /**
  * Historial: the stats, «Registrar Servicio», Services by month as the PWA's
- * expandable ServiceCard (Quitar asks first; «Factura» waits for S12), and
+ * expandable ServiceCard (Quitar asks first; «Factura» opens the invoice), and
  * the latest Mileage readings, each opening «Corregir lectura».
  */
 export function HistoryTab({ vehicle }: { vehicle: VehicleView }) {
@@ -110,7 +110,7 @@ export function HistoryTab({ vehicle }: { vehicle: VehicleView }) {
   );
 }
 
-/** The PWA's ServiceCard: collapsed by default, expanded for lines, Taller, notes, «Editar» and «Quitar». */
+/** The PWA's ServiceCard: collapsed by default, expanded for lines, Taller, notes, «Factura», «Editar» and «Quitar». */
 function ServiceCard({ vehicle, service, index }: { vehicle: VehicleView; service: ServiceRecord; index: number }) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -195,6 +195,16 @@ function ServiceCard({ vehicle, service, index }: { vehicle: VehicleView; servic
             </Text>
           ) : null}
           <View style={styles.serviceActions}>
+            {service.invoicePath ? (
+              <Button
+                testID={`service-card-invoice-${index}`}
+                size="sm"
+                variant="secondary"
+                icon="document"
+                label={t('vehicleDetail.history.invoice')}
+                onPress={() => router.push({ pathname: '/invoice', params: { serviceId: service.id } })}
+              />
+            ) : null}
             <Button
               testID={`service-card-edit-${index}`}
               size="sm"

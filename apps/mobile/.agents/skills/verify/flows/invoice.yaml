@@ -1,0 +1,250 @@
+# Feature: the invoice photo on a Service (features/invoice.md). Run through
+# scripts/verify.sh drive <ios|android> invoice. drive puts the photo below
+# in the device's photo library first (simctl addmedia on iOS, turning a slim
+# simulator's library back on; adb push and a media scan on Android).
+# Photos: media/invoice.jpg
+# It signs in, withdraws what an earlier run left (cleanup-sei67.js), then on
+# the test account's first Vehicle records a Service («Revisión con
+# factura», notes «verify SEI-67»), opens it, attaches the photo from the
+# library, saves, sees it in «Factura», and removes it. Each save is checked
+# the way the PWA would read it (invoice-check.js, read-only). The Service
+# stays, with no invoice, for the proof query; the next run withdraws it.
+appId: ${APP_ID}
+name: Attach an invoice photo to a Service, see it and remove it
+---
+- setDarkMode: disabled
+- stopApp
+- openLink: ${DEV_URL}
+- runFlow: sign-in.yaml
+- runScript:
+    file: scripts/cleanup-sei67.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}
+- runScript:
+    file: scripts/first-vehicle.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}
+- startRecording: invoice
+
+# --- A Service to attach the invoice to, recorded from the Vehicle's Historial.
+- openLink: ${APP_URL}vehicle/${output.vehicleId}?tab=historial
+- runFlow:
+    when:
+      platform: iOS
+      visible: 'Open|Abrir'
+    commands:
+      - tapOn: 'Open|Abrir'
+- extendedWaitUntil:
+    visible:
+      id: detail-tabs
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: record-service
+    centerElement: true
+- tapOn:
+    id: record-service
+- extendedWaitUntil:
+    visible:
+      id: service-form
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: service-add-item
+    centerElement: true
+- tapOn:
+    id: service-add-item
+- tapOn:
+    id: service-item-0-name
+- inputText: Revisión con factura
+- runFlow: service-hide-keyboard.yaml
+- scrollUntilVisible:
+    element:
+      id: service-notes
+    centerElement: true
+- tapOn:
+    id: service-notes
+- inputText: verify SEI-67
+- runFlow: service-hide-keyboard.yaml
+# A new Service offers the invoice too; this run attaches it to the saved one.
+- scrollUntilVisible:
+    element:
+      id: service-invoice-attach
+    centerElement: true
+- takeScreenshot: invoice-01-new-service
+- tapOn:
+    id: service-save
+    waitToSettleTimeoutMs: 500
+- extendedWaitUntil:
+    notVisible:
+      id: service-form
+    timeout: 15000
+
+# --- Open the Service: its card, then «Editar».
+- scrollUntilVisible:
+    element:
+      text: '.*Revisión con factura.*'
+    centerElement: true
+- tapOn:
+    text: '.*Revisión con factura.*'
+- extendedWaitUntil:
+    visible:
+      id: 'service-card-edit-[0-9]+'
+    timeout: 15000
+- assertNotVisible:
+    id: 'service-card-invoice-[0-9]+'
+- tapOn:
+    id: 'service-card-edit-[0-9]+'
+- extendedWaitUntil:
+    visible:
+      id: service-form-title
+      text: Editar Servicio
+    timeout: 15000
+
+# --- «Adjuntar foto» → «Elegir de la galería» → the newest photo.
+- scrollUntilVisible:
+    element:
+      id: service-invoice-attach
+    centerElement: true
+- tapOn:
+    id: service-invoice-attach
+- extendedWaitUntil:
+    visible: 'Elegir de la galería'
+    timeout: 5000
+- takeScreenshot: invoice-02-menu
+- tapOn: 'Elegir de la galería'
+# The system photo picker runs outside the app. iOS labels each photo «Photo,
+# <date>» (or «Foto, …» in Spanish). The Seibi Verify simulator's library
+# holds only what drive added (a slim simulator starts with it off), so any
+# photo is the invoice; features/invoice.md → Gotchas has the stock case.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: '(Photo|Foto), .*'
+          timeout: 20000
+      - tapOn: '(Photo|Foto), .*'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      # Android's photo picker lists the newest first.
+      - extendedWaitUntil:
+          visible:
+            id: 'com.google.android.providers.media.module:id/icon_thumbnail'
+          timeout: 20000
+      - tapOn:
+          id: 'com.google.android.providers.media.module:id/icon_thumbnail'
+          index: 0
+- extendedWaitUntil:
+    visible:
+      id: service-invoice
+    timeout: 20000
+- assertVisible: 'Foto lista. Se sube al guardar.'
+- scrollUntilVisible:
+    element:
+      id: service-invoice
+    centerElement: true
+- takeScreenshot: invoice-03-attached
+- tapOn:
+    id: service-save
+    waitToSettleTimeoutMs: 500
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: 'Servicio actualizado'
+          timeout: 20000
+- extendedWaitUntil:
+    notVisible:
+      id: service-form
+    timeout: 20000
+# Saved where the PWA reads it: <user>/<service>/factura-<ms>.jpg, and its link serves the file.
+- runScript:
+    file: scripts/invoice-check.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}
+      EXPECT: photo
+
+# --- See it: «Factura» on the card opens the photo.
+- runFlow:
+    when:
+      notVisible:
+        id: 'service-card-invoice-[0-9]+'
+    commands:
+      - tapOn:
+          text: '.*Revisión con factura.*'
+- scrollUntilVisible:
+    element:
+      id: 'service-card-invoice-[0-9]+'
+    centerElement: true
+- takeScreenshot: invoice-04-card
+- tapOn:
+    id: 'service-card-invoice-[0-9]+'
+- extendedWaitUntil:
+    visible:
+      id: invoice-image
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: invoice-05-viewer
+- tapOn:
+    id: invoice-close
+- extendedWaitUntil:
+    notVisible:
+      id: invoice-viewer
+    timeout: 10000
+
+# --- Remove it: «Editar» → «Quitar factura» → «Guardar cambios».
+- tapOn:
+    id: 'service-card-edit-[0-9]+'
+- extendedWaitUntil:
+    visible:
+      id: service-form-title
+      text: Editar Servicio
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: service-invoice
+    centerElement: true
+- assertVisible: 'Factura guardada'
+- takeScreenshot: invoice-06-saved-in-form
+- tapOn:
+    id: service-invoice-remove
+- extendedWaitUntil:
+    visible:
+      id: service-invoice-attach
+    timeout: 5000
+- takeScreenshot: invoice-07-removed-in-form
+- tapOn:
+    id: service-save
+    waitToSettleTimeoutMs: 500
+- extendedWaitUntil:
+    notVisible:
+      id: service-form
+    timeout: 20000
+- runScript:
+    file: scripts/invoice-check.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}
+      EXPECT: none
+      PREVIOUS: ${output.invoicePath}
+- extendedWaitUntil:
+    notVisible:
+      id: 'service-card-invoice-[0-9]+'
+    timeout: 15000
+- takeScreenshot: invoice-08-removed
+- stopRecording

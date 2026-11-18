@@ -12,6 +12,7 @@ import { InputError, type InputCode } from '../errors';
 import type { ServiceRecord, ServiceType, VehicleView } from '../garage/types';
 import type { MaintenanceTask } from '../task/catalog';
 
+import { initialInvoice, invoiceWrite, type InvoiceDraft } from './invoice';
 import { validateService, type ServiceInput } from './rules';
 
 /** One «¿Qué se hizo?» line: a Maintenance task, or a named part or job of the person's own. */
@@ -37,6 +38,8 @@ export type ServiceDraft = {
   totalCost: string;
   shop: string;
   notes: string;
+  /** «Factura o recibo»: the Service's, a new photo, or none (S12). */
+  invoice: InvoiceDraft;
 };
 
 /** The field a per-line error belongs to. */
@@ -97,6 +100,7 @@ export function initialDraft({
       totalCost: service.totalCost != null ? String(service.totalCost) : '',
       shop: service.shop ?? '',
       notes: service.notes ?? '',
+      invoice: initialInvoice(service.invoicePath),
     };
   }
   return {
@@ -109,6 +113,7 @@ export function initialDraft({
     totalCost: '',
     shop,
     notes: '',
+    invoice: initialInvoice(null),
   };
 }
 
@@ -174,11 +179,19 @@ const draftSchema = z
  * Turns a draft into what `useSaveService` writes, or throws the first
  * InputError: the field and the es.json code (`errors.<code>`). Lines with
  * no name are left out. With costs per line, the total is their sum (none
- * when it is zero); otherwise each line has no cost.
+ * when it is zero); otherwise each line has no cost. `invoicePath` is the
+ * Service's invoice as saved, which the draft's invoice keeps, replaces or
+ * removes.
  */
 export function serviceInputFromDraft(
   draft: ServiceDraft,
-  { serviceId, readingId, appointmentId, today }: { serviceId?: string; readingId?: string; appointmentId?: string | null; today: string },
+  {
+    serviceId,
+    readingId,
+    appointmentId,
+    invoicePath = null,
+    today,
+  }: { serviceId?: string; readingId?: string; appointmentId?: string | null; invoicePath?: string | null; today: string },
 ): ServiceInput {
   const parsed = draftSchema.safeParse(draft);
   if (!parsed.success) {
@@ -209,6 +222,7 @@ export function serviceInputFromDraft(
     totalCost: d.perItemCost ? (sum > 0 ? sum : null) : parseNumber(d.totalCost),
     items,
     appointmentId: appointmentId ?? null,
+    invoice: invoiceWrite(invoicePath, draft.invoice),
   };
   validateService(input, today);
   return input;

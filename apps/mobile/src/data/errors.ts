@@ -38,6 +38,7 @@ const INPUT_CODES = [
   'routine_distance_invalid',
   'routine_days_invalid',
   'reminder_title_required',
+  'invoice_too_large',
 ] as const;
 
 /** Every code, each with a message in es.json (typecheck fails when one is missing). */

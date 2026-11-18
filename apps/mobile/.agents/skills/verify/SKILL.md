@@ -354,11 +354,23 @@ processes per simulator. The auth, app-shell, theme and ui-kit flows pass
 identically on a slim simulator.
 
 Two features are off when slim and break flows that need them: push
-(`com.apple.apsd`) and the photo library (`photos`). After `launch`, turn
+(`com.apple.apsd`) and the photo library (`photos`; `drive` turns it back
+on for a flow that asks for photos, see Photos). After `launch`, turn
 one back on without a reboot — `simslim enable <udid> com.apple.apsd` or
 `simslim enable <udid> photos` — and check what a flow needs with
 `simslim doctor <udid> --requires push,photos`. `SEIBI_VERIFY_SLIM=0`
 keeps the simulator stock instead.
+
+## Photos
+
+A flow that picks a photo from the system picker names it in its header,
+one line per flow: `# Photos: media/invoice.jpg` (paths under `flows/`).
+`drive` adds each one to the device's photo library before the flow
+starts: on iOS `xcrun simctl addmedia <udid> <file>`, after `simslim
+enable <udid> photos` when the simulator is slim (slim turns the library
+off); on Android `adb push` to `/sdcard/Pictures/` and a media-scanner
+broadcast. Adding a photo again only adds a copy. To seed by hand, run
+the same `simctl addmedia` command.
 
 ## Isolation
 

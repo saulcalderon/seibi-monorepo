@@ -36,6 +36,8 @@ import { Text } from '@/ui/text';
 import { confirm, notify } from '@/ui/toast';
 import { useUnsavedGuard } from '@/ui/use-unsaved-guard';
 
+import { InvoiceField } from './invoice-field';
+
 /** How many task chips show before «Ver todas las tareas» (the PWA's 8). */
 const FIRST_TASKS = 8;
 
@@ -54,10 +56,10 @@ export interface ServiceFormProps {
 
 /**
  * Record or edit a Service (S7), the content of the `record-service` form
- * sheet. Ported from the PWA's ServiceForm without the invoice photo (S12):
- * the Vehicle, the Type, what was done (Maintenance tasks as chips, plus
- * lines of the person's own), the date and the Mileage of that day, the
- * cost (one total or per line), the Shop and notes. Editing also offers to
+ * sheet. Ported from the PWA's ServiceForm: the Vehicle, the Type, what was
+ * done (Maintenance tasks as chips, plus lines of the person's own), the
+ * date and the Mileage of that day, the cost (one total or per line), the
+ * Shop and notes, and the invoice photo (S12). Editing also offers to
  * withdraw the Service. Closing with unsaved changes asks first.
  */
 export function ServiceForm({ vehicleId, serviceId, taskCodes, appointmentId, shop }: ServiceFormProps) {
@@ -143,6 +145,7 @@ function sectionOf(field: string) {
   if (field === 'items' || field.startsWith('item.')) return 'items';
   if (field === 'reading' || field === 'performedOn') return 'when';
   if (field === 'totalCost') return 'cost';
+  if (field === 'invoice') return 'invoice';
   return 'form';
 }
 
@@ -232,7 +235,13 @@ function ServiceFormBody({
   const submit = async () => {
     setError(null);
     try {
-      const input = serviceInputFromDraft(draft, { serviceId: editing?.id, readingId: editing?.readingId, appointmentId, today: isoDate() });
+      const input = serviceInputFromDraft(draft, {
+        serviceId: editing?.id,
+        readingId: editing?.readingId,
+        appointmentId,
+        invoicePath: editing?.invoicePath,
+        today: isoDate(),
+      });
       await save.mutateAsync(input);
       notify.success(t(editing ? 'serviceForm.updated' : 'serviceForm.saved'));
       leave();
@@ -461,6 +470,10 @@ function ServiceFormBody({
           value={draft.notes}
           onChangeText={(notes) => patch({ notes })}
         />
+      </View>
+
+      <View onLayout={(event: LayoutChangeEvent) => (sections.current.invoice = event.nativeEvent.layout.y)}>
+        <InvoiceField value={draft.invoice} error={fieldError('invoice')} onChange={(invoice) => patch({ invoice })} />
       </View>
 
       {editing ? (

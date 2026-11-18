@@ -1,3 +1,5 @@
+import { randomUUID } from 'expo-crypto';
+
 import { supabase } from '@/lib/supabase';
 import { isoDate } from '@/lib/format';
 
@@ -6,33 +8,52 @@ import { serviceReading } from '../mileage/rules';
 import { currentUserId } from '../user';
 import { trimmedOrNull } from '../vehicle/rules';
 
+import { checkInvoiceSize, INVOICE_BUCKET, invoiceFile, invoicePath, type InvoicePhoto } from './invoice';
 import { validateService, type ServiceInput } from './rules';
 
-/** Invoice photos, under `<user id>/<service id>/`. Uploading one arrives with S12. */
-const INVOICES = 'service-invoices';
+
+/** Uploads an invoice photo for a Service and resolves to its path in the bucket. */
+async function uploadInvoice(userId: string, serviceId: string, photo: InvoicePhoto) {
+  // React Native's fetch reads a local file; Supabase's docs upload Expo images the same way.
+  const body = await (await fetch(photo.uri)).arrayBuffer();
+  checkInvoiceSize(body.byteLength);
+  const path = invoicePath({ userId, serviceId, photo, now: Date.now() });
+  const { error } = await supabase.storage.from(INVOICE_BUCKET).upload(path, body, { contentType: invoiceFile(photo).contentType, upsert: false });
+  if (error) throw error;
+  return path;
+}
 
 /**
  * Records a Service with its Mileage reading (any number, dated the Service's
  * day) and its Service items. Editing replaces the items and updates the
  * reading's number. A Service answers «No sé» and clears a snooze for its
  * tasks, and completes the Appointment it came from. Resolves to its id.
- * The invoice photo is not written here yet: S12 adds it with the camera.
+ *
+ * The invoice photo (S12) is uploaded before anything is written: a new
+ * Service gets its id here so its photo has a folder, and a failed upload
+ * leaves nothing saved, so «Guardar» again can't record the Service twice.
+ * The file the Service stops pointing at (replaced or removed) is deleted
+ * last; if that fails, the Service is still right and only the file stays.
  */
 export function useSaveService() {
   return useGarageMutation(async (input: ServiceInput) => {
     validateService(input, isoDate());
-    await currentUserId();
+    const userId = await currentUserId();
     const reading = serviceReading({ reading: input.reading, performedOn: input.performedOn });
+    const isNew = !input.serviceId;
+    const id = input.serviceId ?? randomUUID();
+    const invoice = input.invoice ?? null;
+    const uploaded = invoice?.upload ? await uploadInvoice(userId, id, invoice.upload) : null;
     const fields = {
       type: input.type,
       performed_on: input.performedOn,
       shop: trimmedOrNull(input.shop),
       notes: trimmedOrNull(input.notes),
       total_cost: input.totalCost,
+      ...(invoice ? { invoice_path: uploaded } : {}),
     };
-    let serviceId = input.serviceId;
 
-    if (!serviceId) {
+    if (isNew) {
       // The reading goes first: the Service points at it.
       const { data: r, error: rErr } = await supabase
         .from('mileage_readings')
@@ -40,24 +61,18 @@ export function useSaveService() {
         .select('id')
         .single();
       if (rErr) throw rErr;
-      const { data: s, error: sErr } = await supabase
-        .from('services')
-        .insert({ vehicle_id: input.vehicleId, mileage_reading_id: r.id, ...fields })
-        .select('id')
-        .single();
+      const { error: sErr } = await supabase.from('services').insert({ id, vehicle_id: input.vehicleId, mileage_reading_id: r.id, ...fields });
       if (sErr) throw sErr;
-      serviceId = s.id;
     } else {
       if (input.readingId) {
         const { error } = await supabase.from('mileage_readings').update({ reading: reading.reading }).eq('id', input.readingId);
         if (error) throw error;
       }
-      const { error } = await supabase.from('services').update(fields).eq('id', serviceId);
+      const { error } = await supabase.from('services').update(fields).eq('id', id);
       if (error) throw error;
-      const { error: delErr } = await supabase.from('service_items').delete().eq('service_id', serviceId);
+      const { error: delErr } = await supabase.from('service_items').delete().eq('service_id', id);
       if (delErr) throw delErr;
     }
-    const id = serviceId;
 
     const { error: itemsErr } = await supabase.from('service_items').insert(
       input.items.map((i) => ({
@@ -85,6 +100,11 @@ export function useSaveService() {
       const { error } = await supabase.from('appointments').update({ service_id: id }).eq('id', input.appointmentId);
       if (error) throw error;
     }
+
+    if (invoice?.remove) {
+      const { error } = await supabase.storage.from(INVOICE_BUCKET).remove([invoice.remove]);
+      if (error) console.warn('[invoice] the old file stays in the bucket', error.message);
+    }
     return id;
   });
 }
@@ -95,11 +115,4 @@ export function useWithdrawService() {
     const { error } = await supabase.from('services').update({ deleted_at: new Date().toISOString() }).eq('id', serviceId);
     if (error) throw error;
   });
-}
-
-/** A link to the invoice photo that works for five minutes. */
-export async function invoiceUrl(path: string) {
-  const { data, error } = await supabase.storage.from(INVOICES).createSignedUrl(path, 300);
-  if (error) throw error;
-  return data.signedUrl;
 }

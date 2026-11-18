@@ -81,17 +81,21 @@ export interface MenuAction {
 /**
  * A button that opens the platform's menu: SwiftUI's `Menu` on iOS,
  * Material's dropdown on Android. The trigger looks like a secondary
- * IconButton; the menu itself handles the tap.
+ * IconButton, or like a secondary Button when it has `text` (the Service
+ * form's «Adjuntar foto»); the menu itself handles the tap.
  */
 export function MenuButton({
   label,
+  text,
   icon = 'more',
   actions,
   onAction,
   testID,
 }: {
-  /** Required: the trigger has no visible words. */
+  /** Spoken. Required: without `text` the trigger has no visible words. */
   label: string;
+  /** Visible words beside the icon. */
+  text?: string;
   icon?: IconName;
   actions: MenuAction[];
   onAction: (id: string) => void;
@@ -108,8 +112,13 @@ export function MenuButton({
       }))}
       onPressAction={({ nativeEvent }) => onAction(nativeEvent.event)}
     >
-      <View accessible accessibilityRole="button" accessibilityLabel={label} style={styles.menuTrigger}>
-        <Icon name={icon} size="md" fixed />
+      <View accessible accessibilityRole="button" accessibilityLabel={label} style={[styles.menuTrigger, text ? styles.menuTriggerText : undefined]}>
+        <Icon name={icon} size={text ? 'sm' : 'md'} fixed={!text} />
+        {text ? (
+          <Text step="subhead" weight={600} style={styles.menuText}>
+            {text}
+          </Text>
+        ) : null}
       </View>
     </MenuView>
   );
@@ -154,6 +163,17 @@ const styles = StyleSheet.create((theme, rt) => ({
     // Android's MenuView clips its child to the trigger's square bounds, so a shadow there shows as
     // a grey square behind the rounded button: the border alone carries it on Android.
     boxShadow: process.env.EXPO_OS === 'ios' ? theme.shadow.card : undefined,
+  },
+  // A secondary Button's `md` size (button.tsx), for a trigger with words.
+  menuTriggerText: {
+    flexDirection: 'row',
+    gap: theme.space[2],
+    paddingHorizontal: theme.space[4.5],
+    alignSelf: 'flex-start',
+  },
+  menuText: {
+    flexShrink: 1,
+    paddingVertical: theme.space[2],
   },
   date: {
     alignItems: process.env.EXPO_OS === 'ios' ? 'flex-start' : 'stretch',

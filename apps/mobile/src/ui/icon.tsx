@@ -46,6 +46,7 @@ export const icons = {
   undo: { ios: 'arrow.counterclockwise', android: 'undo' }, // RotateCcw
   attach: { ios: 'paperclip', android: 'attach_file' }, // Paperclip
   camera: { ios: 'camera', android: 'photo_camera' }, // Camera
+  photo: { ios: 'photo.on.rectangle', android: 'photo_library' }, // Images: «Elegir de la galería»
   signOut: { ios: 'rectangle.portrait.and.arrow.right', android: 'logout' }, // LogOut
   // Domain
   service: { ios: 'wrench.adjustable', android: 'build' }, // Wrench

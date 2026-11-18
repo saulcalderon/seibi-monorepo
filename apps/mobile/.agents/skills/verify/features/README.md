@@ -111,6 +111,11 @@ handles, required state, commands and observable proof.
   reading it writes, edit and withdraw, «¿Descartar los cambios?».
   Flows: `service`, `service-discard`, `service-cleanup`; subflow
   `service-hide-keyboard.yaml`.
+- [La factura de un Servicio](./invoice.md): «Factura o recibo» in the
+  Service form, from the camera or the library, uploaded where the PWA
+  keeps invoices; «Factura» on the Historial card opens it; replace and
+  remove. Flow: `invoice` (its photo, `flows/media/invoice.jpg`, is added
+  to the library by `drive`).
 - [Actualizar Kilometraje](./mileage.md): today's odometer from [+] and
   Inicio's «Actualizar», the context line, the bump chips, strictly above
   the last reading, the toast. Flow: `mileage`.
