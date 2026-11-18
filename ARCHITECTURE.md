@@ -485,7 +485,8 @@ The migration's order, scope and tickets are in
   (`reading_not_above_current`); an empty field fails with
   `reading_required`. Closing with a number typed asks «¿Descartar los
   cambios?» (`usePreventRemove` + `repeat()`, the `FormLayout` rule).
-- **Perfil** (S11, SEI-66): the PWA's Perfil without its «Planes» card
+- **Perfil** (S11, SEI-66): the PWA's Perfil (as of `6e3b818`, the
+  port's reference; `docs/PLAN.md` → Decisions) without its «Planes» card
   (the paywall replaces it after launch), in `src/profile/`
   (`profile-screen.tsx`, `profile-sheets.tsx`; the decisions as plain
   functions in `profile-logic.ts`, with unit tests). The route
