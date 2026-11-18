@@ -1,10 +1,12 @@
-// Maestro runScript (reminders.yaml, reminders-cleanup.yaml): removes what
-// a failed `reminders` run left on the test account — hand-written
+// Maestro runScript (reminders.yaml, before and after; reminders-cleanup.yaml):
+// removes what a `reminders` run leaves on the test account — hand-written
 // Reminders whose title starts «verify SEI-64» (soft-deleted, the way the
-// app deletes them) and any snooze (`reminder_states.snoozed_until`, which
-// only these flows set on the dedicated test account) — so the next run
-// starts with its Reminder unsnoozed. GraalJsHttp has no PATCH, so each
-// row is read and PUT back whole. Only ever points at SUPABASE_URL, which
+// app deletes them), any snooze (`reminder_states.snoozed_until`, which only
+// these flows set on the dedicated test account), and the flow's own answer
+// to «¿Cuándo fue “Cambio de aceite”?» (the `engine_oil` state, deleted:
+// the test Yaris has none otherwise) — so every run starts from the same
+// Reminders. GraalJsHttp has no PATCH, so each row is read and PUT back
+// whole. Only ever points at SUPABASE_URL, which
 // verify.sh's doctor has checked is seibi-dev.
 if (!/^https:\/\/blirxlxmmrhafomkykmr\.supabase\.co$/.test(SUPABASE_URL)) {
   throw new Error('cleanup-sei64.js only runs against seibi-dev, got ' + SUPABASE_URL);
@@ -42,4 +44,7 @@ for (const state of states) {
   if (!restored.ok) throw new Error('restoring the snoozed Reminder ' + state.task_code + ' failed: HTTP ' + restored.status);
 }
 
-output.cleaned = reminders.length + ' Reminders deleted, ' + states.length + ' snoozes cleared';
+const answered = http.delete(SUPABASE_URL + '/rest/v1/reminder_states?task_code=eq.engine_oil', { headers: auth, body: '{}' });
+if (!answered.ok) throw new Error('deleting the engine_oil answer failed: HTTP ' + answered.status);
+
+output.cleaned = reminders.length + ' Reminders deleted, ' + states.length + ' snoozes cleared, engine_oil answer removed';

@@ -46,7 +46,7 @@ Mileage, «No sé», or the full Service). «Nuevo» opens «Nuevo Recordatorio�
   shows `id: reminder-detail-gone` («Este aviso ya no aplica.»).
 - `history` «Completa tu historial» (`id: avisos-history`, `id:
   detail-history` in the Vehicle detail, `id: home-history` on Inicio):
-  chips `id: history-task-<taskCode>`, the best-known tasks first; `id:
+  chips `id: <card>-task-<taskCode>`, the best-known tasks first; `id:
   <card>-more` shows the rest.
 - `last-done` the sheet `id: last-done-sheet`: `id: last-done-title`, the
   ranges `id: last-done-underMonth|oneToThree|threeToSix|sixToTwelve|overYear`,
@@ -77,10 +77,11 @@ Mileage, «No sé», or the full Service). «Nuevo» opens «Nuevo Recordatorio�
 ## Driving it with verify.sh
 
 Preconditions: the baseline, and the test account's first Vehicle on
-seibi-dev (the Toyota Yaris) with at least one overdue or «Por vencer»
-Reminder. `reminders` runs `scripts/cleanup-sei64.js` first (before the
-recording): it deletes Reminders titled «verify SEI-64 …» and clears any
-snooze on the account. `reminders-cleanup` runs the same alone.
+seibi-dev (the Toyota Yaris) with «Cambio de aceite» among its unknown
+tasks. `reminders` runs `scripts/cleanup-sei64.js` first (before the
+recording) and again at the end: it deletes Reminders titled «verify
+SEI-64 …», clears any snooze on the account and deletes the flow's
+`engine_oil` answer. `reminders-cleanup` runs the same alone.
 
 - **Avisos and a detail.** `scripts/verify.sh drive ios reminders` (then
   `android`): Avisos with its badge, «Por vencer» and the push card's stub
@@ -105,6 +106,13 @@ snooze on the account. `reminders-cleanup` runs the same alone.
 
 ## Gotchas
 
+- Inicio, Avisos and the Vehicle detail each draw «Completa tu historial»
+  and stay mounted in their tabs, so every id in it carries its card's id
+  (`avisos-history-task-engine_oil`); a bare id would match Inicio's copy
+  under the tab bar.
+- The test Yaris has no Service with a task, so all its Reminders start
+  unknown: the flow answers «Cambio de aceite» «Hace más de un año» to make
+  one overdue, and the cleanup deletes that answer before and after.
 - The flow taps rows by position and checks the snoozed one by the task's
   name it read from `id: reminder-detail-title`; a leftover snooze would
   shift «Pospuestos», which is why the cleanup clears every snooze on the

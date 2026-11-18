@@ -1,5 +1,6 @@
 # Feature: features/reminders.md. Avisos (S9, SEI-64) on the test account:
-# open a Reminder's detail, snooze it 7 days and restore it; write a
+# answer «¿Cuándo fue…?» from «Completa tu historial», open the Reminder's
+# detail, snooze it 7 days and restore it; write a
 # hand-written Reminder in Avisos and complete it; write one from the
 # Vehicle detail and delete it there. Its Reminders are titled «verify
 # SEI-64 …». Run through scripts/verify.sh drive <ios|android> reminders.
@@ -40,14 +41,44 @@ name: Avisos shows the Reminders, snoozes one and handles hand-written ones
 - waitForAnimationToEnd
 - takeScreenshot: reminders-01-avisos
 
+# --- «Completa tu historial»: answer «Cambio de aceite» with «Hace más de un
+# año». The test Yaris has no Service with a task, so every Reminder starts
+# unknown; this answer is what makes one overdue (the cleanup removes it).
+- tapOn:
+    id: avisos-unknown-toggle
+# Centred: at the bottom edge the chip sits under the tab bar, and a tap there lands on «Inicio».
+- scrollUntilVisible:
+    element:
+      id: avisos-history-task-engine_oil
+    centerElement: true
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: reminders-02-history
+- tapOn:
+    id: avisos-history-task-engine_oil
+- extendedWaitUntil:
+    visible:
+      id: last-done-title
+    timeout: 15000
+- assertVisible:
+    id: last-done-overYear
+- waitForAnimationToEnd
+- takeScreenshot: reminders-03-last-done
+- tapOn:
+    id: last-done-overYear
+- extendedWaitUntil:
+    notVisible:
+      id: last-done-title
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: avisos-overdue-0
+    direction: UP
+    timeout: 15000
+
 # --- A due Reminder's detail: the first overdue one, else the first «Por vencer».
-- runFlow:
-    when:
-      visible:
-        id: avisos-overdue-0
-    commands:
-      - tapOn:
-          id: avisos-overdue-0
+# The «Por vencer» branch goes first: once a sheet is open the row under it
+# no longer counts as visible, so checking it after the tap would run both.
 - runFlow:
     when:
       notVisible:
@@ -57,14 +88,21 @@ name: Avisos shows the Reminders, snoozes one and handles hand-written ones
           id: avisos-group-soon-toggle
       - tapOn:
           id: avisos-soon-0
+- runFlow:
+    when:
+      visible:
+        id: avisos-overdue-0
+    commands:
+      - tapOn:
+          id: avisos-overdue-0
 - extendedWaitUntil:
     visible:
       id: reminder-detail-title
     timeout: 15000
 - copyTextFrom:
     id: reminder-detail-title
-# The task's name as a pattern: a name like «Pastillas (delanteras)» has regex characters.
-- evalScript: ${output.task = maestro.copiedText.replace(/[.*+?^$()|[\]\\]/g, '\\$&')}
+# The task's name, matched as a pattern below («Cambio de aceite»: no regex characters).
+- evalScript: ${output.task = maestro.copiedText}
 - assertVisible:
     id: reminder-detail-status
 - assertVisible:
@@ -72,7 +110,7 @@ name: Avisos shows the Reminders, snoozes one and handles hand-written ones
 - assertVisible:
     id: reminder-detail-record
 - waitForAnimationToEnd
-- takeScreenshot: reminders-02-detail
+- takeScreenshot: reminders-04-detail
 
 # --- Snooze it 7 days: it moves to «Pospuestos».
 - tapOn:
@@ -93,7 +131,7 @@ name: Avisos shows the Reminders, snoozes one and handles hand-written ones
       text: '${output.task}, .*Pospuesto'
     timeout: 15000
 - waitForAnimationToEnd
-- takeScreenshot: reminders-03-snoozed
+- takeScreenshot: reminders-05-snoozed
 
 # --- Restore it: «Pospuestos» empties and goes away.
 - tapOn:
@@ -112,7 +150,7 @@ name: Avisos shows the Reminders, snoozes one and handles hand-written ones
     notVisible:
       id: avisos-group-snoozed
     timeout: 15000
-- takeScreenshot: reminders-04-restored
+- takeScreenshot: reminders-06-restored
 
 # --- A hand-written Reminder from Avisos' «Nuevo», completed with «Hecho».
 - scrollUntilVisible:
@@ -144,7 +182,7 @@ name: Avisos shows the Reminders, snoozes one and handles hand-written ones
     text: verify SEI-64 hecho
 - assertVisible:
     id: new-reminder-save
-- takeScreenshot: reminders-05-new-keyboard
+- takeScreenshot: reminders-07-new-keyboard
 - tapOn:
     id: new-reminder-save
 - extendedWaitUntil:
@@ -154,13 +192,13 @@ name: Avisos shows the Reminders, snoozes one and handles hand-written ones
 - extendedWaitUntil:
     visible: verify SEI-64 hecho
     timeout: 15000
-- takeScreenshot: reminders-06-manual-saved
+- takeScreenshot: reminders-08-manual-saved
 - tapOn:
     text: 'Hecho: verify SEI-64 hecho'
 - extendedWaitUntil:
     notVisible: verify SEI-64 hecho
     timeout: 15000
-- takeScreenshot: reminders-07-manual-done
+- takeScreenshot: reminders-09-manual-done
 
 # --- Another from the Vehicle detail's «Recordatorio», deleted with the bin.
 - tapOn:
@@ -198,13 +236,13 @@ name: Avisos shows the Reminders, snoozes one and handles hand-written ones
 - scrollUntilVisible:
     element: verify SEI-64 borrar
     timeout: 15000
-- takeScreenshot: reminders-08-detail-manual
+- takeScreenshot: reminders-10-detail-manual
 - tapOn:
     text: 'Eliminar recordatorio: verify SEI-64 borrar'
 - extendedWaitUntil:
     visible: '¿Eliminar «verify SEI-64 borrar»\?'
     timeout: 5000
-- takeScreenshot: reminders-09-delete-confirm
+- takeScreenshot: reminders-11-delete-confirm
 - runFlow:
     when:
       platform: iOS
@@ -222,5 +260,14 @@ name: Avisos shows the Reminders, snoozes one and handles hand-written ones
     notVisible: verify SEI-64 borrar
     timeout: 15000
 - waitForAnimationToEnd
-- takeScreenshot: reminders-10-deleted
+- takeScreenshot: reminders-12-deleted
 - stopRecording
+# Leave the test account as it was: no «verify SEI-64» Reminder, no snooze,
+# no «Cambio de aceite» answer.
+- runScript:
+    file: scripts/cleanup-sei64.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}

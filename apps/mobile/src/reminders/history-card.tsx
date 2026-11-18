@@ -67,7 +67,7 @@ export function HistoryCard({
             // A «No sé» task shows the question mark instead of its icon, so the answer isn't told by colour alone.
             <Chip
               key={reminder.taskCode}
-              testID={`history-task-${reminder.taskCode}`}
+              testID={`${testID}-task-${reminder.taskCode}`}
               label={label}
               icon={dontKnow ? 'help' : taskIcon(reminder.taskCode)}
               accessibilityLabel={dontKnow ? t('reminders.history.dontKnowChip', { task: label }) : label}
