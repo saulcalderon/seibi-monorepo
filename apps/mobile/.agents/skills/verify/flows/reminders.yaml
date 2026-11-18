@@ -135,13 +135,16 @@ name: Avisos shows the Reminders, snoozes one and handles hand-written ones
 - tapOn:
     id: new-reminder-what
 - inputText: verify SEI-64 hecho
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      - pressKey: back
+# The sheet keeps its title, field and «Guardar» above the keyboard (SEI-76).
 - waitForAnimationToEnd
-- takeScreenshot: reminders-05-new
+- assertVisible:
+    id: new-reminder-title
+- assertVisible:
+    id: new-reminder-what
+    text: verify SEI-64 hecho
+- assertVisible:
+    id: new-reminder-save
+- takeScreenshot: reminders-05-new-keyboard
 - tapOn:
     id: new-reminder-save
 - extendedWaitUntil:
@@ -185,11 +188,7 @@ name: Avisos shows the Reminders, snoozes one and handles hand-written ones
 - tapOn:
     id: new-reminder-what
 - inputText: verify SEI-64 borrar
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      - pressKey: back
+- waitForAnimationToEnd
 - tapOn:
     id: new-reminder-save
 - extendedWaitUntil:

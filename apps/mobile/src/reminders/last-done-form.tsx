@@ -27,7 +27,7 @@ import { SheetError, SheetHeader, SheetMessage, WithGarage } from './sheet-parts
  * for a task with no known last Service, a rough answer («Hace 3 a 6
  * meses»), the exact day with the odometer then, «No sé», or the full
  * Service. The answer is remembered on the Reminder (`reminder_states`),
- * not stored as a Service. It has a field, so its sheet has a fixed height.
+ * not stored as a Service.
  */
 export function LastDoneSheet({ vehicleId, taskCode }: { vehicleId?: string; taskCode?: string }) {
   const { t } = useTranslation();

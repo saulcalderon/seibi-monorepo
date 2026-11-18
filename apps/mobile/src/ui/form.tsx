@@ -1,16 +1,14 @@
-import { useState, type ReactNode, type RefObject } from 'react';
-import { View, type ScrollViewInstance } from 'react-native';
-import { KeyboardAwareScrollView, KeyboardStickyView } from 'react-native-keyboard-controller';
+import { createContext, use, useState, type ReactNode, type RefObject } from 'react';
+import { Platform, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
+import { KeyboardAwareScrollView, KeyboardStickyView, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
-/**
- * A form's scrolling body and its action bar. The bar (the save button)
- * rides on top of the keyboard, frame by frame on the UI thread
- * (react-native-keyboard-controller), so it never sits under it; the
- * focused field scrolls into view above the bar. Use it as the content of a
- * `formSheet` route or a full-screen form.
- */
+import { keyboardCover, sheetBottomOffset, sheetRoom, type SheetPlatform } from './sheet-keyboard';
+
+const platform: SheetPlatform = Platform.OS === 'android' ? 'android' : 'ios';
+
 /**
  * Scrolling a form puts the keyboard away: the number pad has no return
  * key, so this is how a person closes it. Use it on every scroll view that
@@ -18,6 +16,30 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
  */
 export const KEYBOARD_DISMISS = 'on-drag';
 
+/** True inside a `formSheet` route of a stack that uses `sheetScreenLayout`. */
+const InSheet = createContext(false);
+
+/**
+ * A stack's `screenLayout` that tells each `formSheet` route it is one, so
+ * its `FormLayout` leaves to the sheet what the sheet does by itself: rise
+ * above the keyboard. For a stack that fills the window, as `(app)`'s does:
+ * the room above a sheet is measured against the window.
+ */
+export function sheetScreenLayout({ children, options }: { children: ReactNode; options: { presentation?: string } }) {
+  return <InSheet value={options.presentation === 'formSheet'}>{children}</InSheet>;
+}
+
+/**
+ * A form's scrolling body and its action bar. The bar (the save button)
+ * rides on top of the keyboard, frame by frame on the UI thread
+ * (react-native-keyboard-controller), so it never sits under it; the
+ * focused field scrolls into view above the bar. Use it as the content of a
+ * `formSheet` route or a full-screen form.
+ *
+ * A form sheet makes room for the keyboard by itself (react-native-screens on
+ * Android, UIKit on iOS), so in one the bar and the scroll make up only what
+ * the sheet couldn't (`sheet-keyboard.ts`, SEI-76).
+ */
 export function FormLayout({
   children,
   footer,
@@ -35,14 +57,28 @@ export function FormLayout({
 }) {
   const { theme } = useUnistyles();
   const insets = useSafeAreaInsets();
+  const window = useWindowDimensions();
+  const inSheet = use(InSheet);
   const [footerHeight, setFooterHeight] = useState(0);
+  const [sheetHeight, setSheetHeight] = useState(0);
+  const room = inSheet ? sheetRoom({ windowHeight: window.height, topInset: insets.top, sheetHeight }) : 0;
+  const clearance = footerHeight + theme.space[4];
   styles.useVariants({ divider });
+  const bar = (
+    <View onLayout={(event) => setFooterHeight(event.nativeEvent.layout.height)} style={[styles.footer, { paddingBottom: insets.bottom + theme.space[3] }]}>
+      {footer}
+    </View>
+  );
   return (
-    <View style={styles.screen} testID={testID}>
+    <View
+      style={styles.screen}
+      testID={testID}
+      onLayout={inSheet ? (event) => setSheetHeight(event.nativeEvent.layout.height) : undefined}
+    >
       <KeyboardAwareScrollView
         // Its ref is a ScrollView; the library's own ref type resolves against a second copy of React's types.
         ref={scrollRef as never}
-        bottomOffset={footerHeight + theme.space[4]}
+        bottomOffset={inSheet ? sheetBottomOffset({ clearance, room, bottomInset: insets.bottom, platform }) : clearance}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode={KEYBOARD_DISMISS}
         contentInsetAdjustmentBehavior="automatic"
@@ -50,14 +86,25 @@ export function FormLayout({
       >
         {children}
       </KeyboardAwareScrollView>
-      {/* With the keyboard up, the home-indicator padding is behind it: drop it. */}
-      <KeyboardStickyView offset={{ opened: insets.bottom }}>
-        <View onLayout={(event) => setFooterHeight(event.nativeEvent.layout.height)} style={[styles.footer, { paddingBottom: insets.bottom + theme.space[3] }]}>
-          {footer}
-        </View>
-      </KeyboardStickyView>
+      {inSheet ? (
+        <SheetActionBar room={room} bottomInset={insets.bottom}>
+          {bar}
+        </SheetActionBar>
+      ) : (
+        // With the keyboard up, the home-indicator padding is behind it: drop it.
+        <KeyboardStickyView offset={{ opened: insets.bottom }}>{bar}</KeyboardStickyView>
+      )}
     </View>
   );
+}
+
+/** The action bar in a sheet: it rises only by what the keyboard still covers. */
+function SheetActionBar({ room, bottomInset, children }: { room: number; bottomInset: number; children: ReactNode }) {
+  const { height } = useReanimatedKeyboardAnimation();
+  const rise = useAnimatedStyle(() => ({
+    transform: [{ translateY: -keyboardCover({ keyboard: -height.value, room, bottomInset, platform }) }],
+  }));
+  return <Animated.View style={rise}>{children}</Animated.View>;
 }
 
 const styles = StyleSheet.create((theme) => ({

@@ -106,10 +106,12 @@ exercises edit and withdraw from Historial's card. Commands as in
   «Rutina guardada», «Rutina eliminada») announce for accessibility only;
   assert them on iOS and prove Android by the closed sheet and the changed
   list.
-- On Android the number pad covers the formSheet's content (SEI-76): the
-  flow presses `back` after each `inputText` in «Corregir lectura» and the
-  Routine sheet, which drops the pad and never the sheet, before it
-  reaches the next field, chip or save.
+- «Corregir lectura» and the Routine sheet keep their title, field and
+  save over the open number pad (SEI-76): the flow asserts them with the
+  pad up (`detail-05-correct-pad`, `detail-06-routine-pad`). With the pad
+  up the Routine's day chips sit under the save bar, where Maestro still
+  counts them visible, so the flow drags the form up first, as a person
+  does.
 - The confirm alerts differ by platform, so the taps split with `runFlow:
   when: platform`. On iOS «Quitar» and «Eliminar Rutina» also name the
   card's or sheet's button behind the alert, so the flow picks the

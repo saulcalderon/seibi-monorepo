@@ -21,7 +21,7 @@ import { SheetError, SheetHeader, SheetMessage, WithGarage } from './sheet-parts
  * ManualReminderForm: something with a date to remember on a Vehicle (the
  * insurance, the inspection), with optional notes. With no `vehicleId` it
  * starts on the Vehicle Inicio shows; with two or more Vehicles it offers a
- * picker. It has fields, so its sheet has a fixed height.
+ * picker.
  */
 export function ManualReminderSheet({ vehicleId }: { vehicleId?: string }) {
   const { t } = useTranslation();

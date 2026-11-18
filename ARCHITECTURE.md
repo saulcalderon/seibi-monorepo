@@ -539,11 +539,8 @@ The migration's order, scope and tickets are in
     `radiant` ring; a tap saves and closes, so it has no `FormLayout`) and
     `profile-location` (country, El Salvador when none is saved, and city,
     80 characters). The limits are `NAME_MAX` and `CITY_MAX` from
-    `src/onboarding/flow.ts`, shared with the first-run questions. Name
-    and location take the Service form's fixed height (`[0.92]`): sized to
-    its content, a sheet jumped to full height and went blank while the
-    keyboard rose, with «Guardar» lost (seen on the iOS Simulator). The
-    level sheet has no field and fits its content. They save through `useUpdateProfile`
+    `src/onboarding/flow.ts`, shared with the first-run questions. All
+    three fit their content (the sheet rule in UI kit, below). They save through `useUpdateProfile`
     (optimistic, rolled back on failure) and close once the save lands, as
     the PWA's sheets; a failed save shows its message in the sheet. Unlike
     the PWA, the name and location sheets ask «¿Descartar los cambios?»
@@ -594,8 +591,8 @@ The migration's order, scope and tickets are in
     | Route | Opens | Who opens it |
     | --- | --- | --- |
     | `/reminder?vehicleId=&task=` | The Reminder's detail: status in words and the share of the interval used, the task's description (when the Knowledge level explains, or nothing is known), «Frecuencia», «Última vez», «Toca a los», «Fuente» with up to three links (`expo-web-browser`); «Ya lo hice: registrar Servicio» (replaces it with `record-service?tasks=`), «Decir cuándo fue la última vez» (unknown), «Posponer 7/30 días» (overdue or soon) or «Reactivar aviso» (snoozed). Sized to its content | Any Reminder row, Inicio's «Estado» cards |
-    | `/last-done?vehicleId=&task=` | «¿Cuándo fue “…”?»: five rough ranges (months back from today, `addMonths`), the exact day with the odometer then, «Tengo la factura» (`record-service`) or «No sé». It writes `reminder_states` (`rememberedPatch`, `DONT_KNOW_PATCH`), not a Service. Fixed `[0.92]`: it has a field | «Completa tu historial»'s chips, the detail |
-    | `/new-reminder?vehicleId=` | «Nuevo Recordatorio»: a Vehicle picker with two or more, what to remember, the day (today to start: a native picker has no empty value), notes. The rules are `manualReminderRow` (`src/data/reminder/rules.ts`). Fixed `[0.92]` | Avisos' «Nuevo», the Vehicle detail's «Recordatorio» |
+    | `/last-done?vehicleId=&task=` | «¿Cuándo fue “…”?»: five rough ranges (months back from today, `addMonths`), the exact day with the odometer then, «Tengo la factura» (`record-service`) or «No sé». It writes `reminder_states` (`rememberedPatch`, `DONT_KNOW_PATCH`), not a Service. Sized to its content | «Completa tu historial»'s chips, the detail |
+    | `/new-reminder?vehicleId=` | «Nuevo Recordatorio»: a Vehicle picker with two or more, what to remember, the day (today to start: a native picker has no empty value), notes. The rules are `manualReminderRow` (`src/data/reminder/rules.ts`). Sized to its content | Avisos' «Nuevo», the Vehicle detail's «Recordatorio» |
 
     Snoozing writes `snoozed_until` = today + 7 or 30 (`snoozePatch`);
     every write goes through `useGarageMutation`, so the tab under the
@@ -650,6 +647,23 @@ The migration's order, scope and tickets are in
   when a fill appears (so rounded views that change fill keep a native
   view from mount). Both are in `docs/DESIGN.md`
   (Type → Text that fits; Spacing and radius → Corners on Android).
+  - **Sheets and the keyboard** (SEI-76). A form sheet fits its content
+    (`sheetAllowedDetents: 'fitToContents'`); only the Service form, longer
+    than the screen, takes a fixed `[0.92]`. The native sheet keeps its
+    content above the keyboard by itself: on Android react-native-screens
+    raises the whole sheet, on iOS UIKit grows it to full height with the
+    content at its top. So `FormLayout` must not move by the whole keyboard
+    as well; doing both pushed the content out of the sheet (Android) or
+    left it blank with «Guardar» gone (iOS). `(app)`'s stack passes
+    `sheetScreenLayout` as its `screenLayout`, which tells each
+    `formSheet` route it is one; there `FormLayout` measures the room
+    above the sheet and lifts the action bar, and scrolls the focused
+    field, only by what the keyboard still covers (`src/ui/sheet-keyboard.ts`).
+    A sheet that fits above the keyboard doesn't move inside at all; a
+    tall one makes up the rest. Full-screen forms keep riding the whole
+    keyboard. Another stack that fills the window and presents form sheets
+    passes `sheetScreenLayout` too; the UI kit's sample sheet, in a stack
+    under a header, doesn't.
 - **UI kit sample screen:** every component and a sample form sheet, at
   `seibi-dev://ui-kit` (Perfil links to it in Seibi Dev). The screens live in `src/ui/dev/`; the routes in
   `src/app/ui-kit/` `require` them only when `EXPO_PUBLIC_APP_VARIANT` is

@@ -2,13 +2,17 @@ import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useUnistyles } from 'react-native-unistyles';
 
+import { sheetScreenLayout } from '@/ui/form';
+
 /** A link straight to a sheet still opens it over the tabs, so closing it leaves you in the app. */
 export const unstable_settings = { anchor: '(tabs)' };
 
 // Everything that needs a session. The root layout opens this group only
 // while signed in (Stack.Protected). The tabs are its first screen; the
 // actions sheet and the forms it opens are presented over them as native
-// form sheets.
+// form sheets. `sheetScreenLayout` tells a form in a sheet that it is one,
+// so it leaves to the sheet the keyboard room the sheet makes by itself
+// (ARCHITECTURE.md → Sheets and the keyboard).
 export default function AppLayout() {
   const { t } = useTranslation();
   const { theme } = useUnistyles();
@@ -19,7 +23,7 @@ export default function AppLayout() {
     contentStyle: { backgroundColor: theme.colors.bg },
   } as const;
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={{ headerShown: false }} screenLayout={sheetScreenLayout}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="actions" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
       {/* The Service form (S7): tall, as the PWA's sheet; record-service?vehicleId= | serviceId= | tasks=. */}
@@ -29,20 +33,14 @@ export default function AppLayout() {
       <Stack.Screen name="correct-reading" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
       {/* The Routine sheet (S6): a row in Uso's «Rutinas semanales» or its «Agregar rutina». */}
       <Stack.Screen name="routine" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
-      {/*
-       * Perfil's sheets (S11). Name and location type with the keyboard up, so they take the Service
-       * form's fixed height: a content-sized sheet jumps to full height and blanks as the keyboard rises.
-       */}
-      <Stack.Screen name="profile-name" options={{ ...sheet, sheetAllowedDetents: [0.92] }} />
+      {/* Perfil's sheets (S11): name, level and location. */}
+      <Stack.Screen name="profile-name" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
       <Stack.Screen name="profile-level" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
-      <Stack.Screen name="profile-location" options={{ ...sheet, sheetAllowedDetents: [0.92] }} />
-      {/*
-       * Avisos' sheets (S9). A Reminder's detail has no field and fits its content; «¿Cuándo fue…?»
-       * and «Nuevo Recordatorio» have fields, so they take the fixed height for the same reason.
-       */}
+      <Stack.Screen name="profile-location" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
+      {/* Avisos' sheets (S9): a Reminder's detail, «¿Cuándo fue…?» and «Nuevo Recordatorio». */}
       <Stack.Screen name="reminder" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
-      <Stack.Screen name="last-done" options={{ ...sheet, sheetAllowedDetents: [0.92] }} />
-      <Stack.Screen name="new-reminder" options={{ ...sheet, sheetAllowedDetents: [0.92] }} />
+      <Stack.Screen name="last-done" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
+      <Stack.Screen name="new-reminder" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
       {/* The Vehicle form (S5): a modal with its own stack, so its pickers push inside it. */}
       <Stack.Screen name="vehicle" options={{ presentation: 'modal', contentStyle: { backgroundColor: theme.colors.bg } }} />
       {/* The data check and Inicio's sample screen exist in Seibi Dev (the development variant) only. */}

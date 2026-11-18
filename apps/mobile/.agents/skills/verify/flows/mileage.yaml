@@ -36,21 +36,31 @@ name: Update Mileage opens from [+] and Inicio, validates and saves today's read
     visible:
       id: mileage-sheet
     timeout: 15000
-# The field autofocuses on open: the keyboard's rise shifts the sheet's
-# bounds mid-animation, so a tap aimed at the header can miss. Tapping a
-# non-interactive line dismisses the number pad (keyboardShouldPersistTaps)
-# and lets the sheet settle.
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      # Back drops the number pad (and never the sheet, while it's up).
-      - back
+# The field autofocuses on open. On iOS the keyboard's rise shifts the
+# sheet's bounds mid-animation, so a tap aimed at the header can miss:
+# tapping a non-interactive line dismisses the number pad
+# (keyboardShouldPersistTaps) and lets the sheet settle. On Android the
+# sheet rises above the pad with its title, field and save in view
+# (SEI-76): the screenshot shows them with the pad open.
 - runFlow:
     when:
       platform: iOS
     commands:
       - tapOn: '.*próximos mantenimientos con este dato.*'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: mileage-reading
+            focused: true
+          timeout: 15000
+      - waitForAnimationToEnd
+      - assertVisible:
+          id: mileage-title
+      - assertVisible:
+          id: mileage-save
 - waitForAnimationToEnd
 - takeScreenshot: mileage-01-sheet
 - tapOn:
@@ -62,19 +72,6 @@ name: Update Mileage opens from [+] and Inicio, validates and saves today's read
 # From Inicio's «Actualizar», straight onto this Vehicle.
 - tapOn:
     id: home-update-mileage
-# Android: the autofocused field's number pad pushes the sheet's header off
-# the top. Wait for the field first (Back before it mounts would pop the
-# sheet), then drop the pad so the header comes back.
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      - extendedWaitUntil:
-          visible:
-            id: mileage-reading
-          timeout: 15000
-      - back
-      - waitForAnimationToEnd
 # The container testID is intermittently invisible to XCUITest on a
 # re-presented formSheet (its children render fine): wait on a leaf instead.
 - extendedWaitUntil:
@@ -109,14 +106,9 @@ name: Update Mileage opens from [+] and Inicio, validates and saves today's read
 - tapOn:
     id: mileage-reading
 - eraseText: 12
-# The field autofocuses on open, so the number pad covers the bump chips:
-# dismiss it the same way before tapping or the key below eats the tap.
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      # Back drops the number pad (and never the sheet, while it's up).
-      - back
+# On iOS the number pad covers the bump chips: dismiss it the same way
+# before tapping or the key below eats the tap. On Android they stay above
+# it.
 - runFlow:
     when:
       platform: iOS

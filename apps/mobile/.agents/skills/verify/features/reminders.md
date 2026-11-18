@@ -118,8 +118,8 @@ snooze on the account. `reminders-cleanup` runs the same alone.
 - The confirm alert differs by platform: on iOS the flow taps «Eliminar»;
   on Android the alert is its own window and the flow taps
   `android:id/button1`.
-- On Android the keyboard covers the sheet's lower half (SEI-76): the flow
-  presses `back` after typing, which drops the keyboard and never the
-  sheet.
+- «Nuevo Recordatorio» keeps its title, field and «Guardar» above the
+  open keyboard (SEI-76): the flow asserts them with the keyboard up
+  (`reminders-05-new-keyboard`).
 - Toasts announce for accessibility only; assert the closed sheet and the
   changed list instead.
