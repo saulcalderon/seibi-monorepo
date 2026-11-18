@@ -42,7 +42,7 @@ Preconditions:
 - `verify.sh launch <ios|android>` ended with `doctor: OK`, with the test account set (`test user:` line).
 - The test account has at least one Vehicle; the flow asserts on whichever is active.
 
-- `.agents/skills/verify/scripts/verify.sh drive ios mileage` (then `android`). Signs in, reads the current odometer from `home-odometer`, opens the sheet from [+] → `action-update-mileage` and closes it clean (`mileage-01-sheet`), reopens it from `home-update-mileage`, asserts the context's «último», tries `1` → the «mayor que el último registro» error (`mileage-02-refused`), taps `mileage-bump-100` → «Guardar <actual+100> km» (`mileage-03-bumped`), saves, asserts the toast and Inicio's new odometer (`mileage-04-saved`).
+- `.agents/skills/verify/scripts/verify.sh drive ios mileage` (then `android`). Signs in, reads the current odometer from `home-odometer`, opens the sheet from [+] → `action-update-mileage` (on Android it asserts the title and save with the number pad open, SEI-76) and closes it clean (`mileage-01-sheet`), reopens it from `home-update-mileage`, asserts the context's «último», tries `1` → the «mayor que el último registro» error (`mileage-02-refused`), taps `mileage-bump-100` → «Guardar <actual+100> km» (`mileage-03-bumped`), saves, asserts the toast and Inicio's new odometer (`mileage-04-saved`).
 - **Proof.** Each run folder holds the video (`startRecording/mileage.mp4`) and the screenshots; the row it wrote shows in `select v.brand, v.model, m.reading, m.recorded_on from public.mileage_readings m join public.vehicles v on v.id = m.vehicle_id join auth.users u on u.id = v.user_id where u.email = 'e2e@seibi.test' order by m.created_at desc limit 5;` on seibi-dev.
 
 ## Gotchas

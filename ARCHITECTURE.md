@@ -539,11 +539,8 @@ The migration's order, scope and tickets are in
     `radiant` ring; a tap saves and closes, so it has no `FormLayout`) and
     `profile-location` (country, El Salvador when none is saved, and city,
     80 characters). The limits are `NAME_MAX` and `CITY_MAX` from
-    `src/onboarding/flow.ts`, shared with the first-run questions. Name
-    and location take the Service form's fixed height (`[0.92]`): sized to
-    its content, a sheet jumped to full height and went blank while the
-    keyboard rose, with «Guardar» lost (seen on the iOS Simulator). The
-    level sheet has no field and fits its content. They save through `useUpdateProfile`
+    `src/onboarding/flow.ts`, shared with the first-run questions. All
+    three fit their content (the sheet rule in UI kit, below). They save through `useUpdateProfile`
     (optimistic, rolled back on failure) and close once the save lands, as
     the PWA's sheets; a failed save shows its message in the sheet. Unlike
     the PWA, the name and location sheets ask «¿Descartar los cambios?»
@@ -610,6 +607,23 @@ The migration's order, scope and tickets are in
   when a fill appears (so rounded views that change fill keep a native
   view from mount). Both are in `docs/DESIGN.md`
   (Type → Text that fits; Spacing and radius → Corners on Android).
+  - **Sheets and the keyboard** (SEI-76). A form sheet fits its content
+    (`sheetAllowedDetents: 'fitToContents'`); only the Service form, longer
+    than the screen, takes a fixed `[0.92]`. The native sheet keeps its
+    content above the keyboard by itself: on Android react-native-screens
+    raises the whole sheet, on iOS UIKit grows it to full height with the
+    content at its top. So `FormLayout` must not move by the whole keyboard
+    as well; doing both pushed the content out of the sheet (Android) or
+    left it blank with «Guardar» gone (iOS). `(app)`'s stack passes
+    `sheetScreenLayout` as its `screenLayout`, which tells each
+    `formSheet` route it is one; there `FormLayout` measures the room
+    above the sheet and lifts the action bar, and scrolls the focused
+    field, only by what the keyboard still covers (`src/ui/sheet-keyboard.ts`).
+    A sheet that fits above the keyboard doesn't move inside at all; a
+    tall one makes up the rest. Full-screen forms keep riding the whole
+    keyboard. Another stack that fills the window and presents form sheets
+    passes `sheetScreenLayout` too; the UI kit's sample sheet, in a stack
+    under a header, doesn't.
 - **UI kit sample screen:** every component and a sample form sheet, at
   `seibi-dev://ui-kit` (Perfil links to it in Seibi Dev). The screens live in `src/ui/dev/`; the routes in
   `src/app/ui-kit/` `require` them only when `EXPO_PUBLIC_APP_VARIANT` is
