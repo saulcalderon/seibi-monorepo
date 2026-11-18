@@ -22,16 +22,19 @@ name: Perfil edits the name and restores it, switches the theme, and links the l
 - waitForAnimationToEnd
 - takeScreenshot: profile-01-top
 
-# --- «Cómo te llamamos»: the sheet starts from the saved name, which the flow keeps to put back.
+# --- «Cómo te llamamos»: the flow keeps the saved name to put it back. It reads
+# it from the row's spoken label («Cómo te llamamos, <name>»), not from the
+# empty field, whose copy could be its label; «Sin nombre» means none.
+- copyTextFrom:
+    id: profile-name-row
+- evalScript: ${output.original = (maestro.copiedText || '').replace(/^Cómo te llamamos,\s*/, '').trim()}
+- evalScript: ${output.original = output.original === 'Sin nombre' ? '' : output.original}
 - tapOn:
     id: profile-name-row
 - extendedWaitUntil:
     visible:
       id: profile-name-field
     timeout: 15000
-- copyTextFrom:
-    id: profile-name-field
-- evalScript: ${output.original = maestro.copiedText || ''}
 - tapOn:
     id: profile-name-field
 - eraseText: 70

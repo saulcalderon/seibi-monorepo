@@ -43,7 +43,7 @@ Preconditions:
 - The device is in light mode with the theme on Auto (the flow sets both, and leaves them so).
 
 - **The screen.** `.agents/skills/verify/scripts/verify.sh drive ios profile` (then `android`). Signs in, opens Perfil (`open-profile.yaml`: `id: signed-in-as` has the test email) and asserts the three «Tú» rows. Screenshot `profile-01-top`.
-- **Rename, then restore.** Taps `id: profile-name-row`, copies the field's name, types «Verify Perfil», taps `id: profile-name-close`: «¿Descartar los cambios?» shows (`profile-02-discard`); «Seguir editando» keeps the text. `id: profile-name-save` closes the sheet; the row and `id: signed-in-as` read «Verify Perfil» (`profile-03-renamed`). It reopens the sheet, types the copied name back (or leaves it empty when there was none) and saves; the row no longer says «Verify Perfil».
+- **Rename, then restore.** Copies the saved name from `id: profile-name-row`'s label («Sin nombre» counts as none), taps the row, types «Verify Perfil», taps `id: profile-name-close`: «¿Descartar los cambios?» shows (`profile-02-discard`); «Seguir editando» keeps the text. `id: profile-name-save` closes the sheet; the row and `id: signed-in-as` read «Verify Perfil» (`profile-03-renamed`). It reopens the sheet, types the copied name back (or leaves it empty when there was none) and saves; the row no longer says «Verify Perfil».
 - **Level and location open.** `id: profile-level-row` shows the four levels (`profile-04-level`) and `profile-level-close` closes it unchanged; `id: profile-location-row` shows «País» and «Ciudad» (`profile-05-location`) and `profile-location-close` closes it with no prompt.
 - **Notifications and theme.** Scrolls to `id: theme-check`; `id: profile-notifications` is on screen. Taps `theme-night`: `theme: night (preference)` (`profile-06-night`); taps `theme-system`: `theme: light (system)`.
 - **Legal and the account.** Scrolls to `id: profile-version` («Seibi · …»); `id: profile-terms`, `profile-privacy`, `profile-contact` (with hola@seibiapp.com), `sign-out` and `delete-account` are on screen (`profile-07-legal`). Taps `profile-privacy`: the Privacy Policy opens in the in-app browser (`profile-08-privacy`); its close button (iOS) or Back (Android) returns to `id: profile-screen`.
@@ -51,7 +51,7 @@ Preconditions:
 
 ## Gotchas
 
-- **The flow renames the shared test account for a moment.** A run that stops between the save and the restore leaves «Verify Perfil» as its name; rename it back by hand in Perfil (the original name is in `maestro.log`, from `copyTextFrom`).
+- **The flow renames the shared test account for a moment.** A run that stops between the save and the restore leaves «Verify Perfil» as its name; rename it back by hand in Perfil (the original name is in `maestro.log`, from `copyTextFrom` on `profile-name-row`).
 - `theme-check` and the «Desarrollo» section exist in Seibi Dev only; Seibi (production and preview builds) has neither.
 - Perfil is taller than the screen: «Preferencias» may sit under the tab bar, and «Legal y ayuda», sign-out and deletion are below it. Every flow that taps them scrolls first (`scrollUntilVisible`).
 - The iOS Simulator has no Mail app: «Escríbenos» shows the «No pudimos abrir tu correo» toast there. On a phone (or an emulator with a mail app) it opens a new message.
