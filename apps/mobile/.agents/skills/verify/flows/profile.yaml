@@ -28,15 +28,18 @@ name: Perfil edits the name and restores it, switches the theme, and links the l
 - copyTextFrom:
     id: profile-name-row
 - evalScript: ${output.original = (maestro.copiedText || '').replace(/^Cómo te llamamos,\s*/, '').trim()}
-- evalScript: ${output.original = output.original === 'Sin nombre' ? '' : output.original}
+- evalScript: ${output.original = output.original.replace(/^Sin nombre$/, '')}
 - tapOn:
     id: profile-name-row
 - extendedWaitUntil:
     visible:
       id: profile-name-field
     timeout: 15000
-- tapOn:
-    id: profile-name-field
+# The field focuses itself once the sheet settles, and the keyboard's rise moves
+# the sheet: a tap aimed at the field mid-move lands on the backdrop and closes
+# the (still clean) sheet. Wait for it to settle and type into the focused field.
+- waitForAnimationToEnd:
+    timeout: 3000
 - eraseText: 70
 - inputText: Verify Perfil
 # Closing with a new name typed asks first; «Seguir editando» keeps the sheet.
@@ -74,8 +77,8 @@ name: Perfil edits the name and restores it, switches the theme, and links the l
     visible:
       id: profile-name-field
     timeout: 15000
-- tapOn:
-    id: profile-name-field
+- waitForAnimationToEnd:
+    timeout: 3000
 - eraseText: 70
 - runFlow:
     when:
@@ -182,8 +185,14 @@ name: Perfil edits the name and restores it, switches the theme, and links the l
 # The Privacy Policy opens in the in-app browser; closing it comes back to Perfil.
 - tapOn:
     id: profile-privacy
+# The page renders in the browser. Wait for its date line, which Perfil itself doesn't have:
+# Perfil's «Política de privacidad» row stays in the hierarchy behind the browser.
+- extendedWaitUntil:
+    visible:
+      text: '.*Actualizado el.*'
+    timeout: 30000
 - waitForAnimationToEnd:
-    timeout: 5000
+    timeout: 3000
 - takeScreenshot: profile-08-privacy
 - runFlow:
     when:

@@ -539,7 +539,11 @@ The migration's order, scope and tickets are in
     `radiant` ring; a tap saves and closes, so it has no `FormLayout`) and
     `profile-location` (country, El Salvador when none is saved, and city,
     80 characters). The limits are `NAME_MAX` and `CITY_MAX` from
-    `src/onboarding/flow.ts`, shared with the first-run questions. They save through `useUpdateProfile`
+    `src/onboarding/flow.ts`, shared with the first-run questions. Name
+    and location take the Service form's fixed height (`[0.92]`): sized to
+    its content, a sheet jumped to full height and went blank while the
+    keyboard rose, with «Guardar» lost (seen on the iOS Simulator). The
+    level sheet has no field and fits its content. They save through `useUpdateProfile`
     (optimistic, rolled back on failure) and close once the save lands, as
     the PWA's sheets; a failed save shows its message in the sheet. Unlike
     the PWA, the name and location sheets ask «¿Descartar los cambios?»

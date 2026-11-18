@@ -29,10 +29,13 @@ export default function AppLayout() {
       <Stack.Screen name="correct-reading" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
       {/* The Routine sheet (S6): a row in Uso's «Rutinas semanales» or its «Agregar rutina». */}
       <Stack.Screen name="routine" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
-      {/* Perfil's sheets (S11): its name, Knowledge level and location. */}
-      <Stack.Screen name="profile-name" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
+      {/*
+       * Perfil's sheets (S11). Name and location type with the keyboard up, so they take the Service
+       * form's fixed height: a content-sized sheet jumps to full height and blanks as the keyboard rises.
+       */}
+      <Stack.Screen name="profile-name" options={{ ...sheet, sheetAllowedDetents: [0.92] }} />
       <Stack.Screen name="profile-level" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
-      <Stack.Screen name="profile-location" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
+      <Stack.Screen name="profile-location" options={{ ...sheet, sheetAllowedDetents: [0.92] }} />
       {/* The Vehicle form (S5): a modal with its own stack, so its pickers push inside it. */}
       <Stack.Screen name="vehicle" options={{ presentation: 'modal', contentStyle: { backgroundColor: theme.colors.bg } }} />
       {/* The data check and Inicio's sample screen exist in Seibi Dev (the development variant) only. */}
