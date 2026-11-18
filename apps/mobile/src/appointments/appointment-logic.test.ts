@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { COMMON_TASKS, type MaintenanceTask } from '@/data/task/catalog';
 
-import { taskChoices } from './appointment-logic';
+import { sameTasks, taskChoices } from './appointment-logic';
 
 // «¿Para qué es?» on «Agendar Cita», the PWA's AppointmentBody
 // (forms/SmallForms.tsx at 6e3b818): what the Vehicle needs first, then the
@@ -38,7 +38,25 @@ describe('taskChoices', () => {
     expect(choices[0]).toBe('transmission_fluid');
   });
 
+  it('keeps every chosen task on screen, after the 14, when the Vehicle changes under it', () => {
+    const choices = taskChoices({ reminders: [], openedWith: [], chosen: ['engine_oil', 'transmission_fluid'], tasks: catalog });
+    expect(choices).toHaveLength(15);
+    expect(choices[0]).toBe('engine_oil');
+    expect(choices[14]).toBe('transmission_fluid');
+  });
+
   it('leaves out codes the catalog does not have', () => {
     expect(taskChoices({ reminders: [], openedWith: ['not_a_task'], tasks: catalog })).not.toContain('not_a_task');
+  });
+});
+
+describe('sameTasks', () => {
+  it('is true for the same tasks tapped in another order', () => {
+    expect(sameTasks(['engine_oil', 'oil_filter'], ['oil_filter', 'engine_oil'])).toBe(true);
+  });
+
+  it('is false when one was added or removed', () => {
+    expect(sameTasks(['engine_oil'], ['engine_oil', 'oil_filter'])).toBe(false);
+    expect(sameTasks(['engine_oil', 'oil_filter'], ['engine_oil', 'wipers'])).toBe(false);
   });
 });

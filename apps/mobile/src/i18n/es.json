@@ -366,7 +366,7 @@
       "addReminderSpoken": "Recordatorio nuevo",
       "add": "Agendar Cita",
       "markDone": "Marcar hecho",
-      "markDoneSpoken": "Marcar hecha la Cita del {{day}}: registrar el Servicio",
+      "markDoneSpoken": "Marcar hecho: registrar el Servicio de la Cita del {{day}}",
       "cancel": "Cancelar",
       "cancelSpoken": "Cancelar la Cita del {{day}}",
       "cancelAsk": "¿Cancelar la Cita del {{day}}?",

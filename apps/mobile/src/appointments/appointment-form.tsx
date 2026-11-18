@@ -22,7 +22,7 @@ import { FormLayout } from '@/ui/form';
 import { notify } from '@/ui/toast';
 import { useUnsavedGuard } from '@/ui/use-unsaved-guard';
 
-import { taskChoices } from './appointment-logic';
+import { sameTasks, taskChoices } from './appointment-logic';
 
 /**
  * «Agendar Cita» (`/schedule-appointment?vehicleId=&tasks=`), the PWA's
@@ -79,12 +79,12 @@ function AppointmentBody({
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<{ field: string; message: string } | null>(null);
   const vehicle = vehicles.find((v) => v.id === chosen) ?? vehicles[0];
-  const choices = taskChoices({ reminders: vehicle.reminders, openedWith: start.codes, tasks });
+  const choices = taskChoices({ reminders: vehicle.reminders, openedWith: start.codes, chosen: codes, tasks });
 
   const dirty =
     chosen !== start.vehicleId ||
     scheduledOn !== start.scheduledOn ||
-    codes.join(',') !== start.codes.join(',') ||
+    !sameTasks(codes, start.codes) ||
     shop.trim() !== '' ||
     notes.trim() !== '';
   const { leave } = useUnsavedGuard(dirty, {

@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native-unistyles';
 
+import { AppointmentDetailRow } from '@/appointments/appointment-row';
 import type { VehicleView } from '@/data/garage/types';
 import { useGarage } from '@/data/garage/use-garage';
 import { useProfile } from '@/data/profile/queries';
@@ -10,7 +11,6 @@ import { taskMap } from '@/data/task/catalog';
 import { useRefreshVehicleData } from '@/data/vehicle/mutations';
 import { knowledgeProfile } from '@/lib/knowledge';
 import { plainText } from '@/lib/text';
-import { AppointmentDetailRow } from '@/appointments/appointment-row';
 import { HistoryCard } from '@/reminders/history-card';
 import { ManualReminderRow } from '@/reminders/manual-reminder-row';
 import { ReminderRow } from '@/reminders/reminder-row';

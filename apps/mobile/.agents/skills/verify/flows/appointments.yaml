@@ -2,7 +2,8 @@
 # test account: the [+] → «Agendar Cita» for «Cambio de aceite» today, with
 # a Shop and notes marked «verify SEI-68»; the Appointment shows in Avisos
 # with «Hecho» and in the Vehicle detail's «Citas y recordatorios», where
-# «Cancelar» asks and removes it from both. Run through
+# «Cancelar» asks and removes it from both; the detail's «Agendar Cita»
+# opens the sheet and closing it with a chip on asks first. Run through
 # scripts/verify.sh drive <ios|android> appointments.
 appId: ${APP_ID}
 name: Schedule an Appointment, see it in Avisos and the Vehicle detail, cancel it
@@ -138,6 +139,30 @@ name: Schedule an Appointment, see it in Avisos and the Vehicle detail, cancel i
 - waitForAnimationToEnd
 - takeScreenshot: appointments-07-canceled
 
+# --- The detail's «Agendar Cita» opens the sheet for this Vehicle; a chip
+# chosen, «Cerrar» asks «¿Descartar la Cita?» and «Descartar» saves nothing.
+- tapOn:
+    id: detail-add-appointment
+- extendedWaitUntil:
+    visible:
+      id: appointment-title
+    timeout: 15000
+- tapOn:
+    id: appointment-task-engine_oil
+- tapOn:
+    id: appointment-close
+- extendedWaitUntil:
+    visible: '¿Descartar la Cita\?'
+    timeout: 10000
+- takeScreenshot: appointments-08-discard-ask
+- tapOn: 'Descartar'
+- extendedWaitUntil:
+    notVisible:
+      id: appointment-title
+    timeout: 10000
+- assertNotVisible:
+    id: detail-appointment-0
+
 # --- Gone from Avisos too.
 - tapOn:
     id: tab-reminders
@@ -146,7 +171,7 @@ name: Schedule an Appointment, see it in Avisos and the Vehicle detail, cancel i
       id: avisos-vehicle-name
     timeout: 15000
 - assertNotVisible: 'Cita · verify SEI-68 taller'
-- takeScreenshot: appointments-08-avisos-after
+- takeScreenshot: appointments-09-avisos-after
 - stopRecording
 # Leave the test account as it was: no open «verify SEI-68» Appointment.
 - runScript:

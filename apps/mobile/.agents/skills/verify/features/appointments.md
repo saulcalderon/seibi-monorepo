@@ -76,7 +76,11 @@ notes start «verify SEI-68». `appointments-cleanup` runs the same alone.
   Cita» under the card (`appointments-05-detail`).
 - **Cancel.** «Cancelar» asks (`appointments-06-cancel-confirm`); «Cancelar
   Cita» removes the row (`appointments-07-canceled`) and Avisos no longer
-  shows it (`appointments-08-avisos-after`).
+  shows it (`appointments-09-avisos-after`).
+- **From the detail, discarded.** «Agendar Cita» opens the sheet; with
+  «Cambio de aceite» on, «Cerrar» asks «¿Descartar la Cita?»
+  (`appointments-08-discard-ask`) and «Descartar» closes it with nothing
+  saved.
 - **Saved data.** After the run, a read-only seibi-dev `SELECT
   scheduled_on, shop, notes, task_codes, canceled_at, service_id FROM
   appointments WHERE notes LIKE 'verify SEI-68%' ORDER BY created_at DESC
@@ -90,6 +94,10 @@ notes start «verify SEI-68». `appointments-cleanup` runs the same alone.
 - `detail-appointment-0` is the soonest upcoming Appointment. The flow's is
   today's, so it is first unless the test account has another one today;
   keep the account's other Appointments in the future.
+- A Reminder's «Agendar» is not driven here: the test Yaris' Reminders
+  are all unknown after the cleanups, so its detail has no Reminder row to
+  open. Drive it after `reminders` makes «Cambio de aceite» overdue, or on
+  a Vehicle with Services.
 - «Hecho» is not driven here: saving a Service moves the test Yaris'
   Reminders and Mileage, which other flows assert. `service` covers the
   Service form.
