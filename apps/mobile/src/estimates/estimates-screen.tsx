@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Fragment, useState, type ReactNode } from 'react';
+import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
@@ -7,31 +7,30 @@ import { StyleSheet } from 'react-native-unistyles';
 import { byUrgency } from '@/data/garage/derive';
 import type { VehicleView } from '@/data/garage/types';
 import { useGarage } from '@/data/garage/use-garage';
-import { errorMessage } from '@/data/errors';
 import { useActiveVehicle } from '@/data/preferences/store';
-import { COUNTRIES, countryName, type Country } from '@/data/profile/countries';
-import { useProfile, useUpdateProfile } from '@/data/profile/queries';
 import { formatDistance, vehicleChoiceLabel } from '@/lib/format';
-import { canContinueCity, CITY_MAX } from '@/onboarding/flow';
 import { TabScroll } from '@/shell/tab-scroll';
 import { Button } from '@/ui/button';
-import { Card, IconTile, ListRow, RowDivider } from '@/ui/card';
-import { SelectField } from '@/ui/controls';
+import { Card, ListRow, RowDivider } from '@/ui/card';
 import { EmptyState, ErrorState, ListRowSkeleton, SkeletonGroup } from '@/ui/feedback';
-import { TextField } from '@/ui/fields';
+import { Segmented } from '@/ui/fields';
 import { Icon } from '@/ui/icon';
 import { usePressed } from '@/ui/press';
 import { Text } from '@/ui/text';
 import { VehicleThumb } from '@/vehicle/fleet-card';
 
+import { ChatPanel } from './chat-panel';
+import { ESTIMATES_MODE, modeOptions, type EstimatesMode } from './chat-logic';
 import { EstimatePanel } from './estimate-panel';
+import { LocationGate } from './location-gate';
 
 /**
- * Estimados (S10, SEI-65), the PWA's screens/Estimados.tsx as of 6e3b818
- * without its chat: price ranges for a job on one Vehicle, in the person's
- * city. The Vehicle is the one Inicio shows unless a link names another
- * (`?vehicle=`); `?task=` asks for that task's Estimate on arrival, as the
- * Reminder detail's «¿Cuánto cuesta?» does.
+ * Estimados (S10, SEI-65; its chat SEI-69), the PWA's screens/Estimados.tsx
+ * as of 6e3b818: price ranges for a job on one Vehicle, in the person's
+ * city, or, through the «Estimar precio / Chat de Seibi» switch, follow-up
+ * questions to Seibi about it. The Vehicle is the one Inicio shows unless a
+ * link names another (`?vehicle=`); `?task=` asks for that task's Estimate
+ * on arrival, as the Reminder detail's «¿Cuánto cuesta?» does.
  */
 export function EstimatesScreen() {
   const { vehicle, task } = useLocalSearchParams<{ vehicle?: string; task?: string }>();
@@ -47,6 +46,7 @@ function Estimados({ vehicleParam, taskParam }: { vehicleParam?: string; taskPar
   const [vehicleId, setVehicleId] = useState<string | null>(vehicleParam ?? null);
   // The link's task is asked for once: switching Vehicles remounts the panel, and must not ask (and spend an AI call) again.
   const [linkTask, setLinkTask] = useState(taskParam);
+  const [mode, setMode] = useState<EstimatesMode>(ESTIMATES_MODE);
   const vehicle = garage.vehicles.find((v) => v.id === (vehicleId ?? active?.id)) ?? null;
 
   if (garage.isLoading) {
@@ -85,8 +85,8 @@ function Estimados({ vehicleParam, taskParam }: { vehicleParam?: string; taskPar
     );
   }
 
-  return (
-    <TabScroll testID="estimates-screen" keyboardShouldPersistTaps="handled">
+  const header = (
+    <>
       <Text step="subhead" tone="muted" style={styles.subtitle}>
         {t('estimates.subtitle')}
       </Text>
@@ -99,9 +99,24 @@ function Estimados({ vehicleParam, taskParam }: { vehicleParam?: string; taskPar
           select(id);
         }}
       />
-      {/* SEI-69 (Chat de Seibi) mounts its mode switch here and swaps the panel for the chat. */}
+      <Segmented testID="estimates-mode" label={t('estimates.mode.label')} value={mode} onChange={setMode} options={modeOptions(t)} />
+    </>
+  );
+
+  // The chat pins its question field at the bottom, so it lays out its own scroll.
+  if (mode === 'chat') return <ChatPanel vehicle={vehicle} header={header} />;
+
+  return (
+    <TabScroll testID="estimates-screen" keyboardShouldPersistTaps="handled">
+      {header}
       <LocationGate>
-        <EstimatePanel key={vehicle.id} vehicle={vehicle} initialTask={linkTask} onInitialTaskAsked={() => setLinkTask(undefined)} />
+        <EstimatePanel
+          key={vehicle.id}
+          vehicle={vehicle}
+          initialTask={linkTask}
+          onInitialTaskAsked={() => setLinkTask(undefined)}
+          onAsk={() => setMode('chat')}
+        />
       </LocationGate>
     </TabScroll>
   );
@@ -181,74 +196,6 @@ function VehicleSwitcher({ vehicle, vehicles, onSelect }: { vehicle: VehicleView
   );
 }
 
-/** Estimates need a country and city: asks right here when the profile has none, as the PWA. */
-function LocationGate({ children }: { children: ReactNode }) {
-  const { t } = useTranslation();
-  const profile = useProfile();
-  const update = useUpdateProfile();
-  const [country, setCountry] = useState<Country>('SV');
-  const [city, setCity] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  if (profile.isLoading) return null;
-  // Without the profile the form could save over a location the person already has.
-  if (profile.isError) return <ErrorState testID="estimates-profile-error" onRetry={() => void profile.refetch()} />;
-  if (profile.data?.country) return children;
-
-  const save = () => {
-    if (!canContinueCity(city) || update.isPending) return;
-    setError(null);
-    update.mutate({ country, city }, { onError: (cause) => setError(errorMessage(cause, t)) });
-  };
-
-  return (
-    <Card testID="estimates-location" style={styles.location}>
-      <View style={styles.locationHead}>
-        <IconTile icon="location" />
-        <View style={styles.grow}>
-          <Text step="callout" weight={700} heading>
-            {t('estimates.location.title')}
-          </Text>
-          <Text step="footnote" tone="muted">
-            {t('estimates.location.body')}
-          </Text>
-        </View>
-      </View>
-      <SelectField
-        testID="estimates-location-country"
-        label={t('estimates.location.country')}
-        value={country}
-        onChange={setCountry}
-        options={COUNTRIES.map((c) => ({ value: c.id, label: t('estimates.location.countryOption', { flag: c.flag, name: countryName(c.id, t) }) }))}
-      />
-      <TextField
-        testID="estimates-location-city"
-        label={t('estimates.location.city')}
-        placeholder={t('estimates.location.cityPlaceholder')}
-        value={city}
-        onChangeText={(text) => {
-          setCity(text);
-          setError(null);
-        }}
-        error={error}
-        autoCapitalize="words"
-        maxLength={CITY_MAX}
-        textContentType="addressCity"
-        returnKeyType="done"
-        onSubmitEditing={save}
-      />
-      <Button
-        testID="estimates-location-save"
-        variant="secondary"
-        block
-        loading={update.isPending}
-        disabled={!canContinueCity(city)}
-        label={t('estimates.location.save')}
-        onPress={save}
-      />
-    </Card>
-  );
-}
-
 const styles = StyleSheet.create((theme) => ({
   subtitle: {
     paddingHorizontal: theme.space[1],
@@ -276,14 +223,5 @@ const styles = StyleSheet.create((theme) => ({
     height: theme.size.dot,
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.subtle,
-  },
-  location: {
-    gap: theme.space[4],
-    padding: theme.space[5],
-  },
-  locationHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.space[3],
   },
 }));

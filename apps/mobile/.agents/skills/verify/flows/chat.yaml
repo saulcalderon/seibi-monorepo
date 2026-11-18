@@ -1,0 +1,95 @@
+# Feature: Chat de Seibi (features/chat.md), SEI-69, on the shared seibi-dev
+# test account. Estimados → «Chat de Seibi», type ONE question with the
+# keyboard up, send it, see «Seibi está escribiendo» and the answer. Run
+# through scripts/verify.sh drive <ios|android> chat.
+#
+# Each run sends the `chat` Edge Function exactly one question, and every
+# question spends one of the test account's AI calls for the day
+# (AI_DAILY_LIMIT, 20 by default, shared with Estimados). Nothing is cached.
+# Never add a second question to this flow, and don't loop it.
+appId: ${APP_ID}
+name: Chat de Seibi answers one question about the Vehicle
+---
+- stopApp
+- openLink: ${DEV_URL}
+- runFlow: sign-in.yaml
+- startRecording: chat
+
+# --- Estimados, then the switch to «Chat de Seibi».
+# Inicio is still settling right after sign-in: tap again if nothing moved.
+- waitForAnimationToEnd:
+    timeout: 5000
+- tapOn:
+    id: tab-estimates
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    visible:
+      id: estimates-vehicle-name
+    timeout: 30000
+- tapOn:
+    id: estimates-mode-chat
+- extendedWaitUntil:
+    visible:
+      id: chat-thread
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: chat-input
+    timeout: 15000
+- assertVisible:
+    id: chat-send
+- assertVisible:
+    id: open-actions
+- waitForAnimationToEnd
+- takeScreenshot: chat-01-thread
+
+# --- The question, typed with the keyboard up: the field rides above it.
+- tapOn:
+    id: chat-input
+- inputText: Cada cuanto cambio el aceite de mi carro?
+- waitForAnimationToEnd
+- assertVisible:
+    id: chat-input
+- assertVisible:
+    id: chat-send
+- takeScreenshot: chat-02-keyboard
+
+# --- The one request.
+- tapOn:
+    id: chat-send
+- extendedWaitUntil:
+    visible:
+      id: chat-pending
+    timeout: 10000
+- extendedWaitUntil:
+    visible:
+      id: chat-typing
+    timeout: 5000
+    optional: true
+- takeScreenshot: chat-03-typing
+# The answer runs a web search: it can take up to a couple of minutes.
+- extendedWaitUntil:
+    visible:
+      id: chat-latest-assistant
+    timeout: 180000
+- assertNotVisible:
+    id: chat-send-error
+- assertNotVisible:
+    id: chat-typing
+- copyTextFrom:
+    id: chat-latest-user
+# VoiceOver's label starts with «Tú:», so match the words inside it.
+- evalScript: ${output.asked = maestro.copiedText.indexOf('Cada cuanto cambio el aceite de mi carro?') !== -1}
+- assertTrue: ${output.asked}
+- waitForAnimationToEnd
+- takeScreenshot: chat-04-answer
+
+# --- The keyboard put away: the field goes back beside the [+], the answer still in view.
+- hideKeyboard
+- waitForAnimationToEnd
+- assertVisible:
+    id: chat-latest-assistant
+- assertVisible:
+    id: chat-input
+- takeScreenshot: chat-05-rest
+- stopRecording

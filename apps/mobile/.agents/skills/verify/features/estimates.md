@@ -42,6 +42,9 @@ consultas de hoy. Vuelve mañana.» at the daily AI limit). No Vehicle:
 - `result` `id: estimates-result`: `-title`, `-summary`, `-independent`,
   `-dealership`, `-includes`, `-factors`, `-confidence`, `-sources` with
   `-source-<n>` (in-app browser).
+- `mode` `id: estimates-mode`: «Estimar precio» (`-estimate`, where the
+  tab opens) and «Chat de Seibi» (`-chat`, features/chat.md); the result's
+  «Preguntar» `id: estimates-result-ask` switches to the chat.
 - `past` `id: estimates-past` with rows `id: estimates-past-<n>` (spoken
   «<job>, <independent total or Sin rango> · <day>»); hidden while a request
   runs.

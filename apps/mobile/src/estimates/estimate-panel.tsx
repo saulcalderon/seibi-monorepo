@@ -36,11 +36,14 @@ export function EstimatePanel({
   vehicle,
   initialTask,
   onInitialTaskAsked,
+  onAsk,
 }: {
   vehicle: VehicleView;
   initialTask?: string;
   /** Called once `initialTask` has been asked for, so the screen doesn't pass it again. */
   onInitialTaskAsked?: () => void;
+  /** The result's «Preguntar»: switches Estimados to the chat. */
+  onAsk: () => void;
 }) {
   const { t } = useTranslation();
   const garage = useGarage();
@@ -147,7 +150,7 @@ export function EstimatePanel({
           ) : null}
           {result && !request.isPending ? (
             <Appear key={`${result.id}-${result.createdAt}`}>
-              <EstimateCard estimate={result} vehicle={vehicle} />
+              <EstimateCard estimate={result} vehicle={vehicle} onAsk={onAsk} />
             </Appear>
           ) : null}
         </View>
