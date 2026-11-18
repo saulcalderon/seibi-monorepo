@@ -110,7 +110,8 @@ handles, required state, commands and observable proof.
   location card, the question and task chips, the waiting line, the result
   (totals, breakdown, what it includes, what moves the price, confidence,
   sources), «Consultas anteriores», and «¿Cuánto cuesta?» from a Reminder.
-  One Estimate per run (the daily AI limit). Flow: `estimates`.
+  One Estimate per run (the daily AI limit). Flows: `estimates`, then
+  `estimates-from-reminder` (served from the cache the first fills).
 - [Registrar un Servicio](./service.md): the form sheet from [+] and the
   Vehicle's «Servicios», tasks and lines, validation order, the Mileage
   reading it writes, edit and withdraw, «¿Descartar los cambios?».

@@ -1,0 +1,113 @@
+# Feature: Estimados (features/estimates.md), its second entry point: a
+# Reminder's «¿Cuánto cuesta?» closes the detail and opens the Estimados tab,
+# which asks for that task at once. Run through scripts/verify.sh drive
+# <ios|android> estimates-from-reminder, AFTER `estimates`: both ask for
+# «Cambio de aceite» on the test Yaris, so this one is served from the 30-day
+# cache that `estimates` filled and spends no AI call.
+#
+# The test Yaris's Reminders all start unknown (no row to open), so the flow
+# answers «¿Cuándo fue “Cambio de aceite”?» with «Hace más de un año» to make
+# it overdue, as `reminders` does; scripts/cleanup-sei64.js removes that
+# answer before and after.
+appId: ${APP_ID}
+name: «¿Cuánto cuesta?» in a Reminder's detail opens Estimados and asks for that task
+---
+- runScript:
+    file: scripts/cleanup-sei64.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}
+- stopApp
+- openLink: ${DEV_URL}
+- runFlow: sign-in.yaml
+- startRecording: estimates-from-reminder
+
+# --- Avisos: make «Cambio de aceite» overdue from «Completa tu historial».
+- waitForAnimationToEnd:
+    timeout: 5000
+- tapOn:
+    id: tab-reminders
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    visible:
+      id: avisos-vehicle-name
+    timeout: 30000
+- tapOn:
+    id: avisos-unknown-toggle
+# Centred: at the bottom edge the chip sits under the tab bar, and a tap there lands on «Inicio».
+- scrollUntilVisible:
+    element:
+      id: avisos-history-task-engine_oil
+    centerElement: true
+    timeout: 15000
+- tapOn:
+    id: avisos-history-task-engine_oil
+- extendedWaitUntil:
+    visible:
+      id: last-done-title
+    timeout: 15000
+- tapOn:
+    id: last-done-overYear
+- extendedWaitUntil:
+    notVisible:
+      id: last-done-title
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: avisos-overdue-0
+    direction: UP
+    timeout: 15000
+
+# --- Its detail, then «¿Cuánto cuesta?».
+- tapOn:
+    id: avisos-overdue-0
+- extendedWaitUntil:
+    visible:
+      id: reminder-detail-title
+    timeout: 15000
+- copyTextFrom:
+    id: reminder-detail-title
+- evalScript: ${output.task = maestro.copiedText.trim()}
+- scrollUntilVisible:
+    element:
+      id: reminder-detail-estimate
+    timeout: 10000
+- assertVisible:
+    id: reminder-detail-schedule
+- waitForAnimationToEnd
+- takeScreenshot: estimates-reminder-01-detail
+- tapOn:
+    id: reminder-detail-estimate
+
+# --- Estimados, on the Estimados tab, asking for that task.
+- extendedWaitUntil:
+    notVisible:
+      id: reminder-detail-title
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: estimates-asked
+      text: '${output.task}'
+    timeout: 20000
+- assertVisible:
+    id: estimates-vehicle-name
+- takeScreenshot: estimates-reminder-02-asked
+- extendedWaitUntil:
+    visible:
+      id: estimates-result
+    timeout: 240000
+- assertNotVisible:
+    id: estimates-request-error
+- waitForAnimationToEnd
+- takeScreenshot: estimates-reminder-03-result
+- stopRecording
+# Leave the test account as it was: no «Cambio de aceite» answer.
+- runScript:
+    file: scripts/cleanup-sei64.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}

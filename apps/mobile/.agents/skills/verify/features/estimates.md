@@ -75,13 +75,17 @@ left today.
 - **Sources.** When the result has one, `id: estimates-result-source-0`
   opens the in-app browser (`estimates-06-source`) and «Done» comes back to
   the card.
-- **«¿Cuánto cuesta?» (not in the flow).** A Reminder's detail →
-  `id: reminder-detail-estimate` closes the sheet, switches to Estimados on
-  that Vehicle and asks for that task at once (the question bubble shows its
-  name). It is a second Estimate, so the `estimates` flow leaves it out
-  (one request per run); prove it in a run of its own, by hand or with a
-  one-off flow, and say which in the PR. Switching Vehicles afterwards must
-  not ask again.
+- **«¿Cuánto cuesta?».** `scripts/verify.sh drive ios
+  estimates-from-reminder`, after `estimates`: Avisos → «Completa tu
+  historial» → «Cambio de aceite» → «Hace más de un año» makes it overdue;
+  its detail shows «Agendar» and «¿Cuánto cuesta?» side by side
+  (`estimates-reminder-01-detail`); «¿Cuánto cuesta?» closes the sheet,
+  switches to the Estimados tab and asks for that task at once, the
+  question bubble showing the task's name (`estimates-reminder-02-asked`),
+  then the result (`estimates-reminder-03-result`). It asks for the same
+  task as `estimates`, so it is served from the cache and spends no AI
+  call. `scripts/cleanup-sei64.js` removes the «Cambio de aceite» answer
+  before and after.
 - **Saved data.** After the run, a read-only seibi-dev `SELECT` shows the
   new request, the same table the PWA's «Consultas anteriores» reads:
 
