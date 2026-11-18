@@ -27,7 +27,8 @@ matching feature file as the recipe. The commands come from
   remove it after the run, but keep the evidence.
 - Inicio (the home, inside the tabs) needs a session. A flow that starts there runs
   `runFlow: sign-in.yaml` after opening the app; it signs in with the
-  seibi-dev test account when the sign-in screen shows.
+  seibi-dev test account when the sign-in screen shows, and answers the
+  first-run questions when the account hasn't finished them.
 
 ## Proof and skip reporting
 
@@ -70,6 +71,12 @@ handles, required state, commands and observable proof.
   place, the floating [+] and its actions sheet, Perfil from the header
   avatar, `seibi-dev://vehicle/<id>`. Flow: `app-shell`; subflows
   `open-profile.yaml`, `close-sheet.yaml`.
+- [The first-run questions](./first-run.md): an account without
+  `onboarded_at` opens the questions instead of Inicio: name, Knowledge
+  level and its check, country and city, the first Vehicle or «Lo agrego
+  después», «Se guardó tu información», Inicio. Flows: `first-run`, `first-run-skip`;
+  subflow `first-run-finish.yaml` (run by `sign-in.yaml`); script
+  `scripts/reset-first-run.js`.
 - [Inicio: the Garage](./home.md): the greeting, the stage with the
   active Vehicle (poster or silhouette), paging by swipe, arrows and an
   adjustable pager, the choice kept across a cold start, Mileage with

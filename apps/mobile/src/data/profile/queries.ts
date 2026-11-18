@@ -81,3 +81,41 @@ export function useUpdateProfile() {
     },
   });
 }
+
+/** How long «Se guardó tu información» stays up before Inicio (the PWA's 2 s). */
+const CONFIRMATION_MS = 2000;
+
+/**
+ * Finishes Onboarding: saves `onboarded_at`, then, once the confirmation has
+ * been up its 2 s, puts it in the profile, which moves the root layout from
+ * the questions to Inicio. Not optimistic, unlike `useUpdateProfile`: the
+ * questions stay open until the save lands, so a failed save can be retried
+ * there instead of starting over.
+ */
+export function useFinishFirstRun() {
+  const userId = useUserId();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      if (!userId) throw new Error('signed-out');
+      // A refetch still running from an earlier answer must not land after this with the old profile.
+      await queryClient.cancelQueries({ queryKey: profileKeys.user(userId) });
+      const onboardedAt = new Date().toISOString();
+      const save = async () => {
+        const { error } = await supabase.from('profiles').update({ onboarded_at: onboardedAt }).eq('user_id', userId);
+        if (error) throw error;
+      };
+      await Promise.all([save(), new Promise((resolve) => setTimeout(resolve, CONFIRMATION_MS))]);
+      return onboardedAt;
+    },
+    onSuccess: (onboardedAt) => {
+      if (!userId) return;
+      const key = profileKeys.user(userId);
+      if (queryClient.getQueryData<Profile>(key)) {
+        queryClient.setQueryData<Profile>(key, (previous) => (previous ? { ...previous, onboardedAt } : previous));
+      } else {
+        return queryClient.invalidateQueries({ queryKey: key });
+      }
+    },
+  });
+}

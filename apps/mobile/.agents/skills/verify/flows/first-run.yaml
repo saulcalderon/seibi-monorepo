@@ -1,0 +1,286 @@
+# Feature: the first-run questions (features/first-run.md). Run through
+# scripts/verify.sh drive <ios|android> first-run. The test account has
+# usually finished its first run, so the flow first resets it the way a new
+# account starts (scripts/reset-first-run.js: the profile's name, level,
+# country, city and onboarded_at back to empty, nothing else). Then it
+# answers every question and adds a Vehicle — a Toyota Corolla 2018 plated
+# S3-RUN-01 — which ends the questions: «Se guardó tu información», then
+# Inicio. At the end it
+# withdraws the S3 Vehicle through Mi flota, so the next run starts from the
+# same state; `fleet-cleanup` withdraws any S3- Vehicle a failed run left.
+appId: ${APP_ID}
+name: The first-run questions save the profile and a first Vehicle
+---
+- runScript:
+    file: scripts/reset-first-run.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}
+- stopApp
+- openLink: ${DEV_URL}
+# Signed out: sign in (not sign-in.yaml, which would answer the questions itself).
+- extendedWaitUntil:
+    visible:
+      id: 'sign-in-title|first-run-name-field'
+    timeout: 120000
+- runFlow:
+    when:
+      visible:
+        id: sign-in-title
+    commands:
+      - tapOn:
+          id: test-sign-in-email
+      - inputText: ${TEST_EMAIL}
+      - pressKey: Enter
+      - inputText:
+          text: ${TEST_PASSWORD}
+          label: Type the test account's password
+      - pressKey: Enter
+      - runFlow:
+          when:
+            platform: iOS
+          commands:
+            - extendedWaitUntil:
+                visible:
+                  text: 'Not Now|Ahora no'
+                timeout: 10000
+                optional: true
+            - tapOn:
+                text: 'Not Now|Ahora no'
+                optional: true
+- extendedWaitUntil:
+    visible:
+      id: first-run-name-field
+    timeout: 30000
+- startRecording: first-run
+- assertNotVisible:
+    id: home-screen
+
+# --- Tú: «Continuar» waits for a name.
+- assertVisible:
+    id: first-run-name-title
+    text: '¡Bienvenido a Seibi!'
+- assertVisible:
+    id: first-run-name-continue
+    enabled: false
+- waitForAnimationToEnd
+- takeScreenshot: first-run-01-name
+- tapOn:
+    id: first-run-name-field
+- eraseText: 60
+- inputText: E2E
+- assertVisible:
+    id: first-run-name-continue
+    enabled: true
+- tapOn:
+    id: first-run-name-continue
+
+# --- Conocimiento: the self-assessment, three checks, the result.
+- extendedWaitUntil:
+    visible:
+      id: first-run-level-title
+    timeout: 10000
+- waitForAnimationToEnd
+- takeScreenshot: first-run-02-level
+- tapOn:
+    id: first-run-level-intermediate
+- extendedWaitUntil:
+    visible:
+      id: first-run-check-0-prevent
+    timeout: 10000
+- tapOn:
+    id: first-run-check-0-prevent
+- extendedWaitUntil:
+    visible:
+      id: first-run-check-1-checksAndDriving
+    timeout: 10000
+- tapOn:
+    id: first-run-check-1-checksAndDriving
+# The dashboard light sits beside the third question.
+- extendedWaitUntil:
+    visible:
+      id: first-run-check-2-overheating
+    timeout: 10000
+- waitForAnimationToEnd
+- takeScreenshot: first-run-03-coolant
+- tapOn:
+    id: first-run-check-2-overheating
+# «Tengo experiencia» (intermediate) and three right answers stay intermediate.
+- extendedWaitUntil:
+    visible:
+      id: first-run-result-title
+      text: 'Hablas el idioma del taller'
+    timeout: 10000
+- assertVisible: '.*Tu nivel.*Tengo experiencia.*'
+- tapOn:
+    id: first-run-result-other
+- assertVisible:
+    id: first-run-result-level-advanced
+- waitForAnimationToEnd
+- takeScreenshot: first-run-04-result
+- tapOn:
+    id: first-run-result-continue
+
+# --- Ubicación: «Continuar» waits for a city of two letters.
+- extendedWaitUntil:
+    visible:
+      id: first-run-location-title
+    timeout: 10000
+- tapOn:
+    id: first-run-location-city
+- eraseText: 80
+- inputText: S
+- assertVisible:
+    id: first-run-location-continue
+    enabled: false
+- inputText: anta Ana
+- assertVisible:
+    id: first-run-location-continue
+    enabled: true
+# The keyboard stays up: Maestro can't dismiss it on this field, and
+# Continue sits above it.
+- waitForAnimationToEnd
+- takeScreenshot: first-run-05-location
+- tapOn:
+    id: first-run-location-continue
+
+# --- Tu Vehículo: S5's form, with the first run's heading and «Lo agrego después».
+- extendedWaitUntil:
+    visible:
+      id: first-run-vehicle-form-brand
+    timeout: 15000
+- assertVisible:
+    id: first-run-vehicle-title
+    text: 'Agrega tu Vehículo'
+- assertVisible:
+    id: first-run-vehicle-later
+- waitForAnimationToEnd
+- takeScreenshot: first-run-06-vehicle
+- tapOn:
+    id: first-run-vehicle-form-brand
+- extendedWaitUntil:
+    visible:
+      id: pick-option-Toyota
+    timeout: 15000
+- tapOn:
+    id: pick-option-Toyota
+- extendedWaitUntil:
+    visible: 'Marca, Toyota.*'
+    timeout: 10000
+- tapOn:
+    id: first-run-vehicle-form-year
+- scrollUntilVisible:
+    element:
+      id: pick-option-2018
+    direction: DOWN
+- tapOn:
+    id: pick-option-2018
+- extendedWaitUntil:
+    visible: 'Año, 2018.*'
+    timeout: 10000
+- tapOn:
+    id: first-run-vehicle-form-model
+- extendedWaitUntil:
+    visible:
+      id: pick-model
+    timeout: 15000
+- runFlow: fleet-search-field.yaml
+- inputText: Corolla
+# vPIC may be down: take the typed «Usar "Corolla"» row, else the listed model.
+- runFlow:
+    when:
+      visible:
+        id: pick-custom
+    commands:
+      - tapOn:
+          id: pick-custom
+- runFlow:
+    when:
+      visible:
+        id: pick-model
+      notVisible: 'Modelo, Corolla.*'
+    commands:
+      - tapOn:
+          id: pick-option-Corolla
+- extendedWaitUntil:
+    visible: 'Modelo, Corolla.*'
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: first-run-vehicle-form-plate
+    direction: DOWN
+- tapOn:
+    id: first-run-vehicle-form-plate
+- inputText: s3-run-01
+- pressKey: Enter
+- inputText: '30000'
+- assertVisible: '.*30,000.*'
+- tapOn:
+    id: first-run-vehicle-form-measure-km
+# The confirmation stays only the PWA's 2 s: don't spend them waiting
+# for the screen to settle.
+- tapOn:
+    id: first-run-vehicle-form-save
+    waitToSettleTimeoutMs: 500
+    retryTapIfNoChange: false
+
+# --- Saving the Vehicle ends the questions, as in the live PWA: the
+# confirmation, then Inicio on its own. The confirmation lasts the PWA's
+# 2 s, often gone before Maestro's iOS hierarchy catches it: screenshot it
+# when caught; the video always shows it, and onboarded_at in the
+# features/first-run.md query proves it saved.
+- runFlow:
+    when:
+      visible:
+        id: first-run-done-card
+        text: '.*Se guardó tu información.*'
+    commands:
+      - takeScreenshot: first-run-07-done
+- extendedWaitUntil:
+    visible:
+      id: home-screen
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: first-run-08-home
+
+# --- A cold start opens Inicio now: the questions don't come back.
+- stopApp
+- openLink: ${DEV_URL}
+- extendedWaitUntil:
+    visible:
+      id: home-screen
+    timeout: 60000
+- assertNotVisible:
+    id: first-run-name-field
+- takeScreenshot: first-run-09-relaunch
+
+# --- Clean up: withdraw the S3 Vehicle through Mi flota (never another one).
+- tapOn:
+    id: tab-fleet
+- extendedWaitUntil:
+    visible:
+      id: fleet-vehicle-0
+    timeout: 20000
+- runFlow: fleet-search-field.yaml
+- inputText: S3-RUN
+- extendedWaitUntil:
+    visible: '.*Toyota Corolla.*S3-RUN-01.*'
+    timeout: 10000
+- hideKeyboard
+- assertVisible:
+    id: fleet-vehicle-0
+    text: '.*S3-.*'
+- tapOn:
+    id: fleet-vehicle-0-menu
+- tapOn: 'Retirar de mi flota'
+- extendedWaitUntil:
+    visible: 'Retirar Toyota Corolla'
+    timeout: 10000
+- tapOn: 'Retirar|RETIRAR'
+- extendedWaitUntil:
+    notVisible: '.*Toyota Corolla.*S3-RUN-01.*'
+    timeout: 20000
+- takeScreenshot: first-run-10-cleaned
+- stopRecording

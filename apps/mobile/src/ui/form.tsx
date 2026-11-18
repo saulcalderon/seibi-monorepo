@@ -23,16 +23,20 @@ export function FormLayout({
   footer,
   testID,
   scrollRef,
+  divider = true,
 }: {
   children: ReactNode;
   footer: ReactNode;
   testID?: string;
+  /** The line over the action bar. The first-run questions leave it out, as the PWA's do. */
+  divider?: boolean;
   /** The scroll view, to bring a field with an error into view. */
   scrollRef?: RefObject<ScrollViewInstance | null>;
 }) {
   const { theme } = useUnistyles();
   const insets = useSafeAreaInsets();
   const [footerHeight, setFooterHeight] = useState(0);
+  styles.useVariants({ divider });
   return (
     <View style={styles.screen} testID={testID}>
       <KeyboardAwareScrollView
@@ -72,7 +76,11 @@ const styles = StyleSheet.create((theme) => ({
     paddingHorizontal: theme.space[5],
     paddingTop: theme.space[3],
     backgroundColor: theme.colors.bg,
-    borderTopWidth: theme.size.border.thin,
-    borderTopColor: theme.colors.line,
+    variants: {
+      divider: {
+        true: { borderTopWidth: theme.size.border.thin, borderTopColor: theme.colors.line },
+        false: {},
+      },
+    },
   },
 }));

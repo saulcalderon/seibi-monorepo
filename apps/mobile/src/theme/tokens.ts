@@ -168,6 +168,8 @@ export const size = {
   pagerDot: { side: 6, active: 18 },
   /** A status card's interval bar on Inicio (`h-1`). */
   bar: 4,
+  /** The first run's confirmation check (`size-16`). */
+  firstRunCheck: 64,
 } as const;
 
 /**
@@ -204,6 +206,8 @@ export const motion = {
   skeleton: { duration: 900 },
   /** A progress bar filling to its value on mount (the PWA's 0.7 s). */
   progress: { duration: 700 },
+  /** The first run: the pause after choosing an answer before the next question, and the confirmation's entrance. */
+  firstRun: { chosen: 180, confirmFade: 350, checkDelay: 120 },
   /** Cubic-bézier control points: `cubicBezier(...motion.curve.out)`. */
   curve: {
     /** Strong ease-out, for press feedback. */

@@ -193,8 +193,10 @@ Android only (`runFlow` `when: platform: Android`).
 
 Every route but sign-in needs a session. A flow that goes past the sign-in
 screen runs `runFlow: sign-in.yaml` right after opening the app: it signs
-in with the email + password test sign-in when the sign-in screen shows
-and ends on Inicio (`id: home-screen`) either way. That form exists only in development and
+in with the email + password test sign-in when the sign-in screen shows,
+answers the first-run questions the short way when the account hasn't
+finished them (`first-run-finish.yaml`), and ends on Inicio (`id:
+home-screen`) either way. That form exists only in development and
 preview builds; `verify.sh` starts Metro with `EXPO_PUBLIC_TEST_SIGN_IN=1`.
 
 - **Account:** `e2e@seibi.test` on seibi-dev, dedicated to these flows
@@ -249,7 +251,11 @@ Proof standards for a PR (`AGENTS.md` → "Prove it works"):
   run a read-only `SELECT` against the hosted **seibi-dev** Supabase
   project (Supabase MCP `execute_sql`) that shows the saved row, and paste
   the query and result in the PR. Never write to seibi-dev by hand to make
-  a journey pass, and never touch production.
+  a journey pass, and never touch production. One setup write is allowed:
+  `flows/scripts/reset-first-run.js` puts the test account back to before
+  its first run (the profile fields a new account has empty), because no
+  user can undo a finished first run and the first-run flows need one to
+  prove. It writes nothing a journey then asserts.
 - Mocks only where a production boundary already isolates the outside
   system.
 - Drive only the ticket's own flow, on its main path, on iOS, on the
@@ -333,7 +339,7 @@ shared: run `reset` after every such run, failed ones too.
   `SEIBI_TEST_PASSWORD`, `SEIBI_TEST_ACCOUNT_FILE`; see Sign-in).
 - `flows/*.yaml`: one Maestro flow per feature journey, named in the
   feature's file. `flows/sign-in.yaml`, `flows/open-profile.yaml`, `flows/close-sheet.yaml`, `flows/ui-kit-open.yaml` and
-  `flows/home-fixture-open.yaml` are subflows, not driven alone.
+  `flows/home-fixture-open.yaml` and `flows/first-run-finish.yaml` are subflows, not driven alone.
   `flows/scripts/` holds the JavaScript that flows run with `runScript`.
 
 ## Slim simulator
