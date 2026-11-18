@@ -317,7 +317,7 @@ system text size, up to twice their size (`maxIconScale`); icons in a
 fixed box (tiles, icon buttons) pass `fixed` and keep theirs.
 
 SVG (`react-native-svg`) covers what symbols can't: the logo, the
-body-type silhouettes, the art on Login and the Intro, and filled icons on
+body-type silhouettes and filled icons on
 Android, where Material Symbols has outline only (`androidPath`, from
 Google's Material Icons, Apache 2.0).
 
@@ -354,7 +354,7 @@ redesign.
 
 | Phone setting | What Seibi does |
 | --- | --- |
-| Text size | All text grows; rows and switch rows stack from 1.35× (`largeTextScale`) instead of truncating; icons beside text grow with it. No line is cut on Android at any size (Type → Text that fits) |
+| Text size | All text grows; rows and switch rows stack from 1.35× (`largeTextScale`) instead of truncating; icons beside text grow with it. No line is cut on Android at any size (Type → Text that fits). The exception is words inside a picture (the Intro's slides): they are hidden from VoiceOver and TalkBack and keep their size, as an image's would |
 | Reduce Motion | No animations; content appears in place |
 | VoiceOver / TalkBack | Every pressable has `accessibilityRole` and a full spoken label that starts with its visible words; headings are marked as headings |
 

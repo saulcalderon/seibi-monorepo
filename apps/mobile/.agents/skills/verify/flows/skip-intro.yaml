@@ -1,0 +1,25 @@
+# Subflow, not driven alone: flows that cold-start the app run it right after
+# opening it, before they wait for sign-in or Inicio. On a phone that has
+# never skipped or finished the Intro (a fresh install, or after clearState),
+# the Intro opens before Login, signed out; this taps «Saltar», which marks it
+# done on the phone for good, and ends on Login. Anywhere else it changes
+# nothing. Feature: features/intro.md.
+appId: ${APP_ID}
+name: Skip the Intro when it shows
+---
+# The first screen after the splash: the Intro, sign-in, Inicio or the first-run questions.
+- extendedWaitUntil:
+    visible:
+      id: 'intro-skip|sign-in-title|home-screen|first-run-name-field'
+    timeout: 120000
+- runFlow:
+    when:
+      visible:
+        id: intro-skip
+    commands:
+      - tapOn:
+          id: intro-skip
+      - extendedWaitUntil:
+          visible:
+            id: sign-in-title
+          timeout: 15000

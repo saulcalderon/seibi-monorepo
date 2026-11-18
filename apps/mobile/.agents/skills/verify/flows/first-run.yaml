@@ -20,6 +20,8 @@ name: The first-run questions save the profile and a first Vehicle
       TEST_PASSWORD: ${TEST_PASSWORD}
 - stopApp
 - openLink: ${DEV_URL}
+# A fresh install opens the Intro first: skip it (skip-intro.yaml).
+- runFlow: skip-intro.yaml
 # Signed out: sign in (not sign-in.yaml, which would answer the questions itself).
 - extendedWaitUntil:
     visible:

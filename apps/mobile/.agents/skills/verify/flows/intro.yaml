@@ -1,0 +1,110 @@
+# Feature: the Intro (features/intro.md).
+# Run through scripts/verify.sh drive <ios|android> intro, which passes
+# APP_ID and DEV_URL.
+#
+# It starts from a fresh install's state: `clearState` deletes Seibi Dev's
+# data (signed out, the Intro not done, the theme back to Auto), so the next
+# flow that needs a session signs in again through sign-in.yaml.
+appId: ${APP_ID}
+name: The Intro shows on a first launch, moves through its three slides, skips to Login and never shows again
+---
+- stopApp
+- clearState
+- startRecording: intro
+- openLink: ${DEV_URL}
+# A reinstalled app may ask once to open the dev client's link.
+- runFlow:
+    when:
+      platform: iOS
+      visible: 'Open|Abrir'
+    commands:
+      - tapOn: 'Open|Abrir'
+# The splash gives way to the Intro, not Login: first slide. The eyebrow's
+# spoken label adds «, diapositiva N de 3», which iOS reports as its text.
+- extendedWaitUntil:
+    visible:
+      id: intro-title
+    timeout: 120000
+- assertVisible:
+    id: intro-eyebrow
+    text: 'Qué es Seibi.*'
+- assertVisible:
+    id: intro-title
+    text: Tu Vehículo, siempre en orden
+- assertVisible:
+    id: intro-skip
+- assertVisible:
+    id: intro-next
+    text: Siguiente
+- assertNotVisible:
+    id: sign-in-title
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: intro-1-what
+# «Siguiente»: the second slide.
+- tapOn:
+    id: intro-next
+- extendedWaitUntil:
+    visible:
+      id: intro-title
+      text: 'Se acabó el .*'
+    timeout: 10000
+- assertVisible:
+    id: intro-eyebrow
+    text: 'El problema.*'
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: intro-2-problem
+# A swipe to the left: the last slide, «Empezar» and no «Saltar».
+- swipe:
+    direction: LEFT
+- extendedWaitUntil:
+    visible:
+      id: intro-title
+      text: Avisos según tu modelo y tu uso
+    timeout: 10000
+- assertVisible:
+    id: intro-eyebrow
+    text: 'Cómo te ayuda.*'
+- assertVisible:
+    id: intro-next
+    text: Empezar
+- assertNotVisible:
+    id: intro-skip
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: intro-3-help
+# A swipe back to the right: the second slide and «Saltar» again.
+- swipe:
+    direction: RIGHT
+- extendedWaitUntil:
+    visible:
+      id: intro-eyebrow
+      text: 'El problema.*'
+    timeout: 10000
+- assertVisible:
+    id: intro-next
+    text: Siguiente
+# «Saltar»: Login.
+- tapOn:
+    id: intro-skip
+- extendedWaitUntil:
+    visible:
+      id: sign-in-title
+    timeout: 15000
+- assertNotVisible:
+    id: intro-skip
+- takeScreenshot: intro-skipped-login
+# A cold start: Login, never the Intro again.
+- stopApp
+- openLink: ${DEV_URL}
+- extendedWaitUntil:
+    visible:
+      id: 'sign-in-title|intro-skip'
+    timeout: 120000
+- assertVisible:
+    id: sign-in-title
+- assertNotVisible:
+    id: intro-skip
+- takeScreenshot: intro-relaunch-login
+- stopRecording

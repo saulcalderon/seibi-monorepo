@@ -27,7 +27,7 @@ async function signedInDevice() {
   const session = createEncryptedStorage({ keys, data, cipher });
   await session.setItem(NAME, JSON.stringify({ access_token: 'a', refresh_token: 'r' }));
   await data.setItem(userDataKey('active-vehicle'), 'f3c1');
-  await data.setItem(userDataKey('intro-done'), '1');
+  await data.setItem(userDataKey('last-tab'), 'fleet');
   return { keys, data, session };
 }
 
@@ -87,13 +87,13 @@ describe('signOut', () => {
     expect(queryCache.clear).toHaveBeenCalledOnce();
   });
 
-  it("deletes the person's device preferences, the active Vehicle and the Intro, and keeps the phone's", async () => {
+  it("deletes the person's device preferences (the active Vehicle) and keeps the phone's, the Intro done among them", async () => {
     const { data, session } = await signedInDevice();
     await data.setItem(ACTIVE_VEHICLE_KEY, 'f3c1');
     await data.setItem(INTRO_DONE_KEY, '1');
 
     await createDeviceWipe({ session, data, providers: [] })();
 
-    expect([...data.entries.keys()].sort()).toEqual(['language.v1', 'theme.v1']);
+    expect([...data.entries.keys()].sort()).toEqual(['intro-done.v1', 'language.v1', 'theme.v1']);
   });
 });

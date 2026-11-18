@@ -38,10 +38,15 @@ export function useActiveVehicle(vehicles: readonly VehicleView[]) {
   return { active, select };
 }
 
-export function isIntroDone() {
-  return Storage.getItemSync(INTRO_DONE_KEY) === '1';
+const readIntroDone = () => Storage.getItemSync(INTRO_DONE_KEY) === '1';
+
+/** Whether the Intro is done on this phone; the root layout's guards follow it. */
+export function useIntroDone() {
+  return useSyncExternalStore(subscribe, readIntroDone);
 }
 
+/** «Saltar», «Empezar» or a session: the Intro never opens again on this phone. */
 export function markIntroDone() {
   Storage.setItemSync(INTRO_DONE_KEY, '1');
+  notify();
 }

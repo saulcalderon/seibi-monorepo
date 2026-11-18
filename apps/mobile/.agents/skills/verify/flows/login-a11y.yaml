@@ -12,6 +12,8 @@ name: Login at the largest text size or with Reduce Motion
 - startRecording: login-a11y
 - stopApp
 - openLink: ${DEV_URL}
+# A fresh install opens the Intro first: skip it (skip-intro.yaml).
+- runFlow: skip-intro.yaml
 - extendedWaitUntil:
     visible:
       id: sign-in-title
