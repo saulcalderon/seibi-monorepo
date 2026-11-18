@@ -113,6 +113,7 @@ export function MenuButton({
   return (
     <MenuView
       testID={testID}
+      style={styles.menu}
       actions={actions.map((action) => ({
         id: action.id,
         title: action.title,
@@ -159,6 +160,13 @@ const styles = StyleSheet.create((theme, rt) => ({
     flexShrink: 1,
     gap: theme.space[0.5],
   },
+  menu: {
+    variants: {
+      // Only as wide as its words: a column would stretch the native host past the button, and a tap
+      // there opens nothing.
+      withText: { true: { alignSelf: 'flex-start' }, false: {} },
+    },
+  },
   menuTrigger: {
     minWidth: theme.size.target,
     minHeight: theme.size.target,
@@ -175,7 +183,7 @@ const styles = StyleSheet.create((theme, rt) => ({
     variants: {
       // With words it takes a secondary Button's `md` padding and gap (button.tsx).
       withText: {
-        true: { flexDirection: 'row', gap: theme.space[2], paddingHorizontal: theme.space[4.5], alignSelf: 'flex-start' },
+        true: { flexDirection: 'row', gap: theme.space[2], paddingHorizontal: theme.space[4.5] },
         false: {},
       },
     },

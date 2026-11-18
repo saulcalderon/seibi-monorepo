@@ -71,12 +71,27 @@ name: Attach an invoice photo to a Service, see it and remove it
 - tapOn:
     id: service-notes
 - inputText: verify SEI-67
-- runFlow: service-hide-keyboard.yaml
+# The notes field fills the middle of the sheet, where a drag lands on the
+# text: drag higher up to put the keyboard away (iOS); Back on Android.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 50%, 15%
+          end: 50%, 25%
+          duration: 800
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
 # A new Service offers the invoice too; this run attaches it to the saved one.
 - scrollUntilVisible:
     element:
       id: service-invoice-attach
     centerElement: true
+- assertVisible: 'Adjuntar foto'
 - takeScreenshot: invoice-01-new-service
 - tapOn:
     id: service-save
@@ -112,6 +127,7 @@ name: Attach an invoice photo to a Service, see it and remove it
     element:
       id: service-invoice-attach
     centerElement: true
+- waitForAnimationToEnd
 - tapOn:
     id: service-invoice-attach
 - extendedWaitUntil:
