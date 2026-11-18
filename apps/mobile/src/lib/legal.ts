@@ -11,6 +11,9 @@ export const LEGAL_URLS = {
   privacy: 'https://seibiapp.com/legal/privacidad',
 } as const;
 
+/** Where «Escríbenos» in Perfil writes to, as the PWA's footer link. */
+export const CONTACT_EMAIL = 'hola@seibiapp.com';
+
 export type LegalDocument = keyof typeof LEGAL_URLS;
 
 /**

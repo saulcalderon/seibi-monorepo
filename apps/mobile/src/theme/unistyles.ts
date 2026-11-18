@@ -1,7 +1,10 @@
 import { StyleSheet } from 'react-native-unistyles';
 
 import { art, garageStage, palettes, shadows, type PaletteName } from './palettes';
-import { applyNativeScheme, getThemePreference, unistylesThemeFor } from './preference';
+import { Appearance } from 'react-native';
+
+import { getThemePreference } from './preference';
+import { themePlan } from './theme-choice';
 import { displayTracking, fonts, garageType, heroType, largeTextScale, maxIconScale, opacity, radius, size, space, typeScale } from './tokens';
 
 /**
@@ -52,12 +55,12 @@ declare module 'react-native-unistyles' {
   export interface UnistylesThemes extends AppThemes {}
 }
 
-const preference = getThemePreference();
+const plan = themePlan(getThemePreference());
 
 StyleSheet.configure({
   themes,
-  settings:
-    preference === 'system' ? { adaptiveThemes: true } : { initialTheme: unistylesThemeFor(preference) },
+  settings: plan.theme ? { initialTheme: plan.theme } : { adaptiveThemes: true },
 });
 
-if (preference !== 'system') applyNativeScheme(preference);
+// Native views (alerts, `@expo/ui` controls, the status bar) follow React Native's scheme: a fixed choice sets it too.
+if (plan.theme) Appearance.setColorScheme(plan.nativeScheme);

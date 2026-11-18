@@ -30,9 +30,6 @@ type FixedPlan = { stored: 'light' | 'night'; adaptive: false; theme: 'light' | 
  * - `nativeScheme`: React Native's colour scheme, which native views (alerts,
  *   `@expo/ui` controls, the status bar) follow.
  */
-export function themePlan(preference: 'system'): SystemPlan;
-export function themePlan(preference: 'light' | 'night'): FixedPlan;
-export function themePlan(preference: ThemePreference): SystemPlan | FixedPlan;
 export function themePlan(preference: ThemePreference): SystemPlan | FixedPlan {
   if (preference === 'system') return { stored: null, adaptive: true, theme: null, nativeScheme: 'unspecified' } as const;
   const theme = preference === 'night' ? 'dark' : 'light';

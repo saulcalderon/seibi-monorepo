@@ -463,7 +463,6 @@
       "terms": "Términos de uso",
       "privacy": "Política de privacidad",
       "contact": "Escríbenos",
-      "email": "hola@seibiapp.com",
       "mailFailed": "No pudimos abrir tu correo. Escríbenos a {{email}}."
     },
     "version": "Seibi · {{version}}"

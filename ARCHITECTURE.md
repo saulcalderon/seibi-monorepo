@@ -499,7 +499,7 @@ The migration's order, scope and tickets are in
     field, 60 characters, the `profiles_display_name_length` limit; empty
     saves as none), `profile-level` (the four levels as option cards, the
     chosen one on `radiantSoft` with a `radiant` ring; a tap saves and
-    closes) and `profile-location` (country, El Salvador when none is
+    closes, so it has no `FormLayout`) and `profile-location` (country, El Salvador when none is
     saved, and city, 80 characters). They save through `useUpdateProfile`
     (optimistic, rolled back on failure) and close once the save lands, as
     the PWA's sheets; a failed save shows its message in the sheet. Unlike
@@ -516,7 +516,8 @@ The migration's order, scope and tickets are in
     reads the active theme for the `verify` flows.
   - **«Legal y ayuda».** «Términos de uso» and «Política de privacidad»
     open `openLegal()` (Legal pages, under Auth); «Escríbenos» opens
-    `mailto:hola@seibiapp.com` with `Linking`, and a toast gives the
+    `mailto:hola@seibiapp.com` (`CONTACT_EMAIL` in `src/lib/legal.ts`)
+    with `Linking`, and a toast gives the
     address when no mail app answers (the iOS Simulator has none).
   - **Account.** «Cerrar sesión» and «Eliminar mi cuenta» are SEI-44's
     `signOut()` and `deleteAccount()` (Auth below), the deletion behind

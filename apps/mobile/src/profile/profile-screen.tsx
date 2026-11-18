@@ -8,7 +8,7 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { deleteAccount, signOut, useAuth } from '@/auth/session';
 import { useProfile } from '@/data/profile/queries';
 import { levelTitle } from '@/lib/knowledge';
-import { openLegal, type LegalDocument } from '@/lib/legal';
+import { CONTACT_EMAIL, openLegal, type LegalDocument } from '@/lib/legal';
 import { identityFromUser, initials } from '@/shell/identity';
 import { TabScroll } from '@/shell/tab-scroll';
 import { setThemePreference, THEME_PREFERENCES, useThemePreference } from '@/theme/preference';
@@ -175,10 +175,9 @@ function ThemeCheck() {
 function LegalAndHelp() {
   const { t } = useTranslation();
   const { theme } = useUnistyles();
-  const email = t('profile.legal.email');
   const open = (document: LegalDocument) => void openLegal(document, theme.colors.radiant);
   const write = () => {
-    Linking.openURL(`mailto:${email}`).catch(() => notify.error(t('profile.legal.mailFailed', { email })));
+    Linking.openURL(`mailto:${CONTACT_EMAIL}`).catch(() => notify.error(t('profile.legal.mailFailed', { email: CONTACT_EMAIL })));
   };
   return (
     <View style={styles.section}>
@@ -188,7 +187,7 @@ function LegalAndHelp() {
         <RowDivider />
         <ListRow testID="profile-privacy" leading={<IconTile icon="privacy" size="sm" />} title={t('profile.legal.privacy')} onPress={() => open('privacy')} />
         <RowDivider />
-        <ListRow testID="profile-contact" leading={<IconTile icon="guide" size="sm" />} title={t('profile.legal.contact')} subtitle={email} onPress={write} />
+        <ListRow testID="profile-contact" leading={<IconTile icon="guide" size="sm" />} title={t('profile.legal.contact')} subtitle={CONTACT_EMAIL} onPress={write} />
       </Card>
     </View>
   );
@@ -284,7 +283,7 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: 'center',
     gap: theme.space[3],
     paddingHorizontal: theme.space[4],
-    paddingVertical: theme.space[3],
+    paddingVertical: theme.space[3.5],
   },
   themeControl: {
     flex: 1,

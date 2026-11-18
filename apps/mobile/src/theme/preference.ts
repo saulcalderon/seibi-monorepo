@@ -23,19 +23,6 @@ export function getThemePreference(): ThemePreference {
   return current;
 }
 
-/** The Unistyles theme for a fixed preference (`light`, or `dark` for the night palette). */
-export function unistylesThemeFor(preference: 'light' | 'night') {
-  return themePlan(preference).theme;
-}
-
-/**
- * Native views (alerts, `@expo/ui` controls, the status bar) follow React
- * Native's colour scheme, so a fixed preference overrides it too.
- */
-export function applyNativeScheme(preference: ThemePreference) {
-  Appearance.setColorScheme(themePlan(preference).nativeScheme);
-}
-
 /** Saves the preference and applies it at once. Styles update without re-rendering React. */
 export function setThemePreference(next: ThemePreference) {
   if (next === current) return;
@@ -43,7 +30,7 @@ export function setThemePreference(next: ThemePreference) {
   const plan = themePlan(next);
   if (plan.stored === null) Storage.removeItemSync(KEY);
   else Storage.setItemSync(KEY, plan.stored);
-  // Native first, so when Unistyles goes back to following the system it reads the phone's scheme.
+  // Native views follow React Native's scheme. Native first, so when Unistyles goes back to following the system it reads the phone's scheme.
   Appearance.setColorScheme(plan.nativeScheme);
   UnistylesRuntime.setAdaptiveThemes(plan.adaptive);
   if (plan.theme) UnistylesRuntime.setTheme(plan.theme);

@@ -49,7 +49,7 @@ function NameForm({ profile }: { profile: Profile }) {
 
   return (
     <FormLayout testID="profile-name-sheet" footer={<SaveButton testID="profile-name-save" loading={update.isPending} error={error} onPress={save} />}>
-      <SheetHeader testID="profile-name-title" title={t('profile.name.title')} />
+      <SheetHeader testID="profile-name-title" closeTestID="profile-name-close" title={t('profile.name.title')} />
       <TextField
         testID="profile-name-field"
         ref={input}
@@ -71,7 +71,10 @@ function NameForm({ profile }: { profile: Profile }) {
   );
 }
 
-/** «Nivel de conocimiento»: tapping a level saves it and closes the sheet. */
+/**
+ * «Nivel de conocimiento»: tapping a level saves it and closes the sheet. No
+ * field and no save button, so it is a plain view rather than a `FormLayout`.
+ */
 export function LevelSheet() {
   return <WithProfile testID="profile-level-sheet">{(profile) => <LevelForm profile={profile} />}</WithProfile>;
 }
@@ -95,7 +98,7 @@ function LevelForm({ profile }: { profile: Profile }) {
 
   return (
     <View testID="profile-level-sheet" style={styles.sheet}>
-      <SheetHeader testID="profile-level-title" title={t('profile.level.title')} body={t('profile.level.body')} />
+      <SheetHeader testID="profile-level-title" closeTestID="profile-level-close" title={t('profile.level.title')} body={t('profile.level.body')} />
       <View accessibilityRole="radiogroup" accessibilityLabel={t('profile.level.group')} style={styles.levels}>
         {KNOWLEDGE_LEVELS.map((level) => (
           <LevelOption
@@ -161,7 +164,7 @@ function LocationForm({ profile }: { profile: Profile }) {
 
   return (
     <FormLayout testID="profile-location-sheet" footer={<SaveButton testID="profile-location-save" loading={update.isPending} error={error} onPress={save} />}>
-      <SheetHeader testID="profile-location-title" title={t('profile.location.title')} body={t('profile.location.body')} />
+      <SheetHeader testID="profile-location-title" closeTestID="profile-location-close" title={t('profile.location.title')} body={t('profile.location.body')} />
       <SelectField
         testID="profile-location-country"
         label={t('profile.location.country')}
@@ -218,7 +221,7 @@ function WithProfile({ children, testID }: { children: (profile: Profile) => Rea
 }
 
 /** The sheet's title, an optional line under it, and «Cerrar». */
-function SheetHeader({ title, body, testID }: { title: string; body?: string; testID: string }) {
+function SheetHeader({ title, body, testID, closeTestID }: { title: string; body?: string; testID: string; closeTestID: string }) {
   const { t } = useTranslation();
   const router = useRouter();
   return (
@@ -227,7 +230,7 @@ function SheetHeader({ title, body, testID }: { title: string; body?: string; te
         <Text testID={testID} step="title3" family="display" heading style={styles.title}>
           {title}
         </Text>
-        <IconButton testID={`${testID.replace(/-title$/, '')}-close`} icon="close" label={t('profile.close')} onPress={() => router.back()} />
+        <IconButton testID={closeTestID} icon="close" label={t('profile.close')} onPress={() => router.back()} />
       </View>
       {body ? (
         <Text step="subhead" tone="muted">

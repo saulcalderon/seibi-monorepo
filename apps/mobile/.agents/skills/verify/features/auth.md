@@ -25,7 +25,7 @@ next launch when the account was deleted somewhere else.
 - `test-sign-in` email + password with the seibi-dev test account, in development and preview builds only.
 - `session-restore` the session survives a kill and relaunch (read back from the encrypted store).
 - `sign-out` «Cerrar sesión» returns to sign-in; a relaunch stays signed out.
-- `delete-account` «Eliminar cuenta» → native alert → `delete-account` Edge Function → «Cuenta eliminada» → «Entendido» → sign-in.
+- `delete-account` «Eliminar mi cuenta» → native alert → `delete-account` Edge Function → «Cuenta eliminada» → «Entendido» → sign-in.
 - `deleted-elsewhere` a session whose account was deleted elsewhere shows «Cuenta eliminada» on the next launch.
 - `apple` Sign in with Apple (iOS). Needs Apple enabled in Supabase and, on the Simulator, an Apple ID.
 - `google` Google's account picker. Hidden until the build has `EXPO_PUBLIC_GOOGLE_*` client ids.
