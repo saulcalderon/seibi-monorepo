@@ -131,8 +131,9 @@ export function EstimatePanel({
 
       {asked ? (
         <View style={styles.thread} testID="estimates-thread">
-          <View style={styles.question} testID="estimates-asked">
-            <Text step="subhead" tone="onInverse">
+          <View style={styles.question}>
+            {/* The id is on the words, so a flow can match what was asked. */}
+            <Text testID="estimates-asked" step="subhead" tone="onInverse">
               {asked}
             </Text>
           </View>
