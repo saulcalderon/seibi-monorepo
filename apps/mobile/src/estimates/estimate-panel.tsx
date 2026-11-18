@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Keyboard, View } from 'react-native';
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
@@ -21,7 +21,7 @@ import { TextField } from '@/ui/fields';
 import { Text } from '@/ui/text';
 
 import { EstimateCard } from './estimate-card';
-import { canAsk, estimateRequest, estimateTitle, pastQueries, pastQuerySubtitle, suggestedTasks, waitingStep, WAITING_STEP_MS, type EstimateAsk } from './estimates-logic';
+import { canAsk, estimateRequest, estimateTitle, pastQueries, pastQuerySubtitle, suggestedTasks, waitingStep, WAITING_STEP_MS, type EstimateAsk, type WaitingStep } from './estimates-logic';
 
 /**
  * Asking for an Estimate on one Vehicle (the PWA's EstimatePanel): what to
@@ -32,7 +32,16 @@ import { canAsk, estimateRequest, estimateTitle, pastQueries, pastQuerySubtitle,
  * Unlike the PWA, the question field sits at the top instead of pinned above
  * the tab bar, where the floating [+] would cover its button.
  */
-export function EstimatePanel({ vehicle, initialTask }: { vehicle: VehicleView; initialTask?: string }) {
+export function EstimatePanel({
+  vehicle,
+  initialTask,
+  onInitialTaskAsked,
+}: {
+  vehicle: VehicleView;
+  initialTask?: string;
+  /** Called once `initialTask` has been asked for, so the screen doesn't pass it again. */
+  onInitialTaskAsked?: () => void;
+}) {
   const { t } = useTranslation();
   const garage = useGarage();
   const profile = useProfile();
@@ -43,7 +52,7 @@ export function EstimatePanel({ vehicle, initialTask }: { vehicle: VehicleView; 
   const [query, setQuery] = useState('');
   const [asked, setAsked] = useState<string | null>(null);
   const [result, setResult] = useState<EstimateResponse | Estimate | null>(null);
-  const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [step, setStep] = useState<WaitingStep>(0);
   const autoRan = useRef(false);
 
   const run = (ask: EstimateAsk) => {
@@ -58,14 +67,17 @@ export function EstimatePanel({ vehicle, initialTask }: { vehicle: VehicleView; 
     request.mutateAsync(estimateRequest(vehicle.id, ask)).then(setResult, () => undefined);
   };
 
+  // Once, when the catalog that names the task has loaded (the PWA's effect).
+  const askInitialTask = useEffectEvent(() => {
+    if (!initialTask || autoRan.current) return;
+    autoRan.current = true;
+    run({ taskCode: initialTask });
+    onInitialTaskAsked?.();
+  });
+  const initialTaskKnown = initialTask ? byCode.has(initialTask) : false;
   useEffect(() => {
-    if (initialTask && !autoRan.current && byCode.has(initialTask)) {
-      autoRan.current = true;
-      run({ taskCode: initialTask });
-    }
-    // Once, when the catalog that names the task has loaded (the PWA's effect).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialTask, byCode.size]);
+    if (initialTaskKnown) askInitialTask();
+  }, [initialTaskKnown]);
 
   useEffect(() => {
     if (!request.isPending) return;
@@ -108,7 +120,9 @@ export function EstimatePanel({ vehicle, initialTask }: { vehicle: VehicleView; 
               label={label}
               icon={taskIcon(code)}
               dot={due ?? undefined}
-              accessibilityLabel={due ? t('estimates.ask.taskPending', { task: label }) : label}
+              // The dot's colour says overdue or «Por vencer»; the spoken label says it in words.
+              accessibilityLabel={due ? t(`estimates.ask.task.${due}`, { task: label }) : label}
+              disabled={request.isPending}
               onPress={() => run({ taskCode: code })}
             />
           );
@@ -167,7 +181,7 @@ export function EstimatePanel({ vehicle, initialTask }: { vehicle: VehicleView; 
 }
 
 /** The line that says Seibi is still looking, moving through its three steps. */
-function Waiting({ step }: { step: 0 | 1 | 2 }) {
+function Waiting({ step }: { step: WaitingStep }) {
   const { t } = useTranslation();
   const { theme } = useUnistyles();
   return (

@@ -30,11 +30,12 @@ consultas de hoy. Vuelve mañana.» at the daily AI limit). No Vehicle:
   `id: estimates-vehicle-<n>` (two or more Vehicles); a tap switches
   Estimados and Inicio.
 - `location` `id: estimates-location` (profile without a country): `id:
-  estimates-location-country`, `-city`, `-save`.
+  estimates-location-country`, `-city`, `-save`. A profile that failed to
+  load shows `id: estimates-profile-error` («Reintentar») instead.
 - `ask` `id: estimates-query` and `id: estimates-send` («Estimar»,
   disabled under three characters or while a request runs); chips `id:
-  estimates-task-<taskCode>` in `id: estimates-tasks`, spoken «<task>,
-  pendiente» when due.
+  estimates-task-<taskCode>` in `id: estimates-tasks` (disabled while a
+  request runs), spoken «<task>, vencido» or «<task>, por vencer» when due.
 - `thread` `id: estimates-thread`: the question `id: estimates-asked`, the
   waiting line `id: estimates-waiting` (busy, its step as its value), a
   failure `id: estimates-request-error`.
@@ -74,6 +75,13 @@ left today.
 - **Sources.** When the result has one, `id: estimates-result-source-0`
   opens the in-app browser (`estimates-06-source`) and «Done» comes back to
   the card.
+- **«¿Cuánto cuesta?» (not in the flow).** A Reminder's detail →
+  `id: reminder-detail-estimate` closes the sheet, switches to Estimados on
+  that Vehicle and asks for that task at once (the question bubble shows its
+  name). It is a second Estimate, so the `estimates` flow leaves it out
+  (one request per run); prove it in a run of its own, by hand or with a
+  one-off flow, and say which in the PR. Switching Vehicles afterwards must
+  not ask again.
 - **Saved data.** After the run, a read-only seibi-dev `SELECT` shows the
   new request, the same table the PWA's «Consultas anteriores» reads:
 

@@ -104,7 +104,10 @@ export function estimatePlace(city: string, country: Country, t: TFunction) {
 /** How long each waiting line stays before the next (the PWA's 4.5 s). */
 export const WAITING_STEP_MS = 4500;
 
+/** One of the three waiting lines (`estimates.waiting.step<n>`). */
+export type WaitingStep = 0 | 1 | 2;
+
 /** Which of the three waiting lines shows after `elapsed` ms: one every 4.5 s, then the last stays. */
-export function waitingStep(elapsed: number): 0 | 1 | 2 {
-  return Math.min(Math.floor(elapsed / WAITING_STEP_MS), 2) as 0 | 1 | 2;
+export function waitingStep(elapsed: number): WaitingStep {
+  return Math.min(Math.floor(elapsed / WAITING_STEP_MS), 2) as WaitingStep;
 }

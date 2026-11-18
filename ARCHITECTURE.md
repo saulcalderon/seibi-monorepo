@@ -197,9 +197,9 @@ The migration's order, scope and tickets are in
   in git), Expo Router with routes in `src/app/`, React Compiler, New
   Architecture (the only architecture since SDK 55), typed routes.
   Development builds (no Expo Go). Add packages with `npx expo install`.
-  The first binary already carries the native modules that after-launch
-  tickets need (`expo-image-picker` for S12, `react-native-svg`,
-  Reanimated), so those tickets can ship by OTA.
+  The first binary carries every native module the launch needs
+  (`expo-image-picker` for S12, `react-native-svg`, Reanimated), so later
+  JavaScript fixes can ship by OTA.
 - **Variants:** one dynamic `app.config.ts`, selected by
   `EXPO_PUBLIC_APP_VARIANT` (`development` | `production`; unset means
   `production`, so an update published without it can't ship development
@@ -625,15 +625,18 @@ The migration's order, scope and tickets are in
   - **Location.** The `estimates` function prices in the profile's country
     and city (`profile_location` without them), so with no country the form
     is replaced by «¿Dónde está tu Vehículo?» (country, city, «Guardar
-    ubicación» through `useUpdateProfile`).
+    ubicación» through `useUpdateProfile`). A profile that failed to load
+    shows «Reintentar» instead, so the card never saves over a location.
   - **Asking.** «¿Qué quieres cotizar?» (three characters at least,
     `canAsk`) or a task chip: the Vehicle's overdue and «Por vencer» tasks
-    first, with their dot, then the PWA's popular ones, eight at most
-    (`suggestedTasks`). It sends `{ vehicleId, taskCode }` or
+    first, with their dot (spoken «vencido» or «por vencer»), then the
+    PWA's popular ones, eight at most (`suggestedTasks`); the chips are
+    disabled while a request runs. It sends `{ vehicleId, taskCode }` or
     `{ vehicleId, query }` (`estimateRequest`). Unlike the PWA, the field
     sits at the top: pinned above the tab bar, the floating [+] would cover
     its button. `?task=` asks for that task once on arrival («¿Cuánto
-    cuesta?» in a Reminder's detail).
+    cuesta?» in a Reminder's detail), and not again when the Vehicle
+    changes.
   - **Waiting and errors.** The question shows as a bubble, then a line
     with a spinner that moves through «Buscando precios en tu zona…»,
     «Comparando fuentes…» and «Ordenando los resultados…», one every 4.5 s

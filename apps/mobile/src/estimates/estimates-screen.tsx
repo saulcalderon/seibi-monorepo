@@ -45,6 +45,8 @@ function Estimados({ vehicleParam, taskParam }: { vehicleParam?: string; taskPar
   const garage = useGarage();
   const { active, select } = useActiveVehicle(garage.vehicles);
   const [vehicleId, setVehicleId] = useState<string | null>(vehicleParam ?? null);
+  // The link's task is asked for once: switching Vehicles remounts the panel, and must not ask (and spend an AI call) again.
+  const [linkTask, setLinkTask] = useState(taskParam);
   const vehicle = garage.vehicles.find((v) => v.id === (vehicleId ?? active?.id)) ?? null;
 
   if (garage.isLoading) {
@@ -99,7 +101,7 @@ function Estimados({ vehicleParam, taskParam }: { vehicleParam?: string; taskPar
       />
       {/* SEI-69 (Chat de Seibi) mounts its mode switch here and swaps the panel for the chat. */}
       <LocationGate>
-        <EstimatePanel key={vehicle.id} vehicle={vehicle} initialTask={taskParam} />
+        <EstimatePanel key={vehicle.id} vehicle={vehicle} initialTask={linkTask} onInitialTaskAsked={() => setLinkTask(undefined)} />
       </LocationGate>
     </TabScroll>
   );
@@ -188,6 +190,8 @@ function LocationGate({ children }: { children: ReactNode }) {
   const [city, setCity] = useState('');
   const [error, setError] = useState<string | null>(null);
   if (profile.isLoading) return null;
+  // Without the profile the form could save over a location the person already has.
+  if (profile.isError) return <ErrorState testID="estimates-profile-error" onRetry={() => void profile.refetch()} />;
   if (profile.data?.country) return children;
 
   const save = () => {

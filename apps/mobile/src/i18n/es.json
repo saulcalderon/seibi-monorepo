@@ -329,7 +329,10 @@
       "label": "¿Qué quieres cotizar?",
       "placeholder": "Ej. cambio de alternador, pastillas de freno",
       "send": "Estimar",
-      "taskPending": "{{task}}, pendiente",
+      "task": {
+        "overdue": "{{task}}, vencido",
+        "soon": "{{task}}, por vencer"
+      },
       "fallback": "Consulta"
     },
     "waiting": {
