@@ -193,14 +193,20 @@ name: Attach an invoice photo to a Service, see it and remove it
       TEST_PASSWORD: ${TEST_PASSWORD}
       EXPECT: photo
 
-# --- See it: «Factura» on the card opens the photo.
+# --- See it: «Factura» on the card opens the photo. The card stays open
+# after «Editar»; open it only if it closed (its «Editar» is gone), then wait
+# for the garage to reload with the invoice.
 - runFlow:
     when:
       notVisible:
-        id: 'service-card-invoice-[0-9]+'
+        id: 'service-card-edit-[0-9]+'
     commands:
       - tapOn:
           text: '.*Revisión con factura.*'
+- extendedWaitUntil:
+    visible:
+      id: 'service-card-invoice-[0-9]+'
+    timeout: 15000
 - scrollUntilVisible:
     element:
       id: 'service-card-invoice-[0-9]+'
@@ -222,6 +228,13 @@ name: Attach an invoice photo to a Service, see it and remove it
     timeout: 10000
 
 # --- Remove it: «Editar» → «Quitar factura» → «Guardar cambios».
+- runFlow:
+    when:
+      notVisible:
+        id: 'service-card-edit-[0-9]+'
+    commands:
+      - tapOn:
+          text: '.*Revisión con factura.*'
 - tapOn:
     id: 'service-card-edit-[0-9]+'
 - extendedWaitUntil:
