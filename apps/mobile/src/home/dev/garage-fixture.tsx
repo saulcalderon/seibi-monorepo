@@ -119,6 +119,7 @@ export function GarageFixtureScreen() {
       onSelect={select}
       onOpenVehicle={() => undefined}
       onUpdateMileage={() => undefined}
+      onOpenReminder={() => undefined}
       onAddVehicle={() => undefined}
       onRetry={() => void tasks.refetch()}
     />

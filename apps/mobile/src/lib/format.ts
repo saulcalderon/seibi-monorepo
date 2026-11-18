@@ -51,7 +51,8 @@ export function isoDate(now = new Date()) {
   return `${y}-${m}-${d}`;
 }
 
-function dayToDate(day: string) {
+/** A calendar day (YYYY-MM-DD) as a local Date, for a date picker. */
+export function dayToDate(day: string) {
   const [y, m, d] = day.split('-').map(Number);
   return new Date(y, m - 1, d);
 }

@@ -97,6 +97,11 @@ handles, required state, commands and observable proof.
   Historial's stats and expandable Service cards with «Corregir lectura»,
   Uso's routines and Datos' sources and withdraw; the `?tab=` deep link and
   the missing state. Flows: `vehicle-detail`, `vehicle-detail-cleanup`.
+- [Avisos](./reminders.md): the active Vehicle's Reminders by status, the
+  other Vehicles' line, the push card's stub, a Reminder's detail with
+  snooze and restore, «Completa tu historial» and «¿Cuándo fue…?»,
+  hand-written Reminders created, completed and deleted. Flows:
+  `reminders`, `reminders-cleanup`.
 - [Registrar un Servicio](./service.md): the form sheet from [+] and the
   Vehicle's «Servicios», tasks and lines, validation order, the Mileage
   reading it writes, edit and withdraw, «¿Descartar los cambios?».

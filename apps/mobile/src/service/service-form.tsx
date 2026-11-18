@@ -22,7 +22,7 @@ import {
 } from '@/data/service/form';
 import { useSaveService, useWithdrawService } from '@/data/service/mutations';
 import { orderedTaskCodes, taskMap, type MaintenanceTask } from '@/data/task/catalog';
-import { formatDistance, formatUsd, isoDate, vehicleName } from '@/lib/format';
+import { dayToDate, formatDistance, formatUsd, isoDate, vehicleName } from '@/lib/format';
 import { knowledgeProfile, taskLabel, type KnowledgeProfile } from '@/lib/knowledge';
 import { taskIcon } from '@/lib/task-icon';
 import { Button, IconButton } from '@/ui/button';
@@ -565,11 +565,6 @@ function SheetMessage({ children, onClose, testID }: { children: ReactNode; onCl
       {onClose ? <Button testID={`${testID}-close`} variant="secondary" block label={t('serviceForm.close')} onPress={onClose} /> : null}
     </View>
   );
-}
-
-function dayToDate(day: string) {
-  const [y, m, d] = day.split('-').map(Number);
-  return new Date(y, m - 1, d);
 }
 
 const styles = StyleSheet.create((theme) => ({

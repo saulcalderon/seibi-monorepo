@@ -175,8 +175,127 @@
     "done": "Vehículo retirado"
   },
   "reminders": {
-    "openVehicle": "Ver Vehículo",
-    "snoozed": "Pospuesto"
+    "snoozed": "Pospuesto",
+    "add": "Nuevo Recordatorio",
+    "addShort": "Nuevo",
+    "empty": {
+      "title": "Aún no hay avisos",
+      "body": "Agrega un Vehículo y te diremos qué mantenimiento le toca y cuándo.",
+      "action": "Agregar Vehículo"
+    },
+    "badge": {
+      "pending": "{{count}} por atender",
+      "noData": "Sin datos",
+      "ok": "Al día"
+    },
+    "others": {
+      "lead": "{{name}} · {{count}} por atender",
+      "leadMore": "{{name}} · {{count}} por atender · y {{more}} más",
+      "show": "Ver tus otros Vehículos",
+      "hide": "Ocultar tus otros Vehículos",
+      "row": "{{name}}, {{detail}}, {{status}}"
+    },
+    "nothingPending": "Nada pendiente. Te avisaremos cuando se acerque el próximo.",
+    "appointment": "Cita",
+    "appointmentShop": "Cita · {{shop}}",
+    "done": "Hecho",
+    "doneSpoken": "Hecho: {{title}}",
+    "delete": "Eliminar recordatorio",
+    "deleteSpoken": "Eliminar recordatorio: {{title}}",
+    "deleted": "Recordatorio eliminado",
+    "unknownRow": {
+      "title_one": "{{count}} tarea sin fecha",
+      "title_other": "{{count}} tareas sin fecha",
+      "body": "Dinos cuándo fue la última vez"
+    },
+    "groups": {
+      "soon": "Por vencer",
+      "ok": "Al día",
+      "snoozed": "Pospuestos",
+      "soonEmpty": "Nada por vencer. Te avisaremos cuando se acerque.",
+      "spoken": "{{title}}, {{count}}"
+    },
+    "push": {
+      "title": "Recibe los avisos en tu teléfono",
+      "body": "Una notificación cuando algo se acerque. Nada más.",
+      "action": "Activar"
+    },
+    "history": {
+      "title": "Completa tu historial",
+      "body_one": "No sabemos cuándo fue la última vez de {{count}} tarea. Con una fecha aproximada basta.",
+      "body_other": "No sabemos cuándo fue la última vez de {{count}} tareas. Con una fecha aproximada basta.",
+      "dontKnow": "En {{count}} dijiste «No sé»: conviene revisarlas en tu próximo Servicio.",
+      "dontKnowChip": "{{task}}, dijiste «No sé»",
+      "more": "Ver {{count}} más",
+      "less": "Ver menos"
+    },
+    "detail": {
+      "used": "Intervalo usado",
+      "frequency": "Frecuencia",
+      "severe": "{{interval}} (uso severo)",
+      "lastDone": "Última vez",
+      "approximate": "{{day}} (aproximado)",
+      "dueAt": "Toca a los",
+      "dueOr": "{{reading}} o el {{day}}",
+      "source": "Fuente",
+      "sourceModel": "Plan del fabricante para tu {{brand}} {{model}}",
+      "sourceGeneral": "Recomendación general, no específica de tu modelo",
+      "recordService": "Ya lo hice: registrar Servicio",
+      "askLast": "Decir cuándo fue la última vez",
+      "snooze": "Posponer {{days}} días",
+      "restore": "Reactivar aviso",
+      "snoozedToast": "Pospuesto {{days}} días",
+      "restored": "Aviso reactivado",
+      "gone": "Este aviso ya no aplica.",
+      "openSpoken": "{{task}}, {{status}}, {{due}}"
+    },
+    "lastDone": {
+      "title": "¿Cuándo fue “{{task}}”?",
+      "body": "Con una fecha aproximada ya podemos calcular el próximo.",
+      "ranges": {
+        "underMonth": "Hace menos de 1 mes",
+        "oneToThree": "Hace 1 a 3 meses",
+        "threeToSix": "Hace 3 a 6 meses",
+        "sixToTwelve": "Hace 6 a 12 meses",
+        "overYear": "Hace más de un año"
+      },
+      "exact": "Sé la fecha exacta",
+      "date": "Fecha",
+      "reading": "Kilometraje ese día",
+      "saveDate": "Guardar fecha",
+      "invoice": "Tengo la factura: registrar el Servicio completo",
+      "dontKnow": "No sé",
+      "saved": "Listo, ya calculamos el próximo",
+      "dontKnowSaved": "Anotado. Te recomendamos revisarlo pronto.",
+      "discard": {
+        "title": "¿Descartar los cambios?",
+        "body": "Lo que escribiste se pierde.",
+        "confirm": "Descartar",
+        "cancel": "Seguir editando"
+      }
+    },
+    "form": {
+      "title": "Nuevo Recordatorio",
+      "body": "Para cosas con fecha: marchamo, seguro, revisión técnica, garantía…",
+      "vehicle": "Vehículo",
+      "what": "¿Qué quieres recordar?",
+      "placeholder": "Renovar el seguro",
+      "date": "Fecha",
+      "notes": "Notas",
+      "save": "Guardar",
+      "saved": "Recordatorio guardado",
+      "discard": {
+        "title": "¿Descartar los cambios?",
+        "body": "Lo que escribiste se pierde.",
+        "confirm": "Descartar",
+        "cancel": "Seguir editando"
+      }
+    },
+    "noMileage": "Sin Kilometraje",
+    "deleteAsk": "¿Eliminar «{{title}}»?",
+    "deleteConfirm": "Eliminar",
+    "deleteCancel": "Cancelar",
+    "close": "Cerrar"
   },
   "vehicleDetail": {
     "plate": "Placa",
@@ -217,7 +336,9 @@
     "appointments": {
       "title": "Citas y recordatorios",
       "workshop": "Cita en el taller",
-      "emptyHint": "Guarda fechas de citas en el taller o cosas como el seguro y la revisión técnica."
+      "emptyHint": "Guarda fechas de citas en el taller o cosas como el seguro y la revisión técnica.",
+      "addReminder": "Recordatorio",
+      "addReminderSpoken": "Recordatorio nuevo"
     },
     "history": {
       "services": "Servicios",

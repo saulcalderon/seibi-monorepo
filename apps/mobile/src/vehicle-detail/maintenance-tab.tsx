@@ -1,5 +1,5 @@
 import { daysBetween } from '@seibi/maintenance-engine/days';
-import type { Reminder } from '@seibi/maintenance-engine/reminders';
+import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native-unistyles';
@@ -7,29 +7,31 @@ import { StyleSheet } from 'react-native-unistyles';
 import type { VehicleView } from '@/data/garage/types';
 import { useGarage } from '@/data/garage/use-garage';
 import { useProfile } from '@/data/profile/queries';
-import { reminderDueText } from '@/data/reminder/text';
-import { taskMap, type MaintenanceTask } from '@/data/task/catalog';
+import { taskMap } from '@/data/task/catalog';
 import { useRefreshVehicleData } from '@/data/vehicle/mutations';
 import { formatDay, isoDate, relativeDays } from '@/lib/format';
 import { knowledgeProfile, taskLabel } from '@/lib/knowledge';
-import { taskIcon } from '@/lib/task-icon';
 import { plainText } from '@/lib/text';
+import { HistoryCard } from '@/reminders/history-card';
+import { ManualReminderRow } from '@/reminders/manual-reminder-row';
+import { ReminderRow } from '@/reminders/reminder-row';
 import { Button } from '@/ui/button';
 import { Card, IconTile, RowDivider, SectionHeader } from '@/ui/card';
-import { ProgressBar } from '@/ui/feedback';
 import { Icon } from '@/ui/icon';
 import { Text } from '@/ui/text';
 
 import { scheduleBanner, scheduleGeneralBody } from './detail-logic';
 
 /**
- * Mantenimiento: the schedule banner, the Reminder groups and «Citas y
- * recordatorios». The rows and list are read-only here: a Reminder's own
- * screen is S9, Marcar hecho/Cancelar/Hecho/Eliminar and the buttons are
- * S13/S9 — as the PWA's MaintenanceTab minus those actions.
+ * Mantenimiento: the schedule banner, «Completa tu historial», the Reminder
+ * groups and «Citas y recordatorios», as the PWA's MaintenanceTab. A
+ * Reminder opens its detail (S9); a hand-written Reminder has «Hecho» and
+ * the bin, and «Recordatorio» writes a new one. Appointments are read-only
+ * and «Agendar Cita» is missing until S13 ships them.
  */
 export function MaintenanceTab({ vehicle }: { vehicle: VehicleView }) {
   const { t } = useTranslation();
+  const router = useRouter();
   const garage = useGarage();
   const profile = useProfile();
   const byCode = taskMap(garage.tasks);
@@ -39,11 +41,11 @@ export function MaintenanceTab({ vehicle }: { vehicle: VehicleView }) {
   const groups = (['overdue', 'soon', 'ok'] as const)
     .map((status) => ({ status, items: vehicle.reminders.filter((r) => r.status === status) }))
     .filter((g) => g.items.length > 0);
-  const appointments = [...vehicle.upcomingAppointments, ...vehicle.openManualReminders];
 
   return (
     <View style={styles.tab}>
       <ScheduleBanner vehicle={vehicle} />
+      <HistoryCard testID="detail-history" vehicleId={vehicle.id} reminders={vehicle.reminders.filter((r) => r.status === 'unknown')} tasks={byCode} level={profile.data?.knowledgeLevel} />
       {groups.map((g) => (
         <View key={g.status} style={styles.section} testID={`reminder-group-${g.status}`}>
           <SectionHeader title={`${t(`status.${g.status}`)} (${g.items.length})`} />
@@ -51,83 +53,60 @@ export function MaintenanceTab({ vehicle }: { vehicle: VehicleView }) {
             {g.items.map((reminder, index) => (
               <View key={reminder.taskCode}>
                 {index > 0 ? <RowDivider /> : null}
-                <ReminderRow reminder={reminder} measure={vehicle.measure} task={byCode.get(reminder.taskCode)} k={k} />
+                <ReminderRow
+                  testID={`reminder-${reminder.taskCode}`}
+                  reminder={reminder}
+                  measure={vehicle.measure}
+                  task={byCode.get(reminder.taskCode)}
+                  k={k}
+                  onPress={() => router.push({ pathname: '/reminder', params: { vehicleId: vehicle.id, task: reminder.taskCode } })}
+                />
               </View>
             ))}
           </Card>
         </View>
       ))}
-      {appointments.length > 0 ? (
-        <View style={styles.section} testID="detail-appointments">
-          <SectionHeader title={t('vehicleDetail.appointments.title')} />
+      <View style={styles.section} testID="detail-appointments">
+        <SectionHeader title={t('vehicleDetail.appointments.title')} />
+        {vehicle.upcomingAppointments.length === 0 && vehicle.openManualReminders.length === 0 ? (
+          <Text step="subhead" tone="muted" style={styles.emptyHint}>
+            {t('vehicleDetail.appointments.emptyHint')}
+          </Text>
+        ) : (
           <Card>
-            {vehicle.upcomingAppointments.map((a) => (
-              <View key={`a-${a.id}`} style={styles.row} testID="detail-appointment">
-                <IconTile icon="appointment" />
-                <View style={styles.rowText}>
-                  <Text step="subhead" weight={600} numberOfLines={1}>
-                    {a.taskCodes.length > 0 ? a.taskCodes.map((c) => taskLabel(byCode.get(c), c, k)).join(', ') : t('vehicleDetail.appointments.workshop')}
-                  </Text>
-                  <Text step="footnote" tone="muted">
-                    {formatDay(a.scheduledOn, 'long')} · {relativeDays(daysBetween(today, a.scheduledOn), t)}
-                    {a.shop ? ` · ${a.shop}` : ''}
-                  </Text>
+            {vehicle.upcomingAppointments.map((a, index) => (
+              <View key={`a-${a.id}`}>
+                {index > 0 ? <RowDivider /> : null}
+                <View style={styles.row} testID="detail-appointment">
+                  <IconTile icon="appointment" />
+                  <View style={styles.rowText}>
+                    <Text step="subhead" weight={600} numberOfLines={1}>
+                      {a.taskCodes.length > 0 ? a.taskCodes.map((c) => taskLabel(byCode.get(c), c, k)).join(', ') : t('vehicleDetail.appointments.workshop')}
+                    </Text>
+                    <Text step="footnote" tone="muted">
+                      {formatDay(a.scheduledOn, 'long')} · {relativeDays(daysBetween(today, a.scheduledOn), t)}
+                      {a.shop ? ` · ${a.shop}` : ''}
+                    </Text>
+                  </View>
                 </View>
               </View>
             ))}
             {vehicle.openManualReminders.map((m, index) => (
               <View key={`m-${m.id}`}>
                 {index > 0 || vehicle.upcomingAppointments.length > 0 ? <RowDivider /> : null}
-                <View style={styles.row} testID="detail-manual-reminder">
-                  <IconTile icon="addReminder" />
-                  <View style={styles.rowText}>
-                    <Text step="subhead" weight={600} numberOfLines={1}>
-                      {m.title}
-                    </Text>
-                    <Text step="footnote" tone="muted">
-                      {formatDay(m.dueOn, 'long')} · {relativeDays(daysBetween(today, m.dueOn), t)}
-                    </Text>
-                    {m.notes ? (
-                      <Text step="footnote" tone="muted" style={styles.notes}>
-                        {m.notes}
-                      </Text>
-                    ) : null}
-                  </View>
-                </View>
+                <ManualReminderRow reminder={m} notes deletable testID={`detail-manual-reminder-${index}`} />
               </View>
             ))}
           </Card>
-        </View>
-      ) : null}
-    </View>
-  );
-}
-
-/** A Reminder row, not tappable until S9 gives each Reminder a screen (the PWA's ReminderRow, plain variant, without its chevron). */
-function ReminderRow({ reminder, measure, task, k }: { reminder: Reminder; measure: VehicleView['measure']; task: MaintenanceTask | undefined; k: ReturnType<typeof knowledgeProfile> }) {
-  const { t } = useTranslation();
-  const tone = reminder.snoozed ? 'unknown' : reminder.status;
-  const due = reminder.snoozed ? t('reminders.snoozed') : reminderDueText(reminder, measure, t);
-  return (
-    <View style={styles.row} testID={`reminder-${reminder.taskCode}`}>
-      <IconTile icon={taskIcon(reminder.taskCode)} />
-      <View style={styles.rowText}>
-        <View style={styles.rowTop}>
-          <Text step="subhead" weight={600} numberOfLines={1} style={styles.rowTitle}>
-            {taskLabel(task, reminder.taskCode, k)}
-          </Text>
-          {reminder.source === 'general' && k.detailed ? (
-            <View style={styles.generalBadge}>
-              <Text step="caption" weight={700} tone="muted">
-                {t('vehicleDetail.reminders.generalBadge')}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-        <Text step="footnote" tone="muted" numberOfLines={1}>
-          {due}
-        </Text>
-        {reminder.status !== 'unknown' ? <ProgressBar value={reminder.used} status={tone} /> : null}
+        )}
+        <Button
+          testID="detail-add-reminder"
+          variant="secondary"
+          icon="addReminder"
+          label={t('vehicleDetail.appointments.addReminder')}
+          accessibilityLabel={t('vehicleDetail.appointments.addReminderSpoken')}
+          onPress={() => router.push({ pathname: '/new-reminder', params: { vehicleId: vehicle.id } })}
+        />
       </View>
     </View>
   );
@@ -208,22 +187,8 @@ const styles = StyleSheet.create((theme) => ({
     gap: theme.space[0.5],
     minWidth: 0,
   },
-  rowTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.space[1.5],
-  },
-  rowTitle: {
-    flexShrink: 1,
-  },
-  generalBadge: {
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.surface3,
-    paddingHorizontal: theme.space[1.5],
-    paddingVertical: theme.space[0.5],
-  },
-  notes: {
-    marginTop: theme.space[1],
+  emptyHint: {
+    paddingHorizontal: theme.space[1],
   },
   banner: {
     borderRadius: theme.radius['3xl'],

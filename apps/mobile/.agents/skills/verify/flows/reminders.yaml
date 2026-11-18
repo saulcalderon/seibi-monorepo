@@ -1,0 +1,273 @@
+# Feature: features/reminders.md. Avisos (S9, SEI-64) on the test account:
+# answer «¿Cuándo fue…?» from «Completa tu historial», open the Reminder's
+# detail, snooze it 7 days and restore it; write a
+# hand-written Reminder in Avisos and complete it; write one from the
+# Vehicle detail and delete it there. Its Reminders are titled «verify
+# SEI-64 …». Run through scripts/verify.sh drive <ios|android> reminders.
+appId: ${APP_ID}
+name: Avisos shows the Reminders, snoozes one and handles hand-written ones
+---
+# A failed run leaves a snooze or a «verify SEI-64» Reminder behind, and
+# they move the rows this flow taps: clear them first.
+- runScript:
+    file: scripts/cleanup-sei64.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}
+- stopApp
+- openLink: ${DEV_URL}
+- runFlow: sign-in.yaml
+- startRecording: reminders
+
+# --- Avisos: the Vehicle Inicio shows, its header and its groups.
+# Inicio is still settling right after sign-in: tap again if nothing moved.
+- waitForAnimationToEnd:
+    timeout: 5000
+- tapOn:
+    id: tab-reminders
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    visible:
+      id: avisos-vehicle-name
+    timeout: 30000
+- assertVisible:
+    id: avisos-badge
+- assertVisible:
+    id: avisos-group-soon
+- assertVisible:
+    id: avisos-push-unavailable
+- waitForAnimationToEnd
+- takeScreenshot: reminders-01-avisos
+
+# --- «Completa tu historial»: answer «Cambio de aceite» with «Hace más de un
+# año». The test Yaris has no Service with a task, so every Reminder starts
+# unknown; this answer is what makes one overdue (the cleanup removes it).
+- tapOn:
+    id: avisos-unknown-toggle
+# Centred: at the bottom edge the chip sits under the tab bar, and a tap there lands on «Inicio».
+- scrollUntilVisible:
+    element:
+      id: avisos-history-task-engine_oil
+    centerElement: true
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: reminders-02-history
+- tapOn:
+    id: avisos-history-task-engine_oil
+- extendedWaitUntil:
+    visible:
+      id: last-done-title
+    timeout: 15000
+- assertVisible:
+    id: last-done-overYear
+- waitForAnimationToEnd
+- takeScreenshot: reminders-03-last-done
+- tapOn:
+    id: last-done-overYear
+- extendedWaitUntil:
+    notVisible:
+      id: last-done-title
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: avisos-overdue-0
+    direction: UP
+    timeout: 15000
+
+# --- A due Reminder's detail: the first overdue one, else the first «Por vencer».
+# The «Por vencer» branch goes first: once a sheet is open the row under it
+# no longer counts as visible, so checking it after the tap would run both.
+- runFlow:
+    when:
+      notVisible:
+        id: avisos-overdue-0
+    commands:
+      - tapOn:
+          id: avisos-group-soon-toggle
+      - tapOn:
+          id: avisos-soon-0
+- runFlow:
+    when:
+      visible:
+        id: avisos-overdue-0
+    commands:
+      - tapOn:
+          id: avisos-overdue-0
+- extendedWaitUntil:
+    visible:
+      id: reminder-detail-title
+    timeout: 15000
+- copyTextFrom:
+    id: reminder-detail-title
+# The task's name, matched as a pattern below («Cambio de aceite»: no regex characters).
+- evalScript: ${output.task = maestro.copiedText}
+- assertVisible:
+    id: reminder-detail-status
+- assertVisible:
+    id: reminder-detail-source
+- assertVisible:
+    id: reminder-detail-record
+- waitForAnimationToEnd
+- takeScreenshot: reminders-04-detail
+
+# --- Snooze it 7 days: it moves to «Pospuestos».
+- tapOn:
+    id: reminder-detail-snooze-7
+- extendedWaitUntil:
+    notVisible:
+      id: reminder-detail-title
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: avisos-group-snoozed
+    timeout: 15000
+- tapOn:
+    id: avisos-group-snoozed-toggle
+- extendedWaitUntil:
+    visible:
+      id: avisos-snoozed-0
+      text: '${output.task}, .*Pospuesto'
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: reminders-05-snoozed
+
+# --- Restore it: «Pospuestos» empties and goes away.
+- tapOn:
+    id: avisos-snoozed-0
+- extendedWaitUntil:
+    visible:
+      id: reminder-detail-restore
+    timeout: 15000
+- tapOn:
+    id: reminder-detail-restore
+- extendedWaitUntil:
+    notVisible:
+      id: reminder-detail-title
+    timeout: 15000
+- extendedWaitUntil:
+    notVisible:
+      id: avisos-group-snoozed
+    timeout: 15000
+- takeScreenshot: reminders-06-restored
+
+# --- A hand-written Reminder from Avisos' «Nuevo», completed with «Hecho».
+- scrollUntilVisible:
+    element:
+      id: avisos-add
+    direction: UP
+- tapOn:
+    id: avisos-add
+- extendedWaitUntil:
+    visible:
+      id: new-reminder-title
+      text: Nuevo Recordatorio
+    timeout: 15000
+# Saving with nothing to remember says so in the field.
+- tapOn:
+    id: new-reminder-save
+- extendedWaitUntil:
+    visible: Escribe qué quieres recordar.
+    timeout: 5000
+- tapOn:
+    id: new-reminder-what
+- inputText: verify SEI-64 hecho
+# The sheet keeps its title, field and «Guardar» above the keyboard (SEI-76).
+- waitForAnimationToEnd
+- assertVisible:
+    id: new-reminder-title
+- assertVisible:
+    id: new-reminder-what
+    text: verify SEI-64 hecho
+- assertVisible:
+    id: new-reminder-save
+- takeScreenshot: reminders-07-new-keyboard
+- tapOn:
+    id: new-reminder-save
+- extendedWaitUntil:
+    notVisible:
+      id: new-reminder-title
+    timeout: 15000
+- extendedWaitUntil:
+    visible: verify SEI-64 hecho
+    timeout: 15000
+- takeScreenshot: reminders-08-manual-saved
+- tapOn:
+    text: 'Hecho: verify SEI-64 hecho'
+- extendedWaitUntil:
+    notVisible: verify SEI-64 hecho
+    timeout: 15000
+- takeScreenshot: reminders-09-manual-done
+
+# --- Another from the Vehicle detail's «Recordatorio», deleted with the bin.
+- tapOn:
+    id: tab-fleet
+- extendedWaitUntil:
+    visible:
+      id: fleet-vehicle-0
+    timeout: 30000
+- tapOn:
+    id: fleet-vehicle-0
+- extendedWaitUntil:
+    visible:
+      id: vehicle-hero
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: detail-add-reminder
+    timeout: 20000
+- tapOn:
+    id: detail-add-reminder
+- extendedWaitUntil:
+    visible:
+      id: new-reminder-title
+    timeout: 15000
+- tapOn:
+    id: new-reminder-what
+- inputText: verify SEI-64 borrar
+- waitForAnimationToEnd
+- tapOn:
+    id: new-reminder-save
+- extendedWaitUntil:
+    notVisible:
+      id: new-reminder-title
+    timeout: 15000
+- scrollUntilVisible:
+    element: verify SEI-64 borrar
+    timeout: 15000
+- takeScreenshot: reminders-10-detail-manual
+- tapOn:
+    text: 'Eliminar recordatorio: verify SEI-64 borrar'
+- extendedWaitUntil:
+    visible: '¿Eliminar «verify SEI-64 borrar»\?'
+    timeout: 5000
+- takeScreenshot: reminders-11-delete-confirm
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: Eliminar
+# Android's alert is its own window; its confirm button is button1.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          id: 'android:id/button1'
+- extendedWaitUntil:
+    notVisible: verify SEI-64 borrar
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: reminders-12-deleted
+- stopRecording
+# Leave the test account as it was: no «verify SEI-64» Reminder, no snooze,
+# no «Cambio de aceite» answer.
+- runScript:
+    file: scripts/cleanup-sei64.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}

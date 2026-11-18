@@ -257,7 +257,7 @@ The migration's order, scope and tickets are in
     _layout.tsx                  root Stack: Stack.Protected (app) · onboarding · (auth)/… · ui-kit
     onboarding/                  the first-run questions (S3), a Stack: one screen per step · pick · done
     +native-intent.tsx           seibi-dev://vehicle/<id> → Mi flota (src/shell/links.ts)
-    (app)/_layout.tsx            Stack, anchor (tabs): (tabs) · actions · record-service · update-mileage · correct-reading · routine · profile-name · profile-level · profile-location · vehicle · data-check · garage-fixture
+    (app)/_layout.tsx            Stack, anchor (tabs): (tabs) · actions · record-service · update-mileage · correct-reading · routine · profile-name · profile-level · profile-location · reminder · last-done · new-reminder · vehicle · data-check · garage-fixture
     (app)/vehicle/               the Vehicle form, a modal with its own Stack: new · [id]/edit · pick
     (app)/(tabs)/_layout.tsx     NativeTabs + the floating [+] drawn over them
     (app)/(tabs)/(home)/index.tsx            Inicio  (/)
@@ -310,10 +310,9 @@ The migration's order, scope and tickets are in
     sign-in). `vehicle/[id]` exists in all three tabs, so
     `+native-intent.tsx` sends `seibi-dev://vehicle/<id>` (or `seibi://`)
     to Mi flota, where a person would find it; other links pass through.
-  - **Placeholders.** Avisos is a placeholder built from kit components
-    over the data layer (each Vehicle's Reminders). Its S-ticket replaces
-    its content, not the route. Inicio is the Garage, Mi flota the Fleet,
-    `vehicle/[id]` the Vehicle detail and `profile` Perfil (below).
+  - **Screens.** Inicio is the Garage, Mi flota the Fleet, Avisos the
+    Reminders (S9, below), `vehicle/[id]` the Vehicle detail and `profile`
+    Perfil (below).
 - **First-run questions** (S3, SEI-58): the PWA's Onboarding
   (`apps/app/src/screens/Onboarding.tsx`), in `src/app/onboarding/` (one
   screen per step) and `src/onboarding/` (the decisions as plain functions
@@ -384,9 +383,9 @@ The migration's order, scope and tickets are in
     mount. The hint under it comes from the engine's `mileagePrompt`.
     «Actualizar» opens `/update-mileage` with the Vehicle's id (S8 reads
     it). «Estado» shows up to four known, unsnoozed Reminders, overdue
-    first, with «Todo al día» or «N por atender»; the cards are not
-    buttons until S9 has a Reminder detail. «Completa tu historial» (the
-    unknown tasks) is S9's and joins Inicio with it.
+    first, with «Todo al día» or «N por atender»; a card opens the
+    Reminder's detail (S9, `onOpenReminder`). «Completa tu historial» (the
+    unknown tasks, S9's `HistoryCard`) follows «Estado».
   - **Empty.** «Sin Vehículos todavía»; «Agregar mi Vehículo» opens
     `/vehicle/new`, S5's Vehicle form. The button follows the line
     under the stage instead of sitting pinned above the tab bar as in the
@@ -460,9 +459,10 @@ The migration's order, scope and tickets are in
   opens update-mileage, Salud only reads, and Uso switches to its tab. Mantenimiento carries the
   schedule banner («Buscar plan del fabricante» runs
   `useRefreshVehicleData`) and the Vencido/Pronto/Al día Reminder groups;
-  the rows are read-only until the Reminder detail (S9), as are «Citas y
-  recordatorios» (appointments and manual Reminders; marking and
-  scheduling wait for S13/S9). Historial groups the Services by month as
+  «Completa tu historial» above them; a row opens the Reminder's detail
+  (S9). «Citas y recordatorios» lists the Appointments (read-only until
+  S13) and the hand-written Reminders with «Hecho» and the bin (a native
+  confirm), and «Recordatorio» opens `new-reminder` for this Vehicle. Historial groups the Services by month as
   the PWA's expandable cards (lines, Taller, notes, «Editar», «Quitar»
   with its confirm; «Factura» waits for S12), stats «Servicios» and
   «Gastado este año», and the last 8 readings, each opening the
@@ -566,6 +566,46 @@ The migration's order, scope and tickets are in
     kit's `ghostDanger` button, the PWA's ghost button with red text. Under them,
     «Seibi · <version>» (`expoConfig.version`), and in Seibi Dev the
     «Desarrollo» links to the data check and the UI kit.
+- **Avisos** (S9, SEI-64): the PWA's Avisos (as of `6e3b818`), in
+  `src/reminders/` (`avisos-screen.tsx` and the pieces it shares with the
+  Vehicle detail and Inicio: `reminder-row.tsx`, `history-card.tsx`,
+  `manual-reminder-row.tsx`; the decisions as plain functions in
+  `avisos-logic.ts`, with unit tests). The route
+  (`(reminders)/reminders.tsx`) renders `AvisosScreen`.
+  - **Which Vehicle.** The one Inicio shows (`useActiveVehicle`, shared
+    with it). When another Vehicle has something pending, a line over it
+    names the most urgent («Corolla · 2 por atender · y 1 más») and
+    unfolds to every other Vehicle, a tap switching to it.
+  - **Groups.** `groupReminders` splits the engine's Reminders: overdue,
+    soon and ok (not snoozed, soonest expected first), «Pospuestos»
+    (snoozed, unknown ones aside) and unknown. The first card holds the
+    overdue ones, the upcoming Appointments (read-only until S13), the open
+    hand-written Reminders with «Hecho», and «N tareas sin fecha», which
+    unfolds «Completa tu historial» under the groups; with none of those
+    due it says «Nada pendiente». «Por vencer» (always), «Al día» and
+    «Pospuestos» (when not empty) are folded cards with their count. Every
+    status has its words, never colour alone. The Vehicle's header says
+    «N por atender», «Sin datos» or «Al día» (`vehicleBadge`).
+  - **Sheets** (`formSheet` routes in `(app)`):
+
+    | Route | Opens | Who opens it |
+    | --- | --- | --- |
+    | `/reminder?vehicleId=&task=` | The Reminder's detail: status in words and the share of the interval used, the task's description (when the Knowledge level explains, or nothing is known), «Frecuencia», «Última vez», «Toca a los», «Fuente» with up to three links (`expo-web-browser`); «Ya lo hice: registrar Servicio» (replaces it with `record-service?tasks=`), «Decir cuándo fue la última vez» (unknown), «Posponer 7/30 días» (overdue or soon) or «Reactivar aviso» (snoozed). Sized to its content | Any Reminder row, Inicio's «Estado» cards |
+    | `/last-done?vehicleId=&task=` | «¿Cuándo fue “…”?»: five rough ranges (months back from today, `addMonths`), the exact day with the odometer then, «Tengo la factura» (`record-service`) or «No sé». It writes `reminder_states` (`rememberedPatch`, `DONT_KNOW_PATCH`), not a Service. Sized to its content | «Completa tu historial»'s chips, the detail |
+    | `/new-reminder?vehicleId=` | «Nuevo Recordatorio»: a Vehicle picker with two or more, what to remember, the day (today to start: a native picker has no empty value), notes. The rules are `manualReminderRow` (`src/data/reminder/rules.ts`). Sized to its content | Avisos' «Nuevo», the Vehicle detail's «Recordatorio» |
+
+    Snoozing writes `snoozed_until` = today + 7 or 30 (`snoozePatch`);
+    every write goes through `useGarageMutation`, so the tab under the
+    sheet shows it when the sheet closes. A Service recorded for a task
+    still clears its snooze and «No sé» (`useSaveService`).
+  - **Push card.** «Recibe los avisos en tu teléfono» is a stub until
+    SEI-47 (`expo-notifications`, `push_tokens`): «Activar» is disabled
+    and the card says «Pronto podrás recibirlas en este teléfono.», as
+    Perfil's switch does. As in the PWA it hides once
+    `profiles.notifications_enabled` is off.
+  - **Not here yet.** The detail's «Agendar» (S13) and «¿Cuánto cuesta?»
+    (S10), and «Hecho» on an Appointment (S13), join with their screens.
+    Unlike the PWA, deleting a hand-written Reminder asks first.
 - **Styling:** Unistyles 3 (`react-native-unistyles` on
   `react-native-nitro-modules`; SEI-42's spike proved it on SDK 58 on both
   platforms). The theme lives in `src/theme/`, values from
