@@ -100,6 +100,11 @@ export function PickScreen() {
         inputType={kind === 'year' ? 'number' : 'text'}
         autoFocus={kind !== 'year'}
         hideWhenScrolling={false}
+        // The bar stays while searching: an iOS search that hid it shows it
+        // again when it closes, and picking pops the picker with the search
+        // still open, so the bar would show up on the screen below (the
+        // first run's Vehicle step has none).
+        hideNavigationBar={false}
         cancelButtonText={t('picker.cancel')}
       />
     </>

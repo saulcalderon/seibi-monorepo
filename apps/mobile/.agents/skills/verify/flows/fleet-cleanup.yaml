@@ -65,6 +65,9 @@ name: Withdraw the S5 and S3 test Vehicles
         id: fleet-filter-all
     commands:
       - runFlow: fleet-search-field.yaml
+      # The bar can still hold «S5-» (iOS 26's bar closes with an ×, not
+      # «Cancelar»): empty it, or the search is «S5-S3-» and finds nothing.
+      - eraseText: 20
       - inputText: S3-
       - hideKeyboard
       - repeat:

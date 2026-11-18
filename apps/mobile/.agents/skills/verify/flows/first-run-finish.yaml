@@ -45,12 +45,14 @@ name: Finish the first-run questions without a Vehicle
     visible:
       id: first-run-vehicle-later
     timeout: 15000
+# The confirmation stays only the PWA's 2 s: don't spend them waiting
+# for the screen to settle.
 - tapOn:
     id: first-run-vehicle-later
-- extendedWaitUntil:
-    visible:
-      id: first-run-done-title
-    timeout: 10000
+    waitToSettleTimeoutMs: 500
+    retryTapIfNoChange: false
+# The confirmation's 2 s are often over before Maestro looks (see
+# first-run.yaml): wait for Inicio, which only opens once it saved.
 - extendedWaitUntil:
     visible:
       id: home-screen

@@ -139,7 +139,8 @@ name: The first-run questions save the profile and a first Vehicle
 - assertVisible:
     id: first-run-location-continue
     enabled: true
-- hideKeyboard
+# The keyboard stays up: Maestro can't dismiss it on this field, and
+# Continue sits above it.
 - waitForAnimationToEnd
 - takeScreenshot: first-run-05-location
 - tapOn:
@@ -218,17 +219,25 @@ name: The first-run questions save the profile and a first Vehicle
 - assertVisible: '.*30,000.*'
 - tapOn:
     id: first-run-vehicle-form-measure-km
+# The confirmation stays only the PWA's 2 s: don't spend them waiting
+# for the screen to settle.
 - tapOn:
     id: first-run-vehicle-form-save
+    waitToSettleTimeoutMs: 500
+    retryTapIfNoChange: false
 
 # --- Saving the Vehicle ends the questions, as in the live PWA: the
-# confirmation, then Inicio on its own.
-- extendedWaitUntil:
-    visible:
-      id: first-run-done-title
-      text: 'Se guardó tu información'
-    timeout: 10000
-- takeScreenshot: first-run-07-done
+# confirmation, then Inicio on its own. The confirmation lasts the PWA's
+# 2 s, often gone before Maestro's iOS hierarchy catches it: screenshot it
+# when caught; the video always shows it, and onboarded_at in the
+# features/first-run.md query proves it saved.
+- runFlow:
+    when:
+      visible:
+        id: first-run-done-card
+        text: '.*Se guardó tu información.*'
+    commands:
+      - takeScreenshot: first-run-07-done
 - extendedWaitUntil:
     visible:
       id: home-screen

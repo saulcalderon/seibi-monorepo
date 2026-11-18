@@ -91,8 +91,12 @@ function RootStack({ auth }: { auth: Exclude<AuthState, { status: 'loading' }> }
       <Stack.Protected guard={auth.status === 'account-deleted'}>
         <Stack.Screen name="(auth)/account-deleted" />
       </Stack.Protected>
-      {/* The UI kit's samples (development builds only) open whatever the session. */}
-      <Stack.Screen name="ui-kit" />
+      {/* The UI kit's samples (development builds only) open whatever the session,
+          except during the first-run questions: a closed screen falls back to the
+          first open one in route order, and ui-kit sorts before onboarding. */}
+      <Stack.Protected guard={firstRun !== 'due'}>
+        <Stack.Screen name="ui-kit" />
+      </Stack.Protected>
     </Stack>
   );
 }

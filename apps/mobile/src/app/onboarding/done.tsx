@@ -38,11 +38,11 @@ export default function DoneStep() {
     <FirstRunScreen testID="first-run-done">
       <View style={styles.center}>
         <Animated.View entering={FadeIn.duration(motion.firstRun.confirmFade)}>
-          <Card style={styles.card} accessible accessibilityRole="summary" accessibilityLiveRegion="polite">
+          <Card testID="first-run-done-card" style={styles.card} accessible accessibilityRole="summary" accessibilityLiveRegion="polite">
             <Animated.View entering={ZoomIn.delay(motion.firstRun.checkDelay).springify()} style={styles.check}>
               <Icon name="check" size="xl" tone="onInverse" fixed />
             </Animated.View>
-            <Text heading step="title1" weight={300} align="center" style={styles.title} testID="first-run-done-title">
+            <Text heading step="title1" weight={300} align="center" style={styles.title}>
               {t('onboarding.done.title')}
             </Text>
             <Text step="body" tone="muted" align="center">

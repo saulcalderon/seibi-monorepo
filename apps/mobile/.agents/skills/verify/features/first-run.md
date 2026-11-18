@@ -34,7 +34,8 @@ that opens Inicio.
   «Agregar y continuar» `id: first-run-vehicle-form-save`, «Lo agrego
   después» `id: first-run-vehicle-later`; the pickers are Mi flota's
   (`pick-option-<value>`, `pick-custom`).
-- `done` «Se guardó tu información» `id: first-run-done-title`; on a
+- `done` «Se guardó tu información» `id: first-run-done-card` (one
+  accessible card: its label holds the title and the body); on a
   failed save its error and «Reintentar» (`id: first-run-done-retry`).
 
 ## How to get to it (user POV)
@@ -69,7 +70,8 @@ Preconditions:
   «Continuar» off (`-05-location`), the Vehicle step with «Lo agrego
   después» (`-06-vehicle`), a Toyota Corolla 2018, Plate S3-RUN-01,
   30,000 km, «Agregar y continuar», which goes straight to «Se guardó tu
-  información» (`-07-done`), Inicio (`-08-home`), Inicio again after a
+  información» (`-07-done` when Maestro catches its 2 s; the video
+  always shows it), Inicio (`-08-home`), Inicio again after a
   cold start (`-09-relaunch`), and the S3 Vehicle withdrawn through Mi
   flota (`-10-cleaned`).
 - **Skip the Vehicle.** `drive ios first-run-skip`: «Lo agrego después»
@@ -105,6 +107,12 @@ Preconditions:
 - «Sin Vehículos todavía» after «Lo agrego después» can't be shown on the
   shared account, which keeps its Toyota Yaris; Inicio's sample screen
   (`home-fixture`, `?case=empty`) shows the empty state.
+- «Se guardó tu información» stays the PWA's 2 s, and Maestro's iOS
+  hierarchy is often too slow to see it after the save: the flows wait
+  for Inicio instead and the video carries the confirmation.
+- The Vehicle pickers keep the navigation bar while searching
+  (`hideNavigationBar={false}`): an iOS search that hid it brings it back
+  when the picker pops, onto the Vehicle step, which has no header.
 - vPIC can be down: the model step takes «Usar "Corolla"» when the list
   fails, as in `fleet`.
 - Each step is its own screen in a stack; covered steps stay mounted, so
