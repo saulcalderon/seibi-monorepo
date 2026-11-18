@@ -532,7 +532,8 @@ The migration's order, scope and tickets are in
     for it. `services.invoice_path` is written with the Service's other
     fields; if that write fails, the new file is deleted again. The file the
     Service stops pointing at (replaced or removed) is deleted last, where
-    the PWA left replaced files behind. Historial's «Factura» opens
+    the PWA left replaced files behind (`DELETE_UNUSED_INVOICES` in
+    `invoice.ts` switches that off; it awaits the owner's OK). Historial's «Factura» opens
     the `invoice?serviceId=` modal (`src/service/invoice-viewer.tsx`): the
     photo fitted to the screen (pinch to zoom on iOS) from a signed link
     that lasts five minutes (`useInvoiceUrl`, `src/data/service/queries.ts`),

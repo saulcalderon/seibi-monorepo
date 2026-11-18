@@ -8,7 +8,7 @@ import { serviceReading } from '../mileage/rules';
 import { currentUserId } from '../user';
 import { trimmedOrNull } from '../vehicle/rules';
 
-import { checkInvoiceSize, INVOICE_BUCKET, invoiceFile, invoicePath, type InvoicePhoto } from './invoice';
+import { checkInvoiceSize, DELETE_UNUSED_INVOICES, INVOICE_BUCKET, invoiceFile, invoicePath, type InvoicePhoto } from './invoice';
 import { validateService, type ServiceInput } from './rules';
 
 
@@ -117,7 +117,7 @@ export function useSaveService() {
       if (error) throw error;
     }
 
-    if (invoice?.remove) await removeInvoice(invoice.remove);
+    if (invoice?.remove && DELETE_UNUSED_INVOICES) await removeInvoice(invoice.remove);
     return id;
   });
 }

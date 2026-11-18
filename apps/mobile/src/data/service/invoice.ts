@@ -9,6 +9,13 @@ import { InputError } from '../errors';
 /** The PWA's private bucket for invoices. */
 export const INVOICE_BUCKET = 'service-invoices';
 
+/**
+ * Whether saving deletes the file a Service stops pointing at (replaced or
+ * removed). The PWA left those files behind; the app deletes them. Awaiting
+ * Saul's OK (SEI-67): set to false to keep them, as the PWA does.
+ */
+export const DELETE_UNUSED_INVOICES = true;
+
 /** The bucket's `file_size_limit`: 10 MB. */
 export const INVOICE_MAX_BYTES = 10485760;
 
