@@ -36,10 +36,12 @@ Proof comes from the running app, driven locally with the `verify` skill (`apps/
 | --- | --- | --- |
 | 0 | Docs, CI, refactors covered by tests, engine logic | `pnpm check`, `pnpm test`, CI |
 | 1 | A small UI change or fix | One iOS run of an existing flow, or screenshots |
-| 2 | A new screen, or a journey that saves data | A Maestro flow for the happy path, an iOS video, one Android run, a read-only seibi-dev query showing the saved row, and the feature's file in the `verify` skill's `features/` map |
+| 2 | A new screen, or a journey that saves data | The ticket's own Maestro flow on its main path, run on iOS on the final commit, its iOS video, a read-only seibi-dev query showing the saved row, and the feature's file in the `verify` skill's `features/` map |
 | 3 | `supabase/`: migrations, Edge Functions, RLS | `deno test`, applied to seibi-dev first, and a read-only seibi-dev query |
 
-- **Android** runs for tier 2 and for any change to platform-specific code (`*.ios.tsx`, `@expo/ui`, glass, the floating [+]). Everything else is proven on iOS.
+- **A ticket runs only its own flow**, on the main path. Edge cases and rules go in unit tests (vitest, in CI).
+- **Android** runs for a ticket only when it changes platform-specific code (`*.ios.tsx` / `*.android.tsx`, `@expo/ui`, glass, the floating [+], Android-only workarounds). Everything else is proven on iOS.
+- **The full run** drives every flow in the `features/` map on iOS and Android (`verify.sh batch`), only when Saul asks for it. Each failure gets its own small fix PR that links its ticket, or a Linear ticket when it is bigger; the results go in the PR or ticket that asked for the run.
 - **Edge cases** (night, the largest text size, Reduce Motion, `break-ui`) get one pass in milestone «3 · Prueba en dispositivos», and the `features/` map one `maintain-verification-skill` pass per milestone.
 - **Every video goes to its ticket.** Upload each video a run records to the PR's Linear ticket, and link that copy from the PR's Verification section, which also names each run's evidence folder. Linear takes files up to 10 MB: upload the `<flow>.linear.mp4` copy that `verify.sh drive` writes next to the original. A PR without a ticket gets one first, docs and tooling included.
 
