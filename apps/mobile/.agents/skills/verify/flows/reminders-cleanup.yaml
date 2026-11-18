@@ -1,0 +1,18 @@
+# Feature: features/reminders.md. Removes what a failed `reminders` run
+# left on the test account — hand-written Reminders titled «verify SEI-64 …»
+# (deleted) and any snooze (cleared) — so the next run starts clean. It goes
+# through Supabase's REST API under the account's own RLS. Run through
+# scripts/verify.sh drive <ios|android> reminders-cleanup.
+appId: ${APP_ID}
+name: Remove the Reminders and snoozes a failed reminders run left
+---
+- startRecording: reminders-cleanup
+- runScript:
+    file: scripts/cleanup-sei64.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}
+- takeScreenshot: reminders-cleanup-done
+- stopRecording

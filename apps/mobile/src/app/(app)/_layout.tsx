@@ -36,6 +36,13 @@ export default function AppLayout() {
       <Stack.Screen name="profile-name" options={{ ...sheet, sheetAllowedDetents: [0.92] }} />
       <Stack.Screen name="profile-level" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
       <Stack.Screen name="profile-location" options={{ ...sheet, sheetAllowedDetents: [0.92] }} />
+      {/*
+       * Avisos' sheets (S9). A Reminder's detail has no field and fits its content; «¿Cuándo fue…?»
+       * and «Nuevo Recordatorio» have fields, so they take the fixed height for the same reason.
+       */}
+      <Stack.Screen name="reminder" options={{ ...sheet, sheetAllowedDetents: 'fitToContents' }} />
+      <Stack.Screen name="last-done" options={{ ...sheet, sheetAllowedDetents: [0.92] }} />
+      <Stack.Screen name="new-reminder" options={{ ...sheet, sheetAllowedDetents: [0.92] }} />
       {/* The Vehicle form (S5): a modal with its own stack, so its pickers push inside it. */}
       <Stack.Screen name="vehicle" options={{ presentation: 'modal', contentStyle: { backgroundColor: theme.colors.bg } }} />
       {/* The data check and Inicio's sample screen exist in Seibi Dev (the development variant) only. */}

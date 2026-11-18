@@ -3,34 +3,15 @@
 // Reminders themselves are computed by the engine, never stored.
 import { supabase } from '@/lib/supabase';
 
-import { InputError } from '../errors';
 import { useGarageMutation } from '../garage/use-garage';
-import { isDay } from '../service/rules';
-import { trimmedOrNull } from '../vehicle/rules';
 
-export type ManualReminderInput = {
-  /** Set when editing. */
-  id?: string;
-  vehicleId: string;
-  title: string;
-  dueOn: string;
-  notes: string | null;
-};
+import { manualReminderRow, type ManualReminderInput } from './rules';
 
-export function validateManualReminder(input: ManualReminderInput) {
-  if (!input.title.trim()) throw new InputError('title', 'reminder_title_required');
-  if (!isDay(input.dueOn)) throw new InputError('dueOn', 'date_required');
-}
+export type { ManualReminderInput } from './rules';
 
 export function useSaveManualReminder() {
   return useGarageMutation(async (input: ManualReminderInput) => {
-    validateManualReminder(input);
-    const row = {
-      vehicle_id: input.vehicleId,
-      title: input.title.trim(),
-      due_on: input.dueOn,
-      notes: trimmedOrNull(input.notes),
-    };
+    const row = manualReminderRow(input);
     const { error } = input.id
       ? await supabase.from('reminders').update(row).eq('id', input.id)
       : await supabase.from('reminders').insert(row);

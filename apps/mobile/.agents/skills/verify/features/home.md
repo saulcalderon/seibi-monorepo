@@ -28,7 +28,8 @@ night, the night palette.
 - `remembers` the active Vehicle survives a cold start (the device's `user.active-vehicle.v1`; sign-out clears it).
 - `mileage` «Kilometraje» with the current odometer and its measure (`id: home-odometer`, spoken «Kilometraje: 52,000 km»), or «Sin lectura»; «Actualizar» (`id: home-update-mileage`, spoken «Actualizar Kilometraje») opens the Mileage sheet.
 - `mileage-hint` when a reading is due, a line under it (`id: home-mileage-hint`): no readings, no usage yet, or «Tu último registro fue hace N días».
-- `status` «Estado» (`id: home-status`) with up to four cards (`id: home-status-0` …), overdue first; the summary (`id: home-status-summary`) is «Todo al día» or «N por atender» (red with a dot when one is overdue). No Service known yet: no «Estado».
+- `status` «Estado» (`id: home-status`) with up to four cards (`id: home-status-0` …), overdue first, each a button that opens the Reminder's detail ([reminders.md](./reminders.md)); the summary (`id: home-status-summary`) is «Todo al día» or «N por atender» (red with a dot when one is overdue). No Service known yet: no «Estado».
+- `history` «Completa tu historial» (`id: home-history`) under «Estado» when the Vehicle has tasks with no known last time; its chips open «¿Cuándo fue…?» ([reminders.md](./reminders.md)).
 - `empty` no Vehicles: «Sin Vehículos todavía» (`id: home-empty-title`), the line under it and «Agregar mi Vehículo» (`id: home-add-vehicle`, opens the Vehicle form `/vehicle/new`).
 - `night` in night the stage, cards and text use the night palette.
 

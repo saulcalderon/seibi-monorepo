@@ -27,6 +27,8 @@ export default function HomeScreen() {
       onOpenVehicle={(id) => router.push(`/vehicle/${id}`)}
       // The Mileage form (S8) takes this route and reads the Vehicle from it.
       onUpdateMileage={(id) => router.push({ pathname: '/update-mileage', params: { vehicleId: id } })}
+      // A Reminder's detail (S9) is a sheet over the tabs.
+      onOpenReminder={(vehicleId, task) => router.push({ pathname: '/reminder', params: { vehicleId, task } })}
       // The Vehicle form (S5) opens as a modal over the tabs.
       onAddVehicle={() => router.push('/vehicle/new')}
       onRetry={garage.refetch}

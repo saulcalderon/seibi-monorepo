@@ -37,11 +37,16 @@ flota».
   `-general`; the last's «Buscar plan del fabricante» refreshes the
   Vehicle's data (`id: schedule-fetch`).
 - `reminders` the groups are `id: reminder-group-<status>` with rows `id:
-  reminder-<taskCode>` — read-only until the Reminder detail (S9), with no
-  status badge (the group names it; a snoozed row says «Pospuesto»).
-- `agenda` «Citas y recordatorios» (`id:
-  detail-appointments`) lists appointments (`id: detail-appointment`)
-  and open manual Reminders (`id: detail-manual-reminder`) read-only; hidden when empty.
+  reminder-<taskCode>`, each opening the Reminder's detail
+  ([reminders.md](./reminders.md)); no status badge (the group names it; a
+  snoozed row says «Pospuesto»). «Completa tu historial» (`id:
+  detail-history`) sits above them when tasks have no known last time.
+- `agenda` «Citas y recordatorios» (`id: detail-appointments`) lists
+  appointments (`id: detail-appointment`, read-only until S13) and open
+  hand-written Reminders (`id: detail-manual-reminder-<n>`, with «Hecho»
+  `-done` and the bin `-delete`, which asks first); empty, it says what to
+  keep there. `id: detail-add-reminder` («Recordatorio») opens «Nuevo
+  Recordatorio» for this Vehicle.
 - `history` stats `id: stat-services` and `id: stat-spent`; `id:
   record-service` opens «Registrar Servicio» for this Vehicle; each
   month's card `id: service-card-<n>` expands to `id:

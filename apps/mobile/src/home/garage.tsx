@@ -1,6 +1,6 @@
 import type { Reminder } from '@seibi/maintenance-engine/reminders';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import Animated, { cubicBezier, Easing, FadeIn, useReducedMotion } from 'react-native-reanimated';
 import { ScopedTheme, StyleSheet, useUnistyles } from 'react-native-unistyles';
 
@@ -14,7 +14,9 @@ import { contactShadow, paintAccent, paintHex, paintGlow, stageFloor } from '@/t
 import { motion } from '@/theme/tokens';
 import { Button } from '@/ui/button';
 import { ErrorState, Skeleton, SkeletonGroup, TextSkeleton } from '@/ui/feedback';
+import { HistoryCard } from '@/reminders/history-card';
 import { Icon } from '@/ui/icon';
+import { PressScale, usePressed } from '@/ui/press';
 import { Text } from '@/ui/text';
 
 import { garageStatus, mileageHint, STATUS_CARDS, usedPercent } from './garage-logic';
@@ -30,6 +32,8 @@ export interface GarageProps {
   onSelect: (id: string) => void;
   onOpenVehicle: (id: string) => void;
   onUpdateMileage: (id: string) => void;
+  /** A card in «Estado»: the Reminder's detail (S9). */
+  onOpenReminder: (vehicleId: string, taskCode: string) => void;
   onAddVehicle: () => void;
   onRetry: () => void;
   testID?: string;
@@ -63,6 +67,7 @@ function GarageBody({
   onSelect,
   onOpenVehicle,
   onUpdateMileage,
+  onOpenReminder,
   onAddVehicle,
   onRetry,
 }: GarageProps) {
@@ -81,7 +86,8 @@ function GarageBody({
       {/* The numbers under the stage fade in when the Vehicle changes (the PWA's 0.2 s). */}
       <Animated.View key={active.id} entering={FadeIn.duration(200).easing(Easing.bezier(...motion.curve.paint))}>
         <Odometer vehicle={active} onUpdate={() => onUpdateMileage(active.id)} />
-        <Status vehicle={active} tasks={tasks} knowledgeLevel={knowledgeLevel} />
+        <Status vehicle={active} tasks={tasks} knowledgeLevel={knowledgeLevel} onOpen={(taskCode) => onOpenReminder(active.id, taskCode)} />
+        <History vehicle={active} tasks={tasks} knowledgeLevel={knowledgeLevel} />
       </Animated.View>
     </>
   );
@@ -151,10 +157,12 @@ function Status({
   vehicle,
   tasks,
   knowledgeLevel,
+  onOpen,
 }: {
   vehicle: VehicleView;
   tasks: readonly MaintenanceTask[];
   knowledgeLevel: KnowledgeLevel | null | undefined;
+  onOpen: (taskCode: string) => void;
 }) {
   const { t } = useTranslation();
   const status = garageStatus(vehicle.reminders);
@@ -187,6 +195,7 @@ function Status({
                 reminder={reminder}
                 label={taskLabel(byCode.get(reminder.taskCode), reminder.taskCode, k)}
                 accent={accent}
+                onPress={() => onOpen(reminder.taskCode)}
                 testID={`home-status-${r * 2 + c}`}
               />
             ))}
@@ -199,37 +208,61 @@ function Status({
 }
 
 /**
- * One task: its icon, its status word, its name and how much of its interval
- * is used, in the paint's accent (red when overdue). The Reminder's detail is
- * S9's: until then the card is information, not a button.
+ * «Completa tu historial» under «Estado» (the PWA's Home): the tasks with no
+ * known last Service. A chip asks when it was last done.
  */
-function StatusCard({ reminder, label, accent, testID }: { reminder: Reminder; label: string; accent: string; testID: string }) {
+function History({ vehicle, tasks, knowledgeLevel }: { vehicle: VehicleView; tasks: readonly MaintenanceTask[]; knowledgeLevel: KnowledgeLevel | null | undefined }) {
+  const unknown = vehicle.reminders.filter((r) => r.status === 'unknown');
+  if (unknown.length === 0) return null;
+  return (
+    <View style={styles.history}>
+      <HistoryCard testID="home-history" vehicleId={vehicle.id} reminders={unknown} tasks={new Map(tasks.map((task) => [task.code, task]))} level={knowledgeLevel} />
+    </View>
+  );
+}
+
+/**
+ * One task: its icon, its status word, its name and how much of its interval
+ * is used, in the paint's accent (red when overdue). A tap opens the
+ * Reminder's detail.
+ */
+function StatusCard({ reminder, label, accent, onPress, testID }: { reminder: Reminder; label: string; accent: string; onPress: () => void; testID: string }) {
   const { t } = useTranslation();
   const reduced = useReducedMotion();
+  const { pressed, pressHandlers } = usePressed();
   const over = reminder.status === 'overdue';
   const word = t(`status.${reminder.status}`);
   const used = usedPercent(reminder);
   styles.useVariants({ over });
   return (
-    <View style={styles.card} accessible accessibilityLabel={t('home.status.card', { task: label, status: word })} testID={testID}>
-      <View style={styles.cardTop}>
-        <Icon name={taskIcon(reminder.taskCode)} size="md" />
-        <View style={styles.summary}>
-          {over ? <View style={styles.alertDot} /> : null}
-          <Text step="caption" weight={500} tone={over ? 'overdue' : 'muted'}>
-            {word}
-          </Text>
+    <PressScale pressed={pressed} style={styles.cardSlot}>
+      <Pressable
+        style={styles.card}
+        accessibilityRole="button"
+        accessibilityLabel={t('home.status.card', { task: label, status: word })}
+        onPress={onPress}
+        testID={testID}
+        {...pressHandlers}
+      >
+        <View style={styles.cardTop}>
+          <Icon name={taskIcon(reminder.taskCode)} size="md" />
+          <View style={styles.summary}>
+            {over ? <View style={styles.alertDot} /> : null}
+            <Text step="caption" weight={500} tone={over ? 'overdue' : 'muted'}>
+              {word}
+            </Text>
+          </View>
         </View>
-      </View>
-      <Text step="subhead" weight={500} numberOfLines={2} style={styles.cardLabel}>
-        {label}
-      </Text>
-      <View style={styles.track}>
-        <Animated.View
-          style={[styles.bar, { width: `${used}%` as const }, !over && { backgroundColor: accent }, !reduced && barTransition]}
-        />
-      </View>
-    </View>
+        <Text step="subhead" weight={500} numberOfLines={2} style={styles.cardLabel}>
+          {label}
+        </Text>
+        <View style={styles.track}>
+          <Animated.View
+            style={[styles.bar, { width: `${used}%` as const }, !over && { backgroundColor: accent }, !reduced && barTransition]}
+          />
+        </View>
+      </Pressable>
+    </PressScale>
   );
 }
 
@@ -371,8 +404,15 @@ const styles = StyleSheet.create((theme, rt) => {
     cardSpacer: {
       flex: 1,
     },
-    card: {
+    cardSlot: {
       flex: stacked ? undefined : 1,
+    },
+    history: {
+      paddingHorizontal: theme.space[5],
+      paddingTop: theme.space[5],
+    },
+    card: {
+      flexGrow: 1,
       gap: theme.space[3],
       paddingHorizontal: theme.space[3.5],
       paddingTop: theme.space[3.5],
