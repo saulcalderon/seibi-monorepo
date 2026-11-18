@@ -5,16 +5,16 @@ import Animated, { cubicBezier, Easing, FadeIn, useReducedMotion } from 'react-n
 import { ScopedTheme, StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import type { VehicleView } from '@/data/garage/types';
-import type { MaintenanceTask } from '@/data/task/catalog';
+import { taskMap, type MaintenanceTask } from '@/data/task/catalog';
 import { formatNumber, measureLabel } from '@/lib/format';
 import { knowledgeProfile, taskLabel, type KnowledgeLevel } from '@/lib/knowledge';
 import { taskIcon } from '@/lib/task-icon';
+import { HistoryCard } from '@/reminders/history-card';
 import { TabScroll } from '@/shell/tab-scroll';
 import { contactShadow, paintAccent, paintHex, paintGlow, stageFloor } from '@/theme/garage';
 import { motion } from '@/theme/tokens';
 import { Button } from '@/ui/button';
 import { ErrorState, Skeleton, SkeletonGroup, TextSkeleton } from '@/ui/feedback';
-import { HistoryCard } from '@/reminders/history-card';
 import { Icon } from '@/ui/icon';
 import { PressScale, usePressed } from '@/ui/press';
 import { Text } from '@/ui/text';
@@ -216,7 +216,7 @@ function History({ vehicle, tasks, knowledgeLevel }: { vehicle: VehicleView; tas
   if (unknown.length === 0) return null;
   return (
     <View style={styles.history}>
-      <HistoryCard testID="home-history" vehicleId={vehicle.id} reminders={unknown} tasks={new Map(tasks.map((task) => [task.code, task]))} level={knowledgeLevel} />
+      <HistoryCard testID="home-history" vehicleId={vehicle.id} reminders={unknown} tasks={taskMap(tasks)} level={knowledgeLevel} />
     </View>
   );
 }

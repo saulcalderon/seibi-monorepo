@@ -57,10 +57,12 @@ function LastDoneBody({ vehicle, taskCode, task }: { vehicle: VehicleView; taskC
   const setState = useReminderState();
   const k = knowledgeProfile(profile.data?.knowledgeLevel);
   const [exactOpen, setExactOpen] = useState(false);
+  // The exact day opens on today: a native date picker has no empty value (the PWA's field started blank).
   const [exact, setExact] = useState(() => new Date());
+  const [dateTouched, setDateTouched] = useState(false);
   const [reading, setReading] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const { leave } = useUnsavedGuard(exactOpen && reading !== null, {
+  const { leave } = useUnsavedGuard(reading !== null || (exactOpen && dateTouched), {
     title: t('reminders.lastDone.discard.title'),
     message: t('reminders.lastDone.discard.body'),
     confirmLabel: t('reminders.lastDone.discard.confirm'),
@@ -78,8 +80,8 @@ function LastDoneBody({ vehicle, taskCode, task }: { vehicle: VehicleView; taskC
       setError(errorMessage(e, t));
     }
   };
-  const remember = (when: LastDoneRange | string) =>
-    answer(rememberedPatch(when, isoDate(), typeof when === 'string' ? reading : null), t('reminders.lastDone.saved'));
+  // As the PWA, a typed «Kilometraje ese día» goes with any answer, a range or the exact day.
+  const remember = (when: LastDoneRange | string) => answer(rememberedPatch(when, isoDate(), reading), t('reminders.lastDone.saved'));
 
   return (
     <FormLayout
@@ -132,7 +134,11 @@ function LastDoneBody({ vehicle, taskCode, task }: { vehicle: VehicleView; taskC
         />
         {exactOpen ? (
           <>
-            <DateField testID="last-done-date" label={t('reminders.lastDone.date')} value={exact} maximumDate={new Date()} onChange={setExact} />
+            <DateField testID="last-done-date" label={t('reminders.lastDone.date')} value={exact} maximumDate={new Date()} onChange={(date) => {
+                setExact(date);
+                setDateTouched(true);
+              }}
+            />
             <MileageField testID="last-done-reading" label={t('reminders.lastDone.reading')} optional measure={vehicle.measure} value={reading} onChange={setReading} />
           </>
         ) : null}

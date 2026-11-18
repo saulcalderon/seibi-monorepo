@@ -12,7 +12,7 @@ import { useProfile } from '@/data/profile/queries';
 import { useReminderState } from '@/data/reminder/mutations';
 import { intervalText, reminderDueText } from '@/data/reminder/text';
 import { taskMap, type MaintenanceTask } from '@/data/task/catalog';
-import { formatDay, formatNumber, isoDate, measureLabel, vehicleName } from '@/lib/format';
+import { formatDay, formatDistance, isoDate, vehicleName } from '@/lib/format';
 import { knowledgeProfile, taskLabel } from '@/lib/knowledge';
 import { taskIcon } from '@/lib/task-icon';
 import { Button } from '@/ui/button';
@@ -67,7 +67,6 @@ function Detail({ vehicle, reminder, task }: { vehicle: VehicleView; reminder: R
   const [snoozing, setSnoozing] = useState<number | 'restore' | null>(null);
   const k = knowledgeProfile(profile.data?.knowledgeLevel);
   const title = taskLabel(task, reminder.taskCode, k);
-  const measure = measureLabel(vehicle.measure);
   const interval = intervalText(reminder, vehicle.measure, t);
   const offer = snoozeOffer(reminder);
   const sources = reminder.source === 'model' ? (vehicle.schedule?.sources ?? []).slice(0, 3) : [];
@@ -121,7 +120,7 @@ function Detail({ vehicle, reminder, task }: { vehicle: VehicleView; reminder: R
             label={t('reminders.detail.lastDone')}
             value={(() => {
               const day = formatDay(reminder.lastDone.performedOn, 'long');
-              const withReading = reminder.lastDone.reading != null ? `${day} · ${formatNumber(reminder.lastDone.reading)} ${measure}` : day;
+              const withReading = reminder.lastDone.reading != null ? `${day} · ${formatDistance(reminder.lastDone.reading, vehicle.measure)}` : day;
               return reminder.lastDone.remembered ? t('reminders.detail.approximate', { day: withReading }) : withReading;
             })()}
           />
@@ -132,8 +131,8 @@ function Detail({ vehicle, reminder, task }: { vehicle: VehicleView; reminder: R
             label={t('reminders.detail.dueAt')}
             value={
               reminder.dueOn
-                ? t('reminders.detail.dueOr', { reading: `${formatNumber(reminder.dueReading)} ${measure}`, day: formatDay(reminder.dueOn, 'long') })
-                : `${formatNumber(reminder.dueReading)} ${measure}`
+                ? t('reminders.detail.dueOr', { reading: formatDistance(reminder.dueReading, vehicle.measure), day: formatDay(reminder.dueOn, 'long') })
+                : formatDistance(reminder.dueReading, vehicle.measure)
             }
           />
         ) : null}

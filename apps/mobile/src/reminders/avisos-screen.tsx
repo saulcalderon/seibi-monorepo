@@ -15,7 +15,7 @@ import { formatDay, formatDistance, isoDate, relativeDays, vehicleChoiceLabel, v
 import { knowledgeProfile, type KnowledgeLevel } from '@/lib/knowledge';
 import { TabScroll } from '@/shell/tab-scroll';
 import { Button } from '@/ui/button';
-import { Card, IconTile, RowDivider } from '@/ui/card';
+import { Card, IconTile, ListRow, RowDivider } from '@/ui/card';
 import { EmptyState, ErrorState, ListRowSkeleton, SkeletonGroup } from '@/ui/feedback';
 import { Icon } from '@/ui/icon';
 import { usePressed } from '@/ui/press';
@@ -103,7 +103,7 @@ export function AvisosScreen() {
 }
 
 /** Plate if any, then the odometer: tells twins of the same model and year apart. */
-function identity(v: VehicleView, none: string) {
+function plateOrMileage(v: VehicleView, none: string) {
   const distance = v.odometer != null ? formatDistance(v.odometer, v.measure) : null;
   return [v.plate, distance].filter(Boolean).join(' · ') || none;
 }
@@ -144,47 +144,30 @@ function OtherVehicles({ active, vehicles, onSelect }: { active: VehicleView; ve
       {open
         ? others.map((v, i) => {
             const label = vehicleChoiceLabel(v, vehicles, t);
-            const detail = `${v.year} · ${identity(v, t('reminders.noMileage'))}`;
+            const detail = `${v.year} · ${plateOrMileage(v, t('reminders.noMileage'))}`;
             const status = v.pending > 0 ? t('reminders.badge.pending', { count: v.pending }) : t('reminders.badge.ok');
             return (
               <Fragment key={v.id}>
                 <RowDivider />
-                <OtherVehicleRow testID={`avisos-other-${i}`} vehicle={v} label={label} detail={detail} status={status} onPress={() => onSelect(v.id)} />
+                <ListRow
+                  testID={`avisos-other-${i}`}
+                  leading={<VehicleThumb vehicle={v} />}
+                  title={label}
+                  subtitle={detail}
+                  trailing={
+                    <Text step="caption" weight={600}>
+                      {status}
+                    </Text>
+                  }
+                  chevron={false}
+                  accessibilityLabel={t('reminders.others.row', { name: label, detail, status })}
+                  onPress={() => onSelect(v.id)}
+                />
               </Fragment>
             );
           })
         : null}
     </Card>
-  );
-}
-
-function OtherVehicleRow({ vehicle, label, detail, status, onPress, testID }: { vehicle: VehicleView; label: string; detail: string; status: string; onPress: () => void; testID: string }) {
-  const { t } = useTranslation();
-  const { pressed, pressHandlers } = usePressed();
-  styles.useVariants({ pressed });
-  return (
-    <Pressable
-      testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={t('reminders.others.row', { name: label, detail, status })}
-      accessibilityHint={t('reminders.others.switchHint')}
-      onPress={onPress}
-      style={styles.otherRow}
-      {...pressHandlers}
-    >
-      <VehicleThumb vehicle={vehicle} />
-      <View style={styles.grow}>
-        <Text step="subhead" weight={600} numberOfLines={1}>
-          {label}
-        </Text>
-        <Text step="caption" tone="muted" numberOfLines={1}>
-          {detail}
-        </Text>
-      </View>
-      <Text step="caption" weight={600}>
-        {status}
-      </Text>
-    </Pressable>
   );
 }
 
@@ -274,7 +257,7 @@ function VehicleAvisos({ vehicle, tasks, level }: { vehicle: VehicleView; tasks:
             {vehicleName(vehicle)}
           </Text>
           <Text step="footnote" tone="muted" numberOfLines={1}>
-            {vehicle.year} · {identity(vehicle, t('reminders.noMileage'))}
+            {vehicle.year} · {plateOrMileage(vehicle, t('reminders.noMileage'))}
           </Text>
         </View>
         <View style={styles.badge} testID="avisos-badge">
@@ -410,16 +393,6 @@ const styles = StyleSheet.create((theme) => ({
     height: theme.size.dot,
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.subtle,
-  },
-  otherRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.space[2.5],
-    paddingHorizontal: theme.space[3.5],
-    paddingVertical: theme.space[2.5],
-    variants: {
-      pressed: { true: { backgroundColor: theme.colors.surface2 }, false: {} },
-    },
   },
   vehicle: {
     gap: theme.space[3],

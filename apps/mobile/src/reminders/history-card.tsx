@@ -9,8 +9,7 @@ import type { MaintenanceTask } from '@/data/task/catalog';
 import { knowledgeProfile, taskLabel, type KnowledgeLevel } from '@/lib/knowledge';
 import { taskIcon } from '@/lib/task-icon';
 import { Card, IconTile } from '@/ui/card';
-import { Icon } from '@/ui/icon';
-import { PressScale, usePressed } from '@/ui/press';
+import { Chip } from '@/ui/chip';
 import { Text } from '@/ui/text';
 
 import { historyPrompt } from './avisos-logic';
@@ -20,7 +19,7 @@ import { historyPrompt } from './avisos-logic';
  * last Service as one card of chips instead of a row each, the ones people
  * know best first. A chip opens «¿Cuándo fue…?» (`/last-done`) for that
  * task; «Ver N más» shows the rest. A task the person answered «No sé»
- * about is tinted and said so.
+ * about shows a question mark and says so.
  */
 export function HistoryCard({
   vehicleId,
@@ -65,12 +64,12 @@ export function HistoryCard({
           const label = taskLabel(tasks.get(reminder.taskCode), reminder.taskCode, k);
           const dontKnow = reminder.unknownReason === 'dont_know';
           return (
-            <TaskChip
+            // A «No sé» task shows the question mark instead of its icon, so the answer isn't told by colour alone.
+            <Chip
               key={reminder.taskCode}
               testID={`history-task-${reminder.taskCode}`}
               label={label}
-              icon={taskIcon(reminder.taskCode)}
-              dontKnow={dontKnow}
+              icon={dontKnow ? 'help' : taskIcon(reminder.taskCode)}
               accessibilityLabel={dontKnow ? t('reminders.history.dontKnowChip', { task: label }) : label}
               onPress={() => router.push({ pathname: '/last-done', params: { vehicleId, task: reminder.taskCode } })}
             />
@@ -95,45 +94,6 @@ export function HistoryCard({
   );
 }
 
-function TaskChip({
-  label,
-  icon,
-  dontKnow,
-  accessibilityLabel,
-  onPress,
-  testID,
-}: {
-  label: string;
-  icon: ReturnType<typeof taskIcon>;
-  dontKnow: boolean;
-  accessibilityLabel: string;
-  onPress: () => void;
-  testID: string;
-}) {
-  const { theme } = useUnistyles();
-  const { pressed, pressHandlers } = usePressed();
-  styles.useVariants({ dontKnow, pressed });
-  return (
-    <Pressable
-      testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      hitSlop={(theme.size.target - theme.size.chip) / 2}
-      onPress={onPress}
-      {...pressHandlers}
-    >
-      <PressScale pressed={pressed}>
-        <View style={styles.chip}>
-          <Icon name={icon} size="sm" />
-          <Text step="subhead" weight={600}>
-            {label}
-          </Text>
-        </View>
-      </PressScale>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create((theme) => ({
   card: {
     padding: theme.space[4],
@@ -152,27 +112,6 @@ const styles = StyleSheet.create((theme) => ({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: theme.space[2],
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.space[1.5],
-    minHeight: theme.size.chip,
-    paddingHorizontal: theme.space[3],
-    borderRadius: theme.radius.pill,
-    borderCurve: 'continuous',
-    outlineStyle: 'solid',
-    outlineWidth: theme.size.border.thin,
-    variants: {
-      dontKnow: {
-        true: { backgroundColor: theme.colors.unknownSoft, outlineColor: theme.colors.unknownSoft },
-        false: { backgroundColor: theme.colors.surface2, outlineColor: theme.colors.line },
-      },
-      pressed: {
-        true: { backgroundColor: theme.colors.surface3 },
-        false: {},
-      },
-    },
   },
   more: {
     minHeight: theme.size.chip,

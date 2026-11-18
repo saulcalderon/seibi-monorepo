@@ -5,7 +5,7 @@ import { errorMessage, InputError } from '@/data/errors';
 import type { VehicleView } from '@/data/garage/types';
 import { useActiveVehicle } from '@/data/preferences/store';
 import { useSaveManualReminder } from '@/data/reminder/mutations';
-import { isoDate, vehicleName } from '@/lib/format';
+import { dayToDate, isoDate, vehicleName } from '@/lib/format';
 import { Button } from '@/ui/button';
 import { DateField, SelectField } from '@/ui/controls';
 import { EmptyState } from '@/ui/feedback';
@@ -15,12 +15,6 @@ import { notify } from '@/ui/toast';
 import { useUnsavedGuard } from '@/ui/use-unsaved-guard';
 
 import { SheetError, SheetHeader, SheetMessage, WithGarage } from './sheet-parts';
-
-/** A calendar day as a local Date, for the date picker. */
-const dayToDate = (day: string) => {
-  const [y, m, d] = day.split('-').map(Number);
-  return new Date(y, m - 1, d);
-};
 
 /**
  * «Nuevo Recordatorio» (`/new-reminder?vehicleId=`), the PWA's
@@ -50,13 +44,14 @@ function ManualReminderBody({ vehicles, vehicleId }: { vehicles: VehicleView[]; 
   const { t } = useTranslation();
   const { active } = useActiveVehicle(vehicles);
   const save = useSaveManualReminder();
-  const [chosen, setChosen] = useState(() => vehicles.find((v) => v.id === vehicleId)?.id ?? active?.id ?? vehicles[0].id);
+  const [start] = useState(() => ({ vehicleId: vehicles.find((v) => v.id === vehicleId)?.id ?? active?.id ?? vehicles[0].id, dueOn: isoDate() }));
+  const [chosen, setChosen] = useState(start.vehicleId);
   const [title, setTitle] = useState('');
   // Opens on today: a native date picker has no empty value, where the PWA's field started blank.
-  const [dueOn, setDueOn] = useState(() => isoDate());
+  const [dueOn, setDueOn] = useState(start.dueOn);
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<{ field: string; message: string } | null>(null);
-  const { leave } = useUnsavedGuard(title.trim() !== '' || notes.trim() !== '', {
+  const { leave } = useUnsavedGuard(title.trim() !== '' || notes.trim() !== '' || dueOn !== start.dueOn || chosen !== start.vehicleId, {
     title: t('reminders.form.discard.title'),
     message: t('reminders.form.discard.body'),
     confirmLabel: t('reminders.form.discard.confirm'),

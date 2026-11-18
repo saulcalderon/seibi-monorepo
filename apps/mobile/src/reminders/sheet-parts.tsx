@@ -25,7 +25,7 @@ export function SheetHeader({ title, body, testID }: { title: string; body?: str
         <Text testID={`${testID}-title`} step="title3" family="display" heading style={styles.title}>
           {title}
         </Text>
-        <IconButton testID={`${testID}-close`} icon="close" label={t('reminders.detail.close')} onPress={() => router.back()} />
+        <IconButton testID={`${testID}-close`} icon="close" label={t('reminders.close')} onPress={() => router.back()} />
       </View>
       {body ? (
         <Text step="subhead" tone="muted">
@@ -43,7 +43,7 @@ export function SheetMessage({ children, testID }: { children: ReactNode; testID
   return (
     <View testID={testID} style={styles.message}>
       {children}
-      <Button variant="secondary" block label={t('reminders.detail.close')} onPress={() => router.back()} />
+      <Button variant="secondary" block label={t('reminders.close')} onPress={() => router.back()} />
     </View>
   );
 }

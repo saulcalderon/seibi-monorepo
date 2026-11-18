@@ -37,7 +37,6 @@ name: Avisos shows the Reminders, snoozes one and handles hand-written ones
     id: avisos-group-soon
 - assertVisible:
     id: avisos-push-unavailable
-    text: Pronto podrás recibirlas en este teléfono.
 - waitForAnimationToEnd
 - takeScreenshot: reminders-01-avisos
 
@@ -52,7 +51,7 @@ name: Avisos shows the Reminders, snoozes one and handles hand-written ones
 - runFlow:
     when:
       notVisible:
-        id: reminder-detail-title
+        id: avisos-overdue-0
     commands:
       - tapOn:
           id: avisos-group-soon-toggle

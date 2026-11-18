@@ -193,8 +193,7 @@
       "leadMore": "{{name}} · {{count}} por atender · y {{more}} más",
       "show": "Ver tus otros Vehículos",
       "hide": "Ocultar tus otros Vehículos",
-      "row": "{{name}}, {{detail}}, {{status}}",
-      "switchHint": "Muestra sus avisos"
+      "row": "{{name}}, {{detail}}, {{status}}"
     },
     "nothingPending": "Nada pendiente. Te avisaremos cuando se acerque el próximo.",
     "appointment": "Cita",
@@ -248,7 +247,6 @@
       "snoozedToast": "Pospuesto {{days}} días",
       "restored": "Aviso reactivado",
       "gone": "Este aviso ya no aplica.",
-      "close": "Cerrar",
       "openSpoken": "{{task}}, {{status}}, {{due}}"
     },
     "lastDone": {
@@ -296,7 +294,8 @@
     "noMileage": "Sin Kilometraje",
     "deleteAsk": "¿Eliminar «{{title}}»?",
     "deleteConfirm": "Eliminar",
-    "deleteCancel": "Cancelar"
+    "deleteCancel": "Cancelar",
+    "close": "Cerrar"
   },
   "vehicleDetail": {
     "plate": "Placa",
@@ -339,7 +338,7 @@
       "workshop": "Cita en el taller",
       "emptyHint": "Guarda fechas de citas en el taller o cosas como el seguro y la revisión técnica.",
       "addReminder": "Recordatorio",
-      "addReminderSpoken": "Nuevo Recordatorio"
+      "addReminderSpoken": "Recordatorio nuevo"
     },
     "history": {
       "services": "Servicios",
