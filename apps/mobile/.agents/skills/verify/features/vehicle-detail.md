@@ -42,11 +42,14 @@ flota».
   snoozed row says «Pospuesto»). «Completa tu historial» (`id:
   detail-history`) sits above them when tasks have no known last time.
 - `agenda` «Citas y recordatorios» (`id: detail-appointments`) lists
-  appointments (`id: detail-appointment`, read-only until S13) and open
-  hand-written Reminders (`id: detail-manual-reminder-<n>`, with «Hecho»
-  `-done` and the bin `-delete`, which asks first); empty, it says what to
-  keep there. `id: detail-add-reminder` («Recordatorio») opens «Nuevo
-  Recordatorio» for this Vehicle.
+  upcoming Appointments (`id: detail-appointment-<n>`, with «Marcar hecho»
+  `-done` and «Cancelar» `-cancel`, which asks first;
+  [appointments.md](./appointments.md)) and open hand-written Reminders
+  (`id: detail-manual-reminder-<n>`, with «Hecho» `-done` and the bin
+  `-delete`, which asks first); empty, it says what to keep there. Under
+  it, `id: detail-add-appointment` («Agendar Cita») opens «Agendar Cita»
+  and `id: detail-add-reminder` («Recordatorio») «Nuevo Recordatorio», both
+  for this Vehicle.
 - `history` stats `id: stat-services` and `id: stat-spent`; `id:
   record-service` opens «Registrar Servicio» for this Vehicle; each
   month's card `id: service-card-<n>` expands to `id:
@@ -80,6 +83,8 @@ flota».
 - Record-service flow: Historial → «Registrar Servicio».
 - Correct-reading flow: Historial → a «Lecturas de kilometraje» row.
 - Routine flow: Uso → «Agregar rutina» or a routine row.
+- Appointment flow: Mantenimiento → «Agendar Cita», or a row's «Marcar
+  hecho» / «Cancelar» ([appointments.md](./appointments.md)).
 - Edit flow: the header pencil or Datos' «Editar datos».
 
 ## Driving it with verify.sh

@@ -1,4 +1,3 @@
-import { daysBetween } from '@seibi/maintenance-engine/days';
 import type { Reminder } from '@seibi/maintenance-engine/reminders';
 import { useRouter } from 'expo-router';
 import { Fragment, useState, type ReactNode } from 'react';
@@ -6,12 +5,13 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 
+import { AppointmentRow } from '@/appointments/appointment-row';
 import type { VehicleView } from '@/data/garage/types';
 import { useGarage } from '@/data/garage/use-garage';
 import { useActiveVehicle } from '@/data/preferences/store';
 import { useProfile } from '@/data/profile/queries';
 import { taskMap, type MaintenanceTask } from '@/data/task/catalog';
-import { formatDay, formatDistance, isoDate, relativeDays, vehicleChoiceLabel, vehicleName } from '@/lib/format';
+import { formatDistance, vehicleChoiceLabel, vehicleName } from '@/lib/format';
 import { knowledgeProfile, type KnowledgeLevel } from '@/lib/knowledge';
 import { TabScroll } from '@/shell/tab-scroll';
 import { Button } from '@/ui/button';
@@ -32,8 +32,8 @@ import { ReminderRow } from './reminder-row';
  * Avisos (S9, SEI-64), the PWA's screens/Avisos.tsx as of 6e3b818: the
  * Reminders of the Vehicle Inicio shows (`useActiveVehicle`), with a line
  * over them to switch to another Vehicle; the push card; then that
- * Vehicle's overdue Reminders, Appointments and hand-written Reminders in
- * one card, and «Por vencer», «Al día» and «Pospuestos» folded under it. A
+ * Vehicle's overdue Reminders, Appointments (with «Hecho») and
+ * hand-written Reminders in one card, and «Por vencer», «Al día» and «Pospuestos» folded under it. A
  * Reminder opens its detail (`/reminder`); «N tareas sin fecha» unfolds
  * «Completa tu historial». «Nuevo» writes a hand-written Reminder.
  */
@@ -177,7 +177,6 @@ function VehicleAvisos({ vehicle, tasks, level }: { vehicle: VehicleView; tasks:
   const router = useRouter();
   const [showUnknown, setShowUnknown] = useState(false);
   const k = knowledgeProfile(level);
-  const today = isoDate();
   const groups = groupReminders(vehicle.reminders);
   const appointments = [...vehicle.upcomingAppointments].sort((a, b) => (a.scheduledOn < b.scheduledOn ? -1 : 1));
   const manual = vehicle.openManualReminders;
@@ -210,21 +209,7 @@ function VehicleAvisos({ vehicle, tasks, level }: { vehicle: VehicleView; tasks:
     );
   }
   groups.overdue.forEach((reminder, i) => main.push(row('overdue', reminder, i)));
-  appointments.forEach((a, i) =>
-    main.push(
-      <View key={`a-${a.id}`} style={styles.line} testID={`avisos-appointment-${i}`}>
-        <IconTile icon="appointment" size="sm" />
-        <View style={styles.grow}>
-          <Text step="subhead" weight={600} numberOfLines={1}>
-            {a.shop ? t('reminders.appointmentShop', { shop: a.shop }) : t('reminders.appointment')}
-          </Text>
-          <Text step="footnote" tone="muted" numberOfLines={1}>
-            {formatDay(a.scheduledOn, 'long')} · {relativeDays(daysBetween(today, a.scheduledOn), t)}
-          </Text>
-        </View>
-      </View>,
-    ),
-  );
+  appointments.forEach((a, i) => main.push(<AppointmentRow key={`a-${a.id}`} appointment={a} vehicleId={vehicle.id} testID={`avisos-appointment-${i}`} />));
   manual.forEach((m, i) => main.push(<ManualReminderRow key={`m-${m.id}`} reminder={m} testID={`avisos-manual-${i}`} />));
   if (groups.unknown.length > 0) {
     main.push(

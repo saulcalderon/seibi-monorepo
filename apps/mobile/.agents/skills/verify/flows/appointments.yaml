@@ -1,0 +1,200 @@
+# Feature: features/appointments.md. «Agendar una Cita» (S13, SEI-68) on the
+# test account: the [+] → «Agendar Cita» for «Cambio de aceite» today, with
+# a Shop and notes marked «verify SEI-68»; the Appointment shows in Avisos
+# with «Hecho» and in the Vehicle detail's «Citas y recordatorios», where
+# «Cancelar» asks and removes it from both; the detail's «Agendar Cita»
+# opens the sheet and closing it with a chip on asks first. Run through
+# scripts/verify.sh drive <ios|android> appointments.
+appId: ${APP_ID}
+name: Schedule an Appointment, see it in Avisos and the Vehicle detail, cancel it
+---
+# A failed run leaves a «verify SEI-68» Appointment open, and it would be the
+# row this flow cancels: cancel those first.
+- runScript:
+    file: scripts/cleanup-sei68.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}
+- stopApp
+- openLink: ${DEV_URL}
+- runFlow: sign-in.yaml
+- startRecording: appointments
+
+# --- The [+] → «Agendar Cita» on Inicio's Vehicle.
+- waitForAnimationToEnd:
+    timeout: 5000
+- extendedWaitUntil:
+    visible:
+      id: home-stage-vehicle
+    timeout: 30000
+- tapOn:
+    id: open-actions
+- extendedWaitUntil:
+    visible:
+      id: action-schedule-appointment
+    timeout: 15000
+- assertVisible:
+    id: action-schedule-appointment
+    text: '.*Agendar Cita.*'
+- waitForAnimationToEnd
+- takeScreenshot: appointments-01-actions
+- tapOn:
+    id: action-schedule-appointment
+- extendedWaitUntil:
+    visible:
+      id: appointment-title
+      text: Agendar Cita
+    timeout: 15000
+- assertNotVisible:
+    id: actions-sheet
+- assertVisible:
+    id: appointment-date
+- assertVisible:
+    id: appointment-save
+- waitForAnimationToEnd
+- takeScreenshot: appointments-02-form
+
+# --- Today (the picker opens on it), «Cambio de aceite», a Shop and notes.
+- tapOn:
+    id: appointment-task-engine_oil
+# «Taller» and «Notas» sit under the 14 chips, below the sheet's fold.
+- scrollUntilVisible:
+    element:
+      id: appointment-shop
+    centerElement: true
+    timeout: 15000
+- tapOn:
+    id: appointment-shop
+- inputText: verify SEI-68 taller
+# With the keyboard up «Notas» sits under the «Guardar Cita» bar, where Maestro
+# still counts it visible and a tap lands on «Guardar Cita»: put it away first.
+- runFlow: service-hide-keyboard.yaml
+- scrollUntilVisible:
+    element:
+      id: appointment-notes
+    centerElement: true
+    timeout: 15000
+- tapOn:
+    id: appointment-notes
+- inputText: verify SEI-68
+# The sheet keeps the notes and «Guardar Cita» above the keyboard (SEI-76).
+- waitForAnimationToEnd
+- assertVisible:
+    id: appointment-notes
+    text: verify SEI-68
+- assertVisible:
+    id: appointment-save
+- takeScreenshot: appointments-03-filled
+- tapOn:
+    id: appointment-save
+- extendedWaitUntil:
+    notVisible:
+      id: appointment-title
+    timeout: 15000
+
+# --- Avisos: «Cita · <Taller>», today, and «Hecho».
+- tapOn:
+    id: tab-reminders
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    visible: 'Cita · verify SEI-68 taller'
+    timeout: 30000
+- assertVisible:
+    id: avisos-appointment-0-done
+- waitForAnimationToEnd
+- takeScreenshot: appointments-04-avisos
+
+# --- The Vehicle detail: the task, the day and the Shop, «Marcar hecho» and «Cancelar».
+- tapOn:
+    id: tab-home
+- extendedWaitUntil:
+    visible:
+      id: home-stage-vehicle
+    timeout: 15000
+- tapOn:
+    id: home-stage-vehicle
+- extendedWaitUntil:
+    visible:
+      id: vehicle-hero
+    timeout: 20000
+- scrollUntilVisible:
+    element: '.*verify SEI-68 taller.*'
+    centerElement: true
+    timeout: 20000
+- assertVisible:
+    id: detail-appointment-0-done
+- assertVisible:
+    id: detail-add-appointment
+- waitForAnimationToEnd
+- takeScreenshot: appointments-05-detail
+
+# --- «Cancelar» asks, then removes it.
+- tapOn:
+    id: detail-appointment-0-cancel
+- extendedWaitUntil:
+    visible: '¿Cancelar la Cita del .*\?'
+    timeout: 5000
+- takeScreenshot: appointments-06-cancel-confirm
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: Cancelar Cita
+# Android's alert is its own window; its confirm button is button1.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          id: 'android:id/button1'
+- extendedWaitUntil:
+    notVisible: '.*verify SEI-68 taller.*'
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: appointments-07-canceled
+
+# --- The detail's «Agendar Cita» opens the sheet for this Vehicle; a chip
+# chosen, «Cerrar» asks «¿Descartar la Cita?» and «Descartar» saves nothing.
+- tapOn:
+    id: detail-add-appointment
+- extendedWaitUntil:
+    visible:
+      id: appointment-title
+    timeout: 15000
+- tapOn:
+    id: appointment-task-engine_oil
+- tapOn:
+    id: appointment-close
+- extendedWaitUntil:
+    visible: '¿Descartar la Cita\?'
+    timeout: 10000
+- takeScreenshot: appointments-08-discard-ask
+- tapOn: 'Descartar'
+- extendedWaitUntil:
+    notVisible:
+      id: appointment-title
+    timeout: 10000
+- assertNotVisible:
+    id: detail-appointment-0
+
+# --- Gone from Avisos too.
+- tapOn:
+    id: tab-reminders
+- extendedWaitUntil:
+    visible:
+      id: avisos-vehicle-name
+    timeout: 15000
+- assertNotVisible: 'Cita · verify SEI-68 taller'
+- takeScreenshot: appointments-09-avisos-after
+- stopRecording
+# Leave the test account as it was: no open «verify SEI-68» Appointment.
+- runScript:
+    file: scripts/cleanup-sei68.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}
