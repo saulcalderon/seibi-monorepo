@@ -37,9 +37,12 @@ matching feature file as the recipe. The commands come from
 - A journey that saves data also needs a read-only seibi-dev `SELECT`
   showing the saved row.
 - Prove on the platforms the change's tier asks for (`AGENTS.md` → Prove
-  it works: Android for a new screen, a journey that saves data, or
-  platform-specific code). Report a platform that could not run, with the
-  command tried and the unmet precondition.
+  it works: iOS, plus Android for platform-specific code). Report a
+  platform that could not run, with the command tried and the unmet
+  precondition.
+- `verify.sh batch` drives every runnable flow this map names, in the
+  order of the Features list below. Name a new flow there, and a subflow
+  as `<name>.yaml`, so the full run drives the one and skips the other.
 - Do not report a skipped entry point as verified through a different path.
 
 ## Feature entry contract

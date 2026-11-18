@@ -6,6 +6,8 @@
 #   verify.sh doctor  ios|android               read-only: is this instance worth driving?
 #   verify.sh drive   ios|android <flow>        run flows/<flow>.yaml, record video + screenshots,
 #                                               then check the corners of every round-* crop
+#   verify.sh batch   ios|android               drive every flow the feature map names, one after
+#                                               another, then print a pass/fail table (on request)
 #   verify.sh cleanup [ios|android|all]         stop what launch started (all: Metro too); evidence stays
 #   verify.sh a11y    ios|android <setting>     large-text | reduce-motion | reset: the device's
 #                                               text size and motion settings, for flows that need them
@@ -441,6 +443,109 @@ cmd_drive() {
   return "$status"
 }
 
+# --- Batch ---------------------------------------------------------------------
+
+# Flows that delete the test account; a batch never runs them (features/auth.md → Gotchas).
+DESTRUCTIVE_FLOWS=(delete-account account-deleted-elsewhere)
+
+is_destructive() {
+  local d
+  for d in "${DESTRUCTIVE_FLOWS[@]}"; do [[ "$1" == "$d" ]] && return 0; done
+  return 1
+}
+
+# Every flow the feature map names, in map order: the backticked names under
+# "## Features" in features/README.md that have a flows/<name>.yaml and record
+# a video. Subflows (named there as <name>.yaml, recording nothing) and the
+# destructive flows are left out.
+map_flows() {
+  local name seen=" "
+  while IFS= read -r name; do
+    [[ -f "$FLOWS_DIR/$name.yaml" && "$seen" != *" $name "* ]] || continue
+    seen+="$name "
+    grep -qE '^- startRecording' "$FLOWS_DIR/$name.yaml" || continue
+    is_destructive "$name" && continue
+    echo "$name"
+  done < <(awk '/^## Features/ { f = 1; next } /^## / { f = 0 } f' "$SKILL_DIR/features/README.md" \
+             | grep -oE '`[a-z0-9-]+`' | tr -d '`')
+}
+
+# The device setting a flow's header asks for ("Run `scripts/verify.sh a11y
+# <ios|android> large-text` first"), or nothing.
+flow_a11y() {
+  sed -n '1,/^appId:/p' "$FLOWS_DIR/$1.yaml" \
+    | grep -m1 -oE 'a11y <ios\|android> (large-text|reduce-motion)' | awk '{ print $NF }' || true
+}
+
+# One drive inside a subshell, so its die ends that run and not the batch.
+# Never call it in a condition (if, ||, &&): bash would ignore set -e inside
+# the drive. It sets BATCH_RC and appends a row to <batch dir>/rows.txt.
+BATCH_N=0
+BATCH_RC=0
+batch_run() {
+  local platform="$1" flow="$2" note="$3" dir="$4" log start evidence result
+  BATCH_N=$((BATCH_N + 1))
+  log="$dir/$(printf '%02d' "$BATCH_N")-$flow.log"
+  start=$SECONDS
+  set +e
+  ( set -e; cmd_drive "$platform" "$flow" ) 2>&1 | tee "$log"
+  BATCH_RC=${PIPESTATUS[0]}
+  set -e
+  scrub_password "$dir"
+  evidence="$(sed -n 's/^evidence:  //p' "$log" | tail -1)"
+  if [[ "$BATCH_RC" == 0 ]]; then result=PASS; else result=FAIL; fi
+  printf '%-50s %-6s %3dm%02ds  %s\n' "$flow${note:+ ($note)}" "$result" \
+    $(((SECONDS - start) / 60)) $(((SECONDS - start) % 60)) "${evidence:-- (see $log)}" >> "$dir/rows.txt"
+}
+
+# Drives every flow the feature map names on one platform, one after another,
+# and keeps going after a failure. A <flow>-cleanup runs right before its
+# <flow> (so a run that died earlier can't fail it) and again when <flow>
+# fails; a flow whose header asks for large text or Reduce Motion gets that
+# setting first and `a11y reset` after. Run only when a full run is asked for.
+cmd_batch() {
+  local platform flow setting dir flows=() list passed failed
+  platform="$(platform_arg "${1:-}")"
+  while IFS= read -r flow; do flows+=("$flow"); done < <(map_flows)
+  [[ ${#flows[@]} -gt 0 ]] || die "features/README.md names no flow to drive"
+  list=" ${flows[*]} "
+  load_test_account
+  [[ -n "${SEIBI_TEST_EMAIL:-}" && -n "${SEIBI_TEST_PASSWORD:-}" ]] \
+    || die "a batch signs in: set SEIBI_TEST_EMAIL and SEIBI_TEST_PASSWORD, or create $TEST_ACCOUNT_FILE (SKILL.md → Sign-in)"
+  dir="$EVIDENCE_ROOT/$(date +%Y%m%d-%H%M%S)-batch-$platform"
+  mkdir -p "$dir"
+  cmd_doctor "$platform" > "$dir/doctor.txt" || { cat "$dir/doctor.txt"; die "doctor failed; see above"; }
+  : > "$dir/rows.txt"
+  log "batch on $platform: ${#flows[@]} flows, destructive ones skipped (${DESTRUCTIVE_FLOWS[*]}); summary: $dir/summary.txt"
+  for flow in "${flows[@]}"; do
+    # A cleanup flow runs beside the flow it cleans up after, not in its own place.
+    [[ "$flow" == *-cleanup && "$list" == *" ${flow%-cleanup} "* ]] && continue
+    if [[ "$list" == *" $flow-cleanup "* ]]; then
+      batch_run "$platform" "$flow-cleanup" "before $flow" "$dir"
+    fi
+    setting="$(flow_a11y "$flow")"
+    if [[ -n "$setting" ]]; then
+      ( cmd_a11y "$platform" "$setting" ) >&2 || log "WARN: a11y $setting failed before $flow"
+    fi
+    batch_run "$platform" "$flow" "" "$dir"
+    if [[ "$BATCH_RC" != 0 && "$list" == *" $flow-cleanup "* ]]; then
+      batch_run "$platform" "$flow-cleanup" "after $flow failed" "$dir"
+    fi
+    if [[ -n "$setting" ]]; then
+      ( cmd_a11y "$platform" reset ) >&2 || log "WARN: a11y reset failed after $flow; reset the device by hand"
+    fi
+  done
+  passed="$(grep -c ' PASS ' "$dir/rows.txt" || true)"
+  failed="$(grep -c ' FAIL ' "$dir/rows.txt" || true)"
+  {
+    echo "batch:     $platform, $(git -C "$APP_DIR" rev-parse --abbrev-ref HEAD) @ $(git -C "$APP_DIR" rev-parse --short HEAD), $(date '+%Y-%m-%d %H:%M')"
+    printf '%-50s %-6s %7s  %s\n' flow result time evidence
+    cat "$dir/rows.txt"
+    echo "result:    $passed passed, $failed failed"
+  } | tee "$dir/summary.txt"
+  [[ "$failed" == 0 ]]
+}
+
 cmd_cleanup() {
   local which="${1:-all}" pid pgid udid i
   # Metro serves both platforms, so only a full cleanup stops it.
@@ -518,8 +623,9 @@ case "${1:-}" in
   launch) shift; cmd_launch "$@" ;;
   doctor) shift; cmd_doctor "$@" ;;
   drive) shift; cmd_drive "$@" ;;
+  batch) shift; cmd_batch "$@" ;;
   cleanup) shift; cmd_cleanup "$@" ;;
   a11y) shift; cmd_a11y "$@" ;;
   where) echo "$EVIDENCE_ROOT" ;;
-  *) sed -n '2,25p' "${BASH_SOURCE[0]}"; exit 2 ;;
+  *) sed -n '2,27p' "${BASH_SOURCE[0]}"; exit 2 ;;
 esac
