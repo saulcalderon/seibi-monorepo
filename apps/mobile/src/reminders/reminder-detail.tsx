@@ -180,14 +180,29 @@ function Detail({ vehicle, reminder, task }: { vehicle: VehicleView; reminder: R
             onPress={() => router.replace({ pathname: '/last-done', params: { vehicleId: vehicle.id, task: reminder.taskCode } })}
           />
         ) : null}
-        <Button
-          testID="reminder-detail-schedule"
-          variant="secondary"
-          icon="addAppointment"
-          block
-          label={t('reminders.detail.schedule')}
-          onPress={() => router.replace({ pathname: '/schedule-appointment', params: { vehicleId: vehicle.id, tasks: reminder.taskCode } })}
-        />
+        {/* «Agendar» and «¿Cuánto cuesta?» side by side, as the PWA's. */}
+        <View style={styles.pair}>
+          <View style={styles.half}>
+            <Button
+              testID="reminder-detail-schedule"
+              variant="secondary"
+              icon="addAppointment"
+              block
+              label={t('reminders.detail.schedule')}
+              onPress={() => router.replace({ pathname: '/schedule-appointment', params: { vehicleId: vehicle.id, tasks: reminder.taskCode } })}
+            />
+          </View>
+          <View style={styles.half}>
+            <Button
+              testID="reminder-detail-estimate"
+              variant="secondary"
+              icon="estimates"
+              block
+              label={t('reminders.detail.estimate')}
+              onPress={() => router.dismissTo({ pathname: '/estimates', params: { vehicle: vehicle.id, task: reminder.taskCode } })}
+            />
+          </View>
+        </View>
         {offer === 'restore' ? (
           <Button
             testID="reminder-detail-restore"

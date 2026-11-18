@@ -1,4 +1,4 @@
-# Feature: the app shell (features/app-shell.md): three tabs with a stack
+# Feature: the app shell (features/app-shell.md): four tabs with a stack
 # each, the floating [+] and its actions sheet, Perfil from the header
 # avatar, and a deep link to a Vehicle. Run through scripts/verify.sh drive
 # <ios|android> app-shell. It signs in before the recording starts (a
@@ -18,7 +18,7 @@ name: Tabs keep their place, the [+] opens the actions, a link opens a Vehicle
       TEST_EMAIL: ${TEST_EMAIL}
       TEST_PASSWORD: ${TEST_PASSWORD}
 - startRecording: app-shell
-# A cold start, already signed in: Inicio, the three tabs and the [+].
+# A cold start, already signed in: Inicio, the four tabs and the [+].
 - stopApp
 - openLink: ${DEV_URL}
 - extendedWaitUntil:
@@ -35,10 +35,13 @@ name: Tabs keep their place, the [+] opens the actions, a link opens a Vehicle
     id: tab-fleet
 - assertVisible:
     id: tab-reminders
+- assertVisible:
+    id: tab-estimates
 # Spoken labels: each tab says its name, the [+] says what it is for, the avatar says Perfil.
 - assertVisible: Inicio
 - assertVisible: Mi flota
 - assertVisible: Avisos
+- assertVisible: Estimados
 - assertVisible: Acciones rápidas
 - assertVisible:
     id: open-actions

@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
-import { ScrollView } from 'react-native';
+import { ScrollView, type ScrollViewProps } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
+
+import { KEYBOARD_DISMISS } from '@/ui/form';
 
 /**
  * The scrolling body of every screen inside the tabs. It is the screen's
@@ -9,10 +11,29 @@ import { StyleSheet } from 'react-native-unistyles';
  * on Android, NativeTabs keeps the screen above its bar). Its end leaves room
  * for the floating [+], so the last row can always scroll clear of it.
  */
-export function TabScroll({ children, flush = false, testID }: { children: ReactNode; flush?: boolean; testID?: string }) {
+export function TabScroll({
+  children,
+  flush = false,
+  keyboardShouldPersistTaps,
+  testID,
+}: {
+  children: ReactNode;
+  flush?: boolean;
+  /** A screen with a field in it (Estimados) passes `handled`, so a tap on a button works while the keyboard is up. */
+  keyboardShouldPersistTaps?: ScrollViewProps['keyboardShouldPersistTaps'];
+  testID?: string;
+}) {
   styles.useVariants({ flush });
   return (
-    <ScrollView testID={testID} contentInsetAdjustmentBehavior="automatic" style={styles.scroll} contentContainerStyle={styles.content}>
+    <ScrollView
+      testID={testID}
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps={keyboardShouldPersistTaps}
+      // The same screens let a drag put the keyboard away.
+      keyboardDismissMode={keyboardShouldPersistTaps ? KEYBOARD_DISMISS : undefined}
+      style={styles.scroll}
+      contentContainerStyle={styles.content}
+    >
       {children}
     </ScrollView>
   );

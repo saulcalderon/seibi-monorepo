@@ -9,6 +9,8 @@ name: Test sign-in, the session survives a relaunch, sign-out closes the app aga
 # Cold start.
 - stopApp
 - openLink: ${DEV_URL}
+# A fresh install opens the Intro first: skip it (skip-intro.yaml).
+- runFlow: skip-intro.yaml
 - extendedWaitUntil:
     visible:
       id: 'sign-in-title|home-screen'

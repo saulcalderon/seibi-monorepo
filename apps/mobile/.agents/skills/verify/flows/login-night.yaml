@@ -11,6 +11,8 @@ name: Login in night (night splash, light Login, night app after sign-in)
 # Start signed out: a failed run may have left the test account signed in.
 - stopApp
 - openLink: ${DEV_URL}
+# A fresh install opens the Intro first: skip it (skip-intro.yaml).
+- runFlow: skip-intro.yaml
 - extendedWaitUntil:
     visible:
       id: 'sign-in-title|home-screen'

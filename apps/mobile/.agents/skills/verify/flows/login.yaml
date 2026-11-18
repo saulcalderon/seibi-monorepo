@@ -17,6 +17,8 @@ name: Login renders, its links and buttons answer, the test sign-in opens the ap
 - tapOn:
     text: Wait
     optional: true
+# A fresh install opens the Intro first: skip it (skip-intro.yaml).
+- runFlow: skip-intro.yaml
 - extendedWaitUntil:
     visible:
       id: 'sign-in-title|home-screen'

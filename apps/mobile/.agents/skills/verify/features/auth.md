@@ -32,7 +32,7 @@ next launch when the account was deleted somewhere else.
 
 ## How to get to it (user POV)
 
-- Open the app signed out: the sign-in screen is the first screen after the splash.
+- Open the app signed out: the sign-in screen is the first screen after the splash (after the Intro on a phone's first launch, [`intro.md`](./intro.md)).
 - Tap a sign-in button; in a development or preview build, type the test account in the form and tap «Entrar con correo».
 - Signed in, the avatar at the top right of a tab opens Perfil, with «Cerrar sesión» and «Eliminar mi cuenta» at the bottom ([`profile.md`](./profile.md)).
 - A deep link to any route (`seibi-dev://`, `seibi-dev://sign-in`, `seibi-dev://vehicle/<id>`) opens only what the session allows.
