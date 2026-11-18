@@ -17,6 +17,10 @@
     "mileage": {
       "title": "Actualizar Kilometraje",
       "body": "El número del odómetro hoy"
+    },
+    "appointment": {
+      "title": "Agendar una Cita",
+      "body": "Un mantenimiento que harás"
     }
   },
   "placeholder": {
@@ -247,7 +251,8 @@
       "snoozedToast": "Pospuesto {{days}} días",
       "restored": "Aviso reactivado",
       "gone": "Este aviso ya no aplica.",
-      "openSpoken": "{{task}}, {{status}}, {{due}}"
+      "openSpoken": "{{task}}, {{status}}, {{due}}",
+      "schedule": "Agendar"
     },
     "lastDone": {
       "title": "¿Cuándo fue “{{task}}”?",
@@ -295,7 +300,27 @@
     "deleteAsk": "¿Eliminar «{{title}}»?",
     "deleteConfirm": "Eliminar",
     "deleteCancel": "Cancelar",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "appointmentDoneSpoken": "Hecho: registrar el Servicio de la Cita del {{day}}"
+  },
+  "appointments": {
+    "form": {
+      "title": "Agendar Cita",
+      "body": "Guarda la fecha de un mantenimiento que harás. Cuando lo hagas, lo marcas como hecho.",
+      "vehicle": "Vehículo",
+      "date": "Fecha",
+      "what": "¿Para qué es?",
+      "shop": "Taller",
+      "notes": "Notas",
+      "save": "Guardar Cita",
+      "saved": "Cita guardada",
+      "discard": {
+        "title": "¿Descartar la Cita?",
+        "body": "Lo que escribiste se pierde.",
+        "confirm": "Descartar",
+        "cancel": "Seguir editando"
+      }
+    }
   },
   "vehicleDetail": {
     "plate": "Placa",
@@ -338,7 +363,17 @@
       "workshop": "Cita en el taller",
       "emptyHint": "Guarda fechas de citas en el taller o cosas como el seguro y la revisión técnica.",
       "addReminder": "Recordatorio",
-      "addReminderSpoken": "Recordatorio nuevo"
+      "addReminderSpoken": "Recordatorio nuevo",
+      "add": "Agendar Cita",
+      "markDone": "Marcar hecho",
+      "markDoneSpoken": "Marcar hecha la Cita del {{day}}: registrar el Servicio",
+      "cancel": "Cancelar",
+      "cancelSpoken": "Cancelar la Cita del {{day}}",
+      "cancelAsk": "¿Cancelar la Cita del {{day}}?",
+      "cancelBody": "Sale de Avisos y del detalle del Vehículo.",
+      "cancelConfirm": "Cancelar Cita",
+      "cancelKeep": "Mantenerla",
+      "canceled": "Cita cancelada"
     },
     "history": {
       "services": "Servicios",

@@ -72,3 +72,33 @@ describe('the garage', () => {
     expect(withdrawn.map((v) => v.id)).toEqual(['recent']);
   });
 });
+
+describe('the upcoming Appointments of a Vehicle', () => {
+  const appointment = (id: string, scheduledOn: string, extra: { serviceId?: string; canceledAt?: string } = {}) => ({
+    id,
+    scheduledOn,
+    shop: null,
+    notes: null,
+    taskCodes: [],
+    serviceId: extra.serviceId ?? null,
+    canceledAt: extra.canceledAt ?? null,
+  });
+
+  it('are today on, soonest first, without the canceled or completed ones', () => {
+    const view = deriveVehicle(
+      vehicle({
+        appointments: [
+          appointment('later', '2026-12-01'),
+          appointment('past', '2026-11-11'),
+          appointment('today', TODAY),
+          appointment('canceled', '2026-11-20', { canceledAt: '2026-11-12T10:00:00Z' }),
+          appointment('done', '2026-11-13', { serviceId: 's1' }),
+          appointment('soon', '2026-11-14'),
+        ],
+      }),
+      [],
+      TODAY,
+    );
+    expect(view.upcomingAppointments.map((a) => a.id)).toEqual(['today', 'soon', 'later']);
+  });
+});

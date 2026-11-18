@@ -298,10 +298,10 @@ The migration's order, scope and tickets are in
     `assets/icons/add.xml`). Spoken label «Acciones rápidas». It pushes
     `/actions`.
   - **Actions sheet** (`(app)/actions.tsx`): a `formSheet` sized to its
-    content, «¿Qué quieres hacer?» with «Registrar un Servicio» and
-    «Actualizar Kilometraje». No Appointment action until S13 ships it.
-    An action replaces the sheet with its own (`router.replace`):
-    `record-service` (S7) and `update-mileage` (S8).
+    content, «¿Qué quieres hacer?» with «Registrar un Servicio»,
+    «Actualizar Kilometraje» and «Agendar una Cita». An action replaces
+    the sheet with its own (`router.replace`): `record-service` (S7),
+    `update-mileage` (S8) and `schedule-appointment` (S13).
   - **Perfil** opens from the header avatar (`ProfileButton`: Google's
     picture, else initials; on iOS 26 the header seats it on its own glass
     circle) inside the current tab (S11, below).
@@ -460,9 +460,11 @@ The migration's order, scope and tickets are in
   schedule banner («Buscar plan del fabricante» runs
   `useRefreshVehicleData`) and the Vencido/Pronto/Al día Reminder groups;
   «Completa tu historial» above them; a row opens the Reminder's detail
-  (S9). «Citas y recordatorios» lists the Appointments (read-only until
-  S13) and the hand-written Reminders with «Hecho» and the bin (a native
-  confirm), and «Recordatorio» opens `new-reminder` for this Vehicle. Historial groups the Services by month as
+  (S9). «Citas y recordatorios» lists the Appointments with «Marcar
+  hecho» and «Cancelar» (S13, below) and the hand-written Reminders with
+  «Hecho» and the bin (a native confirm); «Agendar Cita» opens
+  `schedule-appointment` and «Recordatorio» `new-reminder`, both for this
+  Vehicle. Historial groups the Services by month as
   the PWA's expandable cards (lines, Taller, notes, «Editar», «Quitar»
   with its confirm; «Factura» waits for S12), stats «Servicios» and
   «Gastado este año», and the last 8 readings, each opening the
@@ -479,9 +481,11 @@ The migration's order, scope and tickets are in
   `formSheet` route, `record-service` (`src/service/service-form.tsx`).
   Its params
   are `?vehicleId=` (pre-picked Vehicle, no picker), `?serviceId=` (edit
-  that Service) and `?tasks=` (pre-checked
-  Maintenance tasks). It opens from the [+] actions sheet and from the
-  Vehicle detail's Historial.
+  that Service), `?tasks=` (pre-checked
+  Maintenance tasks) and `?appointmentId=&shop=` (the Appointment it
+  completes, with its Shop filled in). It opens from the [+] actions
+  sheet, the Vehicle detail's Historial, a Reminder's «Ya lo hice» and an
+  Appointment's «Hecho».
   - **Rules.** The draft's Zod schema and the payload builder live in
     `src/data/service/form.ts` (unit-tested in `form.test.ts`), the final
     checks in `src/data/service/rules.ts` (`validateService`). The order,
@@ -579,7 +583,7 @@ The migration's order, scope and tickets are in
   - **Groups.** `groupReminders` splits the engine's Reminders: overdue,
     soon and ok (not snoozed, soonest expected first), «Pospuestos»
     (snoozed, unknown ones aside) and unknown. The first card holds the
-    overdue ones, the upcoming Appointments (read-only until S13), the open
+    overdue ones, the upcoming Appointments with «Hecho» (S13, below), the open
     hand-written Reminders with «Hecho», and «N tareas sin fecha», which
     unfolds «Completa tu historial» under the groups; with none of those
     due it says «Nada pendiente». «Por vencer» (always), «Al día» and
@@ -590,7 +594,7 @@ The migration's order, scope and tickets are in
 
     | Route | Opens | Who opens it |
     | --- | --- | --- |
-    | `/reminder?vehicleId=&task=` | The Reminder's detail: status in words and the share of the interval used, the task's description (when the Knowledge level explains, or nothing is known), «Frecuencia», «Última vez», «Toca a los», «Fuente» with up to three links (`expo-web-browser`); «Ya lo hice: registrar Servicio» (replaces it with `record-service?tasks=`), «Decir cuándo fue la última vez» (unknown), «Posponer 7/30 días» (overdue or soon) or «Reactivar aviso» (snoozed). Sized to its content | Any Reminder row, Inicio's «Estado» cards |
+    | `/reminder?vehicleId=&task=` | The Reminder's detail: status in words and the share of the interval used, the task's description (when the Knowledge level explains, or nothing is known), «Frecuencia», «Última vez», «Toca a los», «Fuente» with up to three links (`expo-web-browser`); «Ya lo hice: registrar Servicio» (replaces it with `record-service?tasks=`), «Decir cuándo fue la última vez» (unknown), «Agendar» (replaces it with `schedule-appointment?tasks=`), «Posponer 7/30 días» (overdue or soon) or «Reactivar aviso» (snoozed). Sized to its content | Any Reminder row, Inicio's «Estado» cards |
     | `/last-done?vehicleId=&task=` | «¿Cuándo fue “…”?»: five rough ranges (months back from today, `addMonths`), the exact day with the odometer then, «Tengo la factura» (`record-service`) or «No sé». It writes `reminder_states` (`rememberedPatch`, `DONT_KNOW_PATCH`), not a Service. Sized to its content | «Completa tu historial»'s chips, the detail |
     | `/new-reminder?vehicleId=` | «Nuevo Recordatorio»: a Vehicle picker with two or more, what to remember, the day (today to start: a native picker has no empty value), notes. The rules are `manualReminderRow` (`src/data/reminder/rules.ts`). Sized to its content | Avisos' «Nuevo», the Vehicle detail's «Recordatorio» |
 
@@ -603,9 +607,31 @@ The migration's order, scope and tickets are in
     and the card says «Pronto podrás recibirlas en este teléfono.», as
     Perfil's switch does. As in the PWA it hides once
     `profiles.notifications_enabled` is off.
-  - **Not here yet.** The detail's «Agendar» (S13) and «¿Cuánto cuesta?»
-    (S10), and «Hecho» on an Appointment (S13), join with their screens.
-    Unlike the PWA, deleting a hand-written Reminder asks first.
+  - **Not here yet.** The detail's «¿Cuánto cuesta?» (S10) joins with its
+    screen. Unlike the PWA, deleting a hand-written Reminder asks first.
+- **Agendar una Cita** (S13, SEI-68): the PWA's AppointmentForm (as of
+  `6e3b818`) as the `formSheet` route `schedule-appointment?vehicleId=&tasks=`
+  (`src/appointments/appointment-form.tsx`), sized to its content. It
+  opens from the [+], the Vehicle detail's «Agendar Cita» and a Reminder's
+  «Agendar». The Vehicle (a picker with two or more; else the one Inicio
+  shows), the day (the native picker from today on; it opens on today,
+  since a native picker has no empty value), «¿Para qué es?» (14 task
+  chips, `taskChoices` in `appointment-logic.ts`: the tasks it was opened
+  for, then the Vehicle's overdue and soon ones, then the common ones;
+  unlike the PWA the opened-for task always shows), «Taller» and «Notas».
+  The rules are `appointmentRow` (`src/data/appointment/rules.ts`): a day
+  is required, a new Appointment is today or later, blank Shop and notes
+  save as null. «Upcoming» is `deriveVehicle`'s `upcomingAppointments`:
+  today on, not canceled, no Service. The rows live in
+  `src/appointments/appointment-row.tsx`: Avisos' «Cita · <Taller>» with
+  «Hecho», the Vehicle detail's tasks · day · Shop with «Marcar hecho» and
+  «Cancelar». «Hecho» opens `record-service?appointmentId=` with the
+  Appointment's tasks and Shop; `useSaveService` sets the Appointment's
+  `service_id`. «Cancelar» sets `canceled_at`; unlike the PWA it asks
+  first with the native alert, as deleting a hand-written Reminder does.
+  Closing the form with changes asks «¿Descartar la Cita?». Editing an
+  Appointment has no screen, as in the PWA; Inicio's «Agenda» (#54) is
+  not ported.
 - **Styling:** Unistyles 3 (`react-native-unistyles` on
   `react-native-nitro-modules`; SEI-42's spike proved it on SDK 58 on both
   platforms). The theme lives in `src/theme/`, values from

@@ -34,8 +34,9 @@ const SOURCE_TITLE_MAX = 48;
  * interval used; the task's description when the person wants it explained
  * (or nothing is known); how often, the last time, when it comes due, and
  * the schedule's source with its links. It records the Service, asks the
- * last time of an unknown task, and snoozes or restores a due one.
- * «Agendar» (S13) and «¿Cuánto cuesta?» (S10) join it with their screens.
+ * last time of an unknown task, plans an Appointment for it («Agendar»),
+ * and snoozes or restores a due one. «¿Cuánto cuesta?» (S10) joins
+ * «Agendar» with its screen, side by side as in the PWA.
  */
 export function ReminderDetailSheet({ vehicleId, taskCode }: { vehicleId?: string; taskCode?: string }) {
   const { t } = useTranslation();
@@ -179,6 +180,14 @@ function Detail({ vehicle, reminder, task }: { vehicle: VehicleView; reminder: R
             onPress={() => router.replace({ pathname: '/last-done', params: { vehicleId: vehicle.id, task: reminder.taskCode } })}
           />
         ) : null}
+        <Button
+          testID="reminder-detail-schedule"
+          variant="secondary"
+          icon="addAppointment"
+          block
+          label={t('reminders.detail.schedule')}
+          onPress={() => router.replace({ pathname: '/schedule-appointment', params: { vehicleId: vehicle.id, tasks: reminder.taskCode } })}
+        />
         {offer === 'restore' ? (
           <Button
             testID="reminder-detail-restore"

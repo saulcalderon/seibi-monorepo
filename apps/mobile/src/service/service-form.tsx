@@ -44,8 +44,12 @@ export interface ServiceFormProps {
   vehicleId?: string;
   /** A Service to edit; its Vehicle comes with it. */
   serviceId?: string;
-  /** Maintenance tasks to start with, one line each (a Reminder's «Ya lo hice»). */
+  /** Maintenance tasks to start with, one line each (a Reminder's «Ya lo hice», an Appointment's «Hecho»). */
   taskCodes?: string[];
+  /** The Appointment this Service completes (its «Hecho»): saving marks it done. */
+  appointmentId?: string;
+  /** The Shop to start with (the Appointment's). */
+  shop?: string;
 }
 
 /**
@@ -56,7 +60,7 @@ export interface ServiceFormProps {
  * cost (one total or per line), the Shop and notes. Editing also offers to
  * withdraw the Service. Closing with unsaved changes asks first.
  */
-export function ServiceForm({ vehicleId, serviceId, taskCodes }: ServiceFormProps) {
+export function ServiceForm({ vehicleId, serviceId, taskCodes, appointmentId, shop }: ServiceFormProps) {
   const { t } = useTranslation();
   const { theme } = useUnistyles();
   const router = useRouter();
@@ -118,6 +122,8 @@ export function ServiceForm({ vehicleId, serviceId, taskCodes }: ServiceFormProp
       vehicle={vehicle}
       service={found?.service}
       taskCodes={taskCodes}
+      appointmentId={appointmentId}
+      shop={shop}
       tasks={garage.tasks}
       k={knowledgeProfile(profile.data?.knowledgeLevel)}
     />
@@ -147,6 +153,8 @@ function ServiceFormBody({
   vehicle: startVehicle,
   service,
   taskCodes,
+  appointmentId,
+  shop,
   tasks,
   k,
 }: {
@@ -154,6 +162,8 @@ function ServiceFormBody({
   vehicle: VehicleView;
   service?: ServiceRecord;
   taskCodes?: string[];
+  appointmentId?: string;
+  shop?: string;
   tasks: MaintenanceTask[];
   k: KnowledgeProfile;
 }) {
@@ -166,7 +176,7 @@ function ServiceFormBody({
 
   const editing = service ?? null;
   const [initial] = useState(() =>
-    initialDraft({ vehicle: startVehicle, service, taskCodes, tasks: byCode, detailed: k.detailed, today: isoDate() }),
+    initialDraft({ vehicle: startVehicle, service, taskCodes, shop, tasks: byCode, detailed: k.detailed, today: isoDate() }),
   );
   const [draft, setDraft] = useState<ServiceDraft>(initial);
   const [error, setError] = useState<FormError | null>(null);
@@ -222,7 +232,7 @@ function ServiceFormBody({
   const submit = async () => {
     setError(null);
     try {
-      const input = serviceInputFromDraft(draft, { serviceId: editing?.id, readingId: editing?.readingId, today: isoDate() });
+      const input = serviceInputFromDraft(draft, { serviceId: editing?.id, readingId: editing?.readingId, appointmentId, today: isoDate() });
       await save.mutateAsync(input);
       notify.success(t(editing ? 'serviceForm.updated' : 'serviceForm.saved'));
       leave();

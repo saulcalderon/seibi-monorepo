@@ -102,6 +102,10 @@ handles, required state, commands and observable proof.
   snooze and restore, «Completa tu historial» and «¿Cuándo fue…?»,
   hand-written Reminders created, completed and deleted. Flows:
   `reminders`, `reminders-cleanup`.
+- [Agendar una Cita](./appointments.md): «Agendar Cita» from the [+], the
+  Vehicle detail and a Reminder's «Agendar»; the Appointment in Avisos with
+  «Hecho» and in the Vehicle detail with «Marcar hecho» and «Cancelar»
+  (which asks). Flows: `appointments`, `appointments-cleanup`.
 - [Registrar un Servicio](./service.md): the form sheet from [+] and the
   Vehicle's «Servicios», tasks and lines, validation order, the Mileage
   reading it writes, edit and withdraw, «¿Descartar los cambios?».
