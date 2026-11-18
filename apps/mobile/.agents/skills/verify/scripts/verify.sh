@@ -383,6 +383,36 @@ except Exception:
   if [[ "$ok" == 1 ]]; then echo "doctor:    OK"; else echo "doctor:    NOT READY (run: verify.sh launch $platform)"; return 1; fi
 }
 
+# The photos a flow's header asks for ("# Photos: media/<file>", paths under
+# flows/), one per line, or nothing.
+flow_photos() {
+  sed -n '1,/^appId:/p' "$FLOWS_DIR/$1.yaml" | sed -n 's/^# Photos: *//p' | tr ' ' '\n' | sed '/^$/d' || true
+}
+
+# Puts a flow's photos in the device's photo library before it runs, so the
+# system photo picker has them (SKILL.md → Photos). iOS: a slim simulator has
+# the library off, so it is turned back on first; then `simctl addmedia`.
+# Android: pushed to Pictures/ and indexed by the media scanner. A photo
+# already there is added again; the picker shows the newest first.
+seed_photos() {
+  local platform="$1" device="$2" flow="$3" photo file
+  while IFS= read -r photo; do
+    file="$FLOWS_DIR/$photo"
+    [[ -f "$file" ]] || die "$flow asks for $photo, which is not in $FLOWS_DIR"
+    if [[ "$platform" == ios ]]; then
+      if [[ -n "$SIMSLIM" ]] && "$SIMSLIM" verify "$device" >/dev/null 2>&1; then
+        "$SIMSLIM" enable "$device" photos >&2 || log "WARN: simslim could not turn the photo library back on"
+      fi
+      xcrun simctl addmedia "$device" "$file" || die "simctl addmedia $file failed"
+    else
+      "$ADB" -s "$device" push "$file" "/sdcard/Pictures/$(basename "$file")" >/dev/null || die "adb push $file failed"
+      "$ADB" -s "$device" shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE \
+        -d "file:///sdcard/Pictures/$(basename "$file")" >/dev/null || log "WARN: media scan of $(basename "$file") failed"
+    fi
+    log "photo library: added $photo"
+  done < <(flow_photos "$flow")
+}
+
 cmd_drive() {
   local platform flow device run_dir status=0
   platform="$(platform_arg "${1:-}")"; flow="${2:-}"
@@ -395,6 +425,7 @@ cmd_drive() {
   run_dir="$EVIDENCE_ROOT/$(date +%Y%m%d-%H%M%S)-$flow-$platform"
   mkdir -p "$run_dir"
   cmd_doctor "$platform" > "$run_dir/doctor.txt" || { cat "$run_dir/doctor.txt"; die "doctor failed; see above"; }
+  seed_photos "$platform" "$device" "$flow"
   log "driving $flow on $platform; evidence: $run_dir"
   "$MAESTRO" test --device "$device" --no-ansi "$FLOWS_DIR/$flow.yaml" \
     -e APP_ID="$APP_ID" -e DEV_URL="$(dev_url)" -e APP_URL="$APP_SCHEME://" \

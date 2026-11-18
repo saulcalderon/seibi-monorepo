@@ -2,6 +2,8 @@ import { InputError } from '../errors';
 import type { ServiceType } from '../garage/types';
 import { odometerNumber } from '../mileage/rules';
 
+import type { InvoiceWrite } from './invoice';
+
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 export type ServiceItemInput = {
@@ -27,6 +29,8 @@ export type ServiceInput = {
   items: ServiceItemInput[];
   /** The Appointment this Service completes. */
   appointmentId?: string | null;
+  /** What saving does to the invoice photo (S12); none leaves it as it is. */
+  invoice?: InvoiceWrite | null;
 };
 
 export function validateService(input: ServiceInput, today: string) {

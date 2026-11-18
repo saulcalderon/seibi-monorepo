@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { estimateKeys } from './estimate/keys';
 import { garageKeys } from './garage/keys';
 import { profileKeys } from './profile/keys';
+import { invoiceKeys } from './service/keys';
 import { taskKeys } from './task/keys';
 import { vpicKeys } from './vpic/keys';
 
@@ -28,6 +29,7 @@ describe('query keys', () => {
     }
     expect(startsWith(vpicKeys.models('Toyota', 2015), vpicKeys.all)).toBe(true);
     expect(startsWith(vpicKeys.makes(), vpicKeys.all)).toBe(true);
+    expect(startsWith(invoiceKeys.url(`${ANA}/s1/factura-1.jpg`), invoiceKeys.all)).toBe(true);
   });
 
   it('keep the PWA’s key for the garage, the one query every screen reads', () => {
@@ -35,7 +37,7 @@ describe('query keys', () => {
   });
 
   it('never collide across domains', () => {
-    const roots = [garageKeys.all, profileKeys.all, estimateKeys.all, taskKeys.catalog, vpicKeys.all].map((k) => k[0]);
+    const roots = [garageKeys.all, profileKeys.all, estimateKeys.all, taskKeys.catalog, vpicKeys.all, invoiceKeys.all].map((k) => k[0]);
     expect(new Set(roots).size).toBe(roots.length);
   });
 

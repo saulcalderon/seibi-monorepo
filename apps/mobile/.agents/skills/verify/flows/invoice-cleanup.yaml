@@ -1,0 +1,18 @@
+# Feature: features/invoice.md. Withdraws the Service an `invoice` run left
+# on the test account (notes «verify SEI-67») and deletes its invoice files,
+# through Supabase's REST API under the account's own RLS. `invoice` runs the
+# same script at its start; this flow lets a full run (`batch`) clean up
+# after it. Run through scripts/verify.sh drive <ios|android> invoice-cleanup.
+appId: ${APP_ID}
+name: Withdraw the Service an invoice run left
+---
+- startRecording: invoice-cleanup
+- runScript:
+    file: scripts/cleanup-sei67.js
+    env:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_KEY: ${SUPABASE_KEY}
+      TEST_EMAIL: ${TEST_EMAIL}
+      TEST_PASSWORD: ${TEST_PASSWORD}
+- takeScreenshot: invoice-cleanup-done
+- stopRecording

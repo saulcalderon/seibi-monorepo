@@ -458,7 +458,8 @@
       "remove": "Quitar",
       "removed": "Servicio quitado del historial",
       "shop": "Taller: {{shop}}",
-      "cancel": "Cancelar"
+      "cancel": "Cancelar",
+      "invoice": "Factura"
     },
     "correct": {
       "title": "Corregir lectura",
@@ -636,7 +637,39 @@
     "missing": {
       "title": "No encontramos este Servicio",
       "body": "Puede que lo hayas quitado del historial o que el enlace no sea tuyo."
+    },
+    "invoice": {
+      "label": "Factura o recibo",
+      "attach": "Adjuntar foto",
+      "replace": "Reemplazar factura",
+      "camera": "Tomar foto",
+      "library": "Elegir de la galería",
+      "new": "Foto lista. Se sube al guardar.",
+      "saved": "Factura guardada",
+      "remove": "Quitar factura",
+      "cameraFailed": "No pudimos abrir la cámara. Puedes elegir la foto de tu galería.",
+      "libraryFailed": "No pudimos abrir tu galería. Intenta de nuevo o toma la foto con la cámara.",
+      "denied": {
+        "camera": {
+          "title": "Seibi no puede usar la cámara",
+          "body": "Para fotografiar la factura, permite la cámara en Ajustes. También puedes elegir la foto de tu galería."
+        },
+        "library": {
+          "title": "Seibi no puede abrir tus fotos",
+          "body": "Para elegir la factura, permite tus fotos en Ajustes. También puedes tomarla con la cámara."
+        },
+        "settings": "Abrir Ajustes",
+        "cancel": "Ahora no"
+      }
     }
+  },
+  "invoice": {
+    "title": "Factura",
+    "close": "Cerrar",
+    "photo": "Foto de la factura",
+    "pdf": "Esta factura es un PDF.",
+    "openPdf": "Abrir PDF",
+    "missing": "Este Servicio no tiene factura."
   },
   "forms": {
     "noVehicles": {
@@ -813,7 +846,8 @@
     "routine_name_required": "Ponle un nombre, por ejemplo “Trabajo”.",
     "routine_distance_invalid": "Escribe la distancia de ida y vuelta.",
     "routine_days_invalid": "Elige cuántos días a la semana.",
-    "reminder_title_required": "Escribe qué quieres recordar."
+    "reminder_title_required": "Escribe qué quieres recordar.",
+    "invoice_too_large": "La foto pesa más de 10 MB. Toma otra o elige una más liviana."
   },
   "relative": {
     "today": "hoy",

@@ -25,6 +25,9 @@ const tasks = taskMap([task('engine_oil', 'Cambio de aceite'), task('oil_filter'
 
 const yaris = { id: 'v1', odometer: 52000, measure: 'km' } as VehicleView;
 
+const INVOICE = 'u1/s1/factura-1.jpg';
+const photo = { uri: 'file:///tmp/a.jpg', mimeType: 'image/jpeg', fileName: 'a.jpg' };
+
 const saved: ServiceRecord = {
   id: 's1',
   type: 'repair',
@@ -94,6 +97,13 @@ describe('unsaved changes', () => {
     expect(isDirty({ ...a, shop: 'x' }, a)).toBe(true);
     expect(isDirty({ ...a, items: [...a.items, customItem()] }, a)).toBe(true);
   });
+
+  it('include a photo added, and an invoice removed', () => {
+    const a = draft();
+    expect(isDirty({ ...a, invoice: { kind: 'new', photo } }, a)).toBe(true);
+    const b = initialDraft({ vehicle: yaris, service: { ...saved, invoicePath: INVOICE }, tasks, detailed: false, today: TODAY });
+    expect(isDirty({ ...b, invoice: { kind: 'none' } }, b)).toBe(true);
+  });
 });
 
 describe('saving a draft', () => {
@@ -152,6 +162,27 @@ describe('saving a draft', () => {
   it('keeps the ids it edits', () => {
     const input = serviceInputFromDraft(draft(), { serviceId: 's1', readingId: 'r1', today: TODAY });
     expect(input).toMatchObject({ serviceId: 's1', readingId: 'r1', appointmentId: null, vehicleId: 'v1' });
+  });
+
+  it('opens with the Service\'s invoice and saves it untouched', () => {
+    const d = initialDraft({ vehicle: yaris, service: { ...saved, invoicePath: INVOICE }, tasks, detailed: false, today: TODAY });
+    expect(d.invoice).toEqual({ kind: 'saved', path: INVOICE });
+    expect(serviceInputFromDraft(d, { serviceId: 's1', invoicePath: INVOICE, today: TODAY }).invoice).toBeNull();
+  });
+
+  it('uploads a photo added, replacing the Service\'s invoice', () => {
+    expect(serviceInputFromDraft(draft({ invoice: { kind: 'new', photo } }), { today: TODAY }).invoice).toEqual({ upload: photo, remove: null });
+    expect(serviceInputFromDraft(draft({ invoice: { kind: 'new', photo } }), { serviceId: 's1', invoicePath: INVOICE, today: TODAY }).invoice).toEqual({
+      upload: photo,
+      remove: INVOICE,
+    });
+  });
+
+  it('removes the invoice taken off the form', () => {
+    expect(serviceInputFromDraft(draft({ invoice: { kind: 'none' } }), { serviceId: 's1', invoicePath: INVOICE, today: TODAY }).invoice).toEqual({
+      upload: null,
+      remove: INVOICE,
+    });
   });
 
   it('completes the Appointment it was opened from', () => {

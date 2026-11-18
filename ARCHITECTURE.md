@@ -468,7 +468,7 @@ The migration's order, scope and tickets are in
   `schedule-appointment` and «Recordatorio» `new-reminder`, both for this
   Vehicle. Historial groups the Services by month as
   the PWA's expandable cards (lines, Taller, notes, «Editar», «Quitar»
-  with its confirm; «Factura» waits for S12), stats «Servicios» and
+  with its confirm; «Factura» opens the invoice, S12 below), stats «Servicios» and
   «Gastado este año», and the last 8 readings, each opening the
   `correct-reading` sheet (`src/vehicle-detail/correct-reading-form.tsx`),
   which fixes a reading's number without moving its date. Uso shows the
@@ -508,6 +508,37 @@ The migration's order, scope and tickets are in
     `usePreventRemove`, driven by `repeat()` so a fast close after typing
     still asks «¿Descartar los cambios?». A clean sheet closes with no
     prompt.
+  - **Invoice photo** (S12, SEI-67). «Factura o recibo» at the end of the
+    form (`src/service/invoice-field.tsx`): «Adjuntar foto» is a
+    `MenuButton` with words (the system menu) offering «Tomar foto» and
+    «Elegir de la galería» (`expo-image-picker`, in the binary since the
+    first build). The picker compresses (JPEG at 60 %, `Compatible`
+    representation on iOS, so no HEIC); no image library is added. The
+    camera asks for its permission; denied, a native alert explains it and
+    offers «Elegir de la galería» and «Abrir Ajustes». The library is the
+    system photo picker, which needs no permission; if it fails while the
+    phone reports photo access denied, the same alert offers the camera.
+    Which picture the form shows (the new photo's file, a signed link to the
+    saved one, a PDF icon) is `invoicePreview`. The draft holds the
+    invoice as `none`, `saved` (the Service's) or `new` (a photo), and
+    `invoiceWrite` (`src/data/service/invoice.ts`, unit-tested) turns it
+    into what saving does: upload, clear, or both. Files go where the PWA
+    puts them, so either app shows the other's: the private
+    `service-invoices` bucket, `<user id>/<service id>/factura-<ms>.<ext>`
+    (`invoicePath`; the bucket's RLS checks the first folder), at most
+    10 MB (`invoice_too_large`). `useSaveService` uploads first, giving a
+    new Service its id in the app (`expo-crypto`'s `randomUUID`), so a
+    failed upload saves nothing and «Guardar» again can't record it twice
+    for it. `services.invoice_path` is written with the Service's other
+    fields; if that write fails, the new file is deleted again. The file the
+    Service stops pointing at (replaced or removed) is deleted last, where
+    the PWA left replaced files behind (`DELETE_UNUSED_INVOICES` in
+    `invoice.ts` switches that off; it awaits the owner's OK). Historial's «Factura» opens
+    the `invoice?serviceId=` modal (`src/service/invoice-viewer.tsx`): the
+    photo fitted to the screen (pinch to zoom on iOS) from a signed link
+    that lasts five minutes (`useInvoiceUrl`, `src/data/service/queries.ts`),
+    or «Abrir PDF» in the system browser for a PDF the PWA took. Invoice
+    images stay in `expo-image`'s memory cache only, never on disk.
   - **The Vehicle's list.** The PWA's expandable Service card — lines
     with part brand, part number and cost, Taller, notas, «Quitar» —
     lives in Detalle del Vehículo's Historial (S6, SEI-61), which
@@ -987,6 +1018,8 @@ The migration's order, scope and tickets are in
   - **Query keys** come from a factory in each domain's `keys.ts`, never a
     loose string: `garageKeys.user(id)` (`['garage', id]`),
     `profileKeys.user(id)`, `estimateKeys.user(id)`, `taskKeys.catalog`,
+    `invoiceKeys.url(path)` (a signed invoice link; the path starts with
+    the owner's user id),
     `vpicKeys.makes()` / `vpicKeys.models(make, year)`. Keys for the
     person's data carry their user id; each nests under its domain's
     `all`, so invalidating the domain reaches every entry.

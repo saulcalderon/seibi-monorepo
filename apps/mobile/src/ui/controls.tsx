@@ -81,25 +81,39 @@ export interface MenuAction {
 /**
  * A button that opens the platform's menu: SwiftUI's `Menu` on iOS,
  * Material's dropdown on Android. The trigger looks like a secondary
- * IconButton; the menu itself handles the tap.
+ * IconButton, or like a secondary Button when it has `text` (the Service
+ * form's «Adjuntar foto»); the menu itself handles the tap.
  */
 export function MenuButton({
   label,
+  text,
   icon = 'more',
   actions,
   onAction,
   testID,
-}: {
-  /** Required: the trigger has no visible words. */
-  label: string;
+}: (
+  | {
+      /** Spoken: the trigger has no visible words. */
+      label: string;
+      text?: undefined;
+    }
+  | {
+      /** Visible words beside the icon, also spoken unless `label` says more. */
+      text: string;
+      label?: string;
+    }
+) & {
   icon?: IconName;
   actions: MenuAction[];
   onAction: (id: string) => void;
   testID?: string;
 }) {
+  const withText = text !== undefined;
+  styles.useVariants({ withText });
   return (
     <MenuView
       testID={testID}
+      style={styles.menu}
       actions={actions.map((action) => ({
         id: action.id,
         title: action.title,
@@ -108,8 +122,13 @@ export function MenuButton({
       }))}
       onPressAction={({ nativeEvent }) => onAction(nativeEvent.event)}
     >
-      <View accessible accessibilityRole="button" accessibilityLabel={label} style={styles.menuTrigger}>
-        <Icon name={icon} size="md" fixed />
+      <View accessible accessibilityRole="button" accessibilityLabel={label ?? text} style={styles.menuTrigger}>
+        <Icon name={icon} size={withText ? 'sm' : 'md'} fixed={!withText} />
+        {withText ? (
+          <Text step="subhead" weight={600} style={styles.menuText}>
+            {text}
+          </Text>
+        ) : null}
       </View>
     </MenuView>
   );
@@ -141,6 +160,13 @@ const styles = StyleSheet.create((theme, rt) => ({
     flexShrink: 1,
     gap: theme.space[0.5],
   },
+  menu: {
+    variants: {
+      // Only as wide as its words: a column would stretch the native host past the button, and a tap
+      // there opens nothing.
+      withText: { true: { alignSelf: 'flex-start' }, false: {} },
+    },
+  },
   menuTrigger: {
     minWidth: theme.size.target,
     minHeight: theme.size.target,
@@ -154,6 +180,17 @@ const styles = StyleSheet.create((theme, rt) => ({
     // Android's MenuView clips its child to the trigger's square bounds, so a shadow there shows as
     // a grey square behind the rounded button: the border alone carries it on Android.
     boxShadow: process.env.EXPO_OS === 'ios' ? theme.shadow.card : undefined,
+    variants: {
+      // With words it takes a secondary Button's `md` padding and gap (button.tsx).
+      withText: {
+        true: { flexDirection: 'row', gap: theme.space[2], paddingHorizontal: theme.space[4.5] },
+        false: {},
+      },
+    },
+  },
+  menuText: {
+    flexShrink: 1,
+    paddingVertical: theme.space[2],
   },
   date: {
     alignItems: process.env.EXPO_OS === 'ios' ? 'flex-start' : 'stretch',
