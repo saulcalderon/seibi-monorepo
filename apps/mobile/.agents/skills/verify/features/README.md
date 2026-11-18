@@ -19,6 +19,9 @@ matching feature file as the recipe. The commands come from
 
 - Every flow cold-starts the app through `${DEV_URL}`; start each recipe
   from that state unless its preconditions say otherwise.
+- On a phone's first launch the Intro opens before sign-in. Every flow that
+  cold-starts the app runs `runFlow: skip-intro.yaml` right after opening
+  it (`sign-in.yaml` does it too), so only the `intro` flow ever stops there.
 - Target elements by `testID` (`id:` in Maestro). Visible text is the
   fallback, and only for copy the feature owns.
 - Treat flow names, test IDs and expected text as literal.
@@ -64,6 +67,11 @@ handles, required state, commands and observable proof.
 
 ## Features
 
+- [The Intro](./intro.md): a phone's first launch, signed out, opens
+  three still slides before Login: swipe, «Siguiente», the dots, «Saltar»
+  and «Empezar», never shown again. Flow: `intro` (clears the app's data
+  first); subflow `skip-intro.yaml` (run by every flow that cold-starts the
+  app, `sign-in.yaml` included).
 - [The app launches to Inicio](./app-launches.md): cold start, native
   splash, Inicio inside the tabs, on iOS and Android. Flow: `app-launches`.
 - [The app shell: tabs, the [+] and its actions, Perfil, deep

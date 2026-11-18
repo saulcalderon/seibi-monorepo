@@ -256,6 +256,7 @@ The migration's order, scope and tickets are in
   src/app/
     _layout.tsx                  root Stack: Stack.Protected (app) · onboarding · (auth)/… · ui-kit
     onboarding/                  the first-run questions (S3), a Stack: one screen per step · pick · done
+    (auth)/                      signed out: intro (S2) · sign-in (S1) · account-deleted
     +native-intent.tsx           seibi-dev://vehicle/<id> → Mi flota (src/shell/links.ts)
     (app)/_layout.tsx            Stack, anchor (tabs): (tabs) · actions · record-service · update-mileage · correct-reading · routine · profile-name · profile-level · profile-location · reminder · last-done · new-reminder · vehicle · data-check · garage-fixture
     (app)/vehicle/               the Vehicle form, a modal with its own Stack: new · [id]/edit · pick
@@ -712,17 +713,50 @@ The migration's order, scope and tickets are in
     `Cache-Control: no-store` (`src/lib/supabase.ts`), which Android's
     OkHttp honours.
   - **Routes.** `src/app/(app)/` and `src/app/onboarding/` need a
-    session; `(auth)/sign-in` and `(auth)/account-deleted` are the only
-    other screens. The root layout opens exactly one with `Stack.Protected`
-    guards on `useAuth()` (`src/auth/session.ts`, fed only by
-    `onAuthStateChange`) and, signed in, on the profile's `onboarded_at`
-    (`firstRunStatus` in `src/onboarding/flow.ts`, the PWA's
+    session; `(auth)/intro`, `(auth)/sign-in` and `(auth)/account-deleted`
+    are the only other screens. The root layout opens exactly one with
+    `Stack.Protected` guards on `useAuth()` (`src/auth/session.ts`, fed only
+    by `onAuthStateChange`); signed out, on the Intro's mark (`introOpen`
+    in `src/intro/flow.ts`, the PWA's `pathAfterSplash`): `(auth)/intro`
+    until it is done, then `(auth)/sign-in`; and signed in, on the profile's
+    `onboarded_at` (`firstRunStatus` in `src/onboarding/flow.ts`, the PWA's
     `homePathFor`): `onboarding` without one, `(app)` with one, and `(app)`
     when the profile can't load (Inicio shows its own error). Nothing
     redirects by hand. The splash stays up until the saved session is read
     and, signed in, the profile has loaded, so a signed-in launch never
     shows Login or flashes Inicio before the questions. Right after a
     sign-in, sign-in stays up while the profile loads.
+  - **Intro** (`(auth)/intro.tsx`, S2, SEI-57): the PWA's Intro
+    (`screens/Intro.tsx` before #54) as still slides, in `src/intro/` (the
+    decisions as plain functions in `flow.ts`, with unit tests; the screen
+    in `intro-screen.tsx`; the pictures in `art.tsx`). It opens after the
+    splash and before Login, signed out, until it is done; «Saltar» (on
+    every slide but the last) and «Empezar» (on the last) mark it done and
+    the guards open Login. A session also marks it done, as the PWA's
+    splash does, so someone who opens the app signed in never sees it. The
+    mark is the phone's (`intro-done.v1`, Device preferences below), so a
+    sign-out opens Login, never the Intro again.
+    - **Slides.** The PWA's three, with its words: «Qué es Seibi», «El
+      problema», «Cómo te ayuda». The PWA played a live screen inside a
+      phone on each; the port drops the phone and the motion and keeps
+      each screen where it came to rest, drawn from what exists: the PWA's
+      370Z (`assets/images/intro-vehicle.png`, its `intro-370z.png`) on the
+      floor's contact shadow; three kit-style cards («Último cambio»,
+      «Factura del taller», «Precio»); the 370Z's «Estado» with four tasks.
+      The pictures are hidden from VoiceOver and TalkBack and their words
+      don't grow with the text size; the slide's own words do, and a slide
+      scrolls when they don't fit.
+    - **Paging.** A native horizontal paging scroll view, as Inicio's
+      carousel: a swipe follows the finger; «Siguiente» and the dots move
+      to a slide with an animated scroll, none under Reduce Motion. Only
+      the current slide is in the accessibility tree; its eyebrow says
+      «…, diapositiva N de 3»; the dots are one adjustable control
+      («Diapositivas», swipe up or down), as a system page control is; a
+      change of slide is announced, since the focus stays on the control
+      that made it.
+    - **Look.** Login's: the `garage` palette in a `ScopedTheme`, light
+      whatever the theme, dark status bar, the lockup at the top, the title
+      in the first-run style, a black pill (`Button` `inverse`).
   - **Login** (`(auth)/sign-in.tsx`, S1, SEI-56): the PWA's Login on the
     `garage` theme in a `ScopedTheme`, light whatever the theme (a
     first-run screen), with a dark status bar. The lockup (`Logo` and the
@@ -772,8 +806,9 @@ The migration's order, scope and tickets are in
     every kv-store key under `user.` (`userDataKey()` in `sign-out.ts`) and
     Google's remembered account. The same wipe runs on every `SIGNED_OUT`,
     so it also happens when Supabase signs out on its own (a refresh token
-    revoked elsewhere). Device preferences stay: the theme (`theme.v1`)
-    and the language (`language.v1`) are not under `user.`. The wipe also
+    revoked elsewhere). Device preferences stay: the theme (`theme.v1`),
+    the language (`language.v1`) and the Intro done (`intro-done.v1`) are
+    not under `user.`. The wipe also
     clears the in-memory query cache (`caches`, SEI-53). Anything new that
     keeps a person's data on the device (push tokens in SEI-47) is cleared
     there.
@@ -899,11 +934,13 @@ The migration's order, scope and tickets are in
     --schema public > apps/mobile/src/lib/database.types.ts` (it reads the
     hosted project; no local stack, no Docker). Then run `pnpm typecheck`.
   - **Device preferences** in the `expo-sqlite` kv-store, read
-    synchronously, keys versioned `.v1`: the theme (`theme.v1`) and the
-    language (`language.v1`) belong to the phone; the active Vehicle
-    (`user.active-vehicle.v1`, `useActiveVehicle`) and the Intro done
-    (`user.intro-done.v1`) belong to the person (`src/data/preferences/`),
-    so sign-out deletes them.
+    synchronously, keys versioned `.v1`: the theme (`theme.v1`), the
+    language (`language.v1`) and the Intro done (`intro-done.v1`,
+    `useIntroDone` and `markIntroDone` in `src/data/preferences/`) belong
+    to the phone; the active Vehicle (`user.active-vehicle.v1`,
+    `useActiveVehicle`) belongs to the person, so sign-out deletes it. The
+    Intro's mark was the person's until SEI-57: as in the PWA, whose
+    sign-out keeps it, it is shown once per phone.
   - **Formatters** (`src/lib/format.ts`): `es-SV` numbers, money and days
     as the PWA prints them in a browser; words come from `es.json` through
     a `t` argument, so they run outside React. Money uses

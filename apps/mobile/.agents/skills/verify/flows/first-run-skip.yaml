@@ -17,6 +17,8 @@ name: Skipping the Vehicle finishes the first run
       TEST_PASSWORD: ${TEST_PASSWORD}
 - stopApp
 - openLink: ${DEV_URL}
+# A fresh install opens the Intro first: skip it (skip-intro.yaml).
+- runFlow: skip-intro.yaml
 - extendedWaitUntil:
     visible:
       id: 'sign-in-title|first-run-name-field'

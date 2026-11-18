@@ -600,6 +600,48 @@
     "later": "Ahora no",
     "restart": "Reiniciar"
   },
+  "intro": {
+    "skip": "Saltar",
+    "next": "Siguiente",
+    "start": "Empezar",
+    "pager": "Diapositivas",
+    "pagerValue": "{{index}} de {{count}}",
+    "position": "{{eyebrow}}, diapositiva {{index}} de {{count}}",
+    "slides": {
+      "what": {
+        "eyebrow": "Qué es Seibi",
+        "title": "Tu Vehículo, siempre en orden",
+        "body": "Seibi guarda todo lo que le haces a tu Vehículo y te dice qué le toca y cuándo. Uno o toda tu flota."
+      },
+      "problem": {
+        "eyebrow": "El problema",
+        "title": "Se acabó el “¿cuándo fue el último cambio?”",
+        "body": "Los mantenimientos se olvidan, las facturas se pierden y los precios cambian de un taller a otro."
+      },
+      "help": {
+        "eyebrow": "Cómo te ayuda",
+        "title": "Avisos según tu modelo y tu uso",
+        "body": "Planes del fabricante con fuentes, avisos con tu kilometraje real y precios estimados en tu ciudad."
+      }
+    },
+    "art": {
+      "lastChange": "Último cambio",
+      "lastChangeTask": "Cambio de aceite",
+      "lastChangeWhen": "Hace 1 año",
+      "invoice": "Factura del taller",
+      "invoiceDate": "12 mar 2024",
+      "price": "Precio",
+      "priceNote": "Cambia en cada taller",
+      "priceValue": "$35",
+      "vehicle": "Tu 370Z",
+      "estado": "Estado",
+      "attention": "2 por atender",
+      "oil": "Cambio de aceite",
+      "brakes": "Pastillas de freno",
+      "tires": "Rotación de llantas",
+      "battery": "Batería"
+    }
+  },
   "signIn": {
     "title": "Mantenimiento con total claridad",
     "subtitle": "Entra para guardar tus Vehículos y recibir tus avisos.",

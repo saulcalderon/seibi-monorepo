@@ -3,11 +3,14 @@
 # (TEST_EMAIL, TEST_PASSWORD from verify.sh) when the sign-in screen shows,
 # and ends on Inicio, the signed-in home, either way: an account that hasn't
 # finished its first run (new, recreated, or reset by first-run.yaml) answers
-# the first-run questions first (first-run-finish.yaml). Features:
-# features/auth.md, features/first-run.md.
+# the first-run questions first (first-run-finish.yaml). On a fresh install
+# it skips the Intro first (skip-intro.yaml). Features: features/auth.md,
+# features/first-run.md, features/intro.md.
 appId: ${APP_ID}
 name: Sign in with the test account when signed out
 ---
+# A fresh install opens the Intro first: skip it (skip-intro.yaml).
+- runFlow: skip-intro.yaml
 # The first screen after the splash: sign-in when signed out, Inicio when signed
 # in, the first-run questions when signed in before finishing them.
 - extendedWaitUntil:
