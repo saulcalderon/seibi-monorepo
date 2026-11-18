@@ -17,10 +17,9 @@ port.
 
 Done when:
 
-1. The MVP is live on the App Store (by 2026-12-15 at the latest) and on
-   Google Play.
-2. The after-launch tickets have shipped.
-3. SEI-49 has shut down the PWA and removed Web Push.
+1. The MVP, which is every PWA feature but «Planes» (2026-11-17), is live
+   on the App Store (by 2026-12-15 at the latest) and on Google Play.
+2. SEI-49 has shut down the PWA and removed Web Push.
 
 ## Decisions
 
@@ -33,7 +32,7 @@ Done when:
 | Copy `apps/app/src/lib/` into `apps/mobile`; no shared data package. `packages/maintenance-engine` stays shared | The PWA is frozen and will be shut down; sharing would only couple the two |
 | Icons: `expo-symbols`, one `{ ios, android }` name map (Paradero's `icon.tsx`) | Native on both platforms and proven in a live app; 30 icons mapped once instead of twice |
 | Navigation: 4 `NativeTabs` plus a floating [+] (bottom right; glass on iOS, Material on Android) that opens the actions sheet | `NativeTabs` can't host a centre action; the floating button stays in thumb reach |
-| Estimados has no tab at launch (3 tabs + [+]); S10 adds the tab back by OTA. If the MVP finishes early, S10 joins before submission | A "pronto" screen risks rejection under App Review guideline 2.1; tabs are JavaScript, so adding one later needs no new review |
+| Estimados has its tab at launch (4 tabs + [+]), with S10. Intro (S2), Estimados (S10), the invoice photo (S12), Appointments (S13) and Chat (SEI-69) joined the launch on 2026-11-17; before, the app launched with 3 tabs and these came after | Saul wants the whole PWA at launch except «Planes», which the paywall replaces (2026-11-17). An empty «pronto» tab would still risk rejection under App Review guideline 2.1, so a tab ships only with its screen |
 | Test sign-in: email + password in the `development` and `preview` EAS builds only, never in `production` | Apple and Google sign-in can't be automated; a hidden production login breaks App Review guideline 2.3.1 |
 | Accessibility: Paradero's rules and check scripts, aiming at WCAG 2.2 AA. High-contrast palettes come after the redesign | Cheap from the first screen, expensive to retrofit; high contrast is a new feature |
 | Light palette: change only the text roles that fail AA (primary button on `radiantStrong`, new `radiantText`, `okText`, `soonText`, `overdueText`, darker `subtle`); fills, dots and icons keep their colors. Values in `docs/DESIGN.md` → Accessibility | Keeps both "the PWA's look" and AA with the smallest visible change; the redesign starts from passing tokens |
@@ -51,14 +50,14 @@ Done when:
 ## Scope
 
 Every feature the PWA has today, with its call. **Port** = same behaviour;
-**Simplify** = same purpose, simpler form; **Postpone** = after launch, in
-«4 · Después»; **Drop** = no ticket.
+**Simplify** = same purpose, simpler form; **Drop** = no ticket. Nothing is
+postponed since 2026-11-17: everything but «Planes» ships at launch.
 
 | # | Area | Feature | Call | MVP | Ticket |
 | --- | --- | --- | --- | --- | --- |
 | 1 | First run | Splash: the logo animation that flies into Login | Simplify: native splash | yes | S1 |
 | 2 | First run | Login with Apple and Google, plus the rotating Vehicle carousel | Port sign-in; Simplify the carousel to one still image | yes | S1 |
-| 3 | First run | Intro: 3 slides playing inside a phone | Simplify: still slides | no | S2 |
+| 3 | First run | Intro: 3 slides playing inside a phone | Simplify: still slides | yes | S2 |
 | 4 | First run | Questions: name, knowledge level, country/city, how the Vehicle is used, last maintenance, push permission, optional first Vehicle | Port | yes | S3 |
 | 5 | Inicio | Garage: Vehicle carousel, Mileage, status, greeting | Port | yes | S4 |
 | 6 | Mi flota | Vehicle list and search by brand, model, year or plate | Port | yes | S5 |
@@ -69,14 +68,14 @@ Every feature the PWA has today, with its call. **Port** = same behaviour;
 | 11 | Vehicle | Weekly Routines | Port | yes | S6 |
 | 12 | Vehicle | Model render image, with the silhouette until it exists | Port | yes | S6 |
 | 13 | [+] | Record a Service: type, line items (part, brand, part number, cost), shop, date, Mileage, notes | Port | yes | S7 |
-| 14 | [+] | Invoice or receipt photo on a Service | Port, with the native camera and photo library | no | S12 |
+| 14 | [+] | Invoice or receipt photo on a Service | Port, with the native camera and photo library | yes | S12 |
 | 15 | [+] | Update Mileage | Port | yes | S8 |
-| 16 | [+] | Schedule an Appointment (Cita) | Port | no | S13 |
+| 16 | [+] | Schedule an Appointment (Cita) | Port | yes | S13 |
 | 17 | Avisos | Reminders by status (Por vencer / Al día / Pospuestos), detail with source, snooze | Port | yes | S9 |
 | 18 | Avisos | «Completa tu historial» | Port | yes | S9 |
 | 19 | Avisos | Hand-written Reminders: create, complete, delete | Port | yes | S9 |
-| 20 | Estimados | Estimate by city, dealer vs independent shop, what drives the price, sources, past queries | Port | no | S10 |
-| 21 | Estimados | Chat with Seibi | Postpone | no | Chat |
+| 20 | Estimados | Estimate by city, dealer vs independent shop, what drives the price, sources, past queries | Port | yes | S10 |
+| 21 | Estimados | Chat with Seibi | Port (postponed until 2026-11-17) | yes | SEI-69 |
 | 22 | Perfil | Name, knowledge level, location, theme, notifications | Port | yes | S11 |
 | 23 | Perfil | «Planes» card («Seibi Común, todo incluido durante el lanzamiento») | Drop: the paywall replaces it | — | — |
 | 24 | Perfil | Contact email, privacy policy and terms, in the app | Port | yes | S11 |
@@ -115,7 +114,7 @@ ticket and keep its behaviour.
 | B | UI kit | The components in `docs/DESIGN.md` on Unistyles variants; `Icon` with the `expo-symbols` map; `sonner-native` toasts; `@expo/ui` pickers, toggles, menus and date picker, each tested on both platforms | Screens | SEI-42 | yes | SEI-54 |
 | C | App shell | `NativeTabs` Inicio · Mi flota · Avisos (Estimados is added by S10), a stack per tab; floating [+] opening the actions `formSheet`; header avatar → Perfil | Screen contents; the Appointment action until S13 | SEI-41, B | yes | SEI-55 |
 | S1 | Splash and Login | Native splash; Apple and Google buttons; one still Vehicle image; legal line | Lockup fly animation; Vehicle carousel | SEI-44, B | yes | SEI-56 |
-| S2 | Intro | Still slides | The phone animation | B, C | no | SEI-57 |
+| S2 | Intro | Still slides | The phone animation | B, C | yes | SEI-57 |
 | S3 | First-run questions | Every question, the push permission ask, the optional first Vehicle (S5's form) | — | A, B, S5 | yes | SEI-58 |
 | S4 | Inicio | Garage: Vehicle carousel, Mileage, status, greeting, paint accent | Changes to car art or paint presets; «Deshacer» | A, B, C | yes | SEI-59 |
 | S5 | Mi flota and the Vehicle form | List, search, add and edit with vPIC, paint presets, km/mi, withdraw and restore | — | A, B, C | yes | SEI-60 |
@@ -123,10 +122,10 @@ ticket and keep its behaviour.
 | S7 | Record a Service | Form with line items, shop, date, Mileage, notes; the Mileage write rules | Invoice photo (S12) | A, B, C | yes | SEI-62 |
 | S8 | Update Mileage | A standalone reading dated today, strictly above the current odometer | — | A, B, C | yes | SEI-63 |
 | S9 | Avisos | Statuses, detail with source, snooze, «Completa tu historial», hand-written Reminders, push opt-in | — | A, B, C, SEI-47 | yes | SEI-64 |
-| S10 | Estimados | The Estimados tab (shipped by OTA), estimate form, results, what drives the price, sources, past queries | Chat | A, B, C | no | SEI-65 |
+| S10 | Estimados | The Estimados tab, estimate form, results, what drives the price, sources, past queries | Chat (SEI-69) | A, B, C | yes | SEI-65 |
 | S11 | Perfil | Name, knowledge level, location, theme, notifications, contact email, privacy policy and terms, delete account | «Planes» card | A, B, C | yes | SEI-66 |
-| S12 | Invoice photo | `expo-image-picker` camera + library → Supabase Storage, on the Service form | — | S7 | no | SEI-67 |
-| S13 | Schedule an Appointment | The form, the [+] action, Appointments in Avisos and Vehicle detail | — | A, B, C | no | SEI-68 |
+| S12 | Invoice photo | `expo-image-picker` camera + library → Supabase Storage, on the Service form | — | S7 | yes | SEI-67 |
+| S13 | Schedule an Appointment | The form, the [+] action, Appointments in Avisos and Vehicle detail | — | A, B, C | yes | SEI-68 |
 | SEI-48 | Remove the 3D step from `vehicle-render` | Remove the image-to-3D step and its code | Dropping the `glb_path` column | — | no | SEI-48 |
 
 ### Outside the port
@@ -134,7 +133,7 @@ ticket and keep its behaviour.
 | Id | Title | Milestone | Linear |
 | --- | --- | --- | --- |
 | SEI-71 | Recruit 12 testers for Play's closed test | 3 · Prueba en dispositivos (no blockers) | SEI-71 |
-| SEI-69 | Chat with Seibi | 4 · Después | SEI-69 |
+| SEI-69 | Chat with Seibi, inside Estimados (in the launch since 2026-11-17) | 2 · Migración | SEI-69 |
 | SEI-70 | High-contrast palettes | 4 · Después | SEI-70 |
 | SEI-11 | Bring 3D back? (idea) | Backlog | SEI-11 |
 | SEI-49 | Shut down the PWA and remove Web Push | 4 · Después, after both stores | SEI-49 |
@@ -147,13 +146,11 @@ ticket and keep its behaviour.
 4. A, B and C.
 5. The MVP sections and SEI-47.
 6. Milestone 3: devices, TestFlight, Play's closed test.
-7. The after-launch tickets.
 
 Rules:
 
 - **At most 3 tickets in progress**, and a new one starts only after one
-  merges. MVP tickets go first; after-launch tickets wait in Backlog until
-  the MVP ships.
+  merges.
 - **Every ticket follows the Ticket loop** (`AGENTS.md`): one PR from its
   own branch, merged without a human review once its gates pass.
 - A ticket that changes what is true updates `ARCHITECTURE.md` in the same
@@ -179,9 +176,11 @@ The MVP ships whole. If it isn't ready, the date moves; the scope doesn't.
   (checked in Play Console help, 2026-11-11). It starts with the first
   store build, not with the finished MVP, so Android can launch close to
   iOS. Recruiting the testers is SEI-71.
-- **After launch:** EAS Update can add JavaScript screens without a new
-  review, but not native modules. A native module an after-launch ticket
-  needs ships in the first binary (`expo-image-picker` for S12).
+- **After launch:** no port ticket is left for after launch since
+  2026-11-17 (Intro, Estimados, the invoice photo, Appointments and Chat
+  joined the MVP); «4 · Después» keeps SEI-70 and SEI-49. EAS Update can still fix JavaScript screens without a
+  new review, but not add native modules: anything native ships in the
+  first binary (`expo-image-picker` is already in it for S12).
 
 ## Gotchas
 

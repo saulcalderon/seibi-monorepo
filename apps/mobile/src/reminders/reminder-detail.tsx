@@ -179,6 +179,15 @@ function Detail({ vehicle, reminder, task }: { vehicle: VehicleView; reminder: R
             onPress={() => router.replace({ pathname: '/last-done', params: { vehicleId: vehicle.id, task: reminder.taskCode } })}
           />
         ) : null}
+        {/* The PWA pairs this with «Agendar», which joins with Appointments (S13). */}
+        <Button
+          testID="reminder-detail-estimate"
+          variant="secondary"
+          icon="estimates"
+          block
+          label={t('reminders.detail.estimate')}
+          onPress={() => router.dismissTo({ pathname: '/estimates', params: { vehicle: vehicle.id, task: reminder.taskCode } })}
+        />
         {offer === 'restore' ? (
           <Button
             testID="reminder-detail-restore"

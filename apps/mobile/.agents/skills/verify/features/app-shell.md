@@ -1,7 +1,7 @@
 # The app shell: tabs, the [+] and its actions, Perfil, deep links
 
-Signed in, Seibi opens on three native tabs, «Inicio», «Mi flota» and
-«Avisos» (Liquid Glass on iOS 26, Material 3 on Android). Each tab is a
+Signed in, Seibi opens on four native tabs, «Inicio», «Mi flota»,
+«Avisos» and «Estimados» (Liquid Glass on iOS 26, Material 3 on Android). Each tab is a
 stack of its own: a Vehicle opened in a tab opens inside it, under its tab
 bar, and switching tabs and back finds each one where it was left. A
 floating [+] sits bottom right, just above the bar, on every screen of every
@@ -19,7 +19,7 @@ fills in.
 
 ## Sub-features
 
-- `tabs` three tabs, each with its icon and label; the selected one in the radiant text colour.
+- `tabs` four tabs, each with its icon and label; the selected one in the radiant text colour.
 - `tab-stacks` a Vehicle opens inside the current tab with the tab bar and the [+] still on screen.
 - `keeps-place` leaving a tab and coming back finds it on the same screen (a Vehicle still open).
 - `fab-reach` the [+] shows on every tab root (and every screen inside the tabs), above the bar, bottom right.
@@ -47,7 +47,7 @@ Preconditions:
 - Light mode, default text size (`verify.sh a11y <platform> reset`).
 
 - **Whole journey.** `.agents/skills/verify/scripts/verify.sh drive ios app-shell` (then `android`). It signs in before `startRecording`, reads the first Vehicle's id and name (`first-vehicle.js`, read-only), then cold-starts signed in.
-- **Tabs and labels.** `id: home-screen` with `id: home-stage-vehicle`; `id: tab-home`, `tab-fleet`, `tab-reminders` and `id: open-actions` visible; the texts «Inicio», «Mi flota», «Avisos», «Acciones rápidas» and «Perfil» are on screen (Maestro reads the accessibility labels). Screenshot `shell-01-home`.
+- **Tabs and labels.** `id: home-screen` with `id: home-stage-vehicle`; `id: tab-home`, `tab-fleet`, `tab-reminders`, `tab-estimates` and `id: open-actions` visible; the texts «Inicio», «Mi flota», «Avisos», «Estimados», «Acciones rápidas» and «Perfil» are on screen (Maestro reads the accessibility labels). Screenshot `shell-01-home`.
 - **A Vehicle inside its tab.** Tap `tab-fleet`, then `id: fleet-vehicle-0`: `id: vehicle-name` shows with `tab-fleet` and `open-actions` still visible. Screenshots `shell-02-fleet`, `shell-03-fleet-vehicle`.
 - **The [+] doesn't cover content.** Tap `tab-reminders` (`id: reminder-0-0`), swipe to the end: the last row and the card's bottom edge sit above the [+]. Screenshots `shell-04-reminders`, `shell-05-reminders-end`; look at the second one.
 - **Each tab keeps its place.** Tap `tab-fleet`: still `id: vehicle-name`. Screenshot `shell-06-fleet-kept-place`. Back (edge swipe on iOS, Back on Android) to `fleet-vehicle-0`.
@@ -62,5 +62,5 @@ Preconditions:
 - A drag that starts in the middle of the actions sheet scrolls nothing and doesn't close it; `close-sheet.yaml` drags from the sheet's top edge (68 % of the screen height) to the bottom on iOS.
 - The [+] is placed from a per-platform tab bar height (`size.tabBar` in `src/theme/tokens.ts`): NativeTabs can't be measured. If the [+] overlaps the bar or floats far above it on a new OS or device, fix that token, and check `shell-01-home` on both platforms. On Android, `shell-01-home` can catch the Material FAB a shade darker (`#b83f1a`) while Compose is still drawing it in; settled, it is `radiantStrong` (`#c9431a`) in every other screenshot.
 - The tab bar never minimizes on scroll (`minimizeBehavior="never"`): a shrinking bar would leave the [+] floating where the bar was.
-- `seibi-dev://vehicle/<id>` exists in all three tabs; `+native-intent.tsx` sends it to «Mi flota». A link to another route (`seibi-dev://profile`) opens in Inicio.
+- `seibi-dev://vehicle/<id>` exists in all four tabs; `+native-intent.tsx` sends it to «Mi flota». A link to another route (`seibi-dev://profile`) opens in Inicio.
 - Signed out, a deep link lands on sign-in and is not replayed after signing in.

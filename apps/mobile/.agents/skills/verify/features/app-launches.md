@@ -3,7 +3,7 @@
 A cold start of Seibi shows the native splash (the logo mark on the
 phone's light or night background) until the app's fonts have loaded and the saved session has
 been read, then the sign-in screen (signed out) or Inicio, the first of the
-three tabs (signed in), with the floating [+] over the tab bar. Inicio is the
+four tabs (signed in), with the floating [+] over the tab bar. Inicio is the
 Garage ([`home.md`](./home.md)): the active Vehicle and its Mileage,
 derived by the shared maintenance engine from the garage query. The tabs themselves are
 [`app-shell.md`](./app-shell.md); sign-in is [`auth.md`](./auth.md).

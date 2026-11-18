@@ -2,7 +2,8 @@
   "tabs": {
     "home": "Inicio",
     "fleet": "Mi flota",
-    "reminders": "Avisos"
+    "reminders": "Avisos",
+    "estimates": "Estimados"
   },
   "shell": {
     "actions": "Acciones rápidas",
@@ -242,6 +243,7 @@
       "sourceGeneral": "Recomendación general, no específica de tu modelo",
       "recordService": "Ya lo hice: registrar Servicio",
       "askLast": "Decir cuándo fue la última vez",
+      "estimate": "¿Cuánto cuesta?",
       "snooze": "Posponer {{days}} días",
       "restore": "Reactivar aviso",
       "snoozedToast": "Pospuesto {{days}} días",
@@ -296,6 +298,72 @@
     "deleteConfirm": "Eliminar",
     "deleteCancel": "Cancelar",
     "close": "Cerrar"
+  },
+  "estimates": {
+    "subtitle": "Rangos de precio para tu Vehículo, en tu ciudad.",
+    "empty": {
+      "title": "Agrega un Vehículo",
+      "body": "Los precios dependen de la marca, el modelo y el año. Agrega tu Vehículo para estimar.",
+      "action": "Agregar Vehículo"
+    },
+    "vehicle": {
+      "pending": "{{count}} por atender",
+      "ok": "Al día",
+      "line": "{{name}} · {{status}}",
+      "statusAfter": " · {{status}}",
+      "show": "Ver tus otros Vehículos",
+      "hide": "Ocultar tus otros Vehículos",
+      "noMileage": "Sin Kilometraje",
+      "row": "{{name}}, {{detail}}, {{status}}"
+    },
+    "location": {
+      "title": "¿Dónde está tu Vehículo?",
+      "body": "Los precios cambian mucho de una ciudad a otra.",
+      "country": "País",
+      "countryOption": "{{flag}} {{name}}",
+      "city": "Ciudad",
+      "cityPlaceholder": "San Salvador",
+      "save": "Guardar ubicación"
+    },
+    "ask": {
+      "label": "¿Qué quieres cotizar?",
+      "placeholder": "Ej. cambio de alternador, pastillas de freno",
+      "send": "Estimar",
+      "taskPending": "{{task}}, pendiente",
+      "fallback": "Consulta"
+    },
+    "waiting": {
+      "spoken": "Seibi está buscando precios",
+      "step0": "Buscando precios en tu zona…",
+      "step1": "Comparando fuentes…",
+      "step2": "Ordenando los resultados…"
+    },
+    "result": {
+      "meta": "{{vehicle}} {{year}} · {{place}}",
+      "place": "{{city}}, {{country}}",
+      "independent": "Taller independiente",
+      "dealership": "Agencia",
+      "noData": "Sin datos",
+      "totalSpoken": "{{label}}: {{value}}",
+      "partsEconomy": "Piezas económicas",
+      "partsOem": "Piezas originales",
+      "labor": "Mano de obra",
+      "includes": "Suele incluir",
+      "factors": "Qué mueve el precio",
+      "confidence": {
+        "high": "Confianza alta",
+        "medium": "Confianza media",
+        "low": "Confianza baja"
+      },
+      "sources": "Fuentes",
+      "openSource": "Abrir «{{title}}» en el navegador",
+      "disclaimer": "Estimado, no presupuesto. Los precios cambian según la ciudad, el año y el motor, la calidad y el origen de la pieza, el tipo de taller, la mano de obra y la disponibilidad. Pide una cotización antes de hacer el trabajo."
+    },
+    "past": {
+      "title": "Consultas anteriores",
+      "noRange": "Sin rango",
+      "subtitle": "{{range}} · {{day}}"
+    }
   },
   "vehicleDetail": {
     "plate": "Placa",

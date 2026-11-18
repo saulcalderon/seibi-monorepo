@@ -263,19 +263,20 @@ The migration's order, scope and tickets are in
     (app)/(tabs)/(home)/index.tsx            Inicio  (/)
     (app)/(tabs)/(fleet)/fleet.tsx           Mi flota (/fleet)
     (app)/(tabs)/(reminders)/reminders.tsx   Avisos (/reminders)
-    (app)/(tabs)/(home,fleet,reminders)/     one Stack per tab: _layout · vehicle/[id] · profile
+    (app)/(tabs)/(estimates)/estimates.tsx   Estimados (/estimates)
+    (app)/(tabs)/(home,fleet,reminders,estimates)/   one Stack per tab: _layout · vehicle/[id] · profile
   ```
 
-  - **Tabs.** Three `NativeTabs` (`expo-router/native-tabs`): Inicio ·
-    Mi flota · Avisos. Liquid Glass on iOS 26 (the system draws it),
+  - **Tabs.** Four `NativeTabs` (`expo-router/native-tabs`): Inicio ·
+    Mi flota · Avisos · Estimados (S10 added the fourth; Estimados ships at
+    launch since 2026-11-17). Liquid Glass on iOS 26 (the system draws it),
     Material 3 on Android (`surface` bar, `radiantSoft` indicator). The
     selected label and icon use `radiantText` (text contrast), the rest
-    `muted`. Estimados has no tab until S10 adds one by OTA (decided
-    2026-11-11: no «pronto» screen). Tabs are static; adding one is a code
+    `muted`. Tabs are static; adding one is a code
     change, never a runtime toggle (it would remount the navigator). The
     bar never minimizes on scroll (`minimizeBehavior="never"`), so the [+]
     always sits right above it.
-  - **A stack per tab.** The array group `(home,fleet,reminders)/` gives
+  - **A stack per tab.** The array group `(home,fleet,reminders,estimates)/` gives
     each tab its own copy of the same stack (`TabStack`,
     `src/shell/tab-stack.tsx`, after Paradero): the root under a large
     title with the avatar on the right, then `vehicle/[id]` and `profile`.
@@ -307,7 +308,7 @@ The migration's order, scope and tickets are in
     circle) inside the current tab (S11, below).
   - **Deep links.** Everything in `(app)` is behind `Stack.Protected`:
     signed out, a link lands on sign-in (and is not replayed after
-    sign-in). `vehicle/[id]` exists in all three tabs, so
+    sign-in). `vehicle/[id]` exists in all four tabs, so
     `+native-intent.tsx` sends `seibi-dev://vehicle/<id>` (or `seibi://`)
     to Mi flota, where a person would find it; other links pass through.
   - **Screens.** Inicio is the Garage, Mi flota the Fleet, Avisos the
@@ -527,7 +528,7 @@ The migration's order, scope and tickets are in
   (the paywall replaces it after launch), in `src/profile/`
   (`profile-screen.tsx`, `profile-sheets.tsx`; the decisions as plain
   functions in `profile-logic.ts`, with unit tests). The route
-  (`(home,fleet,reminders)/profile.tsx`) renders `ProfileScreen`.
+  (`(home,fleet,reminders,estimates)/profile.tsx`) renders `ProfileScreen`.
   - **Card.** Google's picture or the initials on `inverse`
     (`size.profileAvatar`), the name (`profiles.display_name`, else the
     account's name, else the email; `headerName`) and the email; spoken as
@@ -603,9 +604,62 @@ The migration's order, scope and tickets are in
     and the card says «Pronto podrás recibirlas en este teléfono.», as
     Perfil's switch does. As in the PWA it hides once
     `profiles.notifications_enabled` is off.
-  - **Not here yet.** The detail's «Agendar» (S13) and «¿Cuánto cuesta?»
-    (S10), and «Hecho» on an Appointment (S13), join with their screens.
+  - **«¿Cuánto cuesta?»** in the detail closes it and opens Estimados on
+    that Vehicle and task (`router.dismissTo('/estimates?vehicle=&task=')`),
+    which asks for the Estimate on arrival, as the PWA.
+  - **Not here yet.** The detail's «Agendar» and «Hecho» on an Appointment
+    (S13) join with their screens.
     Unlike the PWA, deleting a hand-written Reminder asks first.
+- **Estimados** (S10, SEI-65): the PWA's Estimados (as of `6e3b818`)
+  without its chat, in `src/estimates/` (`estimates-screen.tsx`,
+  `estimate-panel.tsx`, `estimate-card.tsx`; the decisions as plain
+  functions in `estimates-logic.ts`, with unit tests). The route
+  (`(estimates)/estimates.tsx`) renders `EstimatesScreen`. Data:
+  `useRequestEstimate` and `useEstimateHistory` (`src/data/estimate/`).
+  - **Which Vehicle.** The one Inicio shows (`useActiveVehicle`), unless
+    `?vehicle=` names another. The line over the form names it with «N por
+    atender» or «Al día»; with two or more it unfolds the others, most
+    urgent first, and a tap switches Estimados and Inicio. No Vehicle:
+    «Agrega un Vehículo» (`/vehicle/new`). A new `?vehicle=`/`?task=`
+    starts the screen over, as the PWA's route key did.
+  - **Location.** The `estimates` function prices in the profile's country
+    and city (`profile_location` without them), so with no country the form
+    is replaced by «¿Dónde está tu Vehículo?» (country, city, «Guardar
+    ubicación» through `useUpdateProfile`).
+  - **Asking.** «¿Qué quieres cotizar?» (three characters at least,
+    `canAsk`) or a task chip: the Vehicle's overdue and «Por vencer» tasks
+    first, with their dot, then the PWA's popular ones, eight at most
+    (`suggestedTasks`). It sends `{ vehicleId, taskCode }` or
+    `{ vehicleId, query }` (`estimateRequest`). Unlike the PWA, the field
+    sits at the top: pinned above the tab bar, the floating [+] would cover
+    its button. `?task=` asks for that task once on arrival («¿Cuánto
+    cuesta?» in a Reminder's detail).
+  - **Waiting and errors.** The question shows as a bubble, then a line
+    with a spinner that moves through «Buscando precios en tu zona…»,
+    «Comparando fuentes…» and «Ordenando los resultados…», one every 4.5 s
+    (`waitingStep`), announced as busy. A failure shows its `errors.<code>`
+    message: `ai_limit` (429, the per-user `AI_DAILY_LIMIT`) says
+    «Llegaste al límite de consultas de hoy. Vuelve mañana.».
+  - **Result.** The Vehicle and place, the job, then either the summary of
+    what is missing (`found: false`) or the independent shop and dealership
+    totals («Sin datos» when null), the economy parts, original parts and
+    labour that have a range (`priceRows`), the summary, «Suele incluir»
+    and «Qué mueve el precio». Then the confidence (three bars and its
+    words), up to five sources in the in-app browser (`expo-web-browser`,
+    as the Vehicle detail's) and «Estimado, no presupuesto». Dollars come
+    from `formatUsdRange` (no `currencyDisplay`: Hermes ignores it). The
+    card rises in (`motion.estimate`; still with Reduce Motion).
+  - **«Consultas anteriores».** The chosen Vehicle's last six (from the
+    person's last 20 requests, once per Estimate and Vehicle, the same
+    `estimate_requests` the PWA lists), with the independent total or «Sin
+    rango» and the day; a tap shows that result again without a new call.
+    Hidden while a request runs.
+  - **Cost.** Each new Estimate spends one of the day's AI calls; the
+    function caches an Estimate 30 days per model, engine, job and city, and
+    a cached one costs nothing (it still records the request).
+  - **Not here.** The PWA's «Estimar precio / Chat de Seibi» switch and the
+    chat (SEI-69 mounts them above the form), «Preguntar» (chat) and
+    «Agendar» (S13).
 - **Styling:** Unistyles 3 (`react-native-unistyles` on
   `react-native-nitro-modules`; SEI-42's spike proved it on SDK 58 on both
   platforms). The theme lives in `src/theme/`, values from

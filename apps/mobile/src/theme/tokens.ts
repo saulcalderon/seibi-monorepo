@@ -172,6 +172,10 @@ export const size = {
   bar: 4,
   /** The first run's confirmation check (`size-16`). */
   firstRunCheck: 64,
+  /** An Estimate's three confidence bars, each `h-3 w-1.5`. */
+  confidenceBar: { width: 6, height: 12 },
+  /** The question and the waiting line on Estimados take at most this share of the row (`max-w-[85%]`). */
+  bubble: '85%',
 } as const;
 
 /**
@@ -210,6 +214,8 @@ export const motion = {
   progress: { duration: 700 },
   /** The first run: the pause after choosing an answer before the next question, and the confirmation's entrance. */
   firstRun: { chosen: 180, confirmFade: 350, checkDelay: 120 },
+  /** An Estimate's result rising into place (the PWA's 0.35 s). */
+  estimate: { duration: 350 },
   /** Cubic-bézier control points: `cubicBezier(...motion.curve.out)`. */
   curve: {
     /** Strong ease-out, for press feedback. */
