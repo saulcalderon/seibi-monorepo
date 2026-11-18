@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { ChatMessage } from '@/data/chat/messages';
 import { t } from '@/data/test-i18n';
 
-import { bubbleSources, bubbleText, canSend, chatRequest, ESTIMATES_MODE, MESSAGE_MAX, modeOptions, replySpoken, starters } from './chat-logic';
+import { bubbleSources, bubbleText, canSend, chatRequest, MESSAGE_MAX, replySpoken, starters } from './chat-logic';
 
 describe('canSend', () => {
   it('sends a question of two characters or more, counted without the spaces around it', () => {
@@ -27,16 +27,6 @@ describe('chatRequest', () => {
 
   it('keeps the line breaks inside the question', () => {
     expect(chatRequest('Hace ruido.\n¿Es grave?', 'v1').message).toBe('Hace ruido.\n¿Es grave?');
-  });
-});
-
-describe('the switch', () => {
-  it('offers «Estimar precio» then «Chat de Seibi», and Estimados opens on the first', () => {
-    expect(modeOptions(t)).toEqual([
-      { value: 'estimate', label: 'Estimar precio' },
-      { value: 'chat', label: 'Chat de Seibi' },
-    ]);
-    expect(ESTIMATES_MODE).toBe('estimate');
   });
 });
 

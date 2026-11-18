@@ -421,7 +421,7 @@
       "mine": "Tú: {{text}}",
       "seibi": "Seibi: {{text}}",
       "reply": "Seibi respondió: {{text}}",
-      "openSource": "Abrir «{{title}}» en el navegador",
+      "openSource": "{{title}}, se abre en el navegador",
       "aiUse": "Cómo usamos la IA"
     }
   },

@@ -4,6 +4,7 @@
 import type { TFunction } from 'i18next';
 
 import type { ChatMessage } from '@/data/chat/messages';
+import type { ChatRequest } from '@/data/chat/schemas';
 import { knowledgeProfile, type KnowledgeLevel } from '@/lib/knowledge';
 import { plainText } from '@/lib/text';
 
@@ -20,22 +21,8 @@ export function canSend(message: string) {
 }
 
 /** The body of the `chat` call: the question, and the Vehicle the answer is about. */
-export function chatRequest(message: string, vehicleId: string) {
+export function chatRequest(message: string, vehicleId: string): ChatRequest {
   return { message: message.trim(), vehicleId };
-}
-
-/** Estimados' two modes: the price form, or the chat (the PWA's «Modo» switch). */
-export type EstimatesMode = 'estimate' | 'chat';
-
-/** The mode Estimados opens on, as the PWA's: the price form. */
-export const ESTIMATES_MODE: EstimatesMode = 'estimate';
-
-/** The switch's two options, in the PWA's order. */
-export function modeOptions(t: TFunction): { value: EstimatesMode; label: string }[] {
-  return [
-    { value: 'estimate', label: t('estimates.mode.estimate') },
-    { value: 'chat', label: t('estimates.mode.chat') },
-  ];
 }
 
 /**

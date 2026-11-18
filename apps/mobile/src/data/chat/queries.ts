@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useMutationState, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { supabase } from '@/lib/supabase';
@@ -9,7 +9,7 @@ import { useUserId } from '../user';
 
 import { chatKeys } from './keys';
 import { chronological, replyMessages, withReply, type ChatMessage } from './messages';
-import { chatResponse, storedChatRow } from './schemas';
+import { chatResponse, storedChatRow, type ChatRequest } from './schemas';
 
 /** How many messages the thread shows: the latest 100, as many as the PWA read. */
 const THREAD_LIMIT = 100;
@@ -45,10 +45,24 @@ export function useSendChat() {
   const userId = useUserId();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { message: string; vehicleId: string }) => invokeFunction('chat', input, chatResponse),
+    mutationKey: chatKeys.send,
+    mutationFn: (input: ChatRequest) => invokeFunction('chat', input, chatResponse),
     onSuccess: (data) => {
       if (!userId) return;
       queryClient.setQueryData<ChatMessage[]>(chatKeys.user(userId), (thread) => withReply(thread, replyMessages(data.messages)));
     },
   });
+}
+
+/**
+ * The question on its way to Seibi, or null. It outlives the screen that
+ * sent it: switching to «Estimar precio» and back still shows it, and still
+ * stops a second question until the answer arrives.
+ */
+export function usePendingQuestion(): string | null {
+  const pending = useMutationState({
+    filters: { mutationKey: chatKeys.send, status: 'pending' },
+    select: (mutation) => (mutation.state.variables as ChatRequest | undefined)?.message ?? null,
+  });
+  return pending.at(-1) ?? null;
 }

@@ -1,5 +1,5 @@
 import { openBrowserAsync } from 'expo-web-browser';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AccessibilityInfo, Pressable, TextInput, View, type ScrollViewInstance } from 'react-native';
 import { KeyboardChatScrollView, KeyboardStickyView, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
@@ -9,7 +9,7 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import type { ChatMessage } from '@/data/chat/messages';
 import { replyMessages } from '@/data/chat/messages';
-import { useChat, useSendChat } from '@/data/chat/queries';
+import { useChat, usePendingQuestion, useSendChat } from '@/data/chat/queries';
 import { errorMessage } from '@/data/errors';
 import type { VehicleView } from '@/data/garage/types';
 import { useProfile } from '@/data/profile/queries';
@@ -55,40 +55,47 @@ export function ChatPanel({ vehicle, header }: { vehicle: VehicleView; header: R
   const profile = useProfile();
   const located = useLocated();
   const [text, setText] = useState('');
-  const [pending, setPending] = useState<string | null>(null);
+  // The question on its way lives with the mutation, so it survives a trip to «Estimar precio» and back.
+  const pending = usePendingQuestion();
+  // Blocks a second tap before the first one's render lands (two taps would spend two AI calls).
+  const sending = useRef(false);
   const scrollRef = useRef<ScrollViewInstance>(null);
   const toEnd = useRef(true);
 
   const messages = chat.data ?? [];
   // Where the field rests: level with the [+], whose bottom is measured from the window. On iOS the
   // screen runs under the tab bar, so the field keeps clear of it; on Android the screen ends at the bar.
-  const fabBottom = actionsButtonBottom(insets.bottom);
-  const resting = ios ? fabBottom : space[3];
   // With the keyboard up the field sits a small gap above it; this is how much nearer it comes than the keyboard's height.
-  const lift = fabBottom - space[2];
+  const lift = actionsButtonBottom(insets.bottom) - space[2];
 
   // A new message or the typing line brings the end of the thread into view once it is laid out.
-  useEffect(() => {
+  // Armed before the layout's size change can fire.
+  useLayoutEffect(() => {
     toEnd.current = true;
   }, [messages.length, pending]);
 
   const submit = (raw: string) => {
-    if (!canSend(raw) || send.isPending) return;
+    if (!canSend(raw) || pending !== null || sending.current) return;
+    sending.current = true;
     const body = chatRequest(raw, vehicle.id);
     setText('');
-    setPending(body.message);
     announce(t('estimates.chat.typing'));
-    send.mutateAsync(body).then(
-      (data) => {
-        const reply = replyMessages(data.messages).find((m) => m.role === 'assistant');
-        if (reply) announce(replySpoken(reply, t));
-      },
-      (error: unknown) => {
-        // The question goes back in the field, so a failed send doesn't lose it.
-        setText((current) => current || body.message);
-        announce(errorMessage(error, t));
-      },
-    ).finally(() => setPending(null));
+    send
+      .mutateAsync(body)
+      .then(
+        (data) => {
+          const reply = replyMessages(data.messages).find((m) => m.role === 'assistant');
+          if (reply) announce(replySpoken(reply, t));
+        },
+        (error: unknown) => {
+          // The question goes back in the field, so a failed send doesn't lose it.
+          setText((current) => current || body.message);
+          announce(errorMessage(error, t));
+        },
+      )
+      .finally(() => {
+        sending.current = false;
+      });
   };
 
   const empty = messages.length === 0 && !pending;
@@ -121,19 +128,20 @@ export function ChatPanel({ vehicle, header }: { vehicle: VehicleView; header: R
             ) : empty ? (
               <View style={styles.starters} testID="chat-starters">
                 {starters(profile.data?.knowledgeLevel, t).map((question, i) => (
-                  <Starter key={question} testID={`chat-starter-${i}`} question={question} disabled={send.isPending} onPress={() => submit(question)} />
+                  <Starter key={question} testID={`chat-starter-${i}`} question={question} onPress={() => submit(question)} />
                 ))}
               </View>
             ) : (
               // The thread already there when the chat opens appears in place; only what is added after rises in.
-              <LayoutAnimationConfig skipEntering>
+              // Keyed on loading, so it mounts once the thread is in: the very first question still rises in.
+              <LayoutAnimationConfig skipEntering key={chat.isFetched ? 'thread' : 'loading'}>
                 {messages.map((m, i) => (
                   // The newest question and answer carry their own ids, so a flow can find the reply it waited for.
                   <Bubble key={m.id} message={m} testID={i >= messages.length - 2 && !pending ? `chat-latest-${m.role}` : undefined} />
                 ))}
                 {pending ? (
                   <>
-                    <Bubble testID="chat-pending" message={{ id: PENDING, role: 'user', content: pending, sources: [], createdAt: '', vehicleId: vehicle.id }} />
+                    <Bubble testID="chat-pending" sending message={{ id: PENDING, role: 'user', content: pending, sources: [], createdAt: '', vehicleId: vehicle.id }} />
                     <Typing />
                   </>
                 ) : null}
@@ -151,8 +159,8 @@ export function ChatPanel({ vehicle, header }: { vehicle: VehicleView; header: R
       {located ? (
         // With the keyboard up the bottom padding is behind it: the field rises by the keyboard less `lift`.
         <KeyboardStickyView offset={{ opened: lift }}>
-          <View style={{ paddingBottom: resting }}>
-            <Composer value={text} onChange={setText} busy={send.isPending} onSend={() => submit(text)} />
+          <View style={styles.dock}>
+            <Composer value={text} onChange={setText} busy={pending !== null} onSend={() => submit(text)} />
           </View>
         </KeyboardStickyView>
       ) : null}
@@ -161,7 +169,7 @@ export function ChatPanel({ vehicle, header }: { vehicle: VehicleView; header: R
 }
 
 /** One of the three questions an empty thread offers; a tap sends it. */
-function Starter({ question, disabled, onPress, testID }: { question: string; disabled: boolean; onPress: () => void; testID: string }) {
+function Starter({ question, onPress, testID }: { question: string; onPress: () => void; testID: string }) {
   const { t } = useTranslation();
   const { pressed, pressHandlers } = usePressed();
   styles.useVariants({ pressed });
@@ -171,8 +179,6 @@ function Starter({ question, disabled, onPress, testID }: { question: string; di
       accessibilityRole="button"
       accessibilityLabel={question}
       accessibilityHint={t('estimates.chat.starterHint')}
-      accessibilityState={{ disabled }}
-      disabled={disabled}
       onPress={onPress}
       style={styles.starter}
       {...pressHandlers}
@@ -185,14 +191,14 @@ function Starter({ question, disabled, onPress, testID }: { question: string; di
 }
 
 /** A message: the person's on the right in `inverse`, Seibi's on the left with up to three sources. */
-function Bubble({ message, testID }: { message: ChatMessage; testID?: string }) {
+function Bubble({ message, sending = false, testID }: { message: ChatMessage; sending?: boolean; testID?: string }) {
   const { t } = useTranslation();
   const reduced = useReducedMotion();
   const mine = message.role === 'user';
   const words = bubbleText(message);
   const sources = bubbleSources(message);
   // A saved question takes the place of the one shown while sending: it appears in place, only new bubbles rise in.
-  const rises = !reduced && (!mine || message.id === PENDING);
+  const rises = !reduced && (!mine || sending);
   styles.useVariants({ mine });
   return (
     // The entrance and the theme's styles stay on separate views: Unistyles styles a plain View.
@@ -231,7 +237,7 @@ function Bubble({ message, testID }: { message: ChatMessage; testID?: string }) 
   );
 }
 
-/** «Seibi está escribiendo»: three dots that pulse one after another (still with Reduce Motion on). */
+/** «Seibi está escribiendo»: three dots that pulse one after another; with Reduce Motion on they hold still. */
 function Typing() {
   const { t } = useTranslation();
   const reduced = useReducedMotion();
@@ -313,7 +319,7 @@ function AiUse() {
   );
 }
 
-const styles = StyleSheet.create((theme) => ({
+const styles = StyleSheet.create((theme, rt) => ({
   screen: {
     flex: 1,
     backgroundColor: theme.colors.bg,
@@ -394,6 +400,11 @@ const styles = StyleSheet.create((theme) => ({
     height: theme.size.dot,
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.muted,
+  },
+  dock: {
+    // At rest the field is level with the [+]. On iOS the screen runs under the tab bar, so the field keeps
+    // clear of it; on Android the screen ends at the bar. With the keyboard up this padding is behind it.
+    paddingBottom: ios ? actionsButtonBottom(rt.insets.bottom) : theme.space[3],
   },
   composer: {
     flexDirection: 'row',

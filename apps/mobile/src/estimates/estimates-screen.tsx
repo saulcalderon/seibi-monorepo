@@ -20,8 +20,8 @@ import { Text } from '@/ui/text';
 import { VehicleThumb } from '@/vehicle/fleet-card';
 
 import { ChatPanel } from './chat-panel';
-import { ESTIMATES_MODE, modeOptions, type EstimatesMode } from './chat-logic';
 import { EstimatePanel } from './estimate-panel';
+import { INITIAL_MODE, modeOptions, type EstimatesMode } from './estimates-logic';
 import { LocationGate } from './location-gate';
 
 /**
@@ -46,7 +46,7 @@ function Estimados({ vehicleParam, taskParam }: { vehicleParam?: string; taskPar
   const [vehicleId, setVehicleId] = useState<string | null>(vehicleParam ?? null);
   // The link's task is asked for once: switching Vehicles remounts the panel, and must not ask (and spend an AI call) again.
   const [linkTask, setLinkTask] = useState(taskParam);
-  const [mode, setMode] = useState<EstimatesMode>(ESTIMATES_MODE);
+  const [mode, setMode] = useState<EstimatesMode>(INITIAL_MODE);
   const vehicle = garage.vehicles.find((v) => v.id === (vehicleId ?? active?.id)) ?? null;
 
   if (garage.isLoading) {

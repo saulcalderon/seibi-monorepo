@@ -715,7 +715,10 @@ The migration's order, scope and tickets are in
       once with three pulsing dots, «Seibi está escribiendo», until the
       answer arrives. A failure shows its `errors.<code>` message under the
       thread (`ai_limit`: the same daily limit and words as Estimados) and
-      puts the question back in the field.
+      puts the question back in the field. The question on its way is the
+      mutation's own (`usePendingQuestion`, `chatKeys.send`), so a trip to
+      «Estimar precio» and back still shows it and still blocks a second
+      question until the answer arrives.
     - **The keyboard and the [+].** The chat is the one screen in the tabs
       with a pinned field, so it doesn't use `TabScroll`: the thread is a
       `KeyboardChatScrollView` and the field a `KeyboardStickyView`

@@ -22,5 +22,8 @@ export const storedChatRow = chatRow.extend({ sources: z.array(source).catch([])
 /** The `chat` Edge Function's answer: the question and the reply it saved, in that order. */
 export const chatResponse = z.object({ messages: z.array(chatRow) });
 
+/** The body of a `chat` call: the question, and the Vehicle the answer is about. */
+export type ChatRequest = { message: string; vehicleId: string };
+
 export type ChatRow = z.infer<typeof chatRow>;
 export type ChatResponse = z.infer<typeof chatResponse>;
