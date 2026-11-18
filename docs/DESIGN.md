@@ -210,6 +210,7 @@ lines fit its box (`text-fit.ts`).
 | `silhouette.sm` / `lg` | 136 / 240 | A silhouette's width |
 | `hero` | 192 | A still hero image's height: the Vehicle on Login (`h-48`) |
 | `avatar` | 36 | The header avatar that opens Perfil (`hitSlop` to 44) |
+| `profileAvatar` | 64 | The picture or initials on Perfil's card (`size-16`) |
 | `fab` | 56 | The floating [+] |
 | `tabBar.ios` / `android` | 49 / 80 | The tab bar's height above the bottom safe area, where the [+] sits (NativeTabs can't be measured; checked on screenshots) |
 | `border.thin` / `focus` | 1 / 2 | Field and card borders; the focus ring |
@@ -249,7 +250,7 @@ it natively without a re-render.
 | --- | --- | --- | --- |
 | `Text` | `text.tsx` | `step` (the type scale), `family` (`display`, `sans`, `mono`; `system`, the platform font at 500, only where a third party's brand rules ask for it), `weight` (300–700, as a font file), `tone` (`ink`, `muted`, `subtle`, `radiant`, `ok`, `soon`, `overdue`, `unknown`, `onInverse`, `onRadiant`; each status tone uses its `*Text` role), `align`, `heading` (`accessibilityRole="header"`). On Android it hangs a thin space after its words so no line is cut (Type → Text that fits) | — |
 | `Icon` | `icon.tsx` | `size` `xs`–`xl`, `tone` or `color`, `label` (only when the icon means something alone), `fixed`. See Icons | lucide-react |
-| `Button` | `button.tsx` | `variant`: `primary` (`radiantStrong`, glow), `secondary`, `tonal` (`surface3` with no border, pressed `garage.controlPressed`: Inicio's «Actualizar»), `ghost`, `danger`, `inverse`; `size`: `sm` 36, `md` 44, `lg` 56 (`minHeight`; `sm` gets `hitSlop` to 44); `icon`, `trailingIcon`, `loading` (the platform's spinner in place of the icon, keeps its label and colors, ignores presses, `busy`; the PWA also dims it, which left Android's thin arc almost invisible on the orange), `disabled` (dims to `opacity.disabled`), `block` | `ui/Button.tsx` |
+| `Button` | `button.tsx` | `variant`: `primary` (`radiantStrong`, glow), `secondary`, `tonal` (`surface3` with no border, pressed `garage.controlPressed`: Inicio's «Actualizar»), `ghost`, `ghostDanger` (no fill, `overdueText` label, pressed `overdueSoft`: Perfil's «Eliminar mi cuenta»), `danger`, `inverse`; `size`: `sm` 36, `md` 44, `lg` 56 (`minHeight`; `sm` gets `hitSlop` to 44); `icon`, `trailingIcon`, `loading` (the platform's spinner in place of the icon, keeps its label and colors, ignores presses, `busy`; the PWA also dims it, which left Android's thin arc almost invisible on the orange), `disabled` (dims to `opacity.disabled`), `block` | `ui/Button.tsx` |
 | `IconButton` | `button.tsx` | `ghost`, `secondary`, `inverse`; 44 × 44; `round` makes it a circle (Inicio's arrows); `label` is required | `ui/Button.tsx` |
 | `Chip` | `chip.tsx` | `selected`, `count`, `icon`, `radio` (one of a group: `accessibilityRole="radio"`, the group is a `radiogroup`), `dot` (`soon`/`overdue`: a status dot after the label, e.g. a due Maintenance task) | filter chips |
 | `Card`, `SectionHeader`, `ListRow`, `RowDivider`, `IconTile` | `card.tsx` | A `ListRow` with `onPress` is one button with a chevron and a background highlight on press (never a scale); from `largeTextScale` (1.35×) its title, subtitle and trailing part stack. `IconTile` tone: `neutral`, `radiant`, `ok`, `soon`, `overdue`, `unknown`; size `sm`, `md` | `ui/Card.tsx` |
@@ -379,7 +380,9 @@ their base colors, which already pass.
 Which background each text role sits on:
 
 - `ink` and `muted`: `bg`, `surface`, `surface2`, and `surface3`
-  (controls: segmented controls, neutral badges and tiles).
+  (controls: segmented controls, neutral badges and tiles), and
+  `radiantSoft` over each of the three surfaces (a chosen option card:
+  Perfil's Knowledge level).
 - `subtle`: `bg`, `surface`, `surface2`.
 - `radiantText`, `okText`, `soonText`, `overdueText`, `unknownText`: `bg`,
   `surface`, `surface2`, and their soft fill (`radiantSoft`, `okSoft`…). A

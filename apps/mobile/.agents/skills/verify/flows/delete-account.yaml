@@ -11,6 +11,11 @@ name: Delete the account from the app, then «Cuenta eliminada»
 # Account deletion lives in Perfil, which the header avatar opens.
 - runFlow: open-profile.yaml
 - takeScreenshot: before-delete
+# Perfil scrolls: bring it on screen first.
+- scrollUntilVisible:
+    element:
+      id: delete-account
+    direction: DOWN
 - tapOn:
     id: delete-account
 # The native alert asks first.

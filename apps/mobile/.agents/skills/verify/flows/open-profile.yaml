@@ -1,7 +1,7 @@
 # Subflow, not driven alone: from the root of any tab, the header avatar
-# opens Perfil inside that tab. Perfil holds the «Tema» control, the account
-# (who is signed in, sign-out, delete) and, in Seibi Dev, the links to the
-# development screens. Feature: features/app-shell.md.
+# opens Perfil inside that tab (features/profile.md). Perfil is taller than
+# the screen: scroll to «Tema», sign-out or delete before tapping them.
+# Feature: features/app-shell.md.
 appId: ${APP_ID}
 name: Open Perfil from the header avatar
 ---

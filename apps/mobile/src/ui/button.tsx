@@ -5,7 +5,7 @@ import { Icon, type IconName } from './icon';
 import { PressScale, usePressed } from './press';
 import { Text } from './text';
 
-type Variant = 'primary' | 'secondary' | 'tonal' | 'ghost' | 'danger' | 'inverse';
+type Variant = 'primary' | 'secondary' | 'tonal' | 'ghost' | 'ghostDanger' | 'danger' | 'inverse';
 type Size = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends Pick<PressableProps, 'onPress' | 'testID' | 'accessibilityHint'> {
@@ -25,7 +25,7 @@ export interface ButtonProps extends Pick<PressableProps, 'onPress' | 'testID' |
 }
 
 /** Each variant's text and icon colour. */
-const TONE = { primary: 'onRadiant', secondary: 'ink', tonal: 'ink', ghost: 'ink', danger: 'overdue', inverse: 'onInverse' } as const;
+const TONE = { primary: 'onRadiant', secondary: 'ink', tonal: 'ink', ghost: 'ink', ghostDanger: 'overdue', danger: 'overdue', inverse: 'onInverse' } as const;
 /** The label's step for each size: 0.82, 0.92 and 1 rem in the PWA. */
 const STEP = { sm: 'footnote', md: 'subhead', lg: 'callout' } as const;
 const ICON = { sm: 'sm', md: 'sm', lg: 'md' } as const;
@@ -145,6 +145,8 @@ const styles = StyleSheet.create((theme) => ({
         // No fill until pressed. On Android a rounded view with no fill is flattened away and its pressed
         // fill drawn square; `overflow: 'hidden'` keeps it a real view (docs/DESIGN.md → Corners on Android).
         ghost: { overflow: 'hidden' },
+        // The PWA's `variant="ghost" className="text-overdue"` (Perfil's «Eliminar mi cuenta»): no fill, red text.
+        ghostDanger: { overflow: 'hidden' },
         danger: { backgroundColor: theme.colors.overdueSoft },
         inverse: { backgroundColor: theme.colors.inverse },
       },
@@ -156,6 +158,8 @@ const styles = StyleSheet.create((theme) => ({
       { variant: 'secondary', pressed: true, styles: { backgroundColor: theme.colors.surface2 } },
       { variant: 'tonal', pressed: true, styles: { backgroundColor: theme.garage.controlPressed } },
       { variant: 'ghost', pressed: true, styles: { backgroundColor: theme.colors.surface3 } },
+      // Pressed on its soft fill, where `overdueText` is measured (`check-contrast`); `surface3` isn't.
+      { variant: 'ghostDanger', pressed: true, styles: { backgroundColor: theme.colors.overdueSoft } },
       { variant: 'danger', pressed: true, styles: { opacity: theme.opacity.pressed } },
       { variant: 'inverse', pressed: true, styles: { opacity: theme.opacity.pressed } },
     ],
