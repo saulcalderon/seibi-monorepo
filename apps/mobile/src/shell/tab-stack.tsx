@@ -4,7 +4,7 @@ import { useUnistyles } from 'react-native-unistyles';
 
 import { ProfileButton } from './profile-button';
 
-export type TabRoot = 'index' | 'fleet' | 'reminders';
+export type TabRoot = 'index' | 'fleet' | 'reminders' | 'estimates';
 
 /**
  * The stack inside each tab (after Paradero's `src/components/tab-stack.tsx`,

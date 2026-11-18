@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { deleteAccountResponse } from './account/schemas';
-import { estimateResult } from './estimate/schemas';
+import { estimateResponse, estimateResult } from './estimate/schemas';
 import { errorCode, errorMessage, functionError, parseResponse } from './errors';
 import estimatesNoLocation from './fixtures/estimates.no-location.json';
 import storedEstimate from './fixtures/estimates.result.not-found.json';
@@ -71,6 +71,32 @@ describe('estimates', () => {
   it('refuses a stored Estimate whose price range is not numbers', () => {
     const broken = { ...storedEstimate.row.result, labor: { min: '20', max: '40' } };
     expect(invalid(() => parseResponse('estimates', estimateResult, broken))).toBe('invalid_response');
+  });
+
+  it('accepts the answer for one Estimate: what was asked, where, and the stored result', () => {
+    const answer = {
+      id: storedEstimate.row.id,
+      query: 'Filtro de aceite',
+      taskCode: 'oil_filter',
+      city: 'San Salvador',
+      country: 'SV',
+      createdAt: '2026-09-30T02:01:12.396Z',
+      result: storedEstimate.row.result,
+    };
+    const parsed = parseResponse('estimates', estimateResponse, answer);
+    expect(parsed.taskCode).toBe('oil_filter');
+    expect(parsed.result.found).toBe(false);
+  });
+
+  it('refuses an answer for a country Seibi does not price in', () => {
+    const answer = { id: 'x', query: 'Batería', taskCode: null, city: 'Lima', country: 'PE', createdAt: '2026-11-17T00:00:00Z', result: storedEstimate.row.result };
+    expect(invalid(() => parseResponse('estimates', estimateResponse, answer))).toBe('invalid_response');
+  });
+
+  it('says the daily AI limit is reached in the app\'s words, not the server\'s (429 ai_limit)', () => {
+    const error = functionError(429, { error: 'ai_limit', message: 'Llegaste al límite de 20 consultas de hoy. Vuelve mañana.' });
+    expect(errorCode(error)).toBe('ai_limit');
+    expect(errorMessage(error, t)).toBe('Llegaste al límite de consultas de hoy. Vuelve mañana.');
   });
 
   it('asks for the country and city when the profile has none (recorded 409)', () => {

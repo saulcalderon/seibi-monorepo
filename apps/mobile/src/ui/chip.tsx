@@ -22,6 +22,8 @@ export interface ChipProps {
   dot?: 'soon' | 'overdue';
   /** Spoken label; defaults to the label and the count. */
   accessibilityLabel?: string;
+  /** Fades the chip and ignores presses (Estimados' task chips while a request runs). */
+  disabled?: boolean;
   testID?: string;
 }
 
@@ -30,22 +32,23 @@ export interface ChipProps {
  * inverse; the state is also spoken, so colour is never the only signal.
  * Chips are 40 pt tall to sit in a row; `hitSlop` takes the touch area to 44.
  */
-export function Chip({ label, selected = false, onPress, icon, count, radio = false, dot, accessibilityLabel, testID }: ChipProps) {
+export function Chip({ label, selected = false, onPress, icon, count, radio = false, dot, accessibilityLabel, disabled = false, testID }: ChipProps) {
   const { theme } = useUnistyles();
   const { pressed, pressHandlers } = usePressed();
-  styles.useVariants({ selected });
+  styles.useVariants({ selected, disabled });
   const tone = selected ? 'onInverse' : 'ink';
   return (
     <Pressable
       testID={testID}
       accessibilityRole={radio ? 'radio' : 'button'}
       accessibilityLabel={accessibilityLabel ?? (count == null ? label : `${label}, ${count}`)}
-      accessibilityState={radio ? { checked: selected } : { selected }}
+      accessibilityState={radio ? { checked: selected, disabled } : { selected, disabled }}
+      disabled={disabled}
       onPress={onPress}
       hitSlop={(theme.size.target - theme.size.chip) / 2}
       {...pressHandlers}
     >
-      <PressScale pressed={pressed}>
+      <PressScale pressed={pressed && !disabled}>
         <View style={styles.chip}>
           {icon ? <Icon name={icon} size="sm" tone={tone} /> : null}
           <Text step="subhead" weight={600} tone={tone}>
@@ -80,6 +83,7 @@ const styles = StyleSheet.create((theme) => ({
     borderRadius: theme.radius.pill,
     borderWidth: theme.size.border.thin,
     variants: {
+      disabled: { true: { opacity: theme.opacity.disabled }, false: {} },
       selected: {
         true: { backgroundColor: theme.colors.inverse, borderColor: theme.colors.inverse },
         false: { backgroundColor: theme.colors.surface, borderColor: theme.colors.line },

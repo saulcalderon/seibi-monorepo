@@ -67,7 +67,7 @@ handles, required state, commands and observable proof.
 - [The app launches to Inicio](./app-launches.md): cold start, native
   splash, Inicio inside the tabs, on iOS and Android. Flow: `app-launches`.
 - [The app shell: tabs, the [+] and its actions, Perfil, deep
-  links](./app-shell.md): three tabs with a stack each that keep their
+  links](./app-shell.md): four tabs with a stack each that keep their
   place, the floating [+] and its actions sheet, Perfil from the header
   avatar, `seibi-dev://vehicle/<id>`. Flow: `app-shell`; subflows
   `open-profile.yaml`, `close-sheet.yaml`.
@@ -106,6 +106,12 @@ handles, required state, commands and observable proof.
   Vehicle detail and a Reminder's «Agendar»; the Appointment in Avisos with
   «Hecho» and in the Vehicle detail with «Marcar hecho» and «Cancelar»
   (which asks). Flows: `appointments`, `appointments-cleanup`.
+- [Estimados](./estimates.md): the fourth tab: the Vehicle line, the
+  location card, the question and task chips, the waiting line, the result
+  (totals, breakdown, what it includes, what moves the price, confidence,
+  sources), «Consultas anteriores», and «¿Cuánto cuesta?» from a Reminder.
+  One Estimate per run (the daily AI limit). Flows: `estimates`, then
+  `estimates-from-reminder` (served from the cache the first fills).
 - [Registrar un Servicio](./service.md): the form sheet from [+] and the
   Vehicle's «Servicios», tasks and lines, validation order, the Mileage
   reading it writes, edit and withdraw, «¿Descartar los cambios?».

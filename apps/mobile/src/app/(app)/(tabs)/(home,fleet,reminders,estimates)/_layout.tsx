@@ -12,10 +12,11 @@ export const unstable_settings = {
   anchor: 'index',
   fleet: { anchor: 'fleet' },
   reminders: { anchor: 'reminders' },
+  estimates: { anchor: 'estimates' },
 };
 
 /**
- * One folder, three stacks: Expo Router gives each group in the name its own
+ * One folder, four stacks: Expo Router gives each group in the name its own
  * copy of these routes, so every tab has its own stack and a detail screen
  * opens inside the tab you are in, under its tab bar. Paradero learned this
  * the hard way: detail screens as top-level routes hid the bar (its commit
@@ -25,6 +26,7 @@ export default function TabStackLayout({ segment }: { segment: string }) {
   const { t } = useTranslation();
   if (segment === '(fleet)') return <TabStack root="fleet" title={t('tabs.fleet')} />;
   if (segment === '(reminders)') return <TabStack root="reminders" title={t('tabs.reminders')} />;
+  if (segment === '(estimates)') return <TabStack root="estimates" title={t('tabs.estimates')} />;
   // Inicio's large title is the greeting; its tab is still «Inicio».
   return <TabStack root="index" title={greeting(t)} />;
 }
