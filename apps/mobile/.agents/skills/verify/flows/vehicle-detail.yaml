@@ -237,19 +237,15 @@ name: Detalle del Vehículo shows its four tabs and edits them
             id: correct-reading
           timeout: 10000
 - inputText: '${output.odometer}'
-# On Android the sheet rises above the open number pad with its title,
-# field and save in view (SEI-76).
+# The sheet rises above the open number pad with its title, field and
+# save in view (SEI-76).
 - waitForAnimationToEnd
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      - assertVisible:
-          id: correct-title
-      - assertVisible:
-          id: correct-reading
-      - assertVisible:
-          id: correct-save
+- assertVisible:
+    id: correct-title
+- assertVisible:
+    id: correct-reading
+- assertVisible:
+    id: correct-save
 - takeScreenshot: detail-05-correct-pad
 - extendedWaitUntil:
     visible:
@@ -259,18 +255,6 @@ name: Detalle del Vehículo shows its four tabs and edits them
 - tapOn:
     id: correct-save
     waitToSettleTimeoutMs: 500
-# On iOS a tap while the number pad is still closing can land on a sheet
-# that is moving and only drop the pad. Still enabled and still there means
-# nothing was sent (a sent save shows the button busy), so press it again.
-- runFlow:
-    when:
-      visible:
-        id: correct-save
-        enabled: true
-    commands:
-      - tapOn:
-          id: correct-save
-          waitToSettleTimeoutMs: 500
 - runFlow:
     when:
       platform: iOS
@@ -321,27 +305,19 @@ name: Detalle del Vehículo shows its four tabs and edits them
 - inputText: '20'
 # The Routine sheet too keeps its title and save over the pad (SEI-76).
 - waitForAnimationToEnd
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      - assertVisible:
-          id: routine-title
-      - assertVisible:
-          id: routine-save
+- assertVisible:
+    id: routine-title
+- assertVisible:
+    id: routine-save
 - takeScreenshot: detail-06-routine-pad
 # With the pad up the day chips sit under the save bar, where Maestro still
 # counts them visible: scroll the form up the way a person does (the drag
 # also drops the pad).
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      - swipe:
-          start: 50%, 40%
-          end: 50%, 20%
-          duration: 600
-      - waitForAnimationToEnd
+- swipe:
+    start: 50%, 40%
+    end: 50%, 20%
+    duration: 600
+- waitForAnimationToEnd
 - tapOn:
     id: routine-day-5
 - tapOn:
