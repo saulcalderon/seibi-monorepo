@@ -77,6 +77,11 @@ handles, required state, commands and observable proof.
   después», «Se guardó tu información», Inicio. Flows: `first-run`, `first-run-skip`;
   subflow `first-run-finish.yaml` (run by `sign-in.yaml`); script
   `scripts/reset-first-run.js`.
+- [Perfil](./profile.md): the card with who is signed in, the name,
+  Knowledge level and location sheets (saved to the profile the PWA reads),
+  «¿Descartar los cambios?», notifications (off until native push), «Tema»,
+  the Terms, Privacy Policy and email, sign-out and deletion. Flow:
+  `profile`.
 - [Inicio: the Garage](./home.md): the greeting, the stage with the
   active Vehicle (poster or silhouette), paging by swipe, arrows and an
   adjustable pager, the choice kept across a cold start, Mileage with

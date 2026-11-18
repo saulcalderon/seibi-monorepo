@@ -83,8 +83,10 @@ const TEXT: { fg: Role; on: readonly Role[]; soft?: Role; why: string }[] = [
   { fg: 'radiantText', on: SURFACES, soft: 'radiantSoft', why: 'radiant text and links' },
   { fg: 'okText', on: SURFACES, soft: 'okSoft', why: '«Al día» text' },
   { fg: 'soonText', on: SURFACES, soft: 'soonSoft', why: '«Por vencer» text' },
-  { fg: 'overdueText', on: SURFACES, soft: 'overdueSoft', why: '«Vencido» text' },
+  { fg: 'overdueText', on: SURFACES, soft: 'overdueSoft', why: '«Vencido» text; the ghost danger button, pressed on its soft fill' },
   { fg: 'unknownText', on: SURFACES, soft: 'unknownSoft', why: 'unknown-status text' },
+  { fg: 'ink', on: [], soft: 'radiantSoft', why: 'a chosen option card (Perfil\'s Knowledge level)' },
+  { fg: 'muted', on: [], soft: 'radiantSoft', why: 'a chosen option card\'s description' },
   { fg: 'onInverse', on: ['inverse', 'overdue'], why: 'text on inverse surfaces and the error toast' },
   { fg: 'onRadiant', on: ['radiantStrong', 'radiantPressed'], why: 'the primary button label' },
 ];

@@ -4,10 +4,9 @@ Seibi draws every screen in the PWA's light or night palette. By default
 («Auto») it follows the phone: switching the phone between light and dark
 mode recolours the open screen in place, with no reload. Picking «Claro» or
 «Oscuro» fixes the theme whatever the phone says, and the choice survives a
-cold start: the app opens straight in it. Today the choice lives in the
-«Tema» control on the placeholder Perfil, which the header avatar opens
-([`app-shell.md`](./app-shell.md)); Perfil (S11) ports the PWA's screen,
-and this file changes with it.
+cold start: the app opens straight in it. The choice is the «Tema»
+control under «Preferencias» in Perfil, which the header avatar opens
+([`profile.md`](./profile.md)).
 
 ## Sub-features
 
@@ -31,7 +30,7 @@ Preconditions:
 
 - `verify.sh launch <ios|android>` ended with `doctor: OK`.
 - Seibi Dev is installed from the branch under test, built after Unistyles joined (SEI-42). An older build has no Unistyles native module and shows a red screen.
-- The seibi-dev test account is available to `verify.sh` (see [`auth.md`](./auth.md)): Perfil needs a session, so the flow signs in first when signed out (`sign-in.yaml`), then opens Perfil (`open-profile.yaml`).
+- The seibi-dev test account is available to `verify.sh` (see [`auth.md`](./auth.md)): Perfil needs a session, so the flow signs in first when signed out (`sign-in.yaml`), then opens Perfil (`open-profile.yaml`) and scrolls to `id: theme-check`.
 - On iOS, the simulator has rebooted at least once since it was created (`launch` does this for a simulator it creates; see Gotchas).
 
 - **Start in light.** Run `.agents/skills/verify/scripts/verify.sh drive ios theme` (then `android`). The flow sets the device to light (`setDarkMode: disabled`), cold-starts the app, signs in if needed, opens Perfil, taps `id: theme-system` and waits for `id: theme-check` to read `theme: light (system)`. Screenshot `system-light`: light palette.

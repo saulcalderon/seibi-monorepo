@@ -27,6 +27,11 @@ name: Login renders, its links and buttons answer, the test sign-in opens the ap
         id: home-screen
     commands:
       - runFlow: open-profile.yaml
+      # Perfil scrolls: bring it on screen first.
+      - scrollUntilVisible:
+          element:
+            id: sign-out
+          direction: DOWN
       - tapOn:
           id: sign-out
       - extendedWaitUntil:
@@ -246,6 +251,11 @@ name: Login renders, its links and buttons answer, the test sign-in opens the ap
     id: sign-in-title
 # Sign out, from Perfil: Login again.
 - runFlow: open-profile.yaml
+# Perfil scrolls: bring it on screen first.
+- scrollUntilVisible:
+    element:
+      id: sign-out
+    direction: DOWN
 - tapOn:
     id: sign-out
 - extendedWaitUntil:

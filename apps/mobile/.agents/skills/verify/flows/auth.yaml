@@ -20,6 +20,11 @@ name: Test sign-in, the session survives a relaunch, sign-out closes the app aga
         id: home-screen
     commands:
       - runFlow: open-profile.yaml
+      # Perfil scrolls: bring it on screen first.
+      - scrollUntilVisible:
+          element:
+            id: sign-out
+          direction: DOWN
       - tapOn:
           id: sign-out
       - extendedWaitUntil:
@@ -64,6 +69,11 @@ name: Test sign-in, the session survives a relaunch, sign-out closes the app aga
     id: home-screen
 # Sign out, from Perfil.
 - runFlow: open-profile.yaml
+# Perfil scrolls: bring it on screen first.
+- scrollUntilVisible:
+    element:
+      id: sign-out
+    direction: DOWN
 - tapOn:
     id: sign-out
 - extendedWaitUntil:

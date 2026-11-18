@@ -184,6 +184,7 @@ function ButtonsSection() {
         <Button variant="secondary" label={t('uiKit.buttons.secondary')} onPress={press} />
         <Button variant="ghost" label={t('uiKit.buttons.ghost')} onPress={press} />
         <Button variant="danger" label={t('uiKit.buttons.danger')} onPress={press} />
+        <Button variant="ghostDanger" label={t('uiKit.buttons.ghostDanger')} onPress={press} />
         <Button variant="inverse" label={t('uiKit.buttons.inverse')} onPress={press} />
       </View>
       <View style={styles.wrap}>
