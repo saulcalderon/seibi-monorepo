@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { chatKeys } from './chat/keys';
 import { estimateKeys } from './estimate/keys';
 import { garageKeys } from './garage/keys';
 import { profileKeys } from './profile/keys';
@@ -16,14 +17,14 @@ const BETO = '12f6ed83-6ba6-418e-b0bc-df0ba6be6363';
 
 describe('query keys', () => {
   it('keep each person’s data apart, so two people on one phone never share a cached answer', () => {
-    for (const keys of [garageKeys, profileKeys, estimateKeys]) {
+    for (const keys of [garageKeys, profileKeys, estimateKeys, chatKeys]) {
       expect(keys.user(ANA)).not.toEqual(keys.user(BETO));
       expect(keys.user(ANA)).toContain(ANA);
     }
   });
 
   it('nest under their domain, so invalidating the domain reaches every person’s entry', () => {
-    for (const keys of [garageKeys, profileKeys, estimateKeys]) {
+    for (const keys of [garageKeys, profileKeys, estimateKeys, chatKeys]) {
       expect(startsWith(keys.user(ANA), keys.all)).toBe(true);
     }
     expect(startsWith(vpicKeys.models('Toyota', 2015), vpicKeys.all)).toBe(true);
@@ -35,7 +36,7 @@ describe('query keys', () => {
   });
 
   it('never collide across domains', () => {
-    const roots = [garageKeys.all, profileKeys.all, estimateKeys.all, taskKeys.catalog, vpicKeys.all].map((k) => k[0]);
+    const roots = [garageKeys.all, profileKeys.all, estimateKeys.all, chatKeys.all, taskKeys.catalog, vpicKeys.all].map((k) => k[0]);
     expect(new Set(roots).size).toBe(roots.length);
   });
 

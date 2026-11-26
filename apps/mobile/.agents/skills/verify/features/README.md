@@ -120,6 +120,11 @@ handles, required state, commands and observable proof.
   sources), «Consultas anteriores», and «¿Cuánto cuesta?» from a Reminder.
   One Estimate per run (the daily AI limit). Flows: `estimates`, then
   `estimates-from-reminder` (served from the cache the first fills).
+- [Chat de Seibi](./chat.md): «Chat de Seibi» in Estimados: the thread
+  and its starters, the field pinned beside the [+] that rides on the
+  keyboard, «Seibi está escribiendo», the answer and its sources, «Cómo
+  usamos la IA», and «Preguntar» from an Estimate. One question per run
+  (the daily AI limit). Flow: `chat`.
 - [Registrar un Servicio](./service.md): the form sheet from [+] and the
   Vehicle's «Servicios», tasks and lines, validation order, the Mileage
   reading it writes, edit and withdraw, «¿Descartar los cambios?».

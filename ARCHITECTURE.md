@@ -640,12 +640,18 @@ The migration's order, scope and tickets are in
   Closing the form with changes asks «¿Descartar la Cita?». Editing an
   Appointment has no screen, as in the PWA; Inicio's «Agenda» (#54) is
   not ported.
-- **Estimados** (S10, SEI-65): the PWA's Estimados (as of `6e3b818`)
-  without its chat, in `src/estimates/` (`estimates-screen.tsx`,
-  `estimate-panel.tsx`, `estimate-card.tsx`; the decisions as plain
-  functions in `estimates-logic.ts`, with unit tests). The route
+- **Estimados** (S10, SEI-65; its chat SEI-69): the PWA's Estimados (as
+  of `6e3b818`), in `src/estimates/` (`estimates-screen.tsx`,
+  `estimate-panel.tsx`, `estimate-card.tsx`, `location-gate.tsx`,
+  `chat-panel.tsx`; the decisions as plain functions in
+  `estimates-logic.ts` and `chat-logic.ts`, with unit tests). The route
   (`(estimates)/estimates.tsx`) renders `EstimatesScreen`. Data:
-  `useRequestEstimate` and `useEstimateHistory` (`src/data/estimate/`).
+  `useRequestEstimate` and `useEstimateHistory` (`src/data/estimate/`),
+  `useChat` and `useSendChat` (`src/data/chat/`).
+  - **The switch.** Under the Vehicle line, «Estimar precio / Chat de
+    Seibi» (`Segmented`, «Modo»), on «Estimar precio» when the screen
+    opens. Both panels sit behind the location card below. The switch
+    remounts the screen's scroll: the chat lays out its own (below).
   - **Which Vehicle.** The one Inicio shows (`useActiveVehicle`), unless
     `?vehicle=` names another. The line over the form names it with «N por
     atender» or «Al día»; with two or more it unfolds the others, most
@@ -681,7 +687,8 @@ The migration's order, scope and tickets are in
     words), up to five sources in the in-app browser (`expo-web-browser`,
     as the Vehicle detail's) and «Estimado, no presupuesto». Dollars come
     from `formatUsdRange` (no `currencyDisplay`: Hermes ignores it). The
-    card rises in (`motion.estimate`; still with Reduce Motion).
+    card rises in (`motion.estimate`; still with Reduce Motion). It ends
+    with «Preguntar», which switches to the chat.
   - **«Consultas anteriores».** The chosen Vehicle's last six (from the
     person's last 20 requests, once per Estimate and Vehicle, the same
     `estimate_requests` the PWA lists), with the independent total or «Sin
@@ -690,9 +697,47 @@ The migration's order, scope and tickets are in
   - **Cost.** Each new Estimate spends one of the day's AI calls; the
     function caches an Estimate 30 days per model, engine, job and city, and
     a cached one costs nothing (it still records the request).
-  - **Not here.** The PWA's «Estimar precio / Chat de Seibi» switch and the
-    chat (SEI-69 mounts them above the form), «Preguntar» (chat) and
-    the card's «Agendar» (the Reminder detail has one).
+  - **Chat de Seibi** (SEI-69): follow-up questions about the person's
+    Vehicles, the PWA's ChatPanel. A line names the Vehicle and what to
+    ask; an empty thread offers three questions (everyday ones, or specific
+    ones from Knowledge level intermediate up: `starters`), a tap sending
+    one. The thread is the person's one thread for every Vehicle, oldest
+    first: the latest 100 `chat_messages` (the PWA read the oldest 100, so
+    a long thread stopped growing). The person's bubbles show what they
+    typed; Seibi's, without links (`plainText`), with up to three sources
+    in the in-app browser. «Cómo usamos la IA» opens the Terms.
+    - **Sending.** «Enviar» takes 2 to 1,000 characters (`canSend`; the
+      field stops at 1,000) and sends `{ message, vehicleId }`
+      (`chatRequest`) to the `chat` Edge Function, which scopes the answer
+      to that Vehicle and maintenance (an off-topic question is declined
+      by its prompt), saves the question and the answer, and returns both
+      rows (`chatResponse`, Zod). They join the cached thread
+      (`replyMessages`, `withReply`); there is no refetch. The function
+      answers whole, not in parts (no streaming), so the question shows at
+      once with three pulsing dots, «Seibi está escribiendo», until the
+      answer arrives. A failure shows its `errors.<code>` message under the
+      thread (`ai_limit`: the same daily limit and words as Estimados) and
+      puts the question back in the field. The question on its way is the
+      mutation's own (`usePendingQuestion`, `chatKeys.send`), so a trip to
+      «Estimar precio» and back still shows it and still blocks a second
+      question until the answer arrives.
+    - **The keyboard and the [+].** The chat is the one screen in the tabs
+      with a pinned field, so it doesn't use `TabScroll`: the thread is a
+      `KeyboardChatScrollView` and the field a `KeyboardStickyView`
+      (react-native-keyboard-controller's chat recipe). At rest the field
+      sits level with the floating [+] (`actionsButtonBottom`) and leaves it
+      the bottom right corner; with the keyboard up it rides a small gap
+      above the keyboard, takes the whole width (the [+] is behind the
+      keyboard) and the thread lifts with it, so the keyboard covers
+      neither the field nor the last message. A new message scrolls the
+      thread to its end.
+    - **VoiceOver and TalkBack.** Sending announces «Seibi está
+      escribiendo» (the dots are a busy progress bar); the answer is
+      announced when it arrives («Seibi respondió: …»), and so is a
+      failure (`announceForAccessibilityWithOptions`, queued).
+    - **Cost.** Every question spends one of the day's AI calls; nothing
+      is cached.
+  - **Not here.** The card's «Agendar» (the Reminder detail has one).
 - **Styling:** Unistyles 3 (`react-native-unistyles` on
   `react-native-nitro-modules`; SEI-42's spike proved it on SDK 58 on both
   platforms). The theme lives in `src/theme/`, values from
@@ -978,7 +1023,7 @@ The migration's order, scope and tickets are in
     render, `useRenderNudge` for the shell), `service/`, `mileage/`
     (`rules.ts`: the Mileage write rules), `reminder/` (hand-written
     Reminders, Reminder state, `rememberTasks`, the Reminder text),
-    `routine/`, `appointment/`, `estimate/`, `profile/`, `task/` (the
+    `routine/`, `appointment/`, `estimate/`, `chat/`, `profile/`, `task/` (the
     Maintenance task catalog), `vpic/`, `account/` and `preferences/`.
     Vehicle, Service, Mileage, Reminder, Routine and Appointment are read
     through **one garage query** (`garage/`: `useGarage`), as in the PWA:
@@ -1002,11 +1047,12 @@ The migration's order, scope and tickets are in
     PWA's own checks, ported as they are (`validateVehicle`,
     `validateService`…), each throwing an `InputError`.
   - **Zod at the boundaries** whose shape Seibi doesn't control: the
-    responses of `vehicle-lookup`, `vehicle-render`, `estimates` and
-    `delete-account` (`invokeFunction` in `src/data/functions.ts` takes the
-    schema), the NHTSA vPIC answers (`vpic/schemas.ts`), and the JSON
+    responses of `vehicle-lookup`, `vehicle-render`, `estimates`, `chat`
+    and `delete-account` (`invokeFunction` in `src/data/functions.ts` takes
+    the schema), the NHTSA vPIC answers (`vpic/schemas.ts`), and the JSON
     columns the Edge Functions write (`maintenance_schedules.sources`,
-    `estimates.result`). An unexpected shape is `invalid_response`, never a
+    `estimates.result`, `chat_messages.sources`: one that doesn't parse
+    shows the answer with no sources). An unexpected shape is `invalid_response`, never a
     half-read object. The tests parse real recorded answers in
     `src/data/fixtures/`: seibi-dev's Edge Functions called as the test
     account, a stored `estimates.result` row, and vpic.nhtsa.dot.gov. A

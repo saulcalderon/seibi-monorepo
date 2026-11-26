@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 
+import { size, space } from '@/theme/tokens';
 import { FloatingAction } from '@/ui/floating-action';
 
 /**
@@ -21,11 +22,20 @@ export function ActionsButton() {
   );
 }
 
+/**
+ * How far the [+]'s bottom edge sits above the bottom of the window: the
+ * bottom safe area, the tab bar and a gap. NativeTabs can't be measured, so
+ * its height is a token per platform (tokens.ts → size.tabBar). The chat's
+ * question field lines up with it.
+ */
+export function actionsButtonBottom(bottomInset: number) {
+  return bottomInset + (process.env.EXPO_OS === 'ios' ? size.tabBar.ios : size.tabBar.android) + space[3];
+}
+
 const styles = StyleSheet.create((theme, rt) => ({
   place: {
     position: 'absolute',
     right: theme.space[4],
-    // NativeTabs can't be measured, so its height is a token per platform (tokens.ts → size.tabBar).
-    bottom: rt.insets.bottom + (process.env.EXPO_OS === 'ios' ? theme.size.tabBar.ios : theme.size.tabBar.android) + theme.space[3],
+    bottom: actionsButtonBottom(rt.insets.bottom),
   },
 }));

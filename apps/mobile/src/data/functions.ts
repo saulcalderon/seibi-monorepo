@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { functionError, parseResponse, RequestError } from './errors';
 
 /** Seibi's Edge Functions that the app calls with the person's session. */
-export type FunctionName = 'vehicle-lookup' | 'vehicle-render' | 'estimates' | 'delete-account';
+export type FunctionName = 'vehicle-lookup' | 'vehicle-render' | 'estimates' | 'chat' | 'delete-account';
 
 /**
  * Calls an Edge Function and checks its answer against `schema` (Zod). Throws

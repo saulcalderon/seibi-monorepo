@@ -1,0 +1,13 @@
+{
+  "function": "chat",
+  "request": {
+    "message": "a",
+    "vehicleId": null
+  },
+  "status": 400,
+  "recordedAt": "2026-11-18T03:37:24.897Z",
+  "body": {
+    "error": "bad_request",
+    "message": "Escribe tu pregunta."
+  }
+}

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { deleteAccountResponse } from './account/schemas';
+import { chatResponse, storedChatRow } from './chat/schemas';
 import { estimateResponse, estimateResult } from './estimate/schemas';
 import { errorCode, errorMessage, functionError, parseResponse } from './errors';
+import chatBadRequest from './fixtures/chat.bad-request.json';
 import estimatesNoLocation from './fixtures/estimates.no-location.json';
 import storedEstimate from './fixtures/estimates.result.not-found.json';
 import lookupOk from './fixtures/vehicle-lookup.ok.json';
@@ -103,6 +105,47 @@ describe('estimates', () => {
     const error = functionError(estimatesNoLocation.status, estimatesNoLocation.body);
     expect(errorCode(error)).toBe('profile_location');
     expect(errorMessage(error, t)).toBe('Dinos tu país y ciudad en Perfil para calcular precios de tu zona.');
+  });
+});
+
+describe('chat', () => {
+  // A successful answer is not recorded: each one spends one of the test
+  // account's AI calls. The shape is the one `supabase/functions/chat/index.ts`
+  // returns: the two rows it saved, `select('id, role, content, sources, created_at, vehicle_id')`.
+  const saved = [
+    { id: 'q1', role: 'user', content: '¿Cada cuánto cambio el aceite?', sources: [], created_at: '2026-11-17T21:00:00.999+00:00', vehicle_id: 'v1' },
+    {
+      id: 'a1',
+      role: 'assistant',
+      content: 'Cada 5,000 a 10,000 km, según el aceite.',
+      sources: [{ title: 'Manual del propietario', url: 'https://example.com/manual' }],
+      created_at: '2026-11-17T21:00:01+00:00',
+      vehicle_id: 'v1',
+    },
+  ];
+
+  it('accepts the question and the answer the function saved', () => {
+    const parsed = parseResponse('chat', chatResponse, { messages: saved });
+    expect(parsed.messages.map((m) => m.role)).toEqual(['user', 'assistant']);
+    expect(parsed.messages[1]?.sources).toEqual([{ title: 'Manual del propietario', url: 'https://example.com/manual' }]);
+  });
+
+  it('refuses an answer without the saved messages, or with a role the app does not know', () => {
+    expect(invalid(() => parseResponse('chat', chatResponse, { answer: 'Hola' }))).toBe('invalid_response');
+    expect(invalid(() => parseResponse('chat', chatResponse, { messages: [{ ...saved[0], role: 'system' }] }))).toBe('invalid_response');
+  });
+
+  it('reads a stored message whose sources are not a list as one with no sources, as the PWA did', () => {
+    expect(storedChatRow.parse({ ...saved[1], sources: { broken: true } }).sources).toEqual([]);
+  });
+
+  it('says the daily AI limit is reached with the same words as Estimados (429 ai_limit)', () => {
+    const error = functionError(429, { error: 'ai_limit', message: 'Llegaste al límite de 20 consultas de hoy. Vuelve mañana.' });
+    expect(errorMessage(error, t)).toBe('Llegaste al límite de consultas de hoy. Vuelve mañana.');
+  });
+
+  it('maps a question too short for the function to its code (recorded 400)', () => {
+    expect(errorCode(functionError(chatBadRequest.status, chatBadRequest.body))).toBe('bad_request');
   });
 });
 

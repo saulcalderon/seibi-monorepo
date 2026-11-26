@@ -174,8 +174,10 @@ export const size = {
   firstRunCheck: 64,
   /** An Estimate's three confidence bars, each `h-3 w-1.5`. */
   confidenceBar: { width: 6, height: 12 },
-  /** The question and the waiting line on Estimados take at most this share of the row (`max-w-[85%]`). */
+  /** The question and the waiting line on Estimados, and the chat's bubbles, take at most this share of the row (`max-w-[85%]`). */
   bubble: '85%',
+  /** The chat's question field grows with its text up to this height, then scrolls (`max-h-32`). */
+  composerMax: 128,
 } as const;
 
 /**
@@ -199,6 +201,8 @@ export const opacity = {
   pressed: 0.85,
   /** The low point of a skeleton's pulse. */
   skeleton: 0.55,
+  /** The low point of the chat's typing dots (`opacity: [0.3, 1, 0.3]`). */
+  typing: 0.3,
 } as const;
 
 /**
@@ -216,6 +220,8 @@ export const motion = {
   firstRun: { chosen: 180, confirmFade: 350, checkDelay: 120 },
   /** An Estimate's result rising into place (the PWA's 0.35 s). */
   estimate: { duration: 350 },
+  /** The chat's three typing dots: each pulses once a second (half of it each way), the next 150 ms later (the PWA's). */
+  typing: { duration: 500, stagger: 150 },
   /** Cubic-bézier control points: `cubicBezier(...motion.curve.out)`. */
   curve: {
     /** Strong ease-out, for press feedback. */
