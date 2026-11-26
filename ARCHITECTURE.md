@@ -214,8 +214,8 @@ The migration's order, scope and tickets are in
   Only Seibi Dev registers the dev client's `exp+seibi` scheme. One EAS
   slug (`seibi`) and one project id, set once in `EAS_PROJECT_ID` at the
   top of `app.config.ts`: the project `@saulcalderon1408/seibi` on
-  expo.dev (SEI-72), which turns on EAS Build and EAS Update. `pnpm start` / `ios` / `android` in `apps/mobile`
-  run the `development` variant. Since the Sign in with Apple
+  expo.dev (SEI-72), which EAS Build and EAS Update use. `pnpm start` /
+  `ios` / `android` in `apps/mobile` run the `development` variant. Since the Sign in with Apple
   entitlement (SEI-44), `pnpm ios` (`expo run:ios`) asks for a signing
   certificate even for the Simulator; on a Mac without one, build for the
   Simulator with the `verify` skill's `launch ios`, which calls
@@ -234,8 +234,7 @@ The migration's order, scope and tickets are in
   `useOTAUpdate` (`src/hooks/use-ota-update.ts`, called by the root
   layout) checks on launch and on return to foreground, downloads, then
   offers a restart in the native alert; a declined restart applies on the
-  next cold launch. It does nothing in development builds or while EAS
-  Update is off. It ships before the first store release.
+  next cold launch. It does nothing in development builds. It ships before the first store release.
 - **Splash and fonts:** the native splash (`expo-splash-screen` in
   `app.config.ts`, SEI-56) is the logo mark on the phone's screen
   background: `#F2F4F7` with dark ticks (`splash-icon.png`), or in dark
@@ -1106,13 +1105,16 @@ The migration's order, scope and tickets are in
 - **Testers:** teammates test **Seibi** on **seibi-dev** through `preview`
   builds with internal distribution, not TestFlight. Each iPhone is
   registered once with `eas device:create` (a link the tester opens on the
-  phone), and the next `preview` build includes it; the build's page on
-  expo.dev has the install link. JavaScript fixes reach them as EAS
-  Updates on the `preview` channel, with no new build. They sign up with
-  «Continuar con Apple», not the `verify` skill's test account. App Store
-  Connect has one app, Seibi (`com.seibiapp.app`), for `production` builds
-  only: TestFlight for a last check, then App Review. A separate Seibi Dev
-  app there waits until after launch, if testers need both apps installed
+  phone). A `preview` build started from a machine after that offers to
+  add the new iPhone to its signing profile; a CI build
+  (`--non-interactive`) may reuse the old profile without it. The build's
+  page on expo.dev has the install link. JavaScript fixes reach testers
+  as EAS Updates on the `preview` channel, with no new build. They sign up
+  with «Continuar con Apple», not the `verify` skill's test account;
+  Android teammates can't sign up until Google sign-in is set up
+  (SEI-79). TestFlight and App Review take only `production` builds of
+  the one App Store Connect app (see Builds). A separate Seibi Dev app
+  there waits until after launch, if testers need both apps installed
   side by side.
 - **Verification:** `apps/mobile/.agents/skills/verify/` (generated in
   SEI-41 with `create-verification-skill`) drives Seibi Dev on the iOS
