@@ -228,8 +228,11 @@ The migration's order, scope and tickets are in
   `development-simulator`) and `preview` also set
   `EXPO_PUBLIC_TEST_SIGN_IN=1` (see Auth). Remote app versions
   (`appVersionSource: remote`). Only `com.seibiapp.app` gets an App Store
-  Connect record; `.dev` is for the dev client. `ITSAppUsesNonExemptEncryption`
-  is `false` (`ios.config.usesNonExemptEncryption`).
+  Connect record (Apple ID `6839460333`, on the personal team
+  `8C5RS8CX87`); `.dev` is for the dev client. `eas submit --profile
+  production` uploads to it (`submit.production.ios` in `eas.json`).
+  `ITSAppUsesNonExemptEncryption` is `false`
+  (`ios.config.usesNonExemptEncryption`).
 - **Updates:** EAS Update with the `fingerprint` runtime policy.
   `useOTAUpdate` (`src/hooks/use-ota-update.ts`, called by the root
   layout) checks on launch and on return to foreground, downloads, then
