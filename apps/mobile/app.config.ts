@@ -14,10 +14,11 @@ const LANGUAGES = ['es'];
 
 /**
  * The EAS project that both variants share: one slug, one project id
- * (per-variant slugs break EAS). `eas init` prints the id; paste it here.
- * Until it is set, builds run locally only and EAS Update is off.
+ * (per-variant slugs break EAS): @saulcalderon1408/seibi on expo.dev. It
+ * turns on EAS Build and EAS Update; while it was empty, builds were local
+ * only and EAS Update was off.
  */
-const EAS_PROJECT_ID = '';
+const EAS_PROJECT_ID = '8cd6e34e-ced3-4e00-9375-acf17d7c3c6e';
 
 /**
  * Two installs that live side by side on one phone, picked by

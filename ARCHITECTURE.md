@@ -213,8 +213,8 @@ The migration's order, scope and tickets are in
   Each variant has its own scheme so deep links open the right install.
   Only Seibi Dev registers the dev client's `exp+seibi` scheme. One EAS
   slug (`seibi`) and one project id, set once in `EAS_PROJECT_ID` at the
-  top of `app.config.ts`; while it is empty, builds are local only and
-  EAS Update is off. `pnpm start` / `ios` / `android` in `apps/mobile`
+  top of `app.config.ts`: the project `@saulcalderon1408/seibi` on
+  expo.dev (SEI-72), which turns on EAS Build and EAS Update. `pnpm start` / `ios` / `android` in `apps/mobile`
   run the `development` variant. Since the Sign in with Apple
   entitlement (SEI-44), `pnpm ios` (`expo run:ios`) asks for a signing
   certificate even for the Simulator; on a Mac without one, build for the
@@ -1099,11 +1099,21 @@ The migration's order, scope and tickets are in
     link. It needs the `EXPO_TOKEN` repository secret, an Expo access
     token.
 
-  Both need the EAS project id, which isn't set yet (`EAS_PROJECT_ID` in
-  `app.config.ts`, SEI-72). Until it is, the workflow skips its build job
-  and says what is missing, and `eas build` on a machine would offer to
-  create a project: leave that to SEI-72. iOS internal builds install only
-  on devices registered with `eas device:create`.
+  The workflow skips its build job, and says why, while `EXPO_TOKEN` or
+  `EAS_PROJECT_ID` is missing. The first iOS build runs from a machine:
+  EAS asks for the Apple Developer sign-in once to create the signing
+  credentials, which `--non-interactive` in CI can't do.
+- **Testers:** teammates test **Seibi** on **seibi-dev** through `preview`
+  builds with internal distribution, not TestFlight. Each iPhone is
+  registered once with `eas device:create` (a link the tester opens on the
+  phone), and the next `preview` build includes it; the build's page on
+  expo.dev has the install link. JavaScript fixes reach them as EAS
+  Updates on the `preview` channel, with no new build. They sign up with
+  «Continuar con Apple», not the `verify` skill's test account. App Store
+  Connect has one app, Seibi (`com.seibiapp.app`), for `production` builds
+  only: TestFlight for a last check, then App Review. A separate Seibi Dev
+  app there waits until after launch, if testers need both apps installed
+  side by side.
 - **Verification:** `apps/mobile/.agents/skills/verify/` (generated in
   SEI-41 with `create-verification-skill`) drives Seibi Dev on the iOS
   Simulator and the Android emulator (`seibi-pixel`) with Maestro, the way
